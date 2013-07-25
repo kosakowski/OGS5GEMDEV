@@ -1,0 +1,60 @@
+\section{Functions}
+
+\begin{tabular*}{8.35cm}{|p{2.5cm}|p{5cm}|} \hline
+Object acronym & FCT \\
+C++ class      & CFunction \\
+Source files   & rf\_fct.h/cpp \\
+\hline
+File extension & *.fct \\
+Object keyword & \#FUNCTION \\
+\hline
+\end{tabular*}
+
+\Developer{
+%----------------------------------------------------------
+\subsection{Theory}
+}
+
+%-------------------------------------------------------------------------------
+\subsection{\texttt{\bf\#FUNCTION}}
+
+%\subsubsection{Keyword structure}
+
+\begin{verbatim}
+#FUNCTION
+ $TYPE
+  fct_name
+ $GEO_TYPE
+  geo_type geo_name
+ $VARIABLES
+  fct_x_name fct_y_name
+ $DATA
+  x_1 y_1
+  x_2 y_2
+  ...
+  x_n y_n
+ #STOP
+\end{verbatim}
+
+\Examples{
+%-------------------------------------------------------------------------------
+\subsection{Examples}
+
+%-------------------------------------------------------------------------------
+\begin{verbatim}
+#FUNCTION
+ $TYPE
+  STEP_FUNCTION
+ $GEO_TYPE
+  POLYLINE BC02
+ $VARIABLES
+  TIME CONCENTRATION
+ $DATA
+  0.000000000000e+000 1.000000000000e+000
+  5.000000000000e+005 1.000000000000e+000
+  5.010000000000e+005 0.000000000000e+000
+  1.000000000000e+006 0.000000000000e+000
+ #STOP
+\end{verbatim}
+
+\LastModified{OK - \today}

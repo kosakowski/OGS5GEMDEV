@@ -1,0 +1,32 @@
+\subsubsection*{Theory}
+
+Exchange processes, like sorption, between the solid and the liquid phase in the multiphase system of an aquifer can be caused by physical (Van-der-Waals-forces) or chemical bonds. Sorption processes can be reversible (adsorption-desorption) if the chemical environment is changing. When the transport in a multiphase system is simulated, the mass exchange between the liquid and the solid phase has to be included. The equations that describe the sorption processes are called sorption isotherms. Sorption isotherms describe the relation between the substance that is adsorbed on the solid matrix and the one which is dissolved in the fluid phase. Those equations are only valid under isothermal conditions. The isotherms that are listed below, base on the assumption that the adsorbed substance and the dissolved one are in the state of equilibrium.
+
+\begin{eqnarray}
+\mathrm{Henry:}
+& \qquad &
+S\,=\,K_D\cdot C \\[2.0ex]
+\label{eq58}
+%
+\mathrm{Freundlich:}
+& \qquad &
+S\,=\,K_1\cdot C^{K_2} \\[2.0ex]
+\label{eq59}
+%
+\mathrm{Langmuir:\hspace*{0.8ex}}
+& \qquad &
+S\,=\,\frac{K_1\cdot C}{1+K_2\cdot C}
+\label{eq510}
+\end{eqnarray}
+
+{\small
+with
+\begin{tabbing}
+\=xxxxxxxxxxxx \=xxxxxxxxxxxxxxxxxx \kill
+\> $K_D,\; K_1,\; K_2$ \> - distribution coefficients, \\[1.0ex]
+\> $S$ \> - concentration of the adsorbed species (kg/kg), \\[1.0ex]
+\> $C$ \> - concentration of the dissolved species (kg/m$^3$).
+\end{tabbing}
+}
+
+The distribution coefficients are dependent on the substance and the specific soil properties like the pH. The linear Henry-isotherm is often used when there are low concentrations. Non-linear sorption processes are reproduced by the Freundlich or the Langmuir isotherm. Then the retardation is dependent on the solute concentration. In addition, the use of the Langmuir isotherm assumes a constant amount of sorption space at the solid surface. A maximum concentration for the adsorbed substance on the solid matrix is exclusively considered by the Langmuir isotherm (Habbar, 2001). This maximum concentration $c_{\mathrm{max}}$ is included in the distribution coefficient $K_1$ ($K_1=c_{\mathrm{max}}\cdot K_2$). The distribution coefficient $K_2$ of the Langmuir isotherm stands for the affinity between solid and sorbed solute. The distribution coefficients do not have comparable values: each sorption isotherm has to be considered separately with its specific constants.

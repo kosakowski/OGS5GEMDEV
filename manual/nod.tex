@@ -1,0 +1,41 @@
+\Developer{
+\section{NOD Node Data}
+
+\textbf{Data Object - Nodes}
+
+\footnotesize
+\begin{verbatim}
+typedef struct {        /* Knotenkoordinaten */
+    double x;           /* Koordinaten */
+    double y;
+    double z;
+    long node_start_number;     /* Knotennummer im Startnetz */
+    double source;      /* Quelle */
+    long index;         /* aktueller Index nach Umnummerierung, sonst -1 */
+    long *elems1d;      /* zugehoerige 1D-Elemente */
+    long *elems2d;      /* zugehoerige 2D-Elemente */
+    long *elems3d;      /* zugehoerige 3D-Elemente */
+    int anz1d;          /* Anzahl der zugehoerigen 1D-Elemente */
+    int anz2d;          /* Anzahl der zugehoerigen 2D-Elemente */
+    int anz3d;          /* Anzahl der zugehoerigen 3D-Elemente */
+    long *plains;       /* Wird zum Aufbau des Flaechenverzeichnisses (Startnetz) gebraucht */
+    int anz_plains;     /* Waehrend der Adaption werden diese Daten nicht aktualisiert !!!!  */
+    long *edges;        /* Wird zum Aufbau des Kantenverzeichnisses (Startnetz) gebraucht */
+    int anz_edges;      /* Waehrend der Adaption werden diese Daten nicht aktualisiert !!!!  */
+    long *newnodes;     /* benachbarte neugenerierte Knoten fuer 9-Knoten-Elemente */
+    int anz_new_nodes;
+
+    int status;         /* -1: regulaerer Innenknoten
+                           -2: irregulaerer Kantenknoten
+                           -3: regulaerer Randknoten
+                           -4: irregulaerer Flaechenknoten */
+    int corner_node;    /* corner_node flag = 1 if Eckknoten */
+    int free_surface;   /* 1: bewegliche Knoten oben */
+                        /* 2: bewegliche Knoten unten */
+    double *nval;       /* modellabhaengige Knotenwerte, z.B. h und conc */
+    void *nval_intern;            /* interne modellabhaengige Knotendaten */
+    Randbedingung *randbedingung; /* Zeiger auf Randbedingungen */
+} Knoten;
+
+\end{verbatim}
+}

@@ -1,0 +1,12 @@
+Index: CMakeLists.txt
+===================================================================
+--- CMakeLists.txt	(revision 5386)
++++ CMakeLists.txt	(working copy)
+@@ -19,6 +19,7 @@
+ 		ADD_DEFINITIONS(-D_CRT_NONSTDC_NO_WARNINGS)
+ 		ADD_DEFINITIONS(-D_CRT_XNONSTDC_NO_WARNINGS)
+ 		SET ( CMAKE_CONFIGURATION_TYPES "Release;Debug" CACHE TYPE INTERNAL FORCE )
++		SET ( CMAKE_USE_RELATIVE_PATHS ON CACHE BOOL "Relative paths used in makefiles and projects." FORCE ) # Using relative paths work on MSVC and must be checked for other environments.  
+ 	ELSE (MSVC)
+ 		MESSAGE (FATAL_ERROR "Aborting: On Windows only the Visual Studio compiler is supported!")
+ 	ENDIF (MSVC)

@@ -1,0 +1,73 @@
+Creep is a typical effect of viscoplastic material behavior, and represents a time- and/or temperature-dependent deformation process of solid continua affected by constant load. As discussed in Sec.~\ref{sec:viscoplast}, similar to plastic potential, a creep potential $\Phi_{\mathrm{c}}$ is introduced in order to describe the creep behavior.
+
+Usually, a stationary creep model is sufficient to describe the creep phenomena in geological media such as soil and rock. The application of Norton's model Eq.~(\ref{eq:norton}) associated with an explicit Euler scheme for time discretization of the differential equation Eq.~(\ref{eq:creepstrainrate}) results in the following incremental form of the calculatiion of the creep strain tensor:
+%
+\begin{equation}
+\Delta \miu{\varepsilon}{\mathrm c}{}\,=\,
+\alpha\,\left(\frac{3}{2}\right)^{\frac{n+1}{2}}
+\left(\sqrt{\ttfrac{3}{2}\miu{\sigma}{d}{}\ccdot\miu{\sigma}{d}{}}\right)^{n-1}\,
+\Delta t \,\;
+\miu{\sigma}{d}{}
+\end{equation}
+with the time step size $ \Delta t$.
+
+Viscoplastic creep is mainly caused by diffusion and dislocations at the microscale, and results in hardening as well as recovery aspects. Hou and Lux propose an evolutional equation for the (viscoplastic) creep strain rate considering stationary as well as transient creep, damage impact, hardening and recovery (cf. \cite{Hou:1997,Hou:2002,HL:1998}). Neglecting damage effects, this approach is known as Lubby2 model.
+\begin{equation}
+\miu{\varepsilon}{\mathrm{c}}{\dot}\,=\,
+\frac{3}{2}\,
+\left[
+\frac{1}{\eta_k}
+\left(
+1\,-\,
+\frac{\varepsilon_{\mathrm{tr}}}{\mathrm{max}\,\varepsilon_{\mathrm{tr}}}
+\right)
+\,+\,\frac{1}{\eta_m}
+\right]
+\,\miu{\sigma}{d}{}
+\label{Mc_lubby2_ec}
+\end{equation}
+
+Here $\varepsilon^{\mathrm{tr}}$ denotes the equivalent transient creep strain
+\begin{equation}
+\varepsilon_{\mathrm{tr}}\,=\,
+\sqrt{\frac{2}{3}\,\miu{\varepsilon}{\mathrm{tr}}{}\ccdot\miu{\varepsilon}{\mathrm{tr}}{}}
+\end{equation}
+with $\miu{\varepsilon}{\mathrm{tr}}{}=\miu{\varepsilon}{\mathrm{c}}{}-\miu{\varepsilon}{\mathrm{st}}{}$ ($\mio{\varepsilon}{\mathrm{st}}{}$ -- stationary creep fraction). In addition to the equivalent transient creep strain the generalized representation of the von~Mises equivalent deviatoric stress $s_{\mathrm{v}}$ is defined.
+\begin{equation}
+s_{\mathrm{v}}\,=\,\sqrt{\ttfrac{3}{2}\miu{\sigma}{d}{}\ccdot\miu{\sigma}{d}{}}
+\end{equation}
+
+Furthermore, the following material functions are suggested, considering only hardening, and neglecting recovery effects:
+\begin{eqnarray}
+\mathrm{max}\,\varepsilon^{\mathrm{tr}} & \!\!\!\!= &
+\!\!\!\!\frac{s_{\mathrm{v}}}{G_k}
+\\[2.0ex]
+G_k & \!\!\!\!= &
+\!\!\!\!{\bar G}^{\ast}_k\,\mathrm{exp}
+\left(
+k_1\,s_{\mathrm{v}}
+\right)\;\,\qquad\qquad\mbox{(Kelvin shear modulus)}
+\label{Mc_lubby2_f2}
+\\[2.0ex]
+\eta_k & \!\!\!\!= & \!\!\!\!{\bar\eta}^{\ast}_k\,\mathrm{exp}
+\left(
+k_2\,s_{\mathrm{v}}
+\right)\;\;\,\qquad\qquad\mbox{(Kelvin viscosity modulus)}
+\label{Mc_lubby2_f3}
+\\[2.0ex]
+\eta_m & \!\!\!\!= & \!\!\!\!{\bar\eta}^{\ast}_m\,\mathrm{exp}
+\left(
+m\,s_{\mathrm{v}}
+\right)\,\mathrm{exp}(lT)\quad\mbox{(Maxwell viscosity modulus)}
+\label{Mc_lubby2_f4}
+\end{eqnarray}
+
+As $\;T$ denotes the absolute temperature, the following material
+parameters are necessary to model various constitutive effects:
+\begin{list}{$\bullet$}{\topsep0mm \partopsep0mm \leftmargin6mm
+   \parsep0ex \itemsep0.75ex}
+\item ${\bar G}^{\ast}_k\,,\;k_1$ \hspace*{3.0ex} hardening,
+%\item ${\bar G}^{\ast}_{kE}\,,\;k_{1E}$ \hspace*{0.4ex} recovery,
+\item ${\bar\eta}^{\ast}_k\,,\;k_2$ \hspace*{4.0ex} transient creep, and
+\item ${\bar\eta}^{\ast}_m\,,\;m\,,\;l$ \hspace*{1.0ex} stationary creep.
+\end{list}

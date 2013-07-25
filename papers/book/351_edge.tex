@@ -1,0 +1,26 @@
+{
+\sffamily \raggedright \scriptsize
+\texttt{class\ CEdge:\textbf{public}\ CCore\\
+\{\\
+\ \ \ \textbf{private}: // Members\\
+\ \ \ \ \ \ vec$<${}CNode$\ast>${}\ nodes\underline\ of\underline\ edges;\\
+\ \ \ \textbf{public}: // Member functions\\
+\ \ \ \ \ \ \textsl{//\ Construction}\\
+\ \ \ \ \ \ Edge(\textbf{const}\ \textbf{int}\ Index,\ \textbf{bool}\ quadr=\textbf{false});\\
+\ \ \ \ \ \ \textasciitilde Edge();\ \\
+\ \ \ \ \ \ \textsl{//\ Operators}\\
+\ \ \ \ \ \ \textbf{void}\ \textbf{operator}\ =\ (CEdge\&\ edg);\\
+\ \ \ \ \ \ \textbf{bool}\ \textbf{operator}\ ==\ (CEdge\&\ edg);\\
+\ \ \ \ \ \ \textsl{//\ Member access}\\
+\ \ \ \ \ \ \textbf{void}\ SetNodes(\ vec$<${}CNode$\ast>${}\&\ Nodes)\\
+\ \ \ \ \ \ \{\ \textbf{for}(\textbf{int}\ i=0;\ i$<${}(\textbf{int})Nodes.Size();\ i++)\ \ Nodes[i]\ =\ nodes\underline\ of\underline\ edges[i];\ \}\\
+\ \ \ \ \ \ \textbf{void}\ SetNodes(\ vec$<${}CNode$\ast>${}\&\ Nodes)\ \textbf{const}\ \{\ Nodes\ =\ nodes\underline\ of\underline\ edges;\}\\
+\ \ \ \ \ \ \textsl{//\ Output}\\
+\ \ \ \ \ \ \textbf{void}\ Write(ostream\&\ osm=cout)\ \textbf{const};\\
+\ \ \ \textbf{private}: // Class relations\\
+\ \ \ \ \ \ Vector$<${}CNode$\ast>${}\ \ nodes\underline\ of\underline\ edges;\\
+\ \ \ \ \ \ \textbf{friend}\ \textbf{class}\ CElem;\\
+\};\\
+}
+ }
+\normalfont\normalsize

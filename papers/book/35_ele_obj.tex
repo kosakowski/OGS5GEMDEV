@@ -1,0 +1,63 @@
+\section{Element objects - ELE}
+
+In this section, the details of the implementation of the element 
+objects are described. The relationship of element objects is shown 
+in Fig. \ref{fig:ele_objects}. For the simulation of each process in 
+a coupled problem or each single problem, only an instance of  mesh 
+object (ELE-MSH) and an instance of finite element object are 
+required. Geometric element object (ELE-GEO) manufacture the 
+foundation of this concept (section \ref{sec:ele_geo}). Meshes 
+(ELE-MSH) are formed based from geometric element entities (section 
+\ref{sec:ele_msh}). Finite element object (ELE-FEM) basically 
+compute the finite element matrices for different PDE types and 
+geometric element types automatically  using the corresponding shape 
+functions (section \ref{sec:ele_fem}).  ELE-PCS object assemble the 
+equation systems for the problem type, i.e. THM coupled ELE-PCS 
+object problems for porous media (section \ref{sec:ele_pcs}). 
+\rev{To this purpose, objects  ELE-PCS and ELE-FEM and have a 
+pointer member pointing to each other. When an instance of ELE-PCS 
+object for a process in a coupled problem or a single problem is 
+constructed, an instance of ELE-FEM object is created accordingly. 
+During the construction of the instance of ELE-FEM object, the 
+degree of freedom of the problem is initialized by the type the 
+ELE-PCS instance, i.e. the specific problem. This means only one 
+instance of ELE-PCS and one instance of ELE-FEM  have to been 
+created for each process in a coupled problems or for each single 
+problem. Moreover, ELE-FEM has a pointer member pointing to 
+interpolation function. This member is initialized by the messages 
+from the instance of ELE-PCS and each instance of ELE-GEO for each 
+finite element during the local assembly. Such initialization 
+guarantees that interpolation function and its derivatives are set 
+properly for each geometric element for a process or a problem. 
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.8]{figures/ele_relation.eps}
+\caption{Relationship of element objects} 
+\label{fig:ele_objects}
+\end{figure}
+
+In general, messages of the type of a process a problem and the type 
+element determines the pointers to the corresponding interpolation 
+function and its derivatives of an instance of ELE-FEM.   An 
+instance of ELE-FEM has a pointer to  ELE-GEO as a member too. When 
+local assembly comes to an element, or an instance of ELE-GEO, the 
+ELE-FEM instance have the ELE-GEO pointer point to the element and 
+initialized its numerical methods such as interpolation, Guass 
+integration accordingly. This is very helpful for the finite element 
+analysis of consolidation in porous media, in which, the Talyor-Hood 
+finite element spaces, i.e. linear interpolation for flow process 
+and quadratic interpolation for deformation process, is required for 
+stability reason\cite{LeSch:98}. In default, the order of 
+interpolation of each element is linear and the nodes of an element 
+are its geometrical vertices.  If the high order interpolation is 
+required by a process or a problem, additional nodes are created for 
+each instance of ELE-FEM during the construction of the mesh.} The 
+idea of this concept is, that specific process-related information 
+are introduced as late as possible to keep the software concept as 
+flexible as possible.
+
+\input{351_geo_obj}
+\input{352_fem_obj}
+\input{353_pcs_obj}
+\input{354_msh_obj}

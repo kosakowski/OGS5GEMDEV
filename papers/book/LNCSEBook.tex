@@ -1,0 +1,287 @@
+\documentclass[twoside]{report} % double side
+
+% Packages ---------------------------------------------------------------
+% the package 'umlaute' calls only the package 'inputenc' creating a warning (UJG, 04.05.2011)
+%
+% \usepackage[ansi]{umlaute} % --- Unterstuetzen von deutschen Umlauten
+\usepackage[latin1]{inputenc}   %--->for ubuntu linux
+% \usepackage[utf8]{inputenc}   %--->for ubuntu linux
+%for latex
+\usepackage{etex} % for allocating registers when a large number of packages is used
+\usepackage[dvips]{graphicx}
+%for pdflatex
+%\usepackage[pdftex]{graphicx}
+%\usepackage{epstopdf}
+\usepackage{float,color,latexsym, epic,eepic,rotating}
+\usepackage{fheading}           % Seitenkopf gestalten
+\usepackage{amssymb, amsmath}
+\usepackage{epsfig}
+\usepackage{bm}
+\usepackage[usenames,dvipsnames]{pstricks}
+% Who added this, please comment
+\makeatletter
+\renewcommand\thefigure{\thesection.\arabic{figure}}
+\makeatother
+\usepackage[version=3]{mhchem}
+\usepackage{booktabs}
+%\usepackage{units}
+\newcommand{\unit}[1]{\ensuremath{\, \mathrm{#1}}}
+\usepackage{subfigure}
+\usepackage{caption}
+\captionsetup{format=hang,justification=raggedright,justification=justified}
+\usepackage{color}
+\usepackage[hyperref, dvips, colorlinks, linkcolor=black,citecolor=black, urlcolor=black]{hyperref}
+\usepackage{ltablex}  %to generate automatic line breaks in table ( compination of landscape and tabularx)
+\usepackage{longtable}
+\usepackage{lscape}% to get table in landscape format
+\usepackage{paralist}
+\usepackage{arydshln}
+\usepackage{pst-grad} % For gradients
+\usepackage{pst-plot} % For axes
+\usepackage{fancybox} % shadow box
+\usepackage{multirow}
+\usepackage{tikz} % For some figures DDF
+\usetikzlibrary{patterns} % For some figures DDF
+
+% Layout -----------------------------------------------------------------
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt plus 2pt minus 1pt}
+%\renewcommand{\arraystretch}{1.2}
+\pagestyle{fancy}
+\lhead[\fancyplain{}{\footnotesize\textsf\thepage}]%
+      {\fancyplain{}{\footnotesize\textsf\rightmark}}
+\rhead[\fancyplain{}{\footnotesize\textsf\leftmark}]%
+      {\fancyplain{}{\footnotesize\textsf\thepage}}
+\cfoot{}
+\setcounter{tocdepth}{1}
+%Zaehler
+%\setcounter{page}{65}
+%\setcounter{section}{8}
+%\setcounter{equation}{213}
+%\setcounter{figure}{24}
+%\setcounter{table}{9}
+%\pagenumbering{arabic} \setcounter{page}{1}
+% Trennmuster fuer Ausnahmefaelle
+\hyphenation{me-cha-nik}
+\hyphenation{pro-per-ties}
+\makeindex
+
+% Makros -----------------------------------------------------------------
+% \include{makros/rfsdef}
+% \include{makros/rfddef}
+% \include{makros/stnddef}
+% \include{makros/preamble}
+\def\v{\mathbf v}
+\def\u{\mathbf u}
+\def\g{\mathbf g}
+\providecommand{\s}{\bm\sigma}
+\def\K{\mathbf{K}}
+\def\C{\mathbf{C}}
+\def\r{\mathbf r}
+%OK\def\p{\mathbf p}
+%\providecommand{\#1}[1]{\mathbf #1}
+\def\B{\mathbb{B}}
+\def\m{\mathbf m}
+\def\co2{{\ce{CO2}}}
+\def\h2o{{\ce{H2O}}}
+\def\n2{{\ce{N2}}}
+\def\ch4{{\ce{CH4}}}
+\def\CO2{CO$_2$}
+\def\k{\mathbf k}
+% HS: def of unfound macros--------
+\newcommand{\rev}[1]{mbox{#1}}
+\newcommand{\Sh}{\bm N}
+% HS----------------------------------------------------
+\newcommand{\gversion}{\mbox{version 4.11}}
+\newcommand{\GeoSys}{\mbox{OpenGeoSys}}
+\newcommand{\miu}[3]{\mbox{${\mbox{\boldmath$#3{#1}$\unboldmath}}_{\:\!#2}$}}
+\newcommand{\mio}[3]{\mbox{${\mbox{\boldmath$#3{#1}$\unboldmath}}^{\:\!#2}$}}
+\newcommand{\ccdot}{\mbox{\,${\mbox{\boldmath$\cdot\cdot$\unboldmath}}$\,}}
+% \newcommand{\fourtens}[1]
+% {\mbox{${\mbox{\boldmath$\textstyle{\mathop{#1}\limits_{\bf 4}}$\unboldmath}}$}}
+\newcommand{\ttfrac}[2]{\frac{\textstyle{\textstyle{#1}}}{\textstyle{\textstyle{#2}}}}
+% used
+\def\p{\partial}
+\def\J{\mathbf{J}}
+%
+% \newcommand{\miu}[3]
+% {
+% \mbox{${\mbox{\boldmath$#3{#1}$\unboldmath}}_{\:\!#2}$}
+% }
+%
+% \newcommand{\mio}[3]
+% {
+% \mbox{${\mbox{\boldmath$#3{#1}$\unboldmath}}^{\:\!#2}$}
+% }
+%
+\newcommand{\mib}[4]
+{
+\mbox{${\mbox{\boldmath$#4{#1}$\unboldmath}}_{\:\!#2}^{\:\!#3}$}
+}
+%
+\newcommand{\fourtens}[1]
+{
+\mbox{${\mbox{\boldmath$\textstyle{\mathop{#1}\limits_{\bf 4}}$
+              \unboldmath}}$}
+}
+%
+
+%\includeonly{PART_II/M/m,3_symbols}
+\include{3_symbols}
+
+%===============================================================================
+\begin{document}
+\include{title}
+\tableofcontents
+\thispagestyle{empty}
+\chapter{Introduction}
+\textit{by Olaf Kolditz, Uwe Grke, Hua Shao and Wenqing Wang}
+\include{1_intro}
+\label{sec:introduction}
+%-------------------------------------------------------------------------
+\chapter*{Part I \\[5mm] Theory and Numerics}
+\thispagestyle{empty}
+\addcontentsline{toc}{chapter}{Part I - Theory and Numerics}
+\include{symbols}
+\include{2_theory}
+%-------------------------------------------------------------------------
+\chapter{Numerical methods}
+\textit{by Wenqing Wang, Chan-Hee Park, Norihiro Watanabe and Olaf Kolditz}
+
+\include{3_numerics}
+%-------------------------------------------------------------------------
+\chapter*{Part II \\[5mm] Benchmarks for Single Processes}
+\thispagestyle{empty}
+\addcontentsline{toc}{chapter}{Part II - Benchmarks for Single Processes}
+\chapter{Heat transport}
+\textit{by Norbert Bttcher, Guido Blcher, Mauro Cacace, Olaf Kolditz}
+\include{PART_II/T/t}
+\chapter{Groundwater flow}
+\textit{by Feng Sun and Norihiro Watanabe}
+\section{Fluid momentum}
+\textit{by Chan-Hee Park}
+\include{Chapter5/GWF}
+%\section{Anisotropy}
+%\textit{by Chan-Hee Park}
+\chapter{Richards flow}
+\textit{by Thomas Kalbacher and Yanliang Du}
+\section{Root water uptake in soils}
+\chapter{Overland flow}
+\textit{by Jens-Olaf Delfs, Martin Beinhorn and Yajie Wu}
+\include{PART_II/H_SFC/H_SFC}
+\chapter{Gas flow}
+\textit{by Ashok Singh and Olaf Kolditz}
+\include{PART_II/G/g}
+\chapter{Deformation processes}
+\textit{by Uwe Grke, Norihiro Watanabe, Joshua Taron, Wenqing Wang}
+\include{PART_II/M/m}
+\include{PART_II/C/C}
+%-------------------------------------------------------------------------
+\chapter{Coupled processes}
+The below Tab. \ref{tab:coupled_phenomena} shows some of the important coupling phenomena during THMC processes in porous media. Among the modeling challenges in this field are following topics
+\begin{description}
+	\item[T:] Temperature depending material properties and reaction rates,
+	\item[H:] Multi-phase flow with phase changes coupled to reactive transport,
+	\item[M:] Cracking due to gas pressure, thermal stresses, de-saturation,
+	\item[C:] Gas production, pore space clogging dur to precipitation.
+\end{description}
+%
+\begin{table}[htb!]
+\caption{Thermal coupled phenomena}
+\label{tab:coupled_phenomena}
+\begin{center}
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{T} & TH & TM & TC \\
+dependent  & Vapor flux        & Thermal stress  & Partial pressure (T) \\
+parameters & Convection        & Cracking        & Reaction rates \\
+\hline
+HT & \textbf{H} & HM & HC \\
+Advection & & Consolidation   & Advection \\
+          & & Swelling stress & Partial pressure (p) \\
+\hline
+MT & MH & \textbf{M} & MC \\
+   & Consolidation & & Pressure solution \\
+   & Cracking      & & \\
+\hline
+CT & CH & CM & \textbf{C} \\
+Reaction heat & Convection & Chemical damage & \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+%-------------------------------------------------------------------------
+\chapter*{Part III \\[5mm] Examples for Coupled Processes}
+\thispagestyle{empty}
+\addcontentsline{toc}{chapter}{Part III - Examples for Coupled Processes}
+\chapter{Surface/subsurface flow}
+\textit{by Jens-Olaf Delfs and Ed Sudicky (tbc)}
+
+\chapter{Density dependent flow}
+\textit{by Marc Walther, Jens-Olaf Delfs, Chan-Hee Park, Jude Musuuza, Florin Radu, Sabine Attinger}
+\input{PART_III/DDF/dens_dep_main}
+
+\chapter{Multiphase flow processes}
+\textit{by Chan-Hee Park, Joshua Taron, Ashok Singh, Wenqing Wang, Chris McDermott}
+\input{chapter_13/chapter_13}
+
+\chapter{Consolidation (H$^n$M) processes}
+\textit{by Joshua Taron, Norihiro Watanabe, Wenqing Wang}
+\input{chapter_14/chapter_14}
+
+\include{PART_III/HM/hm_Wijesinghe}
+\section{Two-phase flow consolidation}
+\chapter{Thermomechanics}
+\textit{by Wenjie Xu, Wenqing Wang, Norihiro Watanabe and Jürgen Hesser}
+%\include{PART_III/TM/tm}
+\input{PART_III/TM/tm}
+\chapter{Reactive Transport}
+\textit{by Haibing Shao, Sebastian Bauer, Florian Centler, Marco de Lucia, Shuang Jin, Mingliang Xie, Georg Kosakowski}
+\newpage
+\include{PART_III/HC/reactive_transport}
+%-------------------------------------------------------------------------
+\appendix
+%\chapter*{Appendix \\[5mm] OGS}
+%\thispagestyle{empty}
+%\addcontentsline{toc}{chapter}{Appendix - OGS}
+%\include{ogs}
+
+\include{appendix-software_engineering}
+
+%\chapter{Data processing}
+%\textit{by Karsten Rink and Thomas Fischer}
+\include{appendix-data_processing}
+
+%\chapter{Visualization}
+%\textit{by Bjrn Zehner}
+\include{appendix-geomod_and_viz}
+
+\chapter{Parallel computing}
+\textit{by Wenqing Wang and Thomas Kalbacher}
+
+\newpage
+\chapter*{Index}
+\addcontentsline{toc}{chapter}{Index}
+\bibliographystyle{unsrt}
+\bibliography{articles,books,ok2010,ujg,pch,ref,geosys2004,geosys2005,chapter5,RWPT,hydrology,NW,PART_III/DDF/dens_dep_ref,PART_III/DDF/schincariol_authors}
+\addcontentsline{toc}{chapter}{Bibliography}
+\end{document}
+%\include{benchmarktable}
+%===============================================================================
+%% Verzeichnisse
+%\include{symbols}
+%% Abbildungsverzeichnis
+%\newpage
+%\listoffigures
+%% Tabellenverzeichnis
+%\newpage
+%\listoftables
+%% Index
+%\newpage
+%% Symbols
+%\newpage
+%\small
+%\include{symbols/symbols}
+%\normalsize
+
+\textcolor{red}{Fig}}

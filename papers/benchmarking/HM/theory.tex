@@ -1,0 +1,86 @@
+\section{Theory}
+We consider flow of an incompressible fluid (liquid) in a
+deforming porous medium. The system consists of two phases (liquid
+and solid phase). The unknown field functions are liquid pressure
+$\Pressure$ and solid displacement $\Disp$. For the
+determination of the unknown field functions we combine the mass
+balance equations and the momentum balance equation of fluid and
+solid phases (\cite{LewRobSch:89},  \cite{Kol:02}).
+
+The deformation process is modelled by the system
+\begin{align}
+  \nabla \cdot (\Str - \Pressure \bI) + \rho \bg
+  &=\bzero\mbox{ in }\Omega \: ,
+  \label{eq:lsbiot-system-elas1} \\
+  \Str - \ElasticityTensor \bepsilon(\Disp) &=\bzero\mbox{ in }\Omega \: ,
+  \label{eq:lsbiot-system-elas2}
+\end{align}
+where $\Str$ denotes the effective stress,
+and the momentum balance equation is modified such that it
+incorporates stresses and forces connected to the fluid pressure.
+%Note that the displacement field $\Disp$ of this model is defined with respect
+%to the equilibrium under gravity. The true effective stress in the porous
+%medium may be computed from $\Str$ by adding the effect of its own
+%weight due to gravity.
+Here, $\bI$ denotes the identity, $\GravityVector$ denotes the
+gravity vector and $\ElasticityTensor$ is the elasticity tensor
+representing the dependence of strain and stress for a linear
+elastic material law.
+
+
+Fluid flow in deformable porous media is described by the following mass and
+momentum balance equations,
+\begin{align}
+  \nabla \cdot \FluxFluid + \nabla \cdot \frac{\partial \Disp}{\partial t}
+  & = 0 \mbox{ in } \Omega \: ,
+  \label{eq:lsbiot-system-flow1} \\
+  \FluxFluid + \frac{\bk}{\Viscosity} \: (\nabla \Pressure - \Density \bg)
+  &=\bzero\mbox{ in }\Omega \: .
+  \label{eq:lsbiot-system-flow2}
+\end{align}
+In consolidation theory, the fluid mass balance equation
+(\ref{eq:lsbiot-system-flow1}) has an extra term due to the
+deformation process. The second equation
+(\ref{eq:lsbiot-system-flow2}) is denoted as the Darcy law. Here,
+$\FluxFluid$ denotes the volumetric flux of the fluid and
+$\Pressure$ the liquid phase pressure. $\PermTensor$ denotes the
+permeability tensor, $\Viscosity$ is the liquid viscosity, and
+$\Density$ is the density of the porous medium. Hereby we assume
+solid grains itself are incompressible, i.e. $d^s\rho/d^s t = 0$
+
+After applying Galerkin finite element approach to eqns . (\ref{eq:lsbiot-system-elas1}) and (\ref{eq:lsbiot-system-flow1}) build a set of
+coupled linear equations to be solved for the primary variables
+liquid pressure $\Pressure$ and solid deformation $\Disp$ of the
+$\Pressure / \Disp$ formulation of the consolidation problem. The
+resulting equation system can be compactly written in following
+form
+\begin{equation}
+\left[%
+\begin{array}{cc}
+\bK_{pp}^* & \frac{1}{\Delta t}\bC_{u}^*
+\\
+\bK_{up}^* & \bK_{uu}^*
+\end{array}%
+\right]
+\,
+\left[%
+\begin{array}{c}
+\hat{\bp}^{i+1}
+\\
+\hat{\bu}^{i+1}
+\end{array}%
+\right]
+=
+\left[%
+\begin{array}{l}
+\mathbf{f}_{p}^* + \frac{1}{\Delta t}\bC_{u}^* \, \hat\bu^i
+\\
+\mathbf{f}_{u}^*
+\end{array}%
+\right]
+\label{eqn:pu_eqn}
+\end{equation}
+
+The above algebraic equation system (\ref{eqn:pu_eqn}) for
+determination of the primary variables of the $p/\Disp$
+formulation, i.e. nodal pressures and displacements.

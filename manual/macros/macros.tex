@@ -1,0 +1,58 @@
+%--RF Version -----------------------------------------------------
+\def \RFVersion{GeoSys/RockFlow 4.5.10}
+%------------------------------------------------------------------
+% --- Activation of links and page pictures in pdf document -------
+\def \DoLatexToPDF {yes} %yes/no
+%------------------------------------------------------------------
+% ---   Show date of modification ---------------------------------
+\newcommand {\LastModified}[1] {\hfill \footnotesize last modified: #1 \normalsize}
+%\newcommand {\LastModified}[1] {}
+% -----------------------------------------------------------------
+%---- Including of nonofficial parts -------------------------------------------
+\newcommand {\Developer}[1]     {{\color{grayblue} #1}}
+\newcommand {\PlannedStatus}[1] {{\color{grayred} #1}}
+%---- Official version               -------------------------------------------
+\renewcommand {\Developer}[1] {}
+\renewcommand {\PlannedStatus}[1] {}
+\newcommand {\Examples}[0] {}
+\newcommand {\Theory}[1] {}
+
+% ---   Anzeigen aller \label und \ref -Kommandows
+%\usepackage{showkeys}
+% -----------------------------------------------------------------
+% --- Place holder ------------------------------------------------
+\newcommand {\PlaceHolder}[1] {{\color{white} #1}}
+%------------------------------------------------------------------
+
+
+
+
+
+%% === Trennungshilfen ========================================
+\hyphenation{}
+
+
+
+%====  PDF  ===================================================================
+\ifthenelse{\equal{yes}{\DoLatexToPDF}} {
+
+%%%%% ---  Latex2pdf     ---
+\usepackage[ps2pdf]{stys/thumbpdf}
+\usepackage[ps2pdf,pagebackref,pdfpagelabels]{hyperref}
+%%%%% ---  Latex2pdf END ---
+
+\hypersetup{%
+colorlinks=true, % Einfaaerbung von Verknuepfungen
+linkcolor=blue, citecolor=green,
+pdfpagemode=UseThumbs, % Anzeige der Piktogramme
+bookmarksopen=true, % Anzeige aller Ebenen
+bookmarksnumbered=true, % Anzeige der Abschnittsnummern
+pdfstartpage={1}, % Startseite
+pdftitle={RockFlow Manual}, pdfsubject={ },
+pdfauthor={ISEB & UFZ},%
+pdfkeywords={finite element method},
+pdfcreator={Adobe-Acrobat-Distiller},%
+pdfproducer={LaTeX with hyperref and thumbpdf} }
+%
+}  {}
+%=END  PDF  ===================================================================

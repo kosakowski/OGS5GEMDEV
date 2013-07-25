@@ -1,0 +1,18 @@
+GeoSys-OUT: Output ------------------------------------------------
+#OUTPUT
+ $NOD_VALUES
+  PRESSURE1
+  Isochlor
+ $ELE_VALUES
+  VELOCITY1_X
+  VELOCITY1_Z
+ $GEO_TYPE
+  DOMAIN
+ $DAT_TYPE
+  PVD
+ $TIM_TYPE
+  STEPS 1
+#STOP
+
+
+

@@ -1,0 +1,283 @@
+\section{Boundary Conditions}
+
+\begin{tabular*}{8.35cm}{|p{2.5cm}|p{5cm}|} \hline
+Object acronym & BC \\
+C++ class      & CBoundaryCondition \\
+Source files   & rf\_bc.h/cpp \\
+\hline
+File extension & *.bc \\
+Object keyword & \#BOUNDARY\_CONDITION \\
+\hline
+\end{tabular*}
+
+%----------------------------------------------------------
+\subsection{Theory}
+
+The solution of an initial-boundary-value-problem (e.g. partial
+differential equations for flow and transport problems) requires
+the specification of initial and boundary conditions. In this
+section we describe the most common boundary conditions and their
+physical meaning. Methods for implementation of boundary
+conditions in discrete equations are discussed in the part of
+numerical methods. Examples of common flow boundary conditions are
+e.g. inlet, outlet, wall, prescribed pressure values.
+
+Constant pressure boundary condition: The constant pressure
+boundary condition is used in situations where exact details of
+the flow distribution are unknown but the boundary values of
+pressure are known.
+
+No-slip boundary condition at a wall: This boundary condition is
+most common encountered in confined flow problems. The no-slip
+condition is the appropriate one for the velocity components at
+solid walls. The normal velocity component can simply be set to
+zero at this boundary. \index{condition - boundary - no-slip}
+
+The following table gives an overview on common boundary condition
+types and its mathematical representation.
+
+\begin{table}[htb!]
+\caption{Boundary conditions types}
+\begin{center}
+\begin{tabular}{|l|c|l|}
+\hline
+Type of BC & Mathematical Meaning & Physical Meaning \\
+\hline \hline
+Dirichlet type  & $\psi$               & prescribed value \\
+                &                      & potential surface \\
+\hline
+Neumann type    & $\nabla\psi$         & prescribed flux \\
+                &                      & stream surface \\
+\hline
+Cauchy type     & $\psi+A\nabla\psi$   & resistance between  \\
+                &                      & potential and stream surface \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+\index{condition - boundary - Dirichlet} \index{condition -
+boundary - Neumann } \index{condition - boundary - Cauchy}
+\index{flux}
+
+To describe conditions at boundaries we can use flux expressions
+of conservation quantities.
+
+\begin{table}[htb!]
+\caption{Fluxes through surface boundaries}
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+Quantity & Flux term \\
+\hline \hline
+Mass &   $\rho\bf v$ \\
+\hline
+Momentum & $\rho{\bf vv}-\sigma$ \\
+\hline
+Energy   & $\rho e\bf v - \lambda\nabla T$ \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+%-------------------------------------------------------------------------------
+\subsection{\texttt{\bf\#BOUNDARY\_CONDITION}}
+
+%\subsubsection{Keyword structure}
+
+\begin{verbatim}
+#BOUNDARY_CONDITION
+ $PCS_TYPE // physical process
+  PRESSURE1      // flow (phase)
+  PRESSURE2
+  TEMPERATURE1   // heat transport
+  DISPLACEMENT_X1 // deformation
+  DISPLACEMENT_Y1
+  DISPLACEMENT_Z1
+  CONCENTRATION1 // mass transport
+  CONCENTRATIONx
+ $GEO_TYPE // geometry
+  POINT:    name
+  POLYLINE: name
+  SURFACE:  name
+ $DIS_TYPE // value distribution
+  POINT: value
+  CONSTANT: value
+  LINEAR
+ $TIM_TYPE // time dependencies
+  CURVE: number
+\end{verbatim}
+
+
+\begin{tabular*}{12.773cm}{|p{3.cm}|p{1.5cm}|p{7cm}|} \hline
+Parameter          & Acronym & Meaning \\ \hline \hline
+%
+\texttt{PCS\_TYPE} & PCS &  Reference to a process \\
+\texttt{GEO\_TYPE} & GEO &  Reference to a geometric object \\
+\texttt{DIS\_TYPE} & DIS &  Distribution of source terms values \\
+\texttt{TIM\_TYPE} & TIM &  Time dependencies of source terms \\
+\hline
+\end{tabular*}
+
+\subsubsection{\texttt{\$PCS\_TYPE}}
+
+\begin{tabular*}{12.773cm}{|p{3.cm}|p{1.5cm}|p{7cm}|} \hline
+Parameter          & Value & Meaning \\ \hline \hline
+%
+\texttt{PRESSUREx}        & phase & Source term for fluid phase x \\
+\texttt{DISPLACEMENT\_Xx} & phase & Load force for solid phase x \\
+\texttt{DISPLACEMENT\_Yx} & phase & ... \\
+\texttt{DISPLACEMENT\_Zx} & phase & ... \\
+\texttt{TEMPERATUREx}     & phase & Source term for temperature \\
+\texttt{CONCENTRATIONx}   & component & Source term for component mass \\
+\hline
+\end{tabular*}
+
+\subsubsection{\texttt{\$GEO\_TYPE}}
+
+\begin{tabular*}{12.773cm}{|p{3.cm}|p{1.5cm}|p{7cm}|} \hline
+Parameter          & Delimiter & Meaning \\ \hline \hline
+%
+\texttt{POINT}    & : & Name of point \\
+\texttt{POLYLINE} & : & Name of polyline \\
+\texttt{SURFACE}  & : & Name of surface \\
+\hline
+\end{tabular*}
+
+\subsubsection{\texttt{\$DIS\_TYPE}}
+
+\begin{tabular*}{12.773cm}{|p{3.cm}|p{1.5cm}|p{7cm}|} \hline
+Parameter          & Delimiter & Meaning \\ \hline \hline
+%
+\texttt{POINT}    & : & Point value \\
+\texttt{CONSTANT} & : & Constant distribution value \\
+\hline
+\end{tabular*}
+
+\subsubsection{\texttt{\$TIM\_TYPE}}
+
+\begin{tabular*}{12.773cm}{|p{3.cm}|p{1.5cm}|p{7cm}|} \hline
+Parameter          & Delimiter & Meaning \\ \hline \hline
+%
+\texttt{CURVE}    & : & Curve number \\
+\texttt{FUNCTION} & : & Function name \\
+\texttt{LINEAR  } &   & values are point properties \\
+\hline
+\end{tabular*}
+
+%-------------------------------------------------------------------------------
+\subsection{Examples}
+
+%-------------------------------------------------------------------------------
+\subsubsection{Boundary condition at point}
+
+\begin{verbatim}
+benchmark: h_line.bc
+#BOUNDARY_CONDITION
+ $PCS_TYPE
+  PRESSURE1
+ $GEO_TYPE
+  POINT: POINT1
+ $DIS_TYPE
+  CONSTANT: 2.000000e+004
+#STOP
+\end{verbatim}
+
+This boundary condition is defined for a process with primary variable
+\texttt{PRESSURE1}. Geometrically the boundary condition is linked to point 1
+named \texttt{POINT1}.
+
+\begin{verbatim}
+benchmark: h_line.gli
+#POINTS
+0 0.0 0.0 0.0  0.0 -1000.0 0.0 0.0
+1 1.000000e+002  0.000000e+000  0.000000e+000  0.0 -1000.0 0.0 0.0
+#STOP
+\end{verbatim}
+
+%-------------------------------------------------------------------------------
+\subsubsection{Boundary condition along polyline}
+
+\begin{verbatim}
+benchmark: hm_tri.bc
+#BOUNDARY_CONDITION
+ $PCS_TYPE
+  DISPLACEMENT_Y1
+ $GEO_TYPE
+  POLYLINE: BOTTOM
+ $DIS_TYPE
+  CONSTANT: 0.0
+#STOP\end{verbatim}
+
+This boundary condition is defined for a process with primary variable
+\texttt{DISPLACEMENT\_Y1}. Geometrically the source term is linked to a polyline
+named \texttt{BOTTOM}.
+
+\begin{verbatim}
+benchmark: hm_tri.gli
+#POINTS
+2 0.0 -1.0 0.0  0.0 0.0 0.0 0.0
+3 0.1 -1.0 0.0  0.0 0.0 0.0 0.0
+#POLYLINE
+ $NAME
+  BOTTOM
+ $TYPE
+  2
+ $EPSILON
+  1.0e-4
+ $POINTS
+ 2
+ 3
+#STOP
+\end{verbatim}
+
+The polyline \texttt{BOTTOM} is defined by two points 2 and 3.
+
+%-------------------------------------------------------------------------------
+\subsubsection{Boundary condition at surface}
+
+\begin{verbatim}
+benchmark: h_tet3.bc
+#BOUNDARY_CONDITION
+ $PCS_TYPE
+  PRESSURE1
+ $GEO_TYPE
+  SURFACE: BC_PRESSURE
+ $DIS_TYPE
+  CONSTANT: 0.0
+#STOP
+\end{verbatim}
+
+This boundary condition is defined for a process with primary
+variable \texttt{PRESSURE1}. Geometrically the boundary condition
+is linked to a surfaced named \texttt{BC\_PRESSURE}, which is
+defined by a polyline.
+
+\begin{verbatim}
+benchmark: h_tet3.gli
+#POINTS
+2 -10.  10. 0.   0.0 0 0 0
+3 -10. -10. 0.   0.0 0 0 0
+4 -10. -10. 10.  0.0 0 0 0
+5 -10.  10. 10.  0.0 0 0 0
+#POLYLINE
+ $NAME
+  BC_PRESSURE
+ $POINTS
+  2
+  3
+  4
+  5
+#SURFACE
+ $NAME
+  BC_PRESSURE
+  $POLYLINES
+  BC_PRESSURE
+ $EPSILON
+  0.01
+\end{verbatim}
+
+
+
+
+
+\LastModified{OK - \today}

@@ -1,0 +1,97 @@
+\documentclass[10pt,a4paper,twocolumn]{article}
+
+\usepackage{a4wide}
+\usepackage[english]{babel}
+\usepackage{graphicx}
+\usepackage{wrapfig}
+
+\usepackage{times}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+
+\author{Panos Adamidis \and Wenqing Wang \and Dany Kemmler \and Matthias Heß \and Olaf Kolditz}
+\title{Parallelization of the GeoSys Application}
+%%\institute{Center for Applied Geoscience, Universität Tübingen, Germany\\
+%%           \email{matthias.hess@uni-tuebingen.de},\\
+%%           Web pages: \texttt{http://www.uni-tuebingen.de/zag}}
+
+
+\DeclareMathOperator \D {D}
+
+\begin{document}
+
+\maketitle
+
+\section{Motivation}
+Numerical simulations that try to mimic complex systems require a fine discretization of the computational domain in order to obtain meaningful results. This fine discretization usually results in either large memory requirements or long calculation times or both. 
+Parallelization of the calculation is a well established method to reduce calculation times and it also provides a mean to use larger amounts of memory than can be found on a single computer alone.
+
+For all serious simulations it is therefore desirable to have a parallelized version of the simulation code. 
+
+\section{Introduction}
+
+In this article we describe the steps taken to obtain a parallel version of a geohydrological simulation code called GeoSys. The approach to parallelization is based on the object-orientation already inherent in the serial code. We also give measures to evaluate the quality of the serial and parallel code.
+
+\section{Object-oriented Simulation Approach}
+
+In order to be able to develop an object-oriented program, it is neccessary to identify the entities in the problem domain and develop a corresponding class system that reflects the functionality. In this section we will describe very broadly our class system in general and describe classes relevant for parallelization in detail.
+
+\subsection{FEM Problem Domain}
+
+We do not intend to give an introduction into finite element methods, but for the purpose of clarity we describe some basic principles here.
+
+In general, FEM is based on the weak formulation of a partial differential equation given by a differential operator $\D : A \rightarrow B$ that acts on a function $u : M \rightarrow N$, where $A$ and $B$ are function spaces and $M$ and $N$ are problem specific sets. In this formulation, it is assumed that such a solution $u$ to the differential equation exists.
+
+\begin{equation}
+\D u = b
+\label{eq:pde}
+\end{equation}
+
+where $b$ is a function in $B$. The weak formulation is then given by a test function space $S$ and the following integral:
+
+\begin{equation}
+\int_\Omega \text{d}\Omega\,(\D u)\;v = \int_\Omega \text{d}\Omega \, b\;v
+\label{eq:weak}
+\end{equation}
+
+If equation (\ref{eq:weak}) holds for all $v \in S$ then $u$ is said to be a weak solution of the partial differential equation (\ref{eq:pde}).
+In most cases the solution $u$ cannot be obtained analytically and one must find a numerical approach to this solution. One often starts by finding a suitable discretization, which maps the continous problem into a discrete one. For FEM this discretization is the choice of a finite dimensional function space $F$ in which $u$ is approximated by $\bar{u} = \sum_{i=1}^d c_i \phi_i$, where $\phi = \{ \phi_1, \dots, \phi_d\}$ is a basis of the $d$ dimensional space $F$. As is true for all discretization schemes one has to be aware of artefacts that might be introduced by the scheme and one has to find an estimate of the error of the approximation. Otherwise one can never be sure how close the approximation of $u$ really is.
+
+\subsection{Equation Coupling}
+
+\subsection{Objects in the Problem Domain}
+
+From the problem domain description one can identify objects that are part of it and how they interact with each other. First of all and predominantly is the mesh. 
+
+\subsection{Class System}
+
+
+\section{GeoSys and Example Problems}
+
+In this section we give an overview of the GeoSys application and present some implementations of the object-oriented approach. Furthermore, we introduce example problems which are in turn used to measure the quality of the parallelization.
+
+
+\section{Parallelization Approach}
+
+\section{Runtime Environment}
+
+In order to evaluate the quality of the code, it is necessary to have an idea of the capabilities of the runtime environment. In this section we present some performance masurements of the environments in which the simulations used for the tests were run. 
+
+\section{Application Performance}
+
+Parallelization is only beneficial provided the parallel capabilities are used efficiently. If, for instance, the CPUs that work in parallel are idle most of the time, it might be better to use fewer of them. For an estimation of the quality of the parallelization, we describe briefly some of the common measures. Most of the mesaures used in parallel programming relate the number of processes $n_P$, the time $T_1$ of a single process application run, the time $T_p$ for a parallel run for the same problem and the problem size $N$.
+
+\paragraph{Speed-up}
+\paragraph{Parallel Efficiency}
+
+
+\section{Numerical Results}
+
+\subsection{Scaling Analysis}
+
+
+\section{Conclusion and further work}
+
+In this article we have described an object-oriented approach to parallelization of the GeoSys application code. Further work will extend the parallel application to Grid environments and integrate the high-performance part into the graphical user interface. We will also experiment with a different parallelization approach based on the many different processes available in GeoSys and with different coupling schemes.
+
+\end{document}

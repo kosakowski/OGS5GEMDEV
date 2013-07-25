@@ -1,0 +1,120 @@
+\subsection{Planned Status}
+
+The following key words and structure are planned for
+implementation
+
+\vspace{5mm}
+
+ \textbf{1. PARAMETER KEY WORDS}.-Require
+only one universal value
+
+\vspace{5mm}
+
+\begin{verbatim}
+$DISPERSION_LONGTIDUDINAL           [ value ]
+
+$DISPERSION_TRANSVERSE              [ value ]
+
+$FLOW_CONFINMENT_UNCONFINED         [ value ]
+
+$FLOW_CONFINMENT_CONFINED           [ value ]
+
+$GEOELECTRIC_CONDUCTIVITY           [ value ]
+
+$GEOMETRY_DIMENSION                 [ value ]
+
+$GEOMETRY_AREA                      [ value ]
+
+$LITHOLOGY_NO_COMPONENTS            [ value ]
+
+$LITHOLOGY_GRAIN_CLASS_RADIUS       [ value ]
+
+$MATERIAL_DENSITY                   [ value ]
+
+\end{verbatim]
+\vspace{5mm}
+
+\textbf{2. MODELS KEY WORDS}
+
+-Require a model number and then a number of values, given in the
+model description. Where models require less than the number of
+input values available these are not necessary.
+
+\begin{verbatim}
+$POROSITY_MODEL                             [ model ]
+    &POROSITY_MODEL_VALUE1                  [ value ]
+    &POROSITY_MODEL_VALUE2                  [ value ]
+    &POROSITY_MODEL_VALUE3                  [ value ]
+    &POROSITY_MODEL_VALUE4                  [ value ]
+    &POROSITY_MODEL_VALUE5                  [ value ]
+    &POROSITY_MODEL_VALUE6                  [ value ]
+
+$TORTOUSITY_MODEL
+    &TORTOUSITY_MODEL_VALUE1                [ model ]
+    &TORTOUSITY_MODEL_VALUE2                [ value ]
+    &TORTOUSITY_MODEL_VALUE3                [ value ]
+    &TORTOUSITY_MODEL_VALUE4                [ value ]
+    &TORTOUSITY_MODEL_VALUE5                [ value ]
+
+$FLOW_MODEL                                 [ model ]
+    &FLOW_MODEL_VALUE1                      [ value ]
+    &FLOW_MODEL_VALUE2                      [ value ]
+    &FLOW_MODEL_VALUE3                      [ value ]
+    &FLOW_MODEL_VALUE4                      [ value ]
+
+$PERMEABILITY_MODEL                         [ model ]
+    &PERMEBILITY_MODEL_VALUE1               [ value ]
+    &PERMEBILITY_MODEL_VALUE2               [ value ]
+    &PERMEBILITY_MODEL_VALUE3               [ value ]
+    &PERMEBILITY_MODEL_VALUE4               [ value ]
+    &PERMEBILITY_MODEL_VALUE5               [ value ]
+    &PERMEBILITY_MODEL_VALUE6               [ value ]
+    &PERMEBILITY_MODEL_VALUE7               [ value ]
+    &PERMEBILITY_MODEL_VALUE8               [ value ]
+    &PERMEBILITY_MODEL_VALUE9               [ value ]
+    &PERMEBILITY_MODEL_VALUE10              [ value ]
+
+$CAPILLARY_PRESSURE_MODEL                   [ model ]
+    &CAPPILLARY_PRESSURE_MODEL_VALUE1       [ value ]
+    &CAPPILLARY_PRESSURE_MODEL_VALUE2       [ value ]
+    &CAPPILLARY_PRESSURE_MODEL_VALUE3       [ value ]
+    &CAPPILLARY_PRESSURE_MODEL_VALUE4       [ value ]
+    &CAPPILLARY_PRESSURE_MODEL_VALUE5       [ value ]
+    &CAPPILLARY_PRESSURE_MODEL_VALUE6       [ value ]
+    &CAPPILLARY_PRESSURE_MODEL_VALUE7       [ value ]
+
+$SOIL_STORAGE_MODEL                         [ model ]
+    &SOIL_STORAGE_MODEL_VALUE1              [ value ]
+    &SOIL_STORAGE_MODEL_VALUE2              [ value ]
+    &SOIL_STORAGE_MODEL_VALUE3              [ value ]
+    &SOIL_STORAGE_MODEL_VALUE4              [ value ]
+    &SOIL_STORAGE_MODEL_VALUE5              [ value ]
+    &SOIL_STORAGE_MODEL_VALUE6              [ value ]
+
+$HEAT_FLOW_MODEL                            [ model ]
+    &HEAT_FLOW_MODEL_VALUE1                 [ value ]
+    &HEAT_FLOW_MODEL_VALUE2                 [ value ]
+    &HEAT_FLOW_MODEL_VALUE3                 [ value ]
+    &HEAT_FLOW_MODEL_VALUE4                 [ value ]
+    &HEAT_FLOW_MODEL_VALUE5                 [ value ]
+    &HEAT_FLOW_MODEL_VALUE6                 [ value ]
+    &HEAT_FLOW_MODEL_VALUE7                 [ value ]
+    &HEAT_FLOW_MODEL_VALUE8                 [ value ]
+    &HEAT_FLOW_MODEL_VALUE9                 [ value ]
+    &HEAT_FLOW_MODEL_VALUE10                [ value ]
+
+
+$DEFORMATION_MODEL                          [ model ]
+    &DEFORMATION_MODEL_VALUE1               [ value ]
+    &DEFORMATION_MODEL_VALUE2               [ value ]
+    &DEFORMATION_MODEL_VALUE3               [ value ]
+    &DEFORMATION_MODEL_VALUE4               [ value ]
+    &DEFORMATION_MODEL_VALUE5               [ value ]
+    &DEFORMATION_MODEL_VALUE6               [ value ]
+    &DEFORMATION_MODEL_VALUE7               [ value ]
+    &DEFORMATION_MODEL_VALUE8               [ value ]
+
+
+
+
+\end{verbatim}

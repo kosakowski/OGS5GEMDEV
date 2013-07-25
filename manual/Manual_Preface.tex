@@ -1,0 +1,77 @@
+\subsection{The Rockflow Program} GeoSys/Rockflow is currently in the
+third generation of its development. Development started in 1985 at
+the University of Hannover.  At the time, GeoSys/Rockflow was only
+known as Rockflow, and written as separate modules in Fortran.  Each
+developer produced a stand-alone module.  By 1996 the following
+modules were present (\cite{Festschrift:99}, p. 115-118):
+Groundwater flow (\cite{Wol:90}), tracer transport (\cite{Kro:91}),
+multiphase flow (\cite{Hel:93}), coupling of boundary and finite
+elements (\cite{Sha:94}), density-dependent flow
+(\cite{RatKolZie:96}).
+
+After that, came the second phase of the code's development, which
+was driven by applications in the field of environmental geology and
+geothermics (\cite{LegKolZie:96}, \cite{Kol:97}), including projects
+like the geothermal hot dry rock research project at
+Soultz-sous-Forêts in France and Rosemanowes in the UK
+(\cite{KolCla:98}).
+
+>From 1996, the third phase of code development was characterized by
+radical changes: The program was rewritten in ANSI-C to enable the
+use of dynamic data structures and object-oriented programming.
+Another significant change in the structure of the program was, that
+whereas developers still wrote their own model, an effort was made
+to couple these models, as demanded by applications. Coupling models
+meant the introduction of version management and a more unified data
+structure. The coupling of the models allows Rockflow to start
+playing a role in the simulation of coupled processes: Models for
+reactive transport (\cite{Hab:01}), adaptive methods and groundwater
+flow (\cite{Kai:01}), multiphase flow (\cite{Tho:01}), gas transport
+and heat transport (\cite{Kol:96}) emerge. Acompanying process
+modeling, adaptive mesh methods are developed (\cite{Bar:97},
+Schulze-Ruhfus).
+
+In parallel to development of numerical methods, part of the
+research was invested in structural modeling methods. Methods for
+geometric descriptions of porous and fractured media evolve
+(\cite{Rot:01}, Kasper).  These mesh generation and meshing methods
+are essential to the adaptive mesh process modeling methods.  Sylvia
+Moenickes worked specifically on mesh generation for fractured
+porous media (\cite{Moe:04}). In this field, a good cooperation
+exists with Prof. Takeo Taniguchi from Okayama University, Japan.
+
+The coupling of fluid flow and mechanical processes is of particular
+interest in soil mechanics.  In 2000, first approaches in the
+development of RockFlow were made in order to handle the
+consolidation problem (\cite{KolKohTho:00}).  Swelling of bentonite
+material began to be an important field of research
+(\cite{KohKaiKolZie:02}, \cite{KohKaiKolZie:02}).
+
+The ongoing code developments at the University of Hannover focus on
+coupled thermal, hydraulic and mechanical processes. Starting from
+linear material models and integrating existing and well validated
+flow and transport modules,  the treatment of complex simulations in
+combination with a user-friendly control system are the aim of the
+current research work (Kohlmeier et al. [2003a]).
+
+Since 2001, Rockflow is also developed at the University of
+T\"{u}bingen, in the Center for Applied Geoscience (ZAG).  The
+group, headed by Olaf Kolditz grew rapidly to encompass various
+fields of research. The current developments of the group can be
+split into three categories: Conceptual model development, numerical
+model development and software development. In the first category,
+work has been undertaken for geotechnical applications
+(\cite{KolDej:03}, \cite{WanKol:03}, \cite{XieKolTriSch:03}),
+regional groundwater modeling (\cite{BeiKol:03}), groundwater
+remediation (\cite{BauKol:03}, \cite{BauXieKol:04},
+\cite{Annual:03}), and geothermal reservoir modeling
+(\cite{McDKol:03}). In terms of numerical model development, the
+finite element library was extended, the code was re-organized to
+benefit from further object-orientation and to allow an easier
+switching between process couplings. This will be elaborated in the
+code section of this paper. In terms of software development,
+activities can be summarized as follows: reorganization of RockFlow
+into GeoSys: GEOLib, MSHLib, FEMLib, creation and encapsulation of
+process-oriented objects (PCS), code parallelization (in cooperation
+with the HPC Center Stuttgart), development of GUI (Multi-View, 3-D
+graphics).

@@ -1,0 +1,355 @@
+\subsection{Theory}
+
+\subsubsection{Fluid mass balance}
+
+The general fluid mass balance equation for unsaturated flow in a deformable porous medium is
+%
+\begin{eqnarray}
+n S^l \dot\rho^l
++
+n \rho^l \dot S^l
++
+n S^l \rho^l \v^{ls}
++
+S^l \rho^l \nabla\cdot\v^s
++
+S^l \rho^l \frac{1-n}{\rho^s} \dot\rho^s
+=
+\nonumber \\
+Q_\rho^l + S^l \frac{\rho^l}{\rho^s} Q_\rho^s
+\label{eqn:uc1}
+\end{eqnarray}
+%
+Hereby, the basic assumption of Richards type models is that the gaseous phase is immobile, i.e. $\v^g=0$.
+Assuming grain incompressibility for isothermal conditions (i.e. $\dot\rho^s=0$) and no solid sources (e.g. resulting from chemical reactions) as well as
+applying the constitutive equations for fluid compressibility, capillary pressure, and Darcy flux,
+we obtain the following Richards equation for an unsaturated deformable porous medium.
+%
+\begin{eqnarray}
+n S^l \rho_0^l \beta_p \dot p^l
+-
+n \rho^l \frac{dS^l}{d p_c} \dot p^l
+-
+\nabla
+\left(
+\dfrac{\RelKa^l\per}{\mu^l}(\nabla p^l - \dens\grv)
+\right)
++
+S^l \rho^l \nabla\cdot \dot\u^s
+=
+Q_\rho^l
+\label{eqn:uc2}
+\end{eqnarray}
+%
+Rearrangement with respect to the primary variables $p^l, \u^s$ yields
+%
+\begin{eqnarray}
+\left(
+-
+n \rho^l \frac{dS^l}{d p_c}
++
+n S^l \rho_0^l \beta_p
+\right)
+\dot p^l
+-
+\nabla
+\left(
+\dfrac{\RelKa^l\per}{\mu^l} \nabla p^l
+\right)
++
+S^l \rho^l \nabla\cdot \dot\u^s
+=
+\nonumber\\
+Q_\rho^l
++
+\nabla
+\left(
+\dfrac{\RelKa^l\per}{\mu^l}\dens\grv
+\right)
+\label{eqn:uc2}
+\end{eqnarray}
+%
+
+A constitutive equation, the water content function obtained by experiments, characterizes the relationship between $p^l$ and $\sat^l$ and therefore the derivative $dS^l/dp_c$.
+
+\subsubsection{Momentum balance}
+
+The deformation process is described by the momentum balance equation for the unsaturated porous medium in terms of stresses.
+
+\begin{eqnarray}
+\nabla\cdot
+(\s - \alpha_b S^l p^l \bf I) + \rho\g = 0
+\label{eqn:mb_us}
+\end{eqnarray}
+
+All symbols are denoted in chapter \ref{sec:symbols}.
+%
+
+\subsubsection{Numerical scheme}
+
+The standard Galerkin finite element approach is applied for the numerical solution of the PDEs (\ref{eqn:uc2}) and (\ref{eqn:mb_us}) resulting into the following system of algebraic equations.
+
+\begin{eqnarray}
+\underbrace{
+\left[
+\begin{array}{ll}
+\mathbf{C}_{pp} & \mathbf{C}_{pu}
+\\
+\mathbf{C}_{up} & \mathbf{C}_{uu}
+\end{array}
+\right]
+}_{\mathbf C}
+%
+\frac{d}{dt}
+\underbrace{
+\left\{
+\begin{array}{l}
+\hat\PressureVec^l
+\\
+\hat\Disp^s
+\end{array}
+\right\}
+}_{\mathbf x}
+%
++
+%
+\underbrace{
+\left[
+\begin{array}{ll}
+\mathbf{K}_{pp} & \mathbf{K}_{pu}
+\\
+\mathbf{K}_{up} & \mathbf{K}_{uu}
+\end{array}
+\right]
+}_{\mathbf K}
+%
+\left\{
+\begin{array}{l}
+\hat\PressureVec^l
+\\
+\hat\Disp^s
+\end{array}
+\right\}
+%
+=
+\underbrace{
+\left\{
+\begin{array}{l}
+\mathbf{r}_p
+\\
+\mathbf{r}_u
+\end{array}
+\right\}
+}_{\mathbf{r}}
+\nonumber
+\\
+\end{eqnarray}
+
+where $\C_{up}, \C_{uu}, \K_{pu}$ are zero.
+
+\begin{eqnarray}
+\left[
+\begin{array}{cc}
+\mathbf{C}_{pp} & \mathbf{C}_{pu}
+\\
+\mathbf{0} & \mathbf{0}
+\end{array}
+\right]
+%
+\frac{d}{dt}
+\left\{
+\begin{array}{l}
+\hat\PressureVec^l
+\\
+\hat\Disp^s
+\end{array}
+\right\}
+%
++
+%
+\left[
+\begin{array}{ll}
+\mathbf{K}_{pp} & \mathbf{0}
+\\
+\mathbf{K}_{up} & \mathbf{K}_{uu}
+\end{array}
+\right]
+%
+\left\{
+\begin{array}{l}
+\hat\PressureVec^l
+\\
+\hat\Disp^s
+\end{array}
+\right\}
+%
+=
+\left\{
+\begin{array}{l}
+\mathbf{r}_p
+\\
+\mathbf{r}_u
+\end{array}
+\right\}
+\nonumber
+\\
+\end{eqnarray}
+
+%------------------
+Time discretization with explicit finite differences yields
+
+\begin{eqnarray}
+\left(
+\frac{1}{\Delta t} \C_{pp} + \theta \K_{pp}
+\right)
+\hat{\p}^l_{n+1}
++
+\frac{1}{\Delta t} \C_{pu}
+\hat\u^s_{n+1}
+\nonumber\\
+=
+\left(
+\frac{1}{\Delta t} \C_{pp} + (1-\theta) \K_{pp}
+\right)
+\hat\p^l_{n}
++
+\frac{1}{\Delta t} \C_{pu}
+\hat\u^s_{n}
++
+\r_p
+\end{eqnarray}
+
+%------------------
+
+\begin{eqnarray}
+\theta \K_{up}
+\hat\p^l_{n+1}
++
+\theta \K_{uu}
+\hat\u^s_{n+1}
+\nonumber\\
+=
+(1-\theta) \K_{up}
+\hat\p^l_{n+1}
++
+(1-\theta) \K_{pp}
+\hat\u^s_{n+1}
++
+\r_u
+\end{eqnarray}
+
+%------------------
+
+with following finite element matrices
+
+\begin{eqnarray}
+%---
+\C^e_{pp}
+&=&
+\int_{\Domain^e}
+\SFVPressure^T
+\left[
+- n \rho^l \frac{dS^l}{dp_c}
++
+n S^l \rho_0^l \beta_p
+%\UnitOperator^T\GradOperator
+\right]
+\SFVPressure
+\,
+d\Domain^e
+\nonumber
+\\
+%---
+\K^e_{pp}
+&=&
+\int_{\Domain^e}
+\nabla\SFVPressure^T
+\left[
+- \dfrac{\RelKa^l\per}{\mu^l}
+\right]
+\nabla\SFVPressure
+\,
+d\Domain^e
+\nonumber
+\\
+%---
+\C^e_{pu}
+&=&
+\int_{\Domain^e}
+\SFVPressure^T
+\left[
+S^l \rho^l
+\right]
+\nabla\TFVDisp
+\,
+d\Domain^e
+%\nonumber
+\\
+%---
+\r^e_{p}
+&=&
+\int_{\Domain^e}
+\left[
+Q^l_\rho
+\right]
+\SFVPressure
+\,
+d\Domain^e
++
+\int_{\Domain^e}
+\SFVPressure^T
+\left[
+\dfrac{\RelKa^l\per}{\mu^l} \rho^l \g
+\right]
+\nabla\SFVPressure
+\,
+d\Domain^e
+\nonumber
+\end{eqnarray}
+
+%------------------
+
+\begin{eqnarray}
+%---
+\K^e_{up}
+&=&
+\int_{\Domain^e}
+\B^T
+\left[
+\alpha_b S^l
+\right]
+\m\SFVPressure
+\,
+d\Domain^e
+\nonumber
+\\
+%---
+\K^e_{uu}
+&=&
+\int_{\Domain^e}
+\B^T
+\left[
+\mathbb C
+\right]
+\B
+\,
+d\Domain^e
+\nonumber
+\\
+%---
+\r^e_{u}
+&=&
+\int_{\Domain^e}
+\TFVDisp
+\left[
+\rho\g
+\right]
+\,
+d\Domain^e
+\end{eqnarray}
+
+where m is a mapping vector as
+\[\m = [1\, 1\, 1\, 0]^T\] 
+for plane strain problems and
+\[\m = [1\, 1\, 1\, 0\, 0\, 0]^T\] for 3D problems
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

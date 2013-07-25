@@ -1,0 +1,64 @@
+%\section{Introduction}
+
+%\subsection{Linear heat transport}
+
+In the first benchmark chapter
+we consider heat transport in a porous medium described by the heat balance equation (\ref{eqn:energy_balance}).
+With the following assumptions:
+\begin{compactitem}
+	\item Constant material properties,
+	\item Neglecting viscous dissipation effects,
+	\item Local thermal equillibrium, $c\rho = \sum_\alpha c^\alpha \rho^{\alpha}$, $\lambda = \sum_\alpha \lambda^{\alpha}$
+\end{compactitem}
+we obtain the \textbf{linear heat transport} equation
+%
+\begin{equation}
+c\rho\frac{\partial T}{\partial t} + c\rho \mathbf v \cdot \nabla T - \nabla\cdot(\lambda\nabla T) 
+= 
+q_{\mathrm{th}},
+\end{equation}
+%
+where $c$ is specific heat capacity, $\rho$ is density, $T$ is temperature, $\mathbf v$ is advection velocity and $\lambda$ is thermal conductivity.
+
+Conduction takes place when a temperature gradient in a solid or a stationary fluid medium occurs. It runs into the direction of decreasing temperature. The thermal conductivity is defined in order to quantify the ease with which a particular medium conducts heat. Against it, convection is caused by moving fluids of different temperatures.
+
+The equation for the heat conduction is
+%
+\begin{equation}
+\frac{\partial T}{\partial t} = \nabla\cdot(\alpha\nabla T),
+\label{eqn:heat_conduction}
+\end{equation}
+where $\alpha = \lambda/c\rho$ is the heat diffusivity constant.
+
+%\subsection{Non-linear heat transport (temperature dependent material properties)}
+
+Temperature changes cause a change of fluid density and viscosity which influences again the behaviour of the fluid while flowing through a porous medium and therefore the velocity of heat transport by groundwater flow.
+The dependence of density on temperature changes is regarded by using the relation given in \eqref{eq41}
+\begin{equation}
+\rho(T)\, = \,\rho_0\cdot\left(1\,+\,\beta_T\left(T\,-\,T_0\right)\right).
+\label{eq41}
+\end{equation}
+Here $\rho_0$ represents the initial density, $T$ the temperature, $T_0$ the initial temperature and $\beta_T$ is the thermal expansion coefficient assumed to be a material constant.
+A more comprehensive description of thermal material behavior of fluids and solids is given in sections \ref{sec:fluid_properties} and \ref{sec:m_properties},respectively. 
+Temperature dependent material behavior results in \textbf{non-linear heat transport} which are discussed in the coupled processes part of this book.
+
+%\subsection{Benchmarks}
+
+We consider the following series of benchmarks for heat transport with sligthly increasing complexity.
+
+\begin{compactitem}
+	\item Linear heat conduction in a semi-infinte domain (\ref{bmt:heat_conduction_infinite})
+	\item Linear heat conduction in a finite domain (\ref{bmt:heat_conduction_finite})
+	\item Radial heat conduction in a solid (\ref{bmt:heat_conduction_radial_tbc})
+	\item Heat transport in a fracture (\ref{bmt:heat_transport_fracture})
+	\item Heat transport in a porous medium (\ref{bmt:heat_transport_porous_medium})
+	\item Heat transport in a fracture-matrix system (\ref{bmt:heat_transport_fracture_matrix})
+\end{compactitem}
+
+%\subsection{Applications}
+
+At the end of the chapter we present an application example dealing with:
+
+\begin{compactitem}
+	\item Heat transport in a 3D fracture-matrix system (section \ref{bmt:heat_transport_3D_fracture_matrix})
+\end{compactitem}

@@ -1,0 +1,104 @@
+\subsection{Phase mass balance}
+
+We consider the mass balance of individual phases of a porous medium.
+%
+Neglecting mass exchange between the phases (no dissolution and sorption processes), the local mass balance for the individual constituent $\varphi^{\alpha}$ of the porous medium is given by
+\begin{equation}
+\frac{d_{\alpha}\rho^{\alpha}}{dt}+\rho^{\alpha}\,\nabla\cdot\mio{v}{\alpha}{}=
+\frac{\partial\rho^{\alpha}}{dt}+\nabla\cdot\left(\rho^{\alpha}\mio{v}{\alpha}{}\right)=0
+\label{eq14}
+\end{equation}
+with the velocity $\mio{v}{\alpha}{}$ of the constituent under consideration, and the usual divergence operator $\nabla\cdot()$. From the velocity-displacement relation for the solid skeleton follows
+\begin{equation}
+\mio{v}{s}{}=\mio{u}{s}{\dot}
+\label{eq15}
+\end{equation}
+with the solid displacement vector $\mio{u}{s}{}$. The derivative
+\begin{equation}
+\frac{d_{\alpha}A}{dt}=\frac{\partial A}{dt}+\mio{v}{\alpha}{}\cdot\nabla A
+\label{eq16}
+\end{equation}
+with the usual gradient operator $\nabla()$ denotes the material time derivative of an arbitrary variable $A$ with respect to the motion of a material point of the constituent $\varphi^{\alpha}$ (cf. equation (\ref{eqn:derivatives})). It consists of a local (diffusive) part and a convective part associated with the velocity of the constituent.
+
+As mentioned above, the transport processes of the fluid constituents of a porous medium are considered as their relative motion with respect to the motion of the deformable solid skeleton. Consequently, the relations between the material time derivatives (here, of an arbitrary variable $A$) with respect to the solid skeleton, and with respect to the individual fluid constituent $\varphi^{\gamma}$ is of crucial interest in terms of a unified numerical characterization of the different processes.
+\begin{equation}
+\frac{d_{\gamma}A}{dt}=\frac{d_{s}A}{dt}+\mio{v}{\gamma s}{}\cdot\nabla A
+\label{eq17}
+\end{equation}
+
+Here, 
+\begin{equation}
+\mio{v}{\gamma s}{}=\mio{v}{\gamma}{}-\mio{u}{s}{\dot}
+\end{equation}
+
+is the so-called seepage velocity describing the fluid motions with respect to the deforming skeleton material.
+
+According to the generalized formulation~(\ref{eq14}), considering equations (\ref{eq5}) and (\ref{eq11}), the local solid phase mass balance is given by
+\begin{equation}
+\frac{d_s\left[(1-n)\rho^{sR}\right]}{dt}+(1-n)\,\rho^{sR}\,\nabla\cdot\mio{u}{s}{\dot}=0
+\label{eq18}
+\end{equation}
+
+Assuming material incompressibility of the solid phase, i.e. $d_s\rho^{sR}/dt\!\!=\!\!0$ 
+we derive the following expression for porosity changes.
+\begin{equation}
+\frac{d_s n}{dt}
+=
+(1-n)\,\nabla\cdot\mio{u}{s}{\dot}=0
+\label{eq18a}
+\end{equation}
+
+Following the same procedure, additionally considering Eqns.~(\ref{eq7}) and (\ref{eq17}), the mass balance relations for the fluid constituents $\varphi^{\gamma}$
+can be defined with respect to the solid phase motion.
+\begin{equation}
+\frac{d_s\left(nS^{\gamma}\rho^{\gamma R}\right)}{dt}+
+\nabla\cdot\left(nS^{\gamma}\rho^{\gamma R}\mio{v}{\gamma s}{}\right)+
+nS^{\gamma}\rho^{\gamma R}\nabla\cdot\mio{u}{s}{\dot}=0
+\label{eq20}
+\end{equation}
+
+Applying the solid phase mass balance~(\ref{eq18}), Eqn.~(\ref{eq20}) can be represented in a more detailed description.
+\begin{eqnarray}
+& & 
+nS^{\gamma}\frac{d_s\rho^{\gamma R}}{dt}+n\rho^{\gamma R}\frac{d_sS^{\gamma}}{dt} \nonumber \\[1.5ex]
+& & \quad
++\nabla\cdot(\rho^{\gamma}\mio{w}{\gamma s}{})+S^{\gamma}\rho^{\gamma R}\nabla\cdot\mio{u}{s}{\dot}=0
+\label{eq21}
+\end{eqnarray}
+Here
+\begin{equation}
+\mio{w}{\gamma s}{}=nS^{\gamma}\mio{v}{\gamma s}{}
+\label{eq22}
+\end{equation}
+is usually denoted as filter velocity of the motion of the pore fluid constituent $\varphi^{\gamma}$.
+
+Rewriting equation (\ref{eq21}) in terms of partial derivatives we yield
+\begin{eqnarray}
+nS^{\gamma} \frac{\partial\rho^{\gamma R}}{\partial t} + nS^{\gamma} \mio{v}{\gamma s}{} \cdot \nabla \rho^{\gamma R}
++
+n\rho^{\gamma R}\frac{\partial S^{\gamma}}{\partial t} + n\rho^{\gamma R} \mio{v}{\gamma s}{} \cdot \nabla S^{\gamma}
+\nonumber \\ %[1.5ex]
++
+\nabla\cdot(\rho^{\gamma}nS^{\gamma}\mio{v}{\gamma s}{})+S^{\gamma}\rho^{\gamma R}\nabla\cdot\mio{u}{s}{\dot}=0
+\label{eqn:phase_mass_balance}
+\end{eqnarray}
+
+%..........
+\subsubsection{Primary variables}
+
+The selection of primary variables matters and is ruled by our interest in non-isothermal and non-isobaric processes which promotes the choice of pressure $p$ and temperature $T$ as primary variables.
+%
+The substitutions of phase density 
+\begin{align}
+d\rho^\alpha (p,T)
+=
+\frac{\p \rho^\alpha}{\p p} dp + \frac{\p \rho^\alpha}{\p T} dT
+\label{eqn:pv1}
+\end{align}
+and phase saturation
+\begin{align}
+dS^\alpha (p,T)
+\frac{\p S^\alpha}{\p p} dp + \frac{\p S^\alpha}{\p T} dT
+\label{eqn:pv2}
+\end{align}
+will result in formulations of the phase mass balance equations in terms of the selected primary variables.

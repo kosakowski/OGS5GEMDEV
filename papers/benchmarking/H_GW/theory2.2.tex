@@ -1,0 +1,73 @@
+
+\textbf{Theory}
+
+The unsaturated zone is defined as the zone beneath the soil surface that reaches the capillary fringe above the groundwater table. Unlike an aquifer the unsaturated zone is only partially saturated with water. Water flow in the unsaturated zone is calculated by using the Richards equation (equ. \ref{eq25}).
+\begin{equation}
+\frac{\partial}{\partial z}
+\left[
+k(\theta)\cdot\left(\frac{\partial h}{\partial z}\,+\,1\right)
+\right]\,=\,\frac{\partial\theta}{\partial t}\,-\,w_0
+\quad\mathrm{with}\quad
+\frac{\partial\theta}{\partial t}\,=\,C(h_c)
+\frac{\partial h_p}{\partial t}
+\label{eq25}
+\end{equation}
+{\small
+and with
+\begin{tabbing}
+\=xxxx \=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx \=xxxxx \=xxxxxxxxxxxxxxx \kill
+\> $\theta$ \> -- volumetric water content 
+\> $h$      \> -- pressure head \\
+\> $t$      \> -- time 
+\> $w_0$    \> -- sinks/sources \\
+\> $z$      \> -- coordinate 
+\> $C(h_c)$ \> -- function of capillary storage capacity \\
+\> $k(\theta)$ \> -- unsaturated hydraulic conductivity
+\end{tabbing}
+}
+
+The unsaturated hydraulic conductivity $k(\theta)$ is a function of the effective saturation $S_e$ (equ. \ref{eq26}) and therefore it is dependent on the water content of the soil.
+\begin{equation}
+S_e\,=\,\frac{\theta - \theta_r}{\theta_s - \theta_r}
+\label{eq26}
+\end{equation}
+{\small
+with
+\begin{itemize}
+\item[$\theta_r$] -- residual water content,
+\item[$\theta_s$] -- water content in saturated state.
+\end{itemize}
+}
+
+The hydraulic conductivity is calculated by using the Mualem-van-Genuchten-Model in the following form (equ. \ref{eq27}).
+\begin{equation}
+k(\theta)\,=\,k_s\cdot S_e^l
+\left[
+1-S_e^{\frac{1}{m}}
+\left(
+1-
+\right)^m
+\right]^2
+\quad\mathrm{and}\quad
+k_{\mathrm{rel}}\,=\,\frac{k(\theta)}{k_s}
+\label{eq27}
+\end{equation}
+{\small
+with
+$m=1-1/n;\,n>1$
+\begin{itemize}
+\item[$l$] -- connectivity parameter of the pores (common value: 0.5)
+\item[$k_s$] -- saturated conductivity
+\item[$k_{\mathrm{rel}}$] -- relative conductivity
+\end{itemize}
+}
+
+The water content is associated with the matrix potential which is a negative pressure head (-$h$). This relation is called capillary pressure-saturation-relationship. A common capillary pressure-saturation function is the well-known van Genuchten function (equ. \ref{eq28}).
+\begin{equation}
+S_e\,=\,
+\frac{1}{1+\left(\alpha\cdot\vert h \vert^n\right)^m}
+\label{eq28}
+\end{equation}
+{\small
+with $\alpha$ -- empirical constant.
+}

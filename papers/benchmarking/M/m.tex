@@ -1,0 +1,59 @@
+\chapter{Deformation -- M-Processes}
+\section{Theory}
+%\GeoSys  (\gversion) can analyze 2D and 3D deformation
+%problems of porous and fractured media. For 2D problems, we restrict the analysis under the
+%assumption of plane strain.  Triangle and quadrilateral element
+%types are available for 2D simulation. While, 3D simulations can
+% use tetrahedron, hexahedron, prismatic elements.
+
+Pure deformations in any media  can be described by the momentum
+balance equation in the terms of stress as
+\begin{equation}
+\nabla \cdot \Stress + \dens\grv = 0
+\label{eq:momb}
+\end{equation}
+where $\Stress$ is stress tensor, $\dens$ is the solid density. In the present implementation, the traditional sign
+convention for stress and fluid pressure is used. Displacement $\Disp$ is the primary variable to be solved by
+substituting the constitutive law for stress-strain behavior
+\begin{equation}
+\begin{array}{l}
+ \Stress = \CT\, \StrainT\\
+  \StrainT = \dfrac{1}{2}(\nabla \Disp+(\nabla \Disp)^{\mathrm T})
+ \end{array}
+ \label{eq:strstr}
+\end{equation}
+with $\CT$, a forth order material tensor and $\StrainT$, the
+strain. Superscript $\mathrm T$ means the transpose of matrix. The
+deformation problem can be considered as a boundary value problem
+with boundary conditions given by
+\begin{equation}
+\Stress : \nrl = \bm t
+\quad \mbox{or} \quad
+\Disp = \Disp_{\scriptscriptstyle{\Gamma}},
+\quad \forall\,\Point \in
+\partial \Omega
+\label{eq:debc}
+\end{equation}
+where $\nrl$ is the normal to the portion of domain surface on where
+the traction boundary condition $\bm t$ is prescribed, $\Disp_{\scriptscriptstyle{\Gamma}}$ is the
+ described displacement boundary values.
+
+For 2D problems, we restrict the analysis under the
+assumption of plane strain.
+
+\include{M/elasticity_iso}
+
+\include{M/elasticity_transiso}
+
+\include{M/3d_excav}
+
+\include{M/plasticity}
+
+%\section{Localization - Fracture Mechanics}
+%\subsection{Fractured plate - Drucker-Prager plasticity (2D)}
+
+\include{M/creep}
+
+\include{M/creep_salt}
+
+\include{M/creep_lubby2}

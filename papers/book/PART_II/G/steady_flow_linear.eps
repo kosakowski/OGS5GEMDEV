@@ -1,0 +1,790 @@
+%!PS-Adobe-2.0
+%%Creator: TECPLOT
+%%Pages:1
+%%BoundingBox: 71 17 721 595
+%%DocumentFonts: Helvetica Helvetica-Bold Symbol Times-Roman Times-Bold Times-Italic Times-BoldItalic Courier Courier-Bold
+%%EndComments
+/tecplotdict 120 dict def
+tecplotdict begin
+/ed  {exch def} def
+/ftl {findfont exch scalefont setfont} def
+/ftr {/ISOLatin1-Times-Roman ftl} def
+/ftb {/ISOLatin1-Times-Bold ftl} def
+/fti {/ISOLatin1-Times-Italic ftl} def
+/ftib {/ISOLatin1-Times-BoldItalic ftl} def
+/fcr {/ISOLatin1-Courier ftl} def
+/fcb {/ISOLatin1-Courier-Bold ftl} def
+/fhn {/ISOLatin1-Helvetica ftl} def
+/fhb {/ISOLatin1-Helvetica-Bold ftl} def
+/fsy {/Symbol ftl} def
+/gs /gsave load def
+/gr /grestore load def
+/np /newpath load def
+/cp /closepath load def
+/g /setgray load def
+/lc {setlinecap} def
+/lj /setlinejoin load def
+/x /setrgbcolor load def
+/sd /setdash load def
+/sw {setlinewidth} def
+/cpt /currentpoint load def
+/m {moveto} def
+/rm /rmoveto load def
+/l /lineto load def
+/r /rlineto load def
+/sf /setflat load def
+/s /stroke load def
+/q {cpt s m} def
+/ro /rotate load def
+/sh /show load def
+/clp {cp gr gs np m l l l cp clip np cp} def
+/dorect
+{
+/height ed
+/width  ed
+m
+0 height r
+width 0 r
+0 height neg r
+cp
+} def
+/er {cp np dorect g fill 0 g cp} def
+/erc {cp np dorect x fill 0 g cp} def
+/br {cp np dorect g cp s} def
+/brc {cp np dorect x cp s} def
+/ii 0 def
+/n 0 def
+/CurA 0 def
+/Ry 0 def
+/Rx 0 def
+/CA 0 def
+/SA 0 def
+/SJ 0 def
+/SI 0 def
+/bi 0 def
+/i 0 def
+/ib 0 def
+/ig 0 def
+/ir 0 def
+/ishade 0 def
+/bshade 0 def
+/dcs
+{
+m
+dup dup dup
+-2 div dup
+rm
+0 r
+0 exch r
+neg 0 r
+cp
+} bind def
+/pg
+{
+/size ed
+/Ny ed
+/Nx ed
+/Y2 ed
+/X2 ed
+/Y1 ed
+/X1 ed
+Ny 1 gt
+{/Dy Y2 Y1 sub Ny 1 sub div def}
+{/Dy 0.0 def}
+ifelse
+Nx 1 gt
+{/Dx X2 X1 sub Nx 1 sub div def}
+{/Dx 0.0 def}
+ifelse
+Y1 Dy Y2 Dy 2 div add
+{
+X1 Dx X2 Dx 2 div add
+{
+1 index
+size 3 1 roll
+dcs fill
+Dx 0.0 eq
+{exit}
+if
+} for
+pop
+Dy 0.0 eq
+{exit}
+if
+} for
+} bind def
+/z
+{
+/ii ed
+rea ii get
+gra ii get
+bla ii get
+} def
+/lrgb
+{
+/ii ed
+/blue ed
+/green ed
+/red ed
+bla ii blue put
+gra ii green put
+rea ii red put
+} def
+/trace
+{
+cp np
+m
+1 1 n 
+{
+pop
+r
+} for
+cp
+} def
+/pf
+{
+/ishade ed
+/n ed 
+s
+trace
+ishade g fill
+} def
+/pb
+{
+/bshade ed
+/n ed 
+m
+1 1 n 
+{
+pop
+r
+} for
+bshade g s
+} def
+/pfb
+{
+/bshade ed
+/ishade ed
+/n ed 
+s 
+n 2 mul 2 add copy
+trace
+ishade g fill
+trace
+bshade g s
+} def
+/pfi
+{
+/i ed
+/n ed 
+s 
+trace
+i z x fill
+} def
+/pbi
+{
+/i ed
+/n ed 
+m
+1 1 n 
+{
+pop
+r
+} for
+i z x s
+} def
+/pfbi
+{
+/ii ed
+/bi ed
+/n ed 
+s 
+n 2 mul 2 add copy
+trace
+ii z x fill
+trace
+bi z x s
+} def
+/pfr
+{
+/ib ed
+/ig ed
+/ir ed
+/n ed 
+s 
+trace
+ir ig ib x fill
+} def
+/pbr
+{
+/ib ed
+/ig ed
+/ir ed
+/n ed 
+m
+1 1 n 
+{
+pop
+r
+} for
+ir ig ib x s
+} def
+/pfbr
+{
+/ib ed
+/ig ed
+/ir ed
+/ibb ed
+/ibg ed
+/ibr ed
+/n ed
+s
+n 2 mul 2 add copy
+trace
+ir ig ib x fill
+trace
+ibr ibg ibb x s
+} def
+/e
+{
+/Ry ed
+/Rx ed
+/CA ed
+/SA ed
+/SJ ed
+/SI ed
+/DelX SA cos Rx mul def
+/DelY SA sin Ry mul def
+/XI SI DelX add def
+/YI SJ DelY add def
+/OCX DelX def
+/OCY DelY def
+/N 0 def
+SA CA add
+CA
+SA 360 add
+{
+/CurA ed
+/CX CurA cos Rx mul def
+/CY CurA sin Ry mul def
+OCX CX sub 
+OCY CY sub 
+/OCX CX def
+/OCY CY def
+/N N 1 add def
+}
+for
+XI YI N
+} def
+%%EndProlog
+%%Page:? 1
+/getisofont
+{
+findfont
+dup length dict begin
+{
+1 index /FID ne {def}{pop pop} ifelse
+} forall
+/Encoding ISOLatin1Encoding def
+currentdict
+end
+} def
+/Helvetica             getisofont /ISOLatin1-Helvetica             exch definefont pop
+/Helvetica-Bold        getisofont /ISOLatin1-Helvetica-Bold        exch definefont pop
+/Helvetica-Oblique     getisofont /ISOLatin1-Helvetica-Oblique     exch definefont pop
+/Helvetica-BoldOblique getisofont /ISOLatin1-Helvetica-BoldOblique exch definefont pop
+/Times-Roman           getisofont /ISOLatin1-Times-Roman           exch definefont pop
+/Times-Bold            getisofont /ISOLatin1-Times-Bold            exch definefont pop
+/Times-BoldItalic      getisofont /ISOLatin1-Times-BoldItalic      exch definefont pop
+/Times-Italic          getisofont /ISOLatin1-Times-Italic          exch definefont pop
+/Courier               getisofont /ISOLatin1-Courier               exch definefont pop
+/Courier-Bold          getisofont /ISOLatin1-Courier-Bold          exch definefont pop
+/Courier-Oblique       getisofont /ISOLatin1-Courier-Oblique       exch definefont pop
+/Courier-BoldOblique   getisofont /ISOLatin1-Courier-BoldOblique   exch definefont pop
+5 setmiterlimit
+0.025 0.025 scale np
+gs
+7472 3253 7472 20996 26914 20996 26914 3253 clp
+0 g
+23 sw
+0 lc
+0 lj
+[1 114] 0 sd
+8251 3254 m
+8251 20995 l
+s
+9028 3254 m
+9028 20995 l
+s
+9806 3254 m
+9806 20995 l
+s
+10583 3254 m
+10583 20995 l
+s
+12138 3254 m
+12138 20995 l
+s
+12916 3254 m
+12916 20995 l
+s
+13693 3254 m
+13693 20995 l
+s
+14471 3254 m
+14471 20995 l
+s
+16026 3254 m
+16026 20995 l
+s
+16804 3254 m
+16804 20995 l
+s
+17581 3254 m
+17581 20995 l
+s
+18359 3254 m
+18359 20995 l
+s
+19914 3254 m
+19914 20995 l
+s
+20691 3254 m
+20691 20995 l
+s
+21469 3254 m
+21469 20995 l
+s
+22246 3254 m
+22246 20995 l
+s
+23801 3254 m
+23801 20995 l
+s
+24579 3254 m
+24579 20995 l
+s
+25356 3254 m
+25356 20995 l
+s
+26134 3254 m
+26134 20995 l
+s
+7473 3296 m
+26913 3296 l
+s
+7473 4228 m
+26913 4228 l
+s
+7473 5159 m
+26913 5159 l
+s
+7473 6091 m
+26913 6091 l
+s
+7473 7954 m
+26913 7954 l
+s
+7473 8885 m
+26913 8885 l
+s
+7473 9817 m
+26913 9817 l
+s
+7473 10748 m
+26913 10748 l
+s
+7473 12612 m
+26913 12612 l
+s
+7473 13543 m
+26913 13543 l
+s
+7473 14475 m
+26913 14475 l
+s
+7473 15406 m
+26913 15406 l
+s
+7473 17269 m
+26913 17269 l
+s
+7473 18201 m
+26913 18201 l
+s
+7473 19132 m
+26913 19132 l
+s
+7473 20064 m
+26913 20064 l
+s
+[] 0 sd
+7473 3254 m
+7473 20995 l
+s
+11361 3254 m
+11361 20995 l
+s
+15249 3254 m
+15249 20995 l
+s
+19136 3254 m
+19136 20995 l
+s
+23024 3254 m
+23024 20995 l
+s
+26911 3254 m
+26911 20995 l
+s
+7473 7022 m
+26913 7022 l
+s
+7473 11680 m
+26913 11680 l
+s
+7473 16338 m
+26913 16338 l
+s
+7473 20995 m
+26913 20995 l
+s
+92 sw
+7473 18159 m
+9417 17351 l
+11361 16497 l
+13305 15588 l
+15249 14612 l
+17192 13550 l
+19136 12377 l
+21080 11047 l
+23024 9473 l
+24968 7430 l
+26911 3254 l
+q
+2879 719 2879 23761 28801 23761 28801 719 clp
+0 g
+23 sw
+0 lc
+0 lj
+[] 0 sd
+8251 3254 m
+8251 3531 l
+s
+9028 3254 m
+9028 3531 l
+s
+9806 3254 m
+9806 3531 l
+s
+10583 3254 m
+10583 3531 l
+s
+12138 3254 m
+12138 3531 l
+s
+12916 3254 m
+12916 3531 l
+s
+13693 3254 m
+13693 3531 l
+s
+14471 3254 m
+14471 3531 l
+s
+16026 3254 m
+16026 3531 l
+s
+16804 3254 m
+16804 3531 l
+s
+17581 3254 m
+17581 3531 l
+s
+18359 3254 m
+18359 3531 l
+s
+19914 3254 m
+19914 3531 l
+s
+20691 3254 m
+20691 3531 l
+s
+21469 3254 m
+21469 3531 l
+s
+22246 3254 m
+22246 3531 l
+s
+23801 3254 m
+23801 3531 l
+s
+24579 3254 m
+24579 3531 l
+s
+25356 3254 m
+25356 3531 l
+s
+26134 3254 m
+26134 3531 l
+s
+92 sw
+7473 3254 m
+7473 3715 l
+s
+11361 3254 m
+11361 3715 l
+s
+15249 3254 m
+15249 3715 l
+s
+19136 3254 m
+19136 3715 l
+s
+23024 3254 m
+23024 3715 l
+s
+26911 3254 m
+26911 3715 l
+s
+2 lc
+7473 3254 m
+26913 3254 l
+s
+23 sw
+0 lc
+7473 3296 m
+7750 3296 l
+s
+7473 4228 m
+7750 4228 l
+s
+7473 5159 m
+7750 5159 l
+s
+7473 6091 m
+7750 6091 l
+s
+7473 7954 m
+7750 7954 l
+s
+7473 8885 m
+7750 8885 l
+s
+7473 9817 m
+7750 9817 l
+s
+7473 10748 m
+7750 10748 l
+s
+7473 12612 m
+7750 12612 l
+s
+7473 13543 m
+7750 13543 l
+s
+7473 14475 m
+7750 14475 l
+s
+7473 15406 m
+7750 15406 l
+s
+7473 17269 m
+7750 17269 l
+s
+7473 18201 m
+7750 18201 l
+s
+7473 19132 m
+7750 19132 l
+s
+7473 20064 m
+7750 20064 l
+s
+92 sw
+7473 7022 m
+7934 7022 l
+s
+7473 11680 m
+7934 11680 l
+s
+7473 16338 m
+7934 16338 l
+s
+7473 20995 m
+7934 20995 l
+s
+2 lc
+7473 3254 m
+7473 20995 l
+s
+829.44 fhb
+14397 1769 m
+(S) sh
+14982 1769 m
+(a) sh
+15457 1769 m
+(m) sh
+16188 1769 m
+(p) sh
+16682 1769 m
+(l) sh
+16883 1769 m
+(e) sh
+17577 1769 m
+(l) sh
+17778 1769 m
+(e) sh
+18253 1769 m
+(n) sh
+18747 1769 m
+(g) sh
+19240 1769 m
+(t) sh
+19496 1769 m
+(h) sh
+829.44 fhb
+4881 9777 m
+gs 90.0 ro
+(A) sh
+gr
+4881 10361 m
+gs 90.0 ro
+(i) sh
+gr
+4881 10562 m
+gs 90.0 ro
+(r) sh
+gr
+4881 11074 m
+gs 90.0 ro
+(p) sh
+gr
+4881 11567 m
+gs 90.0 ro
+(r) sh
+gr
+4881 11860 m
+gs 90.0 ro
+(e) sh
+gr
+4881 12335 m
+gs 90.0 ro
+(s) sh
+gr
+4881 12774 m
+gs 90.0 ro
+(s) sh
+gr
+4881 13212 m
+gs 90.0 ro
+(u) sh
+gr
+4881 13705 m
+gs 90.0 ro
+(r) sh
+gr
+4881 13998 m
+gs 90.0 ro
+(e) sh
+gr
+691.2 fhn
+7279 2554 m
+(0) sh
+691.2 fhn
+10684 2554 m
+(0) sh
+11073 2554 m
+(.) sh
+11260 2554 m
+(0) sh
+11649 2554 m
+(1) sh
+691.2 fhn
+14572 2554 m
+(0) sh
+14961 2554 m
+(.) sh
+15148 2554 m
+(0) sh
+15537 2554 m
+(2) sh
+691.2 fhn
+18459 2554 m
+(0) sh
+18848 2554 m
+(.) sh
+19035 2554 m
+(0) sh
+19424 2554 m
+(3) sh
+691.2 fhn
+22347 2554 m
+(0) sh
+22736 2554 m
+(.) sh
+22923 2554 m
+(0) sh
+23312 2554 m
+(4) sh
+691.2 fhn
+26235 2554 m
+(0) sh
+26623 2554 m
+(.) sh
+26811 2554 m
+(0) sh
+27199 2554 m
+(5) sh
+691.2 fhn
+4881 6787 m
+(5) sh
+5270 6787 m
+(0) sh
+5659 6787 m
+(0) sh
+6048 6787 m
+(0) sh
+6436 6787 m
+(0) sh
+6825 6787 m
+(0) sh
+691.2 fhn
+5184 11445 m
+(1) sh
+5572 11445 m
+(E) sh
+6033 11445 m
+(+) sh
+6436 11445 m
+(0) sh
+6825 11445 m
+(6) sh
+691.2 fhn
+4608 16103 m
+(1) sh
+4996 16103 m
+(.) sh
+5184 16103 m
+(5) sh
+5572 16103 m
+(E) sh
+6033 16103 m
+(+) sh
+6436 16103 m
+(0) sh
+6825 16103 m
+(6) sh
+691.2 fhn
+5184 20760 m
+(2) sh
+5572 20760 m
+(E) sh
+6033 20760 m
+(+) sh
+6436 20760 m
+(0) sh
+6825 20760 m
+(6) sh
+gr end
+showpage

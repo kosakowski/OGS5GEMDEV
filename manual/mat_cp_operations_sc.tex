@@ -1,0 +1,52 @@
+\subsection{Operations in the source code}
+\subsubsection{Object names}
+
+\begin{verbatim}
+char name_component_properties[80] = "TRACER_PROPERTIES"; \\
+char name_component_properties_component[80] =
+                                  "TRACER_PROPERTIES999";
+\end{verbatim}
+
+\subsubsection{Construction}
+
+The component properties can be created from reading a RFD file.
+The read function is $int MATReadComponentProperties(char *data,
+int found, FILE * f);$. Destruction by MAT list destruction $void
+DestroyMaterialPropertiesList(void)$.
+
+\subsubsection{Data Access}
+
+Access to CP objects is possible either from MAT list or from MAT
+table.
+
+\begin{itemize}
+  \item from MAT list by name
+
+  Data object
+
+  $cp = GetTracerPropertiesObject(name_component_properties_component,
+  cp);$
+\\
+  Object properties by $set$ and $get$ functions like:
+
+  $set\_tp\_solubility(cp, d)$  \ \ /*save the parameter value \\
+  $get\_tp\_solubility(cp)$   \ \ \ \   /*read the parameter value
+
+  \item from MAT table by group, phase, component numbers via MPT:
+
+  $double\ GetTracerDiffusionCoefficient(long index, long phase, long component);$
+\end{itemize}
+
+
+
+\begin{verbatim}
+#Reference
+[1]Habber, A. (2001): Direckte und Inverse Modellierung
+reaktiver Transportprozesse in kl\"{u}ftig-por\"{o}sen Medien,
+Uni-Dissertation, Uni-Hannover
+
+[2]Kohlmeier, M. et al. (2001): Modling of Coupled
+Geohydraulic/Geomechanical/Geochemical Processes in Salt Rock,
+Technical Report, Universit\"{a}t Hannover
+
+\end{verbatim}

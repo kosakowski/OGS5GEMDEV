@@ -1,0 +1,80 @@
+\setlength{\unitlength}{0.0004in}
+%
+\begingroup\makeatletter\ifx\SetFigFont\undefined%
+\gdef\SetFigFont#1#2#3#4#5{%
+  \reset@font\fontsize{#1}{#2pt}%
+  \fontfamily{#3}\fontseries{#4}\fontshape{#5}%
+  \selectfont}%
+\fi\endgroup%
+{\renewcommand{\dashlinestretch}{30}
+\begin{picture}(2940,8238)(0,-10)
+%  polyline 
+\path(1970,7848)(1231,7848)(1231,7478)
+    (1970,7478)(1970,7848)
+%  polyline 
+\path(1970,7478)(1231,7478)(1231,7109)
+    (1970,7109)(1970,7478)
+%  polyline 
+\path(1970,7109)(1231,7109)(1231,6739)
+    (1970,6739)(1970,7109)
+%  polyline 
+\path(1970,6739)(1231,6739)(1231,6369)
+    (1970,6369)(1970,6739)
+%  polyline 
+\path(1970,6369)(1231,6369)(1231,6000)
+    (1970,6000)(1970,6369)
+%  polyline 
+\path(1970,6000)(1231,6000)(1231,5630)
+    (1970,5630)(1970,6000)
+%  polyline 
+\path(1970,5630)(1231,5630)(1231,5261)
+    (1970,5261)(1970,5630)
+%  polyline 
+\path(1970,5261)(1231,5261)(1231,4891)
+    (1970,4891)(1970,5261)
+%  polyline 
+\path(1970,4891)(1231,4891)(1231,4521)
+    (1970,4521)(1970,4891)
+%  polyline 
+\path(1970,4521)(1231,4521)(1231,4152)
+    (1970,4152)(1970,4521)
+%  polyline 
+\path(1970,4152)(1231,4152)(1231,3782)
+    (1970,3782)(1970,4152)
+%  polyline 
+\path(1970,3782)(1231,3782)(1231,3413)
+    (1970,3413)(1970,3782)
+%  polyline 
+\path(1970,3413)(1231,3413)(1231,3043)
+    (1970,3043)(1970,3413)
+%  polyline 
+\path(1970,3043)(1231,3043)(1231,2674)
+    (1970,2674)(1970,3043)
+%  polyline 
+\path(1970,2674)(1231,2674)(1231,2304)
+    (1970,2304)(1970,2674)
+%  polyline 
+\path(1970,2304)(1231,2304)(1231,1934)
+    (1970,1934)(1970,2304)
+%  polyline 
+\path(1970,1934)(1231,1934)(1231,1565)
+    (1970,1565)(1970,1934)
+%  polyline 
+\path(1970,1565)(1231,1565)(1231,1195)
+    (1970,1195)(1970,1565)
+%  polyline 
+\path(1970,1195)(1231,1195)(1231,826)
+    (1970,826)(1970,1195)
+%  polyline 
+\path(1970,826)(1231,826)(1231,456)
+    (1970,456)(1970,826)
+\put(-1000,3600){\makebox(0,0)[lb]{{\SetFigFont{10}{12.4}{\rmdefault}{\mddefault}{\updefault}$\stress_{xy}=0$}}}
+\put(-1000,4200){\makebox(0,0)[lb]{{\SetFigFont{10}{12.4}{\rmdefault}{\mddefault}{\updefault}$u_x=0$}}}
+\put(-1000,4800){\makebox(0,0)[lb]{{\SetFigFont{10}{12.4}{\rmdefault}{\mddefault}{\updefault}${\partial \Pressure}/{\partial \mathbf n}=0$}}}
+\put(2325,3600){\makebox(0,0)[lb]{{\SetFigFont{10}{12.4}{\rmdefault}{\mddefault}{\updefault}$\stress_{xy}=0$}}}
+\put(2325,4200){\makebox(0,0)[lb]{{\SetFigFont{10}{12.4}{\rmdefault}{\mddefault}{\updefault}$u_x=0$}}}
+\put(2325,4800){\makebox(0,0)[lb]{{\SetFigFont{10}{12.4}{\rmdefault}{\mddefault}{\updefault}${\partial \Pressure}/{\partial \mathbf n}=0$}}}
+\put(-500,-54){\makebox(0,0)[lb]{{\SetFigFont{10}{12.4}{\rmdefault}{\mddefault}{\updefault}$ \Pressure=0, \, u_x=0, \,u_y=0$}}}
+\put(-500,8079){\makebox(0,0)[lb]{{\SetFigFont{10}{12.4}{\rmdefault}{\mddefault}{\updefault}${\partial \Pressure}/{\partial \mathbf n}=0, \, \stress_{yy}=0, \,\stress_{xy}=0$}}}
+\end{picture}
+}

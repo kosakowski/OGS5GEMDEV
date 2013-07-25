@@ -1,0 +1,256 @@
+\section{Initial Conditions}
+
+\begin{tabular*}{8.35cm}{|p{2.5cm}|p{5cm}|} \hline
+Object acronym & IC \\
+C++ class      & CInitialCondition \\
+Source files   & rf\_ic\_new.h/cpp \\
+\hline
+File extension & *.ic \\
+Object keyword & \#INITIAL\_CONDITION \\
+\hline
+\end{tabular*}
+
+\Developer{
+%----------------------------------------------------------
+\subsection{Theory}
+}
+
+%-------------------------------------------------------------------------------
+\subsection{\texttt{\bf\#INITIAL\_CONDITION}}
+
+%\subsubsection{Keyword structure}
+
+\begin{verbatim}
+#INITIAL_CONDITION
+ $PCS_TYPE // physical process
+  LIQUID_FLOW       // H process (incompressible flow)
+  UNCONFINED_FLOW   // H process (incompressible flow)
+  GAS_FLOW          // H process (compressible flow)
+  TWO_PHASE_FLOW    // H2 process (incompressible/compressible flow)
+  COMPONENTAL_FLOW  // H2 process (incompressible/compressible flow)
+  RIVER_FLOW        // H process (incompressible flow)
+  RICHARDS_FLOW     // H process (incompressible flow)
+  OVERLAND_FLOW     // H process (incompressible flow)
+  HEAT_TRANSPORT    // T process (single/multi-phase flow)
+  DEFORMATION       // M process (single/multi-phase flow)
+  MASS_TRANSPORT    // C process (single/multi-phase flow)
+  GROUNDWATER_FLOW  // H process (incompressible flow)
+ $PRIMARY_VARIABLE
+  PRESSURE1      // flow (phase)
+  SATURATION2
+  TEMPERATURE1   // heat transport
+  DISPLACEMENT_X // deformation
+  DISPLACEMENT_Y
+  DISPLACEMENT_Z
+  CONCENTRATION1 // mass transport
+  CONCENTRATIONx
+ $GEO_TYPE // geometry
+  POINT    name
+  POLYLINE name
+  SURFACE  name
+  VOLUME   name
+  DOMAIN
+  SUB_DOMAIN
+  MATERIAL_DOMAIN number (material group defined in *.rfi)
+ $DIS_TYPE // value distribution
+  CONSTANT     value
+  DISTRIBUTED  file_name
+  GRADIENT     value1, value2, value3
+  GRADIENT_Z   value1, value2, value3
+  RESTART      file_name.rfr
+\end{verbatim}
+
+
+\begin{tabular*}{12.773cm}{|p{3.cm}|p{1.5cm}|p{7cm}|} \hline
+Parameter          & Acronym & Meaning \\ \hline \hline
+%
+\texttt{PCS\_TYPE} & PCS &  Reference to a process \\
+\texttt{GEO\_TYPE} & GEO &  Reference to a geometric object \\
+\texttt{DIS\_TYPE} & DIS &  Distribution of values \\
+\hline
+\end{tabular*}
+
+\subsubsection{\texttt{\$PCS\_TYPE}}
+
+\begin{tabular*}{12.773cm}{|p{3.cm}|p{1.5cm}|p{7cm}|} \hline
+Parameter          & Value & Meaning \\ \hline \hline
+%
+\texttt{PRESSUREx}        & phase & Source term for fluid phase x \\
+\texttt{DISPLACEMENTx\_X} & phase & Load force for solid phase x \\
+\texttt{DISPLACEMENTx\_Y} & phase & ... \\
+\texttt{DISPLACEMENTx\_Z} & phase & ... \\
+\texttt{TEMPERATUREx}     & phase & Source term for temperature \\
+\texttt{CONCENTRATIONx}   & component & Source term for component mass \\
+\hline
+\end{tabular*}
+
+\subsubsection{\texttt{\$GEO\_TYPE}}
+
+\begin{tabular*}{12.773cm}{|p{3.cm}|p{8.9cm}|} \hline
+Parameter          & Meaning \\ \hline \hline
+%
+\texttt{POINT}     & Name of point \\
+\texttt{POLYLINE}  & Name of polyline \\
+\texttt{SURFACE}   & Name of surface \\
+\texttt{VOLUME }   & Name of volume \\
+\texttt{DOMAIN }   & whole domain \\
+\texttt{SUB\_DOMAIN }  & patches of domain \\
+\texttt{MATERIAL\_DOMAIN }  & Number of material group \\
+\hline
+\end{tabular*}
+
+%%WW
+Initialization of specified zones in a domain can be done by using
+ \texttt{SUB\_DOMAIN} for keyword \texttt{\$GEO\_TYPE} followed data
+ as the number of sub-domains, pair data for indeces of material
+ type (given in .rfi file) and initial values, i.e,
+ \begin{verbatim}
+ #INITIAL_CONDITION
+ $PCS_TYPE
+  HEAT_TRANSPORT
+ $PRIMARY_VARIABLE
+  TEMPERATURE1
+ $GEO_TYPE
+  SUB_DOMAIN
+   2
+   0  25.0
+   1  23.0
+ $DIS_TYPE
+  GRADIENT   500.0  10.0  0.03
+#STOP
+\end{verbatim}
+Where number 2 after keyword "SUB\_DOMAIN" indicates there are two set of initial values. For each pair of data,
+ the integer defines patch index, which is given in the file about finite element mesh data; the float one gives
+ value.  After reading these initial data, the programme will search the elements, which have the same patch
+  indices given in "SUB\_DOMAIN" section, and assign the corresponding values.
+\begin{description}
+  \item[Initial stress by defining a linear function]
+   For stress variables in deformation analysis, we can give initial values of stresses by a linear expression such as
+ \begin{verbatim}
+#INITIAL_CONDITION
+ $PCS_TYPE
+  DEFORMATION
+ $PRIMARY_VARIABLE
+  STRESS_XX
+ $GEO_TYPE
+  SUB_DOMAIN
+   4
+   0   -23.75+-0.2*y
+   1   24.75+-0.5*y
+   2   26.75+12.*y+-10*x
+   3   27.75+14.0*y+-10*x
+#INITIAL_CONDITION
+ $PCS_TYPE
+  DEFORMATION
+ $PRIMARY_VARIABLE
+  STRESS_YY
+ $GEO_TYPE
+  SUB_DOMAIN
+  4
+  0   23.75+0.2*y
+   1   24.75+1.3*y
+   2   26.75+16.*y+-20*x
+   3   27.75+-18.0*y+-20*x
+#STOP
+\end{verbatim}
+Such an expression takes form
+\[a+b*x+c*y+d*z\] with $a,b,c,d$ the float numbers. Note: There is no blank space in the expression.
+Operator $+$ is used as both delimiter and operator in the expression. If coefficients $b,c$ or $d$ is negative,
+symbol $+$ must be given before the coefficient, e.g. 27.75+-18.0*y+-20*x with $b=-20.0$ and $c=18.0$.
+\end{description}
+
+\subsubsection{\texttt{\$DIS\_TYPE}}
+
+\begin{tabular*}{12.773cm}{|p{3.cm}|p{8.9cm}|} \hline
+Parameter          & Meaning \\ \hline \hline
+%
+\texttt{CONSTANT}  & constant value \\
+\texttt{GRADIENT}  & ref position, ref value, gradient \\
+\texttt{GRADIENT\_Z}  & ref position (z), ref value, gradient \\
+\hline
+\end{tabular*}
+
+\Examples{
+%-------------------------------------------------------------------------------
+\subsection{Examples}
+
+%-------------------------------------------------------------------------------
+\subsubsection{Initial condition in the domain}
+
+\begin{verbatim}
+benchmark: h_line.ic
+#INITIAL_CONDITION
+ $PCS_TYPE
+  LIQUID_FLOW
+ $PRIMARY_VARIABLE
+  PRESSURE1
+ $GEO_TYPE
+  DOMAIN
+ $DIS_TYPE
+  CONSTANT 0.0
+#STOP
+\end{verbatim}
+
+This initial condition is defined for a process with primary
+variable \texttt{PRESSURE1}. Geometrically the initial condition
+is assigned to the whole domain, i.e. all mesh points.
+
+Here the use of gradient applies temperature values according to
+depth z inside the domain specified. The first value gives the
+depth of a reference point, the second value its temperature in
+this case, the third value the change in temperature with depth.
+
+\begin{verbatim}
+ #INITIAL_CONDITION
+ $PCS_TYPE
+  TEMPERATURE1
+ $GEO_TYPE
+  DOMAIN
+ $DIS_TYPE
+  GRADIENT_Z   500.0  10.0  0.03
+#STOP
+\end{verbatim}
+
+%-------------------------------------------------------------------------------
+\subsubsection{Restart as initial conditions}
+
+Initial conditions can be used for restarts. A corresponding RFR
+file (restart.rfr) is required. We present an example for
+unsaturated Richards flow.
+
+\begin{verbatim}
+#INITIAL_CONDITION
+ $PCS_TYPE
+  RICHARDS_FLOW
+ $PRIMARY_VARIABLE
+  PRESSURE1
+ $GEO_TYPE
+  DOMAIN
+ $DIS_TYPE
+  RESTART restart.rfr
+\end{verbatim}
+
+Example for an RFR file:
+
+\begin{verbatim}
+#0#0#0#1#3.236234700193E-04#0#4.2.18# // not used
+1   1   4                             // not used
+1   1                                 // number of node variables (first number)
+PRESSURE1,  Pa                        // name of node variable, unit
+0   0.000000000000000e+000            // node number, node value
+1  -1.941899651235000e+001
+2  -3.880014828104000e+001
+3  -5.814051970137000e+001
+4  -7.744430939151999e+001
+...
+231 -3.245527412767000e+002
+232 -3.245527412767000e+002
+\end{verbatim}
+
+Information of restart time comes from the TIM data (.tim file).
+Important is that number of node variables and variable names are
+compatible. In the data block node values for each mesh node are
+required.
+
+}
+ \LastModified{YD - 5th July 2006}

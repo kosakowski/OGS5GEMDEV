@@ -1,0 +1,53 @@
+Index: rf_tim_new.cpp
+===================================================================
+--- rf_tim_new.cpp	(revision 5603)
++++ rf_tim_new.cpp	(working copy)
+@@ -935,35 +935,34 @@
+ 			case 'G': //Groundwater flow
+ 			  // iterdum=MMax(iterdum,m_pcs->iter);
+ 				imflag=1;
+-				if ( (imflag>0) && ( m_pcs->iter  >= time_adapt_tim_vector[time_adapt_tim_vector.size()-1] ) )
++				if ( (imflag>0) && ( m_pcs->iter  >= time_adapt_tim_vector[1] ) )
+ 				{
+-					imflag=0; iterdum = max ( iterdum,m_pcs->iter );
++					imflag=0; cout << "Self adaptive time step: to many iterations for Groundwater flow" << endl;
+ 				}
+ 				if ( ((imflag == 1) && ( m_pcs->iter  <= time_adapt_tim_vector[0] ) ))
+ 				{
+-					imflag=2;iterdum = max ( iterdum,m_pcs->iter );
++				  imflag=2; 
+ 				}
+ 				break;
+ 			case 'M': // Mass transport
+ 				iterdum = max ( iterdum,m_pcs->iter );
++				if ( (imflag>0) && ( m_pcs->iter  >= time_adapt_tim_vector[1] ) )
++				{
++					imflag=0; cout << "Self adaptive time step: to many iterations for Transport " << m_pcs->iter << " "<< time_adapt_tim_vector[1] << endl;
++				}
++				if ( ((imflag == 1) && ( m_pcs->iter  <= time_adapt_tim_vector[0] ) ))
++				{
++				  imflag=2; 
++				}
+ 				break;
+ 		}
+ 		}
+ 	}
+ 
+-	if   ( iterdum  >= time_adapt_tim_vector[time_adapt_tim_vector.size()-1] ) //reduce timestep always if mass transport need it
+-		 {
+-					imflag=0;
+-		  }
+-	else if ( (imflag>0) && (iterdum  <= time_adapt_tim_vector[0]) ) // increase timestep only if groundwater flow alows it,
+-				{
+-					imflag=2;
+-				}
+ 
++	if (imflag==0) {time_step_length = time_step_length * time_adapt_coe_vector[time_adapt_tim_vector.size()-1];} //timestep smaller
++        else if (imflag==2){ time_step_length = time_step_length * time_adapt_coe_vector[0];} //timestep bigger
+ 
+-	if (imflag==0) {time_step_length = time_step_length * time_adapt_coe_vector[time_adapt_tim_vector.size()-1];}
+-        else if (imflag==2){ time_step_length = time_step_length * time_adapt_coe_vector[0];}
+-
+ 	time_step_length = MMin ( time_step_length,my_max_time_step );
+ 	time_step_length = MMax ( time_step_length,min_time_step );
+ 

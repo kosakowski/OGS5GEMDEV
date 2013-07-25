@@ -1,0 +1,200 @@
+\section{Component Properties}
+
+
+\begin{tabular*}{8.35cm}{|p{2.5cm}|p{5cm}|} \hline
+Object acronym & CP \\
+C++ class      & CComponentProperties \\
+Source files   & rfmat\_cp.h/cpp \\
+\hline
+File extension & *.mcp \\
+Object keyword & \#COMPONENT\_PROPERTIES \\
+\hline
+\end{tabular*}
+
+\Developer{
+%----------------------------------------------------------
+\subsection{Theory}
+}
+
+%-------------------------------------------------------------------------------
+\subsection{\texttt{\bf\#COMPONENT\_PROPERTIES}}
+
+For each component, that has to be included in the model simulation, the corresponding component properties have to be specified. This includes chemical species as well as biological species. If the component appears in different phases (i.e. water and solid phase), it has to be specified for each phase. For each component, one process of type \verb|MASS_TRANSPORT| has to be given.
+
+%\subsubsection{Keyword structure}
+
+\begin{verbatim}
+#COMPONENT_PROPERTIES
+ $NAME
+  name
+ $MOBIL
+  0 / 1
+ $TRANSPORT_PHASE
+  phase_number
+ $DIFFUSION
+  model model_parameters
+ $DECAY_AQUEOUS
+  model model_parameters
+ $ISOTHERM
+  model model_parameters
+..
+\end{verbatim}
+
+\subsection{Data Input}
+
+\subsubsection{Component Name}
+The sub-keyword
+\begin{verbatim}
+ $NAME
+\end{verbatim}
+specifies a name for the component. The name is case-sensitive. The same name can be used to get component output.
+If this keyword is skipped, then the name CONCENTRATIONx will be used, where x is number of the component (starting with 0).
+
+\subsubsection{Component Mobility}
+The sub-keyword
+\begin{verbatim}
+ $MOBILE
+\end{verbatim}
+specifies, if a component is mobile (=1) or immobile (=0). If it is mobile, then the corresponding equation system is solved. If it is immobile, i.e. a sorbed species, then the component concentrations are just passed to the next timestep. Has to be specified, default is 1.
+
+\subsubsection{Component Phase}
+The sub-keyword
+\begin{verbatim}
+ $TRANSPORT_PHASE
+\end{verbatim}
+specifies the number of the phase in which the component is to be transported. 0 is water phase. Default is 0.
+
+\subsubsection{Component Diffusion}
+The sub-keyword
+\begin{verbatim}
+ $DIFFUSION
+\end{verbatim}
+specifies the diffusion model and the corresponding diffusion model values used for the diffusion coefficient.
+
+\paragraph*{Case 0: User-defined function by \#CURVE}
+\Developer{
+\begin{eqnarray}
+    D =  -f(C)
+\end{eqnarray}
+\begin{verbatim}
+ $DIFFUSION
+ 0 curve_number
+\end{verbatim}
+}
+Not implemented.
+
+\paragraph*{Case 1: Constant diffusion coefficient}
+\begin{eqnarray}
+    D =  D_0
+\end{eqnarray}
+\begin{verbatim}
+ $DIFFUSION
+ 1  D0
+\end{verbatim}
+
+\subsubsection{Component Decay}
+The sub-keyword
+\begin{verbatim}
+ $DECAY
+\end{verbatim}
+specifies, if the component decays in the phase in which it is transported. The decay does not account for the production of daughter products.
+Decay with a kinetics of any order as well as a Monod kinetics is accounted for. Default is no decay.
+
+\paragraph*{Case 0: User-defined function by \#CURVE}
+\begin{eqnarray}
+  \frac{\partial C}{\partial t} =  -f(C)
+\end{eqnarray}
+\begin{verbatim}
+$DECAY
+ 0 curve_number
+\end{verbatim}
+
+\paragraph*{Case 1: Decay with any-order kinetics}
+\begin{eqnarray}
+  \frac{\partial C}{\partial t} =  - K C^o
+\end{eqnarray}
+\begin{verbatim}
+$DECAY
+ 1  K    o
+\end{verbatim}
+
+\paragraph*{Case 2: Decay with Monod-kinetics}
+\begin{eqnarray}
+  \frac{\partial C}{\partial t} =  -\frac{ K C}{M + C}
+\end{eqnarray}
+\begin{verbatim}
+$DECAY
+ 2  K M
+\end{verbatim}
+
+
+\subsubsection{Component Sorption}
+The sub-keyword
+\begin{verbatim}
+ $ISOTHERM
+\end{verbatim}
+specifies, if the component sorbs in the phase in which it is transported. Linear, Freundlich and Langmuir sorption are accounted for. No mass is transfered to the immobile phase. Default is no decay. Aqueous and sorbed concentration are termed $C$ and $C_S$, respectively.
+
+\paragraph*{Case 0: User-defined function by \#CURVE}
+\begin{eqnarray}
+    C_S = f(C) C
+\end{eqnarray}
+\begin{verbatim}
+ $ISOTHERM
+ 0 curve_number
+\end{verbatim}
+
+\paragraph*{Case 1: Linear Isotherm}
+\begin{eqnarray}
+    C_S = K_D C
+\end{eqnarray}
+\begin{verbatim}
+ $ISOTHERM
+ 1  KD
+\end{verbatim}
+
+\paragraph*{Case 2: Freundlich Isotherm}
+\begin{eqnarray}
+    C_S = K_D C^e
+\end{eqnarray}
+\begin{verbatim}
+ $ISOTHERM
+ 2  KD e
+\end{verbatim}
+
+\paragraph*{Case 3: Langmuir Isotherm}
+\begin{eqnarray}
+    C_S = \frac{K C}{1 + L C}
+\end{eqnarray}
+\begin{verbatim}
+ $ISOTHERM
+ 2  K L
+\end{verbatim}
+
+
+\Examples{
+%-------------------------------------------------------------------------------
+\subsection{Examples}
+
+%-------------------------------------------------------------------------------
+\subsubsection{Mass transport}
+
+\begin{verbatim}
+benchmark: 1d_line.mcp
+
+#COMPONENT_PROPERTIES  ; comp0
+ $NAME
+  Hallo1 ;  Component Name
+ $MOBIL
+  1;  Component is mobile
+ $DIFFUSION
+  1  1.0e-9 ; constant diffusion coefficient
+ $DECAY_AQUEOUS
+  1  1.0e-6  1.0  ; first - order decay
+ $ISOTHERM
+  1  1e-3 ;  linear sorption
+#STOP
+\end{verbatim}
+} % Examples
+
+\LastModified{SB - \today}

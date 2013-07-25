@@ -1,0 +1,321 @@
+\section{Initial Conditions}
+Initial conditions can be specified for saturation, fluid pressure,
+temperature and concentration. Saturation, fluid pressure and temperature
+refer to phases and concentration refers to components. The available
+menus are controled by the selected physico-chemical model as well as
+by the specified number of phases and components.
+
+%----------------------------------------------------------
+\subsection{Keywords}
+
+The following keywords are available to specify initial conditions
+for fluid flow, heat transport and mass transport.
+
+\begin{verbatim}
+#INITIAL_CONDITIONS_PRESSURE
+#INITIAL_CONDITIONS_WATER_CONTENT
+#INITIAL_CONDITIONS_SATURATION
+#INITIAL_CONDITIONS_CONCENTRATION
+#INITIAL_CONDITIONS_SOLUTE_CONCENTRATION
+#INITIAL_CONDITIONS_SORBED_CONCENTRATION
+#INITIAL_CONDITIONS_TEMPERATURE
+#INITIAL_CONDITIONS_IMMOBILE_SOLUTE_CONCENTRATION
+\end{verbatim}
+Initial conditions for different phases and components are specified by
+repeated use of the keyword. If the keyword is not repeated but more than
+one initial conditions are specified under one keyword these conditions
+are applied to the first phase.
+
+
+%----------------------------------------------------------
+\subsection{Methods}
+\begin{table}[h]
+%\caption{}
+\begin{tabular}{|l|l|l|}
+\hline Method & Subject & Au
+\\
+\hline \hline
+0 & Constant value to all nodes & AH
+\\
+1 & Constant value for individual node given by node number & AH
+\\
+2 & Constant value for individual nodes given by coordinates & AH
+\\
+3 & Linear distribution between two nodes given by node numbers & AH
+\\
+4 & Linear distribution between two nodes given by coordinates & AH
+\\
+5 & Linear depth distribution to all nodes & AH/OK
+\\
+6 & Hydrostatic distribution to all nodes by z-coordinate ???? & AH
+\\
+7 & Specified distribution around node given by node number & AH
+\\
+8 & Specified distribution around node given by node coordinates & AH
+\\
+9 & Constant value at a plain given by coordinates & AH
+\\
+10 & Linear distribution between horizontal planes given by z-coordinates & AH
+\\
+11 & Bilinear distribution to all nodes within a rectangle given by node coordinates & RK
+\\
+20 & Constant value inside polygon, 2-D method $\Subset\Supset$ POLYLINE object & OK
+\\
+21 & Constant value along a polygon, 3-D method $\Subset\Supset$ POLYLINE object & OK
+\\
+\hline
+\end{tabular}
+\end{table}
+\newpage
+%----------------------------------------------------------
+\subsection{Examples}
+\hrule
+Method 0:
+A constant value is applied to all nodes.
+%
+\small
+\begin{verbatim}
+RFD - File:
+#INITIAL_CONDITIONS_PRESSURE ; keyword
+0 0 1.e5 ; method, mode, value
+#INITIAL_CONDITIONS_CONCENTRATION ; keyword
+0 0 0. ; method, mode, value
+\end{verbatim}
+\normalsize
+
+\hrule
+Method 1:
+A constant value is applied to a node given by node number.
+%
+\small
+\begin{verbatim}
+RFD - File:
+#INITIAL_CONDITIONS_SATURATION ; keyword
+1 0 0 0.15 ; method, mode, node, value
+\end{verbatim}
+\normalsize
+
+\hrule
+Method 2:
+A constant value is applied to a node given by coordinates.
+%
+\small
+\begin{verbatim}
+RFD - File:
+#INITIAL_CONDITIONS_PRESSURE ; keyword
+2 0 ; method, mode
+100 1 0 1.e5 ; x, y, z, value
+\end{verbatim}
+\normalsize
+
+\hrule
+Method 3:
+A linear value distribution is applied to nodes between two nodes given by
+node numbers. Skipmode specifies to which nodes no values are assigned:\newline
+If skipmode = 1: value is applied to every node on line \newline
+if skipmode = 2: value is applied to 1., 3., 5.....node on line etc.
+%
+\small
+\begin{verbatim}
+RFD - File:
+#INITIAL_CONDITIONS_PRESSURE ; keyword
+3  0 ; method, mode
+0  100 ; node1, node2
+1  1.693567e+005  1.693567e+005 ; skipmode, value1, value2
+\end{verbatim}
+\normalsize
+
+\hrule
+Method 4:
+A linear value distribution is applied to all nodes between two nodes given by
+coordinates.
+%
+\small
+\begin{verbatim}
+RFD - File:
+#REFERENCE_CONDITIONS
+ 9.810000  0.000000  101325.000000
+#INITIAL_CONDITIONS_CONCENTRATION ; keyword
+ 4 0 ; method, mode
+ 1.500000e+02  0.000000e+00  1.500000e+02 200. ; x1, y1, z1, value1
+ 4.500000e+02  0.000000e+00  1.500000e+02 200. ; x2, y2, z2, value2
+\end{verbatim}
+\normalsize
+
+\hrule
+Method 5:
+A linear depth distribution is applied to all nodes according to: \newline
+$value = reference\_value + (node\_elevation - reference\_elevation) * gradient$
+%
+\small
+\begin{verbatim}
+RFD - File:
+#INITIAL_CONDITIONS_PRESSURE  ; keyword
+5 0 ; method, mode
+150. 1.e5  -9810. ; reference_elevation, reference_value, gradient
+\end{verbatim}
+\normalsize
+
+\hrule
+Method 6:
+Hydrostatic distribution to all nodes by z-coordinate according to: \newline
+$value = (value1 - z1)*rho*g) - (node\_elevation - z1)*rho*g$ \newline
+gek\"{u}rzt: $value = rho * g * (value1 - node\_elevation)$ \newline
+ist nie hydrostatisch !!!!!!!
+%
+\small
+\begin{verbatim}
+RFD - File:
+#INITIAL_CONDITIONS_PRESSURE  ; keyword
+6 0 ; method, mode
+100. 100. ; z1, value1
+\end{verbatim}
+\normalsize
+
+\hrule
+Method 7:
+A distribution is assigned to nodes around a node given by node coordinates according
+to the distribution\_type chosen: \newline
+ 0:  Cube with constant value \newline
+ 1:  Diamond with constant value \newline
+ 2:  Sphere with constant value \newline
+-1:  Triangle or cone with value distribution $value = value1 - value1*dist/radius$ \newline
+-2:  Circle or sphere with value distribution \newline
+-3:  Gaussian distribution $value=value1*exp((-0.5)*dist*dist/radius/radius)$ \newline
+-4:  Cylinder ???
+%
+\small
+\begin{verbatim}
+RFD - File:
+#INITIAL_CONDITIONS_CONCENTRATION ; keyword
+7 0 ; method, mode
+-1 ; distribution_type,
+0 ; node
+100 50 ;  radius, value1
+\end{verbatim}
+\normalsize
+
+\hrule
+Method 8:
+A distribution is assigned to nodes around a node given by node coordinates according
+to the distribution\_type chosen: \newline
+ 0:  Cube with constant value \newline
+ 1:  Diamond with constant value \newline
+ 2:  Sphere with constant value \newline
+-1:  Triangle or cone with value distribution $value = value1 - value1*dist/radius$ \newline
+-2:  Circle or sphere with value distribution \newline
+-3:  Gaussian distribution $value=value1*exp((-0.5)*dist*dist/radius/radius)$ \newline
+-4:  Cylinder ???
+%
+\small
+\begin{verbatim}
+RFD - File:
+#INITIAL_CONDITIONS_CONCENTRATION ; keyword
+8 0 ; method, mode
+-1 ; distribution_type
+0 10 10 ; x, y, z,
+2. 100. ;  radius, value1
+\end{verbatim}
+\normalsize
+
+\hrule
+Method 9:
+A constant value is applied to all nodes in a plain given by coordinates.
+%
+\small
+\begin{verbatim}
+RFD - File:
+#INITIAL_CONDITIONS_PRESSURE ; keyword
+9 0 ; method, mode
+0 0 0 ; x1, y1, z1
+0 0 1 ; x2, y2, z2
+0 1 0 ; x3, y3, z3
+1.e5 ; value1
+\end{verbatim}
+\normalsize
+
+\hrule
+Method 10:
+A linear depth distribution is applied to all nodes in between a specified number
+of horizontal planes given by the z coordinates according to: \newline
+$value = value1 + |node\_elevation -z1| * (value2 - value1) \quad / \quad |z2 - z1| $
+%
+\small
+\begin{verbatim}
+RFD - File:
+#INITIAL_CONDITIONS_PRESSURE ; keyword
+10 0 ; method, mode
+2 0 100 50 0 ; number_of_plains, z1, value1, z2, value2
+\end{verbatim}
+\normalsize
+
+\hrule
+Method 11:
+A bilinear distribution is applied to all nodes within a rectangle given by
+node coordinates.
+%
+\small
+\begin{verbatim}
+RFD - File:
+#INITIAL_CONDITIONS_CONCENTRATION ; keyword
+11 0 ; method, mode
+ 0 0 0 100 ; x1, y1, z1, value1
+50 0 0  50 ; x2, y2, z2, value2
+ 0 1 0 100 ; x3, y3, z3, value3
+50 1 0  50 ; x4, y4, z4, value4
+\end{verbatim}
+\normalsize
+
+\hrule
+Method 20:
+A constant value is assigned to all nodes within and close to a polyline (see method 21).
+Initial conditions data are in the RFD file, whereas POLYLINE data are in the RFM file.\newline
+(mode and distribution\_type are not used).
+%
+\small
+\begin{verbatim}
+RFD - File:
+#INITIAL_CONDITIONS_TEMPERATURE ; keyword
+ 20 0 Conc1 0 340.0 ; method, mode, polyline_name, distribution_type, value
+ 20 0 Conc2 0 340.0 ; method, mode, polyline_name, distribution_type, value
+RFM - File:
+#POLYLINE
+Conc1
+4 ; number of polyline points
+2 ; polyline type
+2.566993e+005 -8.162393e+002 0.000000e+000 0.000000e+000 5.000000e+001
+2.566993e+005 -2.264957e+002 0.000000e+000 0.000000e+000 5.000000e+001
+2.515904e+005 -2.111111e+002 0.000000e+000 0.000000e+000 5.000000e+001
+2.514379e+005 -8.111111e+002 0.000000e+000 0.000000e+000 1.000000e-001
+0.000000e+000 ; epsilon
+1 ; closed
+#POLYLINE
+Conc2
+4 ; number of polyline points
+2 ; polyline type
+2.619608e+005 -8.213675e+002 0.000000e+000 0.000000e+000 1.000000e-001
+...
+\end{verbatim}
+\normalsize
+
+\hrule
+Method 21:
+A constant value is assigned to all nodes close to a polyline (3-D method ????).
+Initial conditions data are in the RFD file, whereas POLYLINE data are in the RFM file.\newline
+(mode, distribution\_type and radius are not used(epsilon in rfm)).
+%
+\small
+\begin{verbatim}
+RFD - File:
+#INITIAL_CONDITIONS_TEMPERATURE ; keyword
+ 21 0 Conc1 0 340.0 1 ; method, mode, polyline_name, distribution_type, value, radius
+ 21 0 Conc2 0 340.0 1 ; method, mode, polyline_name, distribution_type, value, radius
+\end{verbatim}
+\normalsize
+
+%----------------------------------------------------------
+\subsection{GUI}
+
+
+
+\LastModified{MB - \today}

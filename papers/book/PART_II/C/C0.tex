@@ -1,0 +1,88 @@
+%\section{Theory}
+
+The mass transport in a homogeneous, saturated aquifer can be influenced by convection, diffusion, decay and biodegradation, sorption and chemical reactions. For a steady state 1-dimensional flow through a homogeneous isotropic medium with constant material parameters the following differential equation (\ref{eq51}) is applied.
+%
+\begin{equation}
+\frac{\partial C}{\partial t}\,+\, \frac{\rho_b}{R}\cdot\frac{\partial S}{\partial t}\,+\, \frac{q}{R}\cdot\frac{\partial C}{\partial x}\,=\,
+D_{xx}\cdot\frac{\partial^2C}{\partial x^2}\,-\,\lambda\cdot C
+\label{eq51}
+\end{equation}
+{\small
+with
+\begin{itemize}
+\item[$C$] -- dissolved concentration (kg$\cdot$m$^{-3}$),
+\item[$S$] -- sorbed concentration(kg$\cdot$kg$^{-1}$),
+\item[$t$] -- time (s),
+\item[$\rho_b$] -- bulk density (kg$\cdot$m$^{-3}$),
+\item[$R$] -- retardation factor (-),
+\item[$q$] -- flow rate (m$\cdot$s$^{-1}$),
+\item[$x$] -- distance (m),
+\item[$D_{xx}$] -- dispersion coefficient in x-direction (m$^2\cdot$s$^{-1}$),
+\item[$\lambda$] -- decay rate (s$^{-1}$).
+\end{itemize}
+}
+
+This equation is used to calculate the concentration distribution under consideration of decay and sorption with the linear Henry-isotherm. The retardation coefficient $R$ for the Henry isotherm is related to the Henry sorption coefficient $K_D$ in the following way.
+%
+\begin{equation}
+R\,=\,1\,+\,\frac{\rho_b}{\Phi}\,K_D\,=\,
+1\,+\,\frac{1-\Theta}{\Phi}\,\rho_s K_D
+\label{eq52}
+\end{equation}
+{\small
+with
+\begin{itemize}
+\item[$\Phi$] -- porosity (-),
+\item[$\rho_s$] -- density (kg$\cdot$m$^{-3}$),
+\end{itemize}
+with the initial and boundary conditions
+\begin{displaymath}
+C(x,t=0)\,=\,C_I\quad\forall x
+\end{displaymath}
+with $C_I$ - concentration at time $I$.
+\begin{displaymath}
+C(x=0,t)\,=\,C_0\quad\forall t,\qquad
+\frac{\partial C}{\partial x}(x\rightarrow\infty,t)\,=\,C_I
+\quad\forall t>0
+\end{displaymath}
+with $C_0$ - initial concentration.
+}
+
+The following analytical solution is significant:
+\begin{eqnarray}
+C=C_1&+&\left(C_0-C_1\right)\cdot\frac{1}{2}
+%\mbox{\hspace{-1.5ex}}\cdot\mbox{\hspace{-1.5ex}}
+\left[
+\exp
+\left(
+\frac{v\cdot x(1-\gamma)}{2\cdot D_{xx}}
+\right)
+\cdot\mathrm{erfc}
+\left(
+\frac{x-v\cdot\gamma\cdot t/R}{2\cdot \sqrt{D_{xx}\cdot t/R}}
+\right)
+\right. \nonumber\\[2.5ex]
+& &
++\left.
+\exp
+\left(
+\frac{v\cdot x(1+\gamma)}{2\cdot D_{xx}}
+\right)
+\cdot\mathrm{erfc}
+\left(
+\frac{x+v\cdot\gamma\cdot t/R}{2\cdot \sqrt{D_{xx}\cdot t/R}}
+\right)
+\right]
+\label{eq53}
+\end{eqnarray}
+{\small
+with $v$ - velocity
+}
+
+\begin{equation}
+\gamma\,=\,
+\sqrt{1+4\cdot\lambda\cdot R\cdot D_{xx}/v^2}\,.
+\label{eq54}
+\end{equation}
+
+Equation (\ref{eq53}) is the basis for the verification of the numerical simulation results for the 1-dimensional mass transport. All described equations and all analytical solutions of equation (\ref{eq53}) are taken from \cite{Hab:01}. 

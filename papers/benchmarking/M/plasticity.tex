@@ -1,0 +1,161 @@
+\section{Elasto-plasticity}
+
+Plasticity is a property of a material to undergo a non-reversible change of shape in response to an applied force. During the elasto-plastic deformation, the onset of plasticity is determined by a yield criterion and post-yield deformation is governed by the yield criterion and a plastic potential. To illustrate features of elasto-plasticity deformation, we consider a uniaxial test of stress depicted in Fig. \ref{fig:uniax_test}.
+
+\begin{figure}[!htb]
+  \centering
+  \includegraphics[scale=0.6]{M/figure/uniaxial.eps}
+  \caption{Uniaxial test }
+  \label{fig:uniax_test}
+\end{figure}
+
+This means only one direction has non-zero stress and strain,e.g $\stress=\sigma_{yy}$ and $\strain=\gamma_{yy}$.
+Different material exhibits different elasto-plastic behavior. Fig. \ref{fig:uniax_lp} depicts a typical
+
+\begin{figure}[!htb]
+  \centering
+  \input{M/figure/plast.eepic}
+  \caption{Stress-strain curve of 1D problems }
+  \label{fig:uniax_lp}
+\end{figure}
+
+stress-strain curve of the uniaxial test. If load $\stress$ is gradually increased, a corresponding point in $(\stress, \strain)$ plane are moving from 0 to A. Up to A, stress reaches a value $\Stress_0$, so called yield stress. If the load is removed gradually before its reaches the yield value, the point follows the line from A to 0. On the other hand, if the load is continually increased after stress is bigger than   $\Stress_0$, the material experiences plastic deformation. Assuming the curve is extended from A to B during load acting. If we remove the load gradually, the point  will not take the way its from, i.e. from B to A to 0. On the contrary, it will move from B to C linearly. Furthermore, if the load is applied again, the point will take the path from \mbox{C $\longrightarrow$ B $\longrightarrow$ D}.
+
+This implies that: i) The unloading is elastic and there is still strain $\strain^p$ left after the load being removed,
+Therefore, the plastic deformation is irreversible; ii) The strain is admissible to be decomposed into several
+components, e.g. $\Stra=\Stra^e+\Stra^p$; iii) The relationship of stress-strain is history dependent curve.  Based on the last point and the  Hook's law, the constitutive equation for the 1D deformation problem can be described as
+
+\begin{eqnarray}
+\sigma_{yy}=E\varepsilon_{yy}^e=E(\varepsilon_{yy}-\varepsilon_{yy}^p)
+\label{eqn:constitu_M_1D}
+\end{eqnarray}
+
+where $E$ is so called Young's modulus. If the stress-strain is monotonic increasing after yielding, the material shows hardening behavior. For some porous media, softening  behavior may be observed and its stress-strain curve looks like what depicted in Fig. \ref{fig:uniax_lp1}.
+
+\begin{figure}[!htb]
+  \centering
+  \input{M/figure/plastics.eepic}
+  \caption{Softening }
+  \label{fig:uniax_lp1}
+\end{figure}
+
+For the constitutive equation, the case of more than one direction have non-zero stress and strain are much more complicated. A yield function $\yieldf$ and a plastic potential $\plsp$ are introduced to establish a constitutive equation. Normally, the variables of the two functions are the first, second or third stress invariant $\sivi$, $\sivii$ or $\siviii$. If we cast the yield functions to the principal stress space, we get the yield surfaces. Fig. \ref{fig:yieldsfc} depticts three typical yield surfaces of porous media.
+
+\begin{figure}[!htb]
+  \begin{center}
+   \begin{minipage}[t]{0.48\textwidth}
+     \begin{center}
+    \includegraphics[scale=0.28]{M/figure/yieldsfc_dp.eps}
+    \centerline{(Drucker-Prager)}
+    \end{center}
+   \end{minipage}
+   \hspace{0.02\textwidth}
+   \begin{minipage}[t]{0.48\textwidth}
+    \begin{center}
+    \includegraphics[scale=0.28]{M/figure/yieldsfc_cam.eps}\\
+    \centerline{(Cam-Clay)}
+    \end{center}
+   \end{minipage}\\
+   %
+   \begin{minipage}[t]{0.48\textwidth}
+     \begin{center}
+    \includegraphics[scale=0.28]{M/figure/yieldsfc_wm.eps}
+    \centerline{(Single yield surface)}
+    \end{center}
+   \end{minipage}
+  \end{center}
+  \caption{Yield surface}
+  \label{fig:yieldsfc}
+\end{figure}
+
+If the stress path of any point locates inside the surface, the point undergoes elastic deformation. Otherwise, the stress status is determined by the Kuhn-Tucker criterion for the loading or unloading:
+
+\begin{eqnarray}
+\label{kuhn_tucker}
+\quad \dot{\yieldf} \leq 0, \,\, \dot{ \PlasticParameter}\,{\yieldf} = 0,\,\mbox{or},\,  \dot{ \PlasticParameter} \geq 0
+\end{eqnarray}
+
+is then used to check the yield status.
+
+Since the stress path in plastic deformation is history dependent, we describe the constitutive equations in the sense of increment of stress and strain.
+Considering the generalized Hook's law (\ref{eq:hook}),  the relationship of incremantal stress  tensor $d \Stress$ and incremantal strain tensor $d \Stra$ the relationship of
+stress and strain obeys the generalized Hook's law:
+
+\begin{eqnarray}
+d\Stress
+= {\mathbf D} d\Stra^e=
+{\mathbf D} (d\Stra-d\Stra^p)
+\label{eq:ghook}
+\end{eqnarray}
+
+From the definition of plastic potential surface $\plsp$, and
+normality law, it is possible to express the generalized plastic
+strain increment if the potential surface is smooth. Since
+$d\Stra^p$ lies parallel to the normal to $\plsp$ at $\Stress$, we
+may write
+
+\begin{eqnarray}
+d\Stra^p =d \PlasticParameter \frac{\partial \plsp}{\partial \Stress}
+\label{eqn:flowrule}
+\end{eqnarray}
+
+where $d \PlasticParameter$ is non-negative factor, plastic
+multiplier. Equaion (\ref{eqn:flowrule}) is so clalled flow rule. Hence, the general elasto-platic constitutive equation is given by
+
+\begin{eqnarray}
+d\Stress
+= {\mathbf D} d\Stra^e=
+{\mathbf D} (d\Stra-d \PlasticParameter \frac{\partial \plsp}{\partial \Stress})
+\label{eq:constitu_m}
+\end{eqnarray}.
+
+The flow rule is associative if $\yieldf\equiv\plsp$. Otherwise, it is non-associative. Typical plastic models, i.e. yield  functions and plastic potentials are described below.
+
+\textit{Drucker-Prager model}
+
+This model is a function of the two stress invariants and hardening parameter. Its yield function takes the form
+
+\begin{eqnarray}
+\yieldf (\Stress, \kappa) =\left\Vert{\devS} \right\Vert+\alpha\sivi-y(\kappa)=0 \\
+\plsp (\Stress, \kappa) =\left\Vert{\devS} \right\Vert+\beta \sivi-y(\kappa)=0
+\label{eqn:dp}
+\end{eqnarray}
+
+where $\alpha$ is a coefficient related to the internal frictional angle, $y(\kappa)$ is the yield stress depending on the hardening parameter.
+
+\textit{Cam-Clay model}
+
+Similar to the Drucker-Prager model, the Cam-Clay model is a funtion of both of the first and the second stress invariants. The generalized Cam-Clay model reads:
+
+\begin{eqnarray}
+\yieldf=q^2+M^2\pm(\pm-\pm_{cn})=0
+\label{eqn:cc}
+\end{eqnarray}
+
+where $q=\sqrt{3/2}=\left\Vert {\devS} \right\Vert$, $\pm=\sivi/3$ the mean stress, $M$ is the slope of the critical state line in a $q-\pm$ digram and $\pm_{cn}$ is the isotropic preconsolidation pressure. The rate of $\pm_{cn}$ is given by
+
+\begin{eqnarray}
+{\frac{\mathrm d\, \pm\phantom{^-_-}}{\mathrm d\,  \epsilon^p_v}}=\frac{(1+e)\pm}{\lambda_c-\kappa_c}
+\label{eqn:cc_pcn}
+\end{eqnarray}
+
+with $e$ the void ratio, $\epsilon^p_v$ the volume plastic strain, $\lambda_c$ the virgin compression index and $\lambda_c$  the swelling/recompression index.
+
+The model also describes the nonlinear elastic behavior of the clay-like media before plastic yielding occurs, in which the bulk modulus $K$ is dependent of stress status as
+
+\begin{eqnarray}
+K=\frac{1+e}{\kappa_c}\pm=0
+\label{eqn:cc_K}
+\end{eqnarray}
+
+with $\mu=3(1-2\nu)K/(2(1+\nu))$.
+
+%-------------------------------------------------------------------------
+\input{M/plasticity_von_Mises}
+%-------------------------------------------------------------------------
+\input{M/plasticity_Drucker_Prager}
+%-------------------------------------------------------------------------
+\input{M/plasticity_Cam_Clay}
+%-------------------------------------------------------------------------
+\input{M/plasticity_rotational_hardening}
+

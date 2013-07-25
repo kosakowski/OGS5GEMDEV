@@ -1,0 +1,70 @@
+\section{Remarks}
+
+\subsection{V4.1.**MX}
+
+Based on the current version, the following points are to be
+considered in the further developments of FEM:
+
+1. Time steps: For reactive transport, different time steps are
+needed for different processes. The realized function for that in
+the current version is valid for TH2C coupled processes. But for
+more processes, a more robust method should be developed in time
+class.
+
+2. Various initial conditions for different material groups: This
+is the problem of DECOVALEX. For THC simulation,
+$\$Material\_DOMAIN$ is used. This can be used only if the mesh is
+already generated in *.rfi. This should be in a general way
+according to mesh type like $SURFACE$ for 2D.
+
+3. Reaction class: there are two classes (REACT and
+REACTION\_MODEL) for reaction. Join them into one?
+
+\subsection{V4.1.13OK}
+\subsection{V4.2.04WW}
+Gravity orientation is automatically determined by the coordinates 
+given  in mesh file as: 
+\begin{itemize}
+  \item 1D: Only $x$ component has non-zero number $\longrightarrow x$  direction, e.g.,   
+           \begin{itemize}
+            \item   [x1] 0.0 0.0
+            \item   [x2] 0.0 0.0   
+            \item  $\vdots$
+           \end{itemize}
+              
+  \item 1D:  Only $z$ component has non-zero number $\longrightarrow z$  direction, e.g.,  
+            \begin{itemize}
+            \item   0.0 0.0 [z1]
+            \item   0.0 0.0 [z2]  
+            \item  $\vdots$
+           \end{itemize}
+  \item 2D:  Gravity in $z$ orientation if $x$ and $z$ components has non-zero number,  
+            \begin{itemize}
+            \item  [x1] 0.0 [z1]
+            \item  [x2] 0.0 [z2]  
+            \item  $\vdots$
+           \end{itemize}
+  \item 2D:  Gravity in $y$ orientation if $x$ and $y$ components has non-zero number,  
+            \begin{itemize}
+            \item  [x1] [y1]  0.0
+            \item  [x2] [y2]  0.0 
+            \item  $\vdots$
+            \end{itemize}
+
+ \item 3D:  Gravity in always in $z$ orientation even if fracture network is involved.  
+\end{itemize}
+
+
+
+
+ToDo things
+\begin{itemize}
+    \item H-Richards - Celia (YD)
+    \item H-Richards - Quad (YD)
+    \item M (PCS keyword) (WW)
+    \item HM (PCS keyword) (WW)
+    \item THM
+    \item TH2M
+\end{itemize}
+
+\LastModified{OK \today}

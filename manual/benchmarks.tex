@@ -1,0 +1,377 @@
+\section{Benchmarks}
+
+Name convention: process type\_\_specification\_\_element type
+
+Version: 4.3.02  15.02.2006 \\
+Responsible: WW
+
+\begin{center}
+\begin{tabular*}{12.7cm}{|p{1.5cm}|p{1.8cm}|p{4.78cm}|p{1cm}|p{1.5cm}|} \hline
+Processes & Files & Subject                & eType & Resonsible \\
+\hline \hline
+           &             & \textbf{Groundwater flow} & & OK \\
+H 1-D     & h\_line & 1-D groundwater flow   & line & \\
+H 2-D     & h\_tri & 2-D groundwater flow & tri &  \\
+H 2-D     & h\_quad & 2-D groundwater flow   & quad & \\
+H 2.5D     & h\_frac & 3-D groundwater flow in fracture (new)  & tri & \\
+H 3-D     & h\_hex & 3-D groundwater flow   & hex & \\
+H 3-D     & h\_tet1 & 3-D groundwater flow, cube & tet &  \\
+H 3-D     & h\_tet2 & 3-D groundwater flow, cave & tet &  \\
+H 3-D     & h\_tet3 & 3-D groundwater flow, tm & tet &  \\
+%H 3-D     & h\_tet4 & 3-D groundwater flow, gocad & tet &  \\
+%H 3-D     & h\_tet5 & 3-D groundwater flow, gmsh & tet &  \\
+\hline
+           &             & \textbf{Groundwater flow} & & OK \\
+H X-D     & h\_ele   & OO-ELE & all &  \\
+\hline
+           &             & \textbf{Richards flow} & & YD \\
+H 1-D     & h\_us\_line & 1-D Richards flow  &  & \\
+          &   & \(Warrick,Celia\)& line &  \\
+          &  & \(Forsyth, Halm \) &  &  \\
+H 2-D     & h\_us\_tri   &2-D Richards flow & tri &  \\
+H 2-D     & h\_us\_quad  &2-D Richards flow & quad &  \\
+\hline
+           &             & \textbf{Groundwater flow} & & MB \\
+H 2-D     & uc\_quad & 2-D unconfined groundwater flow & quad &  \\
+H 3-D     & uc\_pris & 3-D unconfined groundwater flow & pris &  \\
+H 2-D     & q\_quad & 2-D groundwater flow & quad &  \\
+H 3-D     & q\_hex & 3-D groundwater flow & hex &  \\
+H 2-D     & riv1\_quad & 2-D groundwater flow & quad & \\
+H 3-D     & riv1\_pris & 3-D groundwater flow & pris & \\
+H 3-D     & riv1\_hex & 3-D groundwater flow & hex & \\
+H 3-D     & riv2\_hex & 3-D groundwater flow & hex & \\
+\hline
+           &             & \textbf{Overland flow} & & MB \\
+H 2-D     & a1 & 2-D overland flow, steady & quad &  \\
+H 2-D     & a2 & 2-D overland flow, steady & quad &  \\
+H 2-D     & v\_quad & 2-D overland flow, inst. & quad & \\
+H 2-D     & gian\_tri & 2-D overland flow, inst. & tri & \\
+H 2-D     & gian\_quad & 2-D overland flow, inst. & quad & \\
+\hline
+           &             & \textbf{Channel flow} & & MB \\
+H 1-D     & kan & 1-D Channel flow, inst. & quad & \\
+H 1-D     & v\_line & 1-D Channel flow, inst. & quad & \\
+\hline
+           &             & \textbf{Gas flow} & & OK \\
+H X-D     & h\_gas\_ele   & OO-ELE & all &  \\
+\hline
+           &             & \textbf{Multiphase flow} & & OK \\
+H2 1-D     & h2\_line & 1-D two-phase flow, Buckley-Leverett & line & debug \\
+H2 2-D     & h2\_quad & 2-D two-phase flow, Buckley-Leverett & quad & debug \\
+H2 3-D     & h2\_hex  & 3-D two-phase flow, Buckley-Leverett & hex  & debug  \\
+\hline
+\end{tabular*}
+\end{center}
+
+\begin{center}
+\begin{tabular*}{12.7cm}{|p{1.5cm}|p{1.8cm}|p{4.78cm}|p{1cm}|p{1.5cm}|} \hline
+Processes & Files & Subject                & eType & Resonsible \\
+\hline \hline
+           &             & \textbf{Non-isothermal multiphase flow} & &  \\
+TH2 1-D    & th2\_line   & 1-D non-isothermal two-phase flow & line & JdJ  \\
+TH2 1-D    & th2\_csm\_line & 1-D non-isothermal two-phase flow & line & MX  \\
+TH2 2-D    & th2\_quad   & 2-D non-isothermal two-phase flow & quad & JdJ  \\
+TH2 3-D    & th2\_hex   & 3-D non-isothermal two-phase flow & hex & JdJ  \\
+TH2 1-D    & th2\_line\_desat   & 1-D non-isothermal two-phase flow & line & JdJ  \\
+\hline
+\end{tabular*}
+\end{center}
+\begin{center}
+\begin{tabular*}{12.7cm}{|p{1.5cm}|p{1.8cm}|p{4.78cm}|p{1cm}|p{1.5cm}|} \hline
+Processes & Files & Subject                & eType & Resonsible \\
+\hline \hline
+           &             & \textbf{Heat transport with flow} & & CMCD\\
+HT  1-D    & line\_ad & advection and dispersion & line &  \\
+HT  2-D    & triang\_ad & advection and dispersion & tri &  \\
+HT  2-D    & quad\_ad & advection and dispersion & quad&  \\
+HT  3-D    & cube\_ad & advection and dispersion & hex &  \\
+HT  3-D    & prism\_ad & advection and dispersion & prism & \\
+HT  3-D    & tetra\_ad & advection and dispersion & tetra & \\
+& & & & \\
+HT 1-D    & ht\_line&1-D flow and heat transport & line & \\
+HT 2-D    & ht\_tri &2-D flow and heat transport & tri & \\
+HT 2-D    & ht\_quad &2-D flow and heat transport & quad & \\
+HT 3-D    & ht\_hex &3-D flow and heat transport & hex & \\
+HT 3-D    & ht\_prism &3-D flow and heat transport & pris & \\
+\hline
+           &             & \textbf{Heat transport, diffusion only} & & CMCD\\
+HT  1-D    & line\_d & diffusion & line &\\
+HT  2-D    & triang\_d & diffusion & tri &\\
+HT  2-D    & quad\_d & diffusion & quad &\\
+HT  3-D    & cube\_d & diffusion & hex &\\
+HT  3-D    & prism\_d & diffusion & prism &\\
+HT  3-D    & tetra\_d & diffusion & tetra &\\
+\hline
+           &             & \textbf{Heat transport, conductance from source} & & CMCD\\
+HT  1-D    & line\_s & conductance from source & line &\\
+HT  2-D    & triang\_s & conductance from source & tri &\\
+HT  2-D    & quad\_s & conductance from source & quad &\\
+HT  3-D    & cube\_s & conductance from source & hex &\\
+HT  3-D    & prism\_s & conductance from source & prism &\\
+HT  3-D    & tetra\_s & conductance from source & tetra &\\
+\hline
+           &             & \textbf{Heat transport, conductance, fixed boundaries} & & CMCD\\
+HT  1-D    & line\_bc & conductance, fixed temperature boundaries   & line &\\
+HT  2-D    & triang\_bc & conductance, fixed temperature boundaries  & tri &\\
+HT  2-D    & quad\_bc & conductance, fixed temperature boundaries  & quad &\\
+HT  3-D    & cube\_bc & conductance, fixed temperature boundaries  & hex &\\
+HT  3-D    & prism\_bc & conductance, fixed temperature boundaries  & prism &\\
+HT  3-D    & tetra\_bc & conductance, fixed temperature boundaries  & tetra &\\
+\hline
+\end{tabular*}
+\end{center}
+\begin{center}
+\begin{tabular*}{12.7cm}{|p{1.5cm}|p{1.8cm}|p{4.78cm}|p{1cm}|p{1.5cm}|} \hline
+Processes & Files & Subject                & eType & Resonsible \\
+\hline \hline
+           &             & \textbf{Transport dispersion check} & & CMCD\\
+HT  2-D    & frac\_flat &   Pressure boundary, flat mesh  & tri &\\
+HT  3-D    & frac\_y45flat &   Pressure boundary, y45 mesh  & tri &\\
+HT  3-D    & frac\_xy45flat &   Pressure boundary, xy45 mesh  & tri &\\
+HT  2-D    & frac\_gwflat &   Head boundary, flat mesh  & tri &\\
+HT  3-D    & frac\_gwy45flat &   Head boundary, y45 mesh  & tri &\\
+HT  3-D    & frac\_gwxy45flat &   Head boundary, xy45 mesh  & tri &\\
+\hline
+           &             & \textbf{Analytical matrix diffusion} & & CMCD\\
+HT  2-D    & frac & With no analytical matrix solution  & tri &\\
+HT  2-D    & frac\_an & With analytical matrix solution  & tri &\\
+\hline
+           &             & \textbf{Heat transport} & & WW \\
+T  2-D    & t\_tri & heat transport & tri & \\
+\hline
+           &             & \textbf{Deformation} & & WW \\
+M 2-D     & m\_dp\_quad & Drucker-Prager model & quad & \\
+M 2-D     & m\_cc\_tri & Cam-Clay model  & tri & \\
+M 2-D     & m\_ssy\_quad & Single yield surface model  & quad & \\
+M 2-D     & m\_sdc & Strong discontinuity approach  & quad & \\
+M 2-D     & m\_excav & Excavation  & tri & \\
+M 3-D     & m\_brick &   & tet & \\
+M 3-D     & m\_brick\_l &   & tet & \\
+\hline
+           &             & \textbf{Consolidation} & & WW \\
+HM 2-D     & hm\_tri & 2-D poro-elasticity & tri &  \\
+HM 2-D     & hm\_foot\_tri & 2-D poro-elasticity & tri &  \\
+%HM 2-D     & hm\_quad & 2-D poro-elasticity & quad &  \\
+HM 3-D     & hm\_foot\_tet & 3-D poro-elasticity & tet &  \\
+\hline
+           &             & \textbf{Non-isothermal Consolidation} & & WW \\
+THM 2-D    & thm\_quad & 2-D thermo-poro-elasto-plasticity & quad &  \\
+\hline
+           &             & \textbf{Isothermal Consolidation with multi-phase flow} & & WW \\
+TH2M 3-D    & febex & 3-D thermo-poro-elasto-plasticity & hex &  \\
+\hline
+\end{tabular*}
+\end{center}
+
+\begin{center}
+\begin{tabular*}{12.7cm}{|p{1.5cm}|p{1.8cm}|p{4.78cm}|p{1cm}|p{1.5cm}|} \hline
+Processes & Files & Subject                & eType & Resonsible \\
+\hline \hline
+           &             & \textbf{Mass Transport} & & SB \\
+C 1-D      & c\_1d\_line  & 1-D conservative mass transport & line &  \\
+C 1-D      & c\_1d\_tri   & 1-D conservative mass transport & tri &  \\
+C 1-D      & c\_1d\_quad  & 1-D conservative mass transport & quad &  \\
+C 1-D      & c\_1d\_pris  & 1-D conservative mass transport & pris &  \\
+C 1-D      & c\_1d\_hex   & 1-D conservative mass transport & hex &  \\
+C 2-D      & c\_2d\_tri   & 2-D conservative mass transport & tri &  \\
+C 2-D      & c\_2d\_quad  & 2-D conservative mass transport & quad &  \\
+C 2-D      & c\_2d\_pris  & 2-D conservative mass transport & pris &  \\
+C 2-D      & c\_2d\_hex   & 2-D conservative mass transport & hex &  \\
+C 2-D      & c\_2d\_het   & 2-D heterogeneous mass transport & tet &  \\
+\hline
+           &             & \textbf{Fluid Momentum} & & PCH \\
+C 1-D      & c\_1d\_line\_fm  & 1-D fluid momentum & line &  \\
+C 1-D      & c\_1d\_tri\_fm   & 1-D fluid momentum & tri &  \\
+C 1-D      & c\_1d\_quad\_fm  & 1-D fluid momentum & quad &  \\
+C 1-D      & c\_1d\_pris\_fm  & 1-D fluid momentum & pris &  \\
+C 1-D      & c\_1d\_hex\_fm   & 1-D fluid momentum & hex &  \\
+C 1-D      & c\_1d\_tet\_fm   & 1-D fluid momentum & tet &  \\
+C 2-D      & c\_2d\_tri\_fm   & 2-D fluid momentum & tri &  \\
+C 2-D      & c\_2d\_quad\_fm  & 2-D fluid momentum & quad &  \\
+
+\hline
+           &             & \textbf{Reactive Multi-Componental Mass Transport} & & SB \\
+C 1-D      & c\_1d\_pqc1  & 1-D reactive mass transport & line &  \\
+\hline
+TH2C 1-D    & th2c\_line   & 1-D RT in non-isothermal two-phase flow & line & MX  \\
+THC 2-D    & thc\_tri   & 2-D RT in single phase flow with porosity change & tri & MX  \\
+\hline
+\end{tabular*}
+\end{center}
+
+
+\Developer{
+
+\newpage
+\subsection{Groundwater Flow}
+
+\begin{figure}[htb!]
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=7cm]{figures/h_line.eps}\\
+  %\caption{}\label{}
+\end{figure}
+
+\begin{figure}[htb!]
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=7cm]{figures/h_quad.eps}\\
+  %\caption{}\label{}
+\end{figure}
+
+\begin{figure}[htb!]
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=7cm]{figures/h_hex.eps}\\
+  %\caption{}\label{}
+\end{figure}
+
+\begin{figure}[htb!]
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=7cm]{figures/h_tri.eps}\\
+  %\caption{}\label{}
+\end{figure}
+
+\begin{figure}[htb!]
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=7cm]{figures/h_tet1.eps}\\
+  %\caption{}\label{}
+\end{figure}
+
+\begin{figure}[htb!]
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=7cm]{figures/h_tet2.eps}\\
+  %\caption{}\label{}
+\end{figure}
+
+\begin{figure}[htb!]
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=7cm]{figures/h_tet3.eps}\\
+  %\caption{}\label{}
+\end{figure}
+
+\newpage $ $ \newpage
+\subsection{Unconfined Groundwater Flow}
+
+\begin{figure}[htb!]
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=7cm]{figures/h_uc_quad.eps}\\
+  %\caption{}\label{}
+\end{figure}
+
+\begin{figure}[htb!]
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=7cm]{figures/h_uc_pris.eps}\\
+  %\caption{}\label{}
+\end{figure}
+
+\newpage
+\subsection{Gas Flow}
+
+\begin{figure}[htb!]
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=7cm]{figures/h_gas_line.eps}\\
+  %\caption{}\label{}
+\end{figure}
+
+\begin{figure}[htb!]
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=7cm]{figures/h_gas_quad.eps}\\
+  %\caption{}\label{}
+\end{figure}
+
+\newpage
+\subsection{Two-Phase Flow}
+
+\begin{figure}[htb!]
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=7cm]{figures/h2_line.eps}\\
+  %\caption{}\label{}
+\end{figure}
+
+\newpage
+\subsection{Heat Transport}
+
+\begin{figure}[htb!]
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=7cm]{figures/ht_line.eps}\\
+  %\caption{}\label{}
+\end{figure}
+
+\begin{figure}[htb!]
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=7cm]{figures/ht_tri.eps}\\
+  %\caption{}\label{}
+\end{figure}
+
+\begin{figure}[htb!]
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=7cm]{figures/ht_quad.eps}\\
+  %\caption{}\label{}
+\end{figure}
+
+\begin{figure}[htb!]
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=7cm]{figures/ht_hex.eps}\\
+  %\caption{}\label{}
+\end{figure}
+
+\begin{figure}[htb!]
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=7cm]{figures/ht_pris.eps}\\
+  %\caption{}\label{}
+\end{figure}
+
+\newpage $ $ \newpage
+\subsection{Deformation}
+
+\begin{figure}[htb!]
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=7cm]{figures/m_cc_tri.eps}\\
+  %\caption{}\label{}
+\end{figure}
+
+\begin{figure}[htb!]
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=7cm]{figures/m_dp_quad.eps}\\
+  %\caption{}\label{}
+\end{figure}
+
+\begin{figure}[htb!]
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=7cm]{figures/m_sys_quad.eps}\\
+  %\caption{}\label{}
+\end{figure}
+
+\begin{figure}[htb!]
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=7cm]{figures/m_brick.eps}\\
+  %\caption{}\label{}
+\end{figure}
+
+\begin{figure}[htb!]
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=7cm]{figures/m_brick_l.eps}\\
+  %\caption{}\label{}
+\end{figure}
+
+\newpage $ $ \newpage
+\subsection{Consolidation}
+
+\begin{figure}[htb!]
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=7cm]{figures/hm_tri.eps}\\
+  %\caption{}\label{}
+\end{figure}
+
+\begin{figure}[htb!]
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=7cm]{figures/hm_foot_tri.eps}\\
+  %\caption{}\label{}
+\end{figure}
+
+\newpage
+\subsection{THM}
+
+\begin{figure}[htb!]
+  \includegraphics[width=7cm]{figures/thm_quad.eps}\\
+\end{figure}
+
+\LastModified{WW - 15th Feb 2006}}

@@ -1,0 +1,64 @@
+\section{Unit}
+
+\subsection{Richards Flow}
+
+\subsubsection{Independent units}
+
+
+\begin{center}
+\begin{tabular}{|l|l|l|r|}
+\hline
+Objects   & Subkeyword & Parameter                & Unit \\
+\hline \hline
+%
+IC    & \texttt{\$PRIMARY\_VARIABLE}    & \texttt{PRESSUREx}    & $Pa$ \\
+\hline
+BC    & \texttt{\$PRIMARY\_VARIABLE}    & \texttt{PRESSUREx}    & $Pa$ \\
+\hline
+MFP   & \texttt{\$DENSITY}    & \texttt{$\rho$}      & $kg \cdot m^{-3}$ \\
+      & \texttt{\$VISCOSITY}  & \texttt{$\mu$}       & $kg \cdot m^{-1}\cdot s^{-1} $ \\
+\hline
+MMP   & \texttt{\$POROSITY}   & \texttt{n}           & - \\
+      & \texttt{\$PERMEABILITY\_TENSOR}    &         & $m^{-2}$ \\
+      &                       &  \texttt{S}          & -\\
+      &                       &  \texttt{k\_rel}     & -\\
+      & van Genuchten \(1980\)   &  \texttt{S\_res}   & - \\
+      &                       &  \texttt{S\_max}     & - \\
+      &                       &  \texttt{m}          & - \\
+      &                       &  \texttt{$\alpha$}   & $m^{-1}$ \\
+\hline
+%
+\end{tabular}
+\end{center}
+
+
+\subsubsection{Time dependent units}
+
+Keyword setting in *.tim :
+
+\begin{verbatim}
+ $TIME_UNIT    // [T]
+  SECOND       // Default
+  HOUR
+  DAY
+  YEAR
+\end{verbatim}
+
+\begin{center}
+\begin{tabular}{|l|l|l|r|}
+\hline
+Objects   & Subkeyword & Parameter                & Unit \\
+\hline \hline
+%
+TIM    & \texttt{\$TIME\_END}      &     & $[T]$ \\
+       & \texttt{\$TIME\_START}    &     & $[T]$ \\
+\hline
+ST     & \texttt{\$PRIMARY\_VARIABLE}    & \texttt{PRESSUREx}    & $m \cdot [T]^{-1}$ \\
+\hline
+OUT   & \texttt{\$TIM\_TYPE}    &  & $[T]$ \\
+\hline
+%
+\end{tabular}
+\end{center}
+
+\LastModified{YD - \today}

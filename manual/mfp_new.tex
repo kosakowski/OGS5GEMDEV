@@ -1,0 +1,474 @@
+\section{Fluid Properties}
+
+\begin{tabular*}{8.35cm}{|p{2.5cm}|p{5cm}|} \hline
+Object acronym & MFP \\
+C++ class      & CFluidProperties \\
+Source files   & rf\_mfp.h/cpp \\
+\hline
+File extension & *.mfp \\
+Object keyword & \#FLUID\_PROPERTIES \\
+\hline
+\end{tabular*}
+
+%-------------------------------------------------------------------------------
+\subsection{\texttt{\bf\#FLUID\_PROPERTIES}}
+
+%\subsubsection{Keyword structure}
+
+\begin{verbatim}
+#FLUID_PROPERTIES
+ $FLUID_TYPE
+  AIR
+ $DENSITY
+  model model_parameters
+ $VISCOSITY
+  model model_parameters
+ $SPECIFIC_HEAT_CAPACITY
+  model model_parameters
+ $HEAT_CONDUCTIVITY
+  model model_parameters
+ $PHASE_DIFFUSION
+  model model_parameters
+ $NON_GRAVITY
+  model model_parameters
+\end{verbatim}
+
+\begin{itemize}
+  \item fluid type for data base operation
+  \item model / model parameters
+\end{itemize}
+
+
+%==========================================================
+\subsection{Fluid model data input}
+
+\begin{itemize}
+  \item organized by flow types
+\end{itemize}
+
+%----------------------------------------------------------
+\subsubsection{Fluid density}
+
+%-------------------------------------------------------------------------------
+\paragraph*{Case 0: User-defined function by \#CURVE}
+\begin{eqnarray}
+  \Density^\Phase= f(u)
+\end{eqnarray}
+\begin{verbatim}
+$DENSITY
+ 0 curve_number
+\end{verbatim}
+
+\paragraph*{Case 1: Incompressible flow}
+\begin{eqnarray}
+  \Density^\Phase = \Density^\Phase_0
+\end{eqnarray}
+\begin{verbatim}
+$DENSITY
+ 1 rho_0
+\end{verbatim}
+
+\paragraph*{Case 2: Compressible flow}
+\begin{eqnarray}
+  \Density^\Phase(\Pressure)
+  = \Density_0^\Phase(1+\FluidCompressibility^\Phase(\Pressure^\Phase-\Pressure^\Phase_0))
+\end{eqnarray}
+\begin{verbatim}
+$DENSITY
+ 2  rho_0  beta_p  p_0
+\end{verbatim}
+
+\paragraph*{Case 3: Density-dependent flow, mass convection}
+\begin{eqnarray}
+  \Density^\Phase(\Conc)
+  = \Density_0^\Phase(1+\beta_C^\Phase(\Conc-\Conc_0))
+\end{eqnarray}
+\begin{verbatim}
+$DENSITY
+ 3  rho_0  beta_C  C_0
+\end{verbatim}
+
+\paragraph*{Case 4: Density-dependent flow, thermal convection}
+\begin{eqnarray}
+  \Density^\Phase(\Temperature)
+  = \Density_0^\Phase(1+\ThermalExpansionCoefficient^\Phase(\Temperature-\Temperature_0))
+\end{eqnarray}
+\begin{verbatim}
+$DENSITY
+ 4  rho_0  beta_T  T_0
+\end{verbatim}
+
+\paragraph*{Case 5: Density-dependent flow, thermohalin convection}
+\begin{eqnarray}
+  \Density^\Phase(\Conc,\Temperature)
+  = \Density_0^\Phase(1+\beta_C^\Phase(\Conc-\Conc_0)
+  + \Density_0^\Phase(1+\ThermalExpansionCoefficient^\Phase(\Temperature-\Temperature_0))
+\end{eqnarray}
+\begin{verbatim}
+$DENSITY
+ 5  rho_0  beta_C  C_0  beta_T  T_0
+\end{verbatim}
+
+\paragraph*{Case 6: Compressible non-isothermal flow}
+\begin{eqnarray}
+  \Density^\Phase(\Pressure,\Temperature)
+  = \Density_0^\Phase(1+\FluidCompressibility^\Phase(\Pressure^\Phase-\Pressure^\Phase_0)
+  + \Density_0^\Phase(1+\ThermalExpansionCoefficient^\Phase(\Temperature-\Temperature_0))
+\end{eqnarray}
+\begin{verbatim}
+$DENSITY
+ 6  rho_0  beta_p  p_0  beta_T  T_0
+\end{verbatim}
+
+\paragraph*{Case 7: Compressible non-isothermal flow with phase changes}
+\begin{eqnarray}
+  \Density^g(\Pressure^g,\Temperature)=
+  \frac{\MolarMass_a}{\GasConstant\Temperature}\Pressure^g+\frac{(\MolarMass_w -
+  \MolarMass_a)}{\GasConstant\Temperature}\VapourPressure(\Temperature)
+\end{eqnarray}
+\begin{verbatim}
+$DENSITY
+ 7
+\end{verbatim}
+
+
+%----------------------------------------------------------
+\subsubsection{Fluid viscosity}
+%-------------------------------------------------------------------------------
+\paragraph*{Case 0: User-defined function by \#CURVE}
+\begin{eqnarray}
+\Viscosity^\Phase= f(u)
+\end{eqnarray}
+\begin{verbatim}
+$VISCOSITY
+ 0  curve_number
+\end{verbatim}
+
+\paragraph*{Case 1: Incompressible flow}
+\begin{eqnarray}
+\Viscosity^\Phase(\Pressure) = \Viscosity_0^\Phase
+\end{eqnarray}
+\begin{verbatim}
+$VISCOSITY
+ 1  my_0
+\end{verbatim}
+
+\paragraph*{Case 2: Compressible flow}
+\begin{eqnarray}
+\Viscosity^\Phase(\Pressure)
+=
+\Viscosity_0^\Phase \left(1 + \frac{d\Viscosity}{d\Pressure} (p-p_0)\right)
+\end{eqnarray}
+\begin{verbatim}
+$VISCOSITY
+ 2  my_0  dmy_dp  p_0
+\end{verbatim}
+
+\paragraph*{Case 3: Density-dependent flow, mass convection}
+\begin{eqnarray}
+\Viscosity^\Phase(\Conc,\Temperature)
+=
+\frac{\Viscosity}{f1 + f2}
+\quad
+f1= f(\Conc), f2=f(\Temperature)
+\end{eqnarray}
+\begin{verbatim}
+$VISCOSITY
+ 3  my_0  dmy_dC  0.0
+\end{verbatim}
+
+\paragraph*{Case 4: Density-dependent flow, thermal convection}
+\begin{eqnarray}
+\Viscosity^\Phase(\Conc,\Temperature)
+=
+\frac{\Viscosity}{f1 + f2}
+\quad
+f1= f(\Conc), f2=f(\Temperature)
+\end{eqnarray}
+\begin{verbatim}
+$VISCOSITY
+ 4  my_0  0.0  dmy_dT
+\end{verbatim}
+
+\paragraph*{Case 41: Non-isothermal liquid flow (Yaws et al. 1976)}
+\begin{eqnarray}
+\Viscosity^l(\Temperature)
+=
+10^{-3} \exp(-2.471 10^1+\frac{4.209 10^3}{\Temperature}
++
+4.527 10^{-2}\Temperature-3.376 10^{-5}\Temperature^2)
+\end{eqnarray}
+\begin{verbatim}
+$VISCOSITY
+ 41
+\end{verbatim}
+
+\paragraph*{Case 5: Density-dependent flow, thermohaline convection}
+\begin{eqnarray}
+\Viscosity^\Phase(\Conc,\Temperature)
+=
+\frac{\Viscosity}{f1 + f2}
+\quad
+f1= f(\Conc), f2=f(\Temperature)
+\end{eqnarray}
+\begin{verbatim}
+$VISCOSITY
+ 5  my_0  dmy_dC  dmy_dT
+\end{verbatim}
+
+\paragraph*{Case 6: Compressible non-isothermal flow (Reichenberg 1971)}
+\begin{eqnarray}
+\Viscosity^\Phase(\Pressure,\Temperature)
+=
+\Viscosity_0 [1+ \frac{A(\frac{\Pressure}{33.9
+10^4})^{1.5}}{B(\frac{\Pressure}{33.9 10^4}) +
+\frac{1}{C(\frac{\Pressure}{33.9 10^4})^D}}]
+\end{eqnarray}
+\begin{verbatim}
+$VISCOSITY
+ 6
+\end{verbatim}
+
+\paragraph*{Case 61: Non-isothermal gas flow (Marsily 1986)}
+\begin{eqnarray}
+\Viscosity^g(\Temperature)
+=
+2.285\cdot10^{-5} + 1.01 \cdot10^{-3}\log{T}
+\end{eqnarray}
+\begin{verbatim}
+$VISCOSITY
+ 61
+\end{verbatim}
+
+\paragraph*{Case 7: Compressible non-isothermal flow with phase changes (Reichenberg 1971)}
+\begin{eqnarray}
+\Viscosity^\Phase(\Pressure,\Temperature)
+=
+\Viscosity_0 [1+ \frac{A(\frac{\Pressure}{33.9
+10^4})^{1.5}}{B(\frac{\Pressure}{33.9 10^4}) +
+\frac{1}{C(\frac{\Pressure}{33.9 10^4})^D}}]
+\end{eqnarray}
+\begin{verbatim}
+$VISCOSITY
+ 7
+\end{verbatim}
+
+%----------------------------------------------------------
+\subsubsection{Specific heat capacity}
+
+%-------------------------------------------------------------------------------
+\paragraph*{Case 0: User-defined function by \#CURVE}
+\begin{eqnarray}
+  \HeatCapacity^\Phase= f(\Temperature)
+\end{eqnarray}
+\begin{verbatim}
+$SPECIFIC_HEAT_CAPACITY
+ 0 curve_number
+\end{verbatim}
+
+\paragraph*{Case 1: Constant}
+\begin{eqnarray}
+  \HeatCapacity^\Phase = \HeatCapacity^\Phase_0
+\end{eqnarray}
+\begin{verbatim}
+$SPECIFIC_HEAT_CAPACITY
+ 1 rho_0
+\end{verbatim}
+
+\paragraph*{Case 2: Simple enthalpy based phase change}
+\begin{eqnarray}
+  \HeatCapacity^\Phase
+  = f(\Enthalpy,\Temperature)
+\end{eqnarray}
+\begin{eqnarray}
+  \Enthalpy^\Phase
+  = f(\HeatCapacity,\Temperature)
+\end{eqnarray}
+\begin{verbatim}
+$SPECIFIC_HEAT_CAPACITY
+ 2
+\end{verbatim}
+
+\paragraph*{Case 3: Phase change, enthalpy defined by \#CURVE}
+\begin{eqnarray}
+  \HeatCapacity^\Phase
+  = f(\Enthalpy,\Temperature)
+\end{eqnarray}
+\begin{eqnarray}
+  \Enthalpy^\Phase
+  = f(\Temperature)
+\end{eqnarray}
+\begin{verbatim}
+$SPECIFIC_HEAT_CAPACITY
+ 3  T_latent1  T_latent1 curve number
+\end{verbatim}
+
+\paragraph*{Case 4: LBNL Phase change model}
+\begin{eqnarray}
+ \HeatCapacity =
+(1-n)\rho^sc^s+nS^l\rho^lc^l+nS^g\rho^gc^g+H_1\bigg(e^{\frac{p^l}{\rho^l}R\Temperature}\frac{\partial
+\rho_s^g}{\partial
+\Temperature}-\frac{\rho^gp^l}{R\Temperature^2}\bigg)
+\end{eqnarray}\\
+
+\begin{eqnarray}
+H_1=nS^g(L_0+c^g(\Temperature-\TLatentB))
+\end{eqnarray}\\
+\begin{verbatim}
+$SPECIFIC_HEAT_CAPACITY
+ 4  T_latent1  T_latent1 Latent_heat
+\end{verbatim}
+
+%-------------------------------------------------------------------------------
+\subsubsection*{Nomenclature}
+\begin{tabular}{ll}
+$\Conc$ & concentration\\
+$\HeatCapacity $ & specific heat capacity\\
+$\Enthalpy$ & enthalpy\\
+$\MolarMass_a$ & molar mass of air\\
+$\MolarMass_w$ & molar mass of water\\
+$\LatentHeat$ & Latent heat\\
+$\Pressure$ & pressure\\
+$\VapourPressure$ & saturated vapor pressure\\
+$\GasConstant$ & ideal gas constant\\
+$\Temperature$ & temperature\\
+$\TLatentB$ & temperature of beginning phase change\\
+$\TLatentE$ & temperature of ending phase change\\
+$\beta_C$ & solutal expansion coefficient\\
+$\FluidCompressibility$ & compressibility\\
+$\ThermalExpansionCoefficient$ & thermal expansion coefficient\\
+$\Phase$ & phase\\
+$\Viscosity$ & viscosity\\
+$\Density$ & density\\
+subscript 0 &  reference value\\
+\end{tabular}
+
+
+
+\newpage
+\Examples{
+%-------------------------------------------------------------------------------
+\subsection{Examples}
+
+%-------------------------------------------------------------------------------
+\subsubsection{Single phase flow}
+
+\begin{verbatim}
+benchmark: h_line.mfp
+#FLUID_PROPERTIES
+ $FLUID_TYPE
+  LIQUID
+ $PCS_TYPE
+  PRESSURE1
+ $DENSITY
+  1 1.000000e+003
+ $VISCOSITY
+  1 1.000000e-003
+#STOP
+\end{verbatim}
+
+%-------------------------------------------------------------------------------
+\subsubsection{Two phase flow}
+
+\begin{verbatim}
+benchmark: h2_line.mfp
+#FLUID_PROPERTIES
+ $FLUID_TYPE
+  LIQUID
+ $PCS_TYPE
+  PRESSURE1
+ $DENSITY
+  1 1.000000e+003
+ $VISCOSITY
+  1 1.000000e-003
+#FLUID_PROPERTIES
+ $FLUID_TYPE
+  LIQUID
+ $PCS_TYPE
+  SATURATION2
+ $DENSITY
+  1 1.000000e+003
+ $VISCOSITY
+  1 1.000000e-003
+#STOP
+\end{verbatim}
+
+%-------------------------------------------------------------------------------
+\subsubsection{Non-isothermal two phase flow}
+
+\begin{verbatim}
+benchmark: th2_line.mfp
+#FLUID_PROPERTIES // first fluid phase
+ $FLUID_TYPE
+  GAS
+ $PCS_TYPE
+  PRESSURE1
+ $DENSITY
+  2 1.26 1.e5 6.6667e-6
+ $VISCOSITY
+  1 1.8e-5
+ $HEAT_CAPACITY
+  1 1.01e+3
+ $HEAT_CONDUCTIVITY
+  1 0.026
+ $PHASE_DIFFUSION
+  1 2.13e-6
+#FLUID_PROPERTIES // second fluid phase
+ $FLUID_TYPE
+  LIQUID
+ $PCS_TYPE
+  SATURATION2
+ $DENSITY
+  2 1000. 1.e5 4.7e-7
+ $VISCOSITY
+  1 0.0012
+ $HEAT_CAPACITY
+  1 4200.
+ $HEAT_CONDUCTIVITY
+  1 0.6
+ $PHASE_DIFFUSION
+  1 2.13e-6
+#STOP
+\end{verbatim}
+
+%-------------------------------------------------------------------------------
+\subsubsection{Consolidation}
+
+\begin{verbatim}
+benchmark: hm_tri.mfp
+#FLUID_PROPERTIES
+ $FLUID_TYPE
+  LIQUID
+ $PCS_TYPE
+  PRESSURE1
+ $DENSITY
+  1 0.0
+ $VISCOSITY
+  1 1.000000e-003
+#STOP
+\end{verbatim}
+
+%-------------------------------------------------------------------------------
+\subsubsection{Heat transport}
+
+\begin{verbatim}
+benchmark: ht_line.mfp
+#FLUID_PROPERTIES
+ $FLUID_TYPE
+  LIQUID
+ $PCS_TYPE
+  PRESSURE1
+ $DENSITY
+  1 1.000000e+003
+ $VISCOSITY
+  1 1.000000e-003
+ $HEAT_CAPACITY
+  1 4.280000e+003
+ $HEAT_CONDUCTIVITY
+  1 6.000000e-001
+#STOP
+\end{verbatim}
+
+} % Examples
+
+\LastModified{YD - \today}

@@ -1,0 +1,17 @@
+Fractures may be defined through direct measurement or geo-statistical reproduction. In the benchmarks of this report, both methods will be utilized. Where fractures are directly measured, the methodology utilizes a laser profiler. Profiles (elevation measurements) are taken of each fracture surface, and these are manipulated numerically. Point-wise fracture aperture is the difference between the top and bottom surfaces at corresponding locations. Statistically reproduced fractures, reproduce roughness of the aperture (not each surface) to achieve a desired mean and standard deviation. The result is used directly as fracture aperture in numerical simulations.
+
+For a fracture represented by two parallel (planar) plates, permeability is a function of the fracture aperture by the cubic law,
+
+\[k=\frac{b^{2}}{12}.\]
+
+For a uniformely fracture rock mass, the cubic law takes form as ${{{b}^{3}}}/{12s}\;$, where s is fracture spacing. 
+
+The aperture, b, however, represents only the mechanical state of the fracture. In reality, observed flow rates are dependent on the hydraulic state of the fracture. In other words, fracture roughness matters. We therefor distinguish two different apertures: the so-called "void" aperture, ${{b}_{v}}$, and the "hydraulic" aperture, ${{b}_{h}}$. The void aperture is the mean geometrically measured distance between the two fracture surfaces, including only those points that are not in contact (as the name implies, including only voids). The hydraulic aperture is a correction from this value (${{b}_{h}}\le {{b}_{v}}$), with one possibility known as the geometric correction [\cite{piggott2003}],
+
+\[b_{h}^{3}=\exp \left\langle \ln \left( k \right) \right\rangle =\exp \left( 3\left\langle \ln \left( {{b}_{v}} \right) \right\rangle  \right),\]
+
+where the angled brackets indicate that the mean is taken over the logarithm of the pointwise void aperture. Therefore, as an approximation to reality, the (effective) true permeability of a rough fracture is given by,
+
+\[k=\frac{b_{h}^{2}}{12}.\]
+
+In what follows, we use this permeability to approximate behavior of the fracture and to generate an analytical solution for (qualitative) comparison to simulations within rough fractures, where permeability occurs point-wise (and mechanically) as ${k_{i}=b_{i}^{2}}/{12}\;$. Therefore, this is an \emph{effective permeability}, and shall be used as an attempt to approximate (or provide reference to) true flow behavior in a rough fracture from a single bulk property.

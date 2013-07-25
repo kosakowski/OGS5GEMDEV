@@ -1,0 +1,263 @@
+\section{GEOLib Data}
+
+\begin{verbatim}
+filename.gli
+\end{verbatim}
+
+The GLI file is the input file for GeoLib. Geometric objects are:
+\begin{center}
+\begin{tabular}{|l|l|l|c|}
+\hline
+Objects   & Keyword & Class                & Dimension \\
+\hline \hline
+%
+Points    & \texttt{\#POINT}    & \texttt{CGLPoint}    & 0 \\
+Lines     & \texttt{\#LINES}    & \texttt{CGLLine}     & 1 \\
+Polylines & \texttt{\#POLYLINE} & \texttt{CGLPolyline} & 1 \\
+Surfaces  & \texttt{\#SURFACE}  & \texttt{CGLSurface}  & 2 \\
+Volumes   & \texttt{\#VOLUME}   & \texttt{CGLSurface}  & 3 \\
+\hline
+\end{tabular}
+\end{center}
+
+%------------------------------------------------------------------
+\subsection{GEO types}
+\label{sec:geo_types}
+
+\begin{tabular*}{12.773cm}{|p{3.cm}|p{8.9cm}|} \hline
+Parameter          & Meaning \\ \hline \hline
+%
+\texttt{POINT}     & Name of point \\
+\texttt{POLYLINE}  & Name of polyline \\
+\texttt{SURFACE}   & Name of surface \\
+\texttt{VOLUME }   & Name of volume \\
+\texttt{DOMAIN }   & whole domain \\
+\hline
+\end{tabular*}
+
+%------------------------------------------------------------------
+\subsection{Points}
+
+Keyword: \texttt{\#POINTS}
+
+\small
+\begin{verbatim}
+#POINTS
+0 0.0 0.0 0.0 $MD 0.3 $NAME P0
+1 1.0 0.0 0.0 $MD 0.3
+2 1.0 3.0 0.0 $MD 0.3
+3 0.3 0.0 0.0 $MD 0.3
+4 0.0 0.0 3.0 $MD 0.3
+5 1.0 0.0 3.0 $MD 0.3
+6 1.0 3.0 3.0 $MD 0.3
+7 0.0 3.0 3.0 $MD 0.3
+\end{verbatim}
+\normalsize
+
+\small
+\hrule
+
+\begin{verbatim}
+point number | x   y   z   | point properties with subkeywords
+
+0              0.0 0.0 0.0   $MD 0.3 $NAME P0
+
+\end{verbatim}
+
+\hrule
+\normalsize
+
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+Properties   & Meaning \\
+\hline \hline
+%
+\$MD            & Mesh density  \\
+\$NAME          & Name of the point  \\
+\hline
+\end{tabular}
+\end{center}
+
+%------------------------------------------------------------------
+\subsection{Lines}
+
+Keyword: \texttt{\#LINES}
+
+Lines are built from 2 points.
+
+\small
+\begin{verbatim}
+#LINES
+0  0 1
+1  1 2
+2  2 3
+...
+9  7 2
+\end{verbatim}
+\normalsize
+
+\small
+\hrule
+\begin{minipage}[t]{4cm}
+\begin{verbatim}
+line number | point1 point2 (numbers)
+
+0             0      1
+
+\end{verbatim}
+\end{minipage}
+\hrule
+\normalsize
+
+%------------------------------------------------------------------
+\subsection{Polylines}
+
+Keyword: \texttt{\#POLYLINE}
+
+Polylines are built from lines specified in sub-keyword
+\texttt{\$LINES}
+
+\small
+\begin{verbatim}
+#POLYLINE
+ $NAME
+  LOWER_FACE
+ $EPSILON
+  0.000000e+000
+ $POINTS ; List of points identified by ID number
+  22
+  23
+  24
+  25
+  22
+ $POINT_VECTOR
+  file_name.ply
+ $MAT_GROUP
+  mat_group_number
+\end{verbatim}
+\normalsize
+
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+Sub-keyword & Objective \\
+\hline \hline
+%
+\texttt{\$NAME}    &  name for identification \\
+\texttt{\$TYPE}    &  type for use \\
+\texttt{\$EPSILON} &  $\epsilon$ environment \\
+\texttt{\$POINTS}   &  list of points building the polyline \\
+\texttt{\$LINES}   &  list of lines building the polyline \\
+\texttt{\$POINT\_VECTOR}   &  the name of one PLY file \\
+\texttt{\$MAT\_GROUP}   &  connected material group \\
+ \hline
+%\caption{Polyline properties}
+\end{tabular}
+\end{center}
+
+%------------------------------------------------------------------
+\subsection{Surfaces}
+
+Keyword: \texttt{\#SURFACE}
+
+Surfaces are built from polylines specified in sub-keyword
+\texttt{\$POLYLINES}. Surfaces should be completely closed by the
+set of polylines.
+
+\small
+\begin{verbatim}
+#SURFACE
+ $NAME
+  SOURROUND
+ $POLYLINES ; List of polylines identified by name
+  NORTHERN_FACE
+  EASTERN_FACE
+  SOUTHERN_FACE
+  WESTERN_FACE
+ $TIN
+  SOURROUND.tin
+ $MAT_GROUP
+  mat_group_number
+\end{verbatim}
+\normalsize
+
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+Sub-keyword & Objective \\
+\hline \hline
+%
+\texttt{\$NAME}    &  name for identification \\
+\texttt{\$TYPE}    &  type for use \\
+\texttt{\$POLYLINES}  &  list of polylines building the surface \\
+\texttt{\$TIN}    &   file name of a TIN belonging to the surface \\
+\texttt{\$MAT\_GROUP}   &  connected material group \\
+\hline
+%\caption{Polyline properties}
+\end{tabular}
+\end{center}
+
+Where \$TYPE takes integer value. Two special values of it are:
+\begin{itemize}
+    \item 3: Flat surface with any normal direction
+    \item 100: Cylindrical surface between two cross round
+    sections A and B. Four extra data are required to determine
+    this surface as:
+    gli points index of center of sections A and sections B, the
+    radius of the cylinder, and a tolerance to select the element
+    nodes close to the cylindrical surface.
+\end{itemize}
+
+Here is an example of a cylindrical surface with radius of 0.485:
+ \small
+\begin{verbatim}
+#SURFACE
+ $NAME
+  SFS_TUNNEL
+ $TYPE
+   100
+    0 4 0.485 1.0e-4
+\end{verbatim}
+\normalsize
+
+
+%------------------------------------------------------------------
+\subsection{Volumes}
+
+Keyword: \texttt{\#VOLUME}
+
+Volumes are built from surfaces specified in sub-keyword
+\texttt{\$SURFACES}. Volumes should be completely closed by the
+set of surfaces.
+
+\small
+\begin{verbatim}
+#VOLUME
+ $NAME
+  CUBOID_DOMAIN
+ $SURFACES ; List of surfaces identified by name
+  BOTTOM
+  TOP
+  SOURROUND
+ $MAT_GROUP
+  mat_group_number
+\end{verbatim}
+\normalsize
+
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+Sub-keyword & Objective \\
+\hline \hline
+%
+\texttt{\$NAME}    &  name for identification \\
+\texttt{\$TYPE}    &  type for use \\
+\texttt{\$SURFACES}  &  list of surfaces building the volume \\
+\texttt{\$MAT\_GROUP}   &  connected material group \\
+\hline
+%\caption{Polyline properties}
+\end{tabular}
+\end{center}
+
+\vfill \LastModified{OK 17.11.2004}

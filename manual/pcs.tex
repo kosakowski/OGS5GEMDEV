@@ -1,0 +1,294 @@
+\section{Processes}
+\label{sec:pcs}
+
+\begin{tabular*}{5.35cm}{|p{2.5cm}|p{2cm}|} \hline
+Object acronym & PCS \\
+C++ class  & CRFProcess \\
+Source files   & rf\_pcs.h/cpp \\
+\hline
+File extension & *.pcs \\
+Object keyword &  {\texttt{\#PROCESS}} \\
+\hline
+\end{tabular*}
+
+\bigskip
+The control--keyword {\texttt{\#PROCESS}} can be used to specify
+physical/bio/chemical processes.
+
+%-------------------------------------------------------------------------------
+\subsection{\bf\texttt{\#PROCESS}}
+
+\begin{verbatim}
+#PROCESS
+ $PCS_TYPE
+  LIQUID_FLOW       // H process (incompressible flow)
+  GROUNDWATER_FLOW  // H process (incompressible flow)
+  RIVER_FLOW        // H process (incompressible flow)
+  RICHARDS_FLOW     // H process (incompressible flow)
+  OVERLAND_FLOW     // H process (incompressible flow)
+  GAS_FLOW          // H process (compressible flow)
+  TWO_PHASE_FLOW    // H2 process (incompressible/compressible flow)
+  MULTI_PHASE_FLOW  // H2 process (Non-isothermal two-phase flow)
+  COMPONENTAL_FLOW  // H2 process (incompressible/compressible flow)
+  HEAT_TRANSPORT    // T process (single/multi-phase flow)
+  DEFORMATION       // M process (single/multi-phase flow)
+  MASS_TRANSPORT    // C process (single/multi-phase flow)
+  FLUID_MOMENTUM
+ $CPL_TYPE
+  PARTITIONED       // default
+  MONOLITHIC
+ $NUM_TYPE
+  FEM               // Finite-Element-Method default
+  FDM               // Finite-Difference-Method (for line elements)
+  NEW               // New FEM assemblier
+  EXCAVATION        // Works with DEFORMATION process up to now
+ $PRIMARY_VARIABLE  // to specify the primary variable name
+  HEAD
+ $MEMORY_TYPE       // Works with $NUM_TYPE=NEW
+  1                 //0  Do not save local matrices and vectors in RAM; 1, Do
+ $ELEMENT_MATRIX_OUTPUT  // Element output
+   1                //0  Do not output local matrices and vectors; 1, Do
+ $BOUNDARY_CONDITION_OUTPUT  // Given: output the boundary condition and source term nodes together with their values  
+ $DEACTIVATED_SUBDOMAIN  // Select the elements of a subdomain that not required by this process
+   1                     // Number of sub-domain
+   ...                   // List of the indices of the selected subdomain. The indices are given in element data of mesh file.
+                         //The indices are given in element data of mesh file.
+   ...
+$WRITE_READ_SOURCE_OR_NEUMANN_RHS
+  // To write soure term or Neumann
+  // BC after face or domain intergration
+  // Use this keyword will save time if one exemple is run more frenquently.
+  // e.g. First run: 1. Next: 2. Then you skip finding nodes on the specfied polylines,
+  // faces or domains of source or Neumann BC definition and skip the corresponding
+  // numerical integation as well.
+   0     // Do nothing
+   1     // Write
+   2     // Read what has already written
+$TIME_UNIT
+  //HOUR, DAY, MONTH, YEAR
+$MEDIUM_TYPE
+  CONTINUUM  0.95
+   ...
+\end{verbatim}
+%%%%%%WW
+The axisymmetrical problems can be solved by give keyword
+\textit{\mbox{\$AXISYMMETRY}} in .msh file (c.f. section
+\ref{sec:msh}, \ref{sec:st}, \ref{sec:bc} and \ref{sec:out}).
+
+The gravity term for hydraulic analysis is assumed to be always from
+ the vertical direction. %%%%%%%%%WW
+
+
+\subsubsection{Remarks}
+A sub-keyword \mbox{\$RELOAD} is also available to control output/input for test purpose. If value of \mbox{\$RELOAD} is 1, i.e.,
+\begin{verbatim}
+.
+.
+.
+$RELOAD
+ 1
+\end{verbatim}
+Files named by process\_name +"\_"+pcs\_type\_name+"\_primary\_value.asc" will be produced after simulation being finished.
+They contain the results of primary viarables of the last time step. For deformation analysis, this value will make
+  all Gauss point stresses stored in a binary file named as  process\_name +".sts".  Such initial value will
+   be read with \mbox{\$RELOAD=2} if the simulation is restarted. Note, this is a test subkeyword,
+    we do not warrant or guarantee the stability for its usage in current version.
+
+
+
+\subsection{Node values}
+\label{sec:nod_values}
+
+\begin{tabular*}{12.773cm}{|p{3.cm}|p{1.5cm}|p{7cm}|} \hline
+Parameter          & Value & Meaning \\ \hline \hline
+%
+\texttt{PRESSUREx}        & phase & Pressure of fluid phase x \\
+\texttt{DISPLACEMENTx\_X} & phase & Displacement of solid phase x \\
+\texttt{DISPLACEMENTx\_Y} & phase & ... \\
+\texttt{DISPLACEMENTx\_Z} & phase & ... \\
+\texttt{TEMPERATUREx}     & phase & Temperature \\
+\texttt{CONCENTRATIONx}   & component & Mass concentration on component x \\
+\hline
+\end{tabular*}
+
+%-------------------------------------------------------------------------------
+\subsection{Coupling of processes}
+\subsubsection{Partitioning}
+
+Partitioning is the default scheme. Each specified process is
+executed. The order of process execution (i.e. flow, mass transport,
+heat transport and deformation) depends on the order in the PCS input file.
+
+\Examples{
+%-------------------------------------------------------------------------------
+\subsection{Examples}
+%-------------------------------------------------------------------------------
+\subsubsection{(confined) Groundwater flow}
+\begin{verbatim}
+benchmarks: h_*.*
+#PROCESS
+ $PCS_TYPE
+  LIQUID_FLOW
+#STOP
+\end{verbatim}
+%-------------------------------------------------------------------------------
+\subsubsection{(unconfined) Groundwater flow}
+\begin{verbatim}
+benchmarks: h_uc_*.* #PROCESS
+ $PCS_TYPE
+  GROUNDWATER_FLOW
+#STOP
+\end{verbatim}
+%-------------------------------------------------------------------------------
+\subsubsection{Gas flow}
+\begin{verbatim}
+benchmarks: h_gas_*.* #PROCESS
+ $PCS_TYPE
+  GAS_FLOW
+#STOP
+\end{verbatim}
+%-------------------------------------------------------------------------------
+\subsubsection{Two phase flow (partitioned)}
+\begin{verbatim}
+benchmarks: h2_*.*
+#PROCESS
+ $PCS_TYPE
+  TWO_PHASE_FLOW
+#PROCESS
+ $PCS_TYPE
+  TWO_PHASE_FLOW
+#STOP
+\end{verbatim}
+%-------------------------------------------------------------------------------
+\subsubsection{Multi-phase flow (monolithic)}
+\begin{verbatim}
+benchmarks: h2_*.*
+#PROCESS
+ $PCS_TYPE
+  MULTI_PHASE_FLOW
+#STOP
+\end{verbatim}
+This process has two primary variables, capillary pressure and gaseous pressure. In the code,
+ capillary pressure gaseous pressure are denoted as \mbox{PRESSURE1} and \mbox{PRESSURE1}, respectively.
+%-------------------------------------------------------------------------------
+\subsubsection{Heat transport}
+\begin{verbatim}
+benchmarks: ht_*.*
+#PROCESS
+ $PCS_TYPE
+  LIQUID_FLOW
+#PROCESS
+ $PCS_TYPE
+  HEAT_TRANSPORT
+#STOP
+\end{verbatim}
+%-------------------------------------------------------------------------------
+\subsubsection{Deformation}
+\label{sec:pcs_dm}
+\begin{verbatim}
+benchmarks: m_*.*
+#PROCESS
+ $PCS_TYPE
+  DEFORMATION
+#STOP
+\end{verbatim}
+\textbf{Note: For the monolithic approach of HM coupled problem,
+ the process name for boundary conditions and source terms
+  must be DEFORMATION\_FLOW} %%WW
+
+For the case of excavation simulation, the deformation process data is given as
+\begin{verbatim}
+#PROCESS
+ $PCS_TYPE
+  DEFORMATION
+  $NUM_TYPE
+  EXCAVATION        // Works with DEFORMATION process up to now
+#STOP
+\end{verbatim}
+Consequently, user has to specify the elements in the domain to be excavated.
+This is can be done in .st file (see Section\ref{sec:st_excav}). The current version
+  can deal with linear elastic deformation of excavation.
+
+%-------------------------------------------------------------------------------
+\subsubsection{Non-isothermal two-phase flow (partitioned)}
+\begin{verbatim}
+benchmarks: th2_*.*
+#PROCESS
+ $PCS_TYPE
+  COMPONENTAL_FLOW
+#PROCESS
+ $PCS_TYPE
+  COMPONENTAL_FLOW
+#PROCESS
+ $PCS_TYPE
+  HEAT_TRANSPORT
+#STOP
+\end{verbatim}
+%-------------------------------------------------------------------------------
+\subsubsection{Mass transport}
+\begin{verbatim}
+benchmarks: c_*.*
+#PROCESS
+ $PCS_TYPE
+  MASS_TRANSPORT
+#STOP
+\end{verbatim}
+%-------------------------------------------------------------------------------
+\subsubsection{River flow}
+\begin{verbatim}
+GeoSys-PCS: Processes ----- 3.9.09_6OK4_SV1
+#PROCESS
+ $PCS_TYPE
+  RIVER_FLOW
+ $NUM_TYPE
+  FDM
+#STOP
+\end{verbatim}
+
+%-------------------------------------------------------------------------------
+\subsubsection{Unsaturated flow}
+\begin{verbatim}
+GeoSys-PCS: Processes
+ $PCS_TYPE
+  RICHARDS_FLOW
+#STOP
+\end{verbatim}
+
+%-------------------------------------------------------------------------------
+\subsubsection{Unsaturated flow with the dual porosity model} %%WW
+\begin{verbatim}
+GeoSys-PCS: Processes
+ $PCS_TYPE
+  RICHARDS_FLOW
+$MEDIUM_TYPE
+  CONTINUUM  0.95
+#STOP
+\end{verbatim}
+%%WW
+Keyword \mbox{\$MEDIUM\_TYPE} indicates that the process is for a unsaturated flow process with the dual porosity model.
+While subkeyword \mbox{CONTINUUM} specifies the volumetric factor for matrix $w\_m$, which is 0.95 for this example.
+
+%-------------------------------------------------------------------------------
+\subsubsection{Monolithic schemes}
+Is more than one PCS type specified, than these processes are treated in a monolithic coupling scheme
+(see Example \ref{sec:ex_monolithic})
+%-------------------------------------------------------------------------------
+\subsubsection{Consolidation (monolithic)}
+\label{sec:ex_monolithic}
+\begin{verbatim}
+benchmarks: hm_*.*
+#PROCESS
+ $PCS_TYPE
+  LIQUID_FLOW
+  DEFORMATION
+ $CPL_TYPE
+  MONOLITHIC
+#STOP
+\end{verbatim}
+
+} % Examples
+
+
+%\LastModified{OK August 13, 2004}
+\LastModified{PCH \today}
+\newpage

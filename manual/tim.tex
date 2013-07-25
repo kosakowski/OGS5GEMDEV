@@ -1,0 +1,165 @@
+\section{Time Discretization}
+
+\begin{tabular*}{8.35cm}{|p{2.5cm}|p{5cm}|} \hline
+Object acronym & TIM \\
+C++ class      & CTimeDiscretization \\
+Source files   & rf\_tim.h/cpp \\
+\hline
+File extension & *.tim \\
+Object keyword & \#TIME\_STEPPING \\
+\hline
+\end{tabular*}
+
+\Developer{
+%----------------------------------------------------------
+\subsection{Theory}
+}
+
+%-------------------------------------------------------------------------------
+\subsection{\texttt{\bf\#TIME\_STEPPING}}
+
+%\subsubsection{Keyword structure}
+
+\begin{verbatim}
+#TIME_STEPPING
+ $PCS_TYPE // physical process
+  LIQUID_FLOW       // H process (incompressible flow)
+  UNCONFINED_FLOW   // H process (incompressible flow)
+  RICHARDS_FLOW     // H process (incompressible flow)
+  GAS_FLOW          // H process (compressible flow)
+  TWO_PHASE_FLOW    // H2 process (incompressible/compressible flow)
+  COMPONENTAL_FLOW  // H2 process (incompressible/compressible flow)
+  RIVER_FLOW        // H process (incompressible flow)
+  OVERLAND_FLOW     // H process (incompressible flow)
+  HEAT_TRANSPORT    // T process (single/multi-phase flow)
+  DEFORMATION       // M process (single/multi-phase flow)
+  MASS_TRANSPORT    // C process (single/multi-phase flow)
+  GROUNDWATER_FLOW  // H process (incompressible flow)
+ $TIME_STEPS
+  no_steps time_step_length
+  ...
+ $TIME_UNIT
+  SECOND
+  HOUR
+  DAY
+  YEAR
+ $TIME_END
+  time_end
+ $TIME_START
+  time_start
+ $TIME_CONTROL
+  COURANT
+  NEUMANN           // Only available for Richards flow
+  PECLET
+  SELF_ADAPTIVE
+  ERROR_CONTROL_ADAPTIVE     // Only available for Richards flow
+ #STOP
+\end{verbatim}
+
+
+\begin{tabular*}{12.773cm}{|p{3.cm}|p{1.5cm}|p{7cm}|} \hline
+Subkeyword             & Data type & Meaning \\ \hline \hline
+%
+\texttt{PCS\_TYPE}     & string     &  Specified processes for time stepping \\
+\texttt{TIME\_STEPS}   & int,double &  Number of time steps and time step length \\
+\texttt{TIME\_UNIT}    & string     &  Unit of time step, default value is second \\
+\texttt{TIME\_START}   & double     &  Start time \\
+\texttt{TIME\_END}     & double     &  End time \\
+\texttt{TIME\_CONTROL} & string     &  Criterion for time step control \\
+\hline
+\end{tabular*}
+
+\subsubsection{\texttt{\$PCS\_TYPE}}
+
+\begin{tabular*}{10.853cm}{|p{3.cm}|p{7cm}|} \hline
+Parameter          &Meaning \\ \hline \hline
+%
+\texttt{FLUID\_FLOW}     &Time stepping for flow process \\
+\texttt{HEAT\_TRANSPORT} &Time stepping for heat transport process \\
+\texttt{DEFORMATION}     &Time stepping for deformation process \\
+\texttt{MASS\_TRANSPORT} &Time stepping for mass transport process \\
+\texttt{RIVER\_FLOW}     &Time stepping for river flow process \\
+\texttt{RICHARDS\_FLOW}     &Time stepping for Richards flow process \\
+\hline
+\end{tabular*}
+
+\Examples{
+\newpage
+%-------------------------------------------------------------------------------
+\subsection{Examples}
+
+%-------------------------------------------------------------------------------
+\subsubsection{Domain output}
+
+Data output of \texttt{PRESSURE1} at $t$ = 4.320000e+003 sec for
+whole domain.
+
+\begin{verbatim}
+benchmark: th2_line.tim
+#TIME_STEPPING
+ $PCS_TYPE
+  LIQUID_FLOW
+ $TIME_STEPS
+ 1000  1e+0
+ 100  1e+1
+ 100  2e+1
+ 400  5e+1
+ $TIME_START
+  0.0
+ $TIME_END
+  2.e+4
+#STOP
+\end{verbatim}
+
+\begin{verbatim}
+benchmark: h_us_line_warrick.tim
+#TIME_STEPPING
+ $PCS_TYPE
+  RICHARDS_FLOW
+ $TIME_END
+  61200.0
+ $TIME_START
+  0.0
+ $TIME_CONTROL
+  NEUMANN
+#STOP
+\end{verbatim}
+
+\begin{verbatim}
+benchmark: h_us_line_forsyth.tim
+#TIME_STEPPING
+ $PCS_TYPE
+  RICHARDS_FLOW
+ $TIME_UNIT
+  HOUR
+ $TIME_END
+  240
+ $TIME_START
+  0.0
+ $TIME_CONTROL
+   SELF-ADAPTIVE
+   4    1.7
+   10   0.7
+   MAX_TIME_STEP
+   1
+   MIN_TIME_STEP
+   0.00001
+#STOP
+\end{verbatim}
+
+\begin{verbatim}
+benchmark: h_us_line_warrick.tim #TIME_STEPPING
+ $PCS_TYPE
+  RICHARDS_FLOW
+ $TIME_END
+  61200.0
+ $TIME_START
+  0.0
+ $TIME_CONTROL
+  ERROR_CONTROL_ADAPTIVE
+#STOP
+\end{verbatim}
+
+}
+
+\LastModified{YD - \today}

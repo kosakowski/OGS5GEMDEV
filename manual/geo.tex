@@ -1,0 +1,48 @@
+\section{Geometry}
+
+%--------------------------------------------------------
+\subsection{Polylines}
+
+Data for geometric objects are contained in the RFM file. The
+format for data input is as follows.
+
+%--------------------------------------------------------
+\subsubsection{Keyword}
+
+\small
+\begin{verbatim}
+#POLYLINE
+\end{verbatim}
+\normalsize
+
+%--------------------------------------------------------
+\subsubsection{Example}
+
+\small
+\begin{verbatim}
+#POLYLINE ; keyword
+POLYLINE1 ; name - polyline identfier
+4         ; number of polyline nodes
+;           x             y             z         value
+7.222222e-001 3.083144e+000 1.000000e+000 1.000000e+000
+6.818783e+000 3.559226e+000 2.000000e+000 2.000000e+000
+8.783069e+000 8.570615e+000 1.000000e+000 4.000000e+000
+4.534392e+000 8.921412e+000 3.000000e+000 3.000000e+000
+...
+\end{verbatim}
+\normalsize
+
+
+%--------------------------------------------------------
+\subsubsection{Implementation}
+
+\small
+\begin{verbatim}
+read function:  int GEOReadPolylines (char *data,int found,FILE *f)
+write function: void  GEOWritePolylines (FILE *f)
+\end{verbatim}
+\normalsize
+
+
+Graphics-based data input is described in section
+\ref{sec:polylines_graphics}.

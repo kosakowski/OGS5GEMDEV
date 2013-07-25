@@ -1,0 +1,139 @@
+\section{Solid Properties}
+
+\normalsize
+
+
+
+\subsection{Keywords}
+
+Solid properties can be specified using the keyword
+
+\begin{verse}
+ \#SOLID\_PROPERTIES
+\end{verse}
+
+This keyword is mandatory for the use of the stand-alone deformation model (10) and other coupled
+deformation models and processes.  It may be used repeatedly, then several species are defined.
+
+\begin{tabular}{|l|p{2.75cm}|c|c|p{5cm}|}
+  \hline
+  Parameter &    RF Variable                    &  Values  & SI-Unit & Meaning            \\
+  \hline
+%
+  \hline
+%
+  N1        & {\footnotesize material\_model}   &          &         & {\bf Linear elastic models}   \\
+            &                                   &     1    &         & Linear elasticity model        \\
+            &                                   &          &         & {\bf Elasto-plastic models}   \\
+            &                                   &   (100)    &         & $J^2$ von Mises plasticity model    \\
+            &                                   &   (101)    &         & Drucker-Prager model         \\
+            &                                   &   (200)    &         & {\bf Visco-elastic models}     \\
+%
+  \hline
+  \hline
+%
+  if N1=1   &                                   &          &         & Linear elasticity model        \\
+            & {\footnotesize e\_modulus}        &  E       &   Pa    & Elasticity modulus          \\
+            & {\footnotesize poissons\_ratio}   &  $\nu$   &   -     & Poisson's Ratio             \\
+%
+  \hline
+  \hline
+%
+  if N1=101 &                                   &               &         & $J^2$ von Mises plasticy model  \\
+            & {\footnotesize e\_modulus}        &  E            &   Pa    & Elasticity modulus          \\
+            & {\footnotesize poissons\_ratio}   &  $\nu$        &   -     & Poisson's Ratio             \\
+            & {\footnotesize yield\_stress}     &  $\sigma_0$   &   Pa    & Yield stress                \\
+%
+%
+  \hline
+%
+\end{tabular}
+{\footnotesize () - in preparation}
+
+
+{\bf Example}
+
+\begin{verbatim}
+#SOLID_PROPERTIES
+ 1           ; Linear elasticity model
+ 2000.0      ; Modulus of elasticity
+ 0.3         ; Poisson's ratio
+\end{verbatim}
+
+
+\subsection{Sub-keywords}
+Auxiliary sub-keywords are listed in the following table.
+
+\begin{tabular}{|p{7cm}|c|c|p{3cm}|}
+  \hline
+  Sub-keyword /  RF Variable                         &  Value            & SI-Unit & Compatible Models / Meaning        \\
+%
+  \hline
+  \hline
+%
+ \$THERMAL\_EXPANSION\_COEFFICIENT                   &                   &        &  [1]                      \\
+  {\footnotesize thermal\_expansion\_coefficient}    &  $\beta_T$        &   1/K  &  Thermal expansion coeff.$^1$ \\
+%
+  \hline
+%
+\end{tabular}
+{\footnotesize $^{1)}$ The reference temperature $T_{\mathrm{ref}} = T_{\mathrm{0}}$ is
+defined using \#REFERENCE\_CONDITIONS}
+
+
+\vspace{0.5cm}
+
+\LastModified{MK June 25, 2003}
+
+\centerline{\rule{10cm}{0.1mm}}
+
+
+\newpage
+
+
+
+
+
+The following keywords govern the input of the extra material parameters of solid properties.
+
+\begin{tabular}{lp{7.5cm}}
+\$ DRUCKER-PRAGER\index{\$ DRUCKER-PRAGER}
+   &
+         Following this keyword, four parameters for Drucker-Prager plastic model have to be input. They are
+         \begin{tabbing}
+           $Y_0$ \= The initial yield stress  \\
+           % \> for next tab, \\ for new line...
+           $H$ \> Plastic hardening modulus \\
+           $\phi$ \> Internal frictional angle \\
+           $\phi$ \> dilatancy angle \\
+         \end{tabbing}
+         This keyword has to be used in the case that involves plasticity with Drucker-Prager model
+
+\\
+\$ EHLERS\_WEIMAR\index{\$ EHLERS\_WEIMAR} %Name to be changed
+   &
+         This keyword switches the input of 20 parameters of a new plastic model derived from Ehlers' model. Following
+         this keyword, the 20 data are in the order:
+         \begin{center}
+           $\alpha_0$, $\beta_0$, $\delta_0$, $\epsilon_0$, $\kappa_0$, $\gamma_0$, $m_0$,
+           $\hat \alpha$, $\hat \beta$, $\hat \delta$, $\hat \epsilon$, $\hat \kappa$, $\hat \gamma$, $\hat m$,
+           $\psi_1$, $ \psi_2$, $C_h$,$C_d$, $ b_r$,$m_r$
+         \end{center}
+\\
+\end{tabular}
+
+Here is a sample of using these keywords
+\begin{verbatim}
+#SOLID_PROPERTIES
+  1 0.350000e+08  3.0000e-001 ; elasticity_modul, Possion ratio
+  $THERMAL_EXPANSION_COEFFICIENT
+    1.0e-5
+  $DRUCKER-PRAGER
+   1.0e6 ;Initial yield stress
+   -1.0e+6 ; Plastic hardening modulus
+   20.0 ;Internal frictional angle
+   5.0 ;dilatancy angle
+\end{verbatim}
+
+
+\LastModified{WW May 2003}

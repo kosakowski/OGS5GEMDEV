@@ -1,0 +1,57 @@
+
+The subject of this chapter is the movement of gases in porous media. In contrast to groundwater hydraulics, gas flow is more complicated because of its compressibility. Significant variations in gas density and viscosity can result also from temperature fluctuations (so-called Klinkenberg effect). According to the kinetic theory of gases, its viscosity should not depend on the pressure. This is not necessarily the case for conditions typically existing in natural gas reservoirs \cite{VoiLau:1985}. At a fixed temperature, the viscosity of gas can vary by tens of percents as the formation pressure changes by a few Mega Pascale. Another problem concerns the evidence of turbulent flow which results in additional friction effects. The present study is verified with existed analytical solutions. Simulation of compressible flows in porous media is neccessary for different applications such as air movement in soils, gas production or $\mathrm {CO_2}$ storage if carbon dioxide is injected in a gaseous state.
+
+
+The theory of gas seepage was developed first by \cite{Muskat:1937}, \cite{Leibenzon:1947}, and \cite{AraNum:1965}, who worked out a number of analytical approximations to solve the nonlinear problem. To this end, following assumption is made
+\begin{itemize}
+\item Gravitational forces are neglected
+\item No phreatic surfaces are formed
+\item Idealized material properties
+\end{itemize}
+The state of the compressible fluid within a considered closed system may be isothermal (const. temperature), adiabatic (const. heat content), or polytropic (const. change of heat content).
+
+
+The equation of gas flow in a porous medium can be derived from the mass balance of gas
+\begin{equation}
+\frac{\p (n \rho)}{\p t}+\nabla \cdot (\rho n \v)=\rho Q_\rho
+\label{eqn:fluid_mass_1}
+\end{equation}
+where $\rho$ is gas density, $\v$ is velocity vector, $n$ is porosity and $Q_{\rho}$ is source/sink term.
+
+
+The equation of state for an ideal gas represents its compressibility as pressure and temperature changes.
+\begin{equation}
+\rho=\frac{p M}{R T}
+\label{eqn:ideal_gas_law}
+\end{equation}
+where $p$ is gas pressure, $R$ is the universal gas constant, $M$ is molecular weight of gas and $T$ is temperature in Kelvin.
+
+
+Since gas density $\rho$ is depending on pressure and temperature, hence for compressible gas flow, mass balance equation  (\ref{eqn:fluid_mass_1}) become
+
+\begin{equation}
+\frac{n}{p} \frac{\p p}{\p t} -\frac{n}{T} \frac{\p T}{\p t}+\frac{1}{p}\nabla p -\frac{1}{T}\nabla T+\nabla \cdot (n \v)=Q_\rho
+\end{equation}
+In addition with the momentum balance equation, which can be expressed in form of an extended Darcy's law for non-linear flow.
+\begin{equation}
+n\v=-\frac{\k}{\mu}\nabla p
+\label{eqn:darcy_gas}
+\end{equation}
+where $\k$ is permeability tensor, $\mu$ is fluid viscosity, the gas mass balance equation reads as
+\begin{equation}
+\frac{n}{p} \frac{\p p}{\p t} -\frac{n}{T} \frac{\p T}{\p t}+\frac{1}{p}\nabla p -\frac{1}{T}\nabla T-
+\nabla \cdot (\frac{\k}{\mu}\nabla p)=Q_\rho
+\end{equation}
+which is a non-linear equation with respect to gas pressure $p$. For isothermal case temperature related term should be neglected and for nonisothermal case temperature value can get from heat transport equation.
+
+We will present following two benchmarks for verification of compressible gas flow code. In first benchmark density is changing only due to pressure and temperature is constant, i.e. isothermal case whereas in second benchmark we proved phenomenon of Joule-Thomson processes during carbon sequestration and enhance gas recovery.
+
+\begin{compactitem}
+	\item Isothermal compressible gas flow (\ref{bmt:Isothermal_compressible_flow})
+	\item Joule-Thomson cooling processes (\ref{bmt:Joule-Thomson_processes})
+\end{compactitem}
+At the end of the chapter we present an application example dealing with:
+
+\begin{compactitem}
+	\item Air flow through porous medium (section \ref{bmt:G-air_flow_examples})
+\end{compactitem}

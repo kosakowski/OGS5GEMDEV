@@ -1,0 +1,47 @@
+\section{Software Concept}
+
+New features
+\begin{itemize}
+ \item object-orientation
+ \item C++ implementation
+ \item libraries (GEOLib, MSHLib, FEMLib)
+ \item file concept (object-oriented)
+ \item user interface (Windows-MDI/OpenGL application)
+ \item software interfaces (ArcGIS,gOcad,SURFER,EXCEL)
+ \item PHREEQC interface for chemical reactions
+ \item data base for material properties
+ \item parallel computing (\#define PARALLEL)
+\end{itemize}
+
+
+\subsection{File Concept}
+
+\begin{center}
+\begin{tabular*}{12.715cm}{|p{3.5cm}|p{1.5cm}|p{2.0cm}|p{2.2cm}|p{1.4cm}|}
+\hline
+Object               & Acronym & File extension & Implementation & Resp
+\\ \hline \hline
+Processes            & PCS & *.pcs & 4.0.01 & OK\\
+Initial conditions   & IC  & *.ic  & 4.0.04 & MX\\
+Boundary conditions  & BC  & *.bc  & 4.0.03 & PCH\\
+Source/sink terms    & ST  & *.st  & 4.0.02 & MB\\
+Fluid properties     & MFP & * mfp & 4.0.08 & YD \\
+Solid properties     & MSP & *.msp & 4.0.10 & WW \\
+Medium properties    & MMP & *.mmp & 4.0.09 & CMCD\\
+Component properties & MCP & *.mcp & 4.0.23 & SB\\
+Reactions            & REC & *.rec & 4.0.13 & SB/MX\\
+Time discretization  & TIM & *.tim & 4.0.07 & OK \\
+Numerical properties & NUM & *.num & 4.0.XX & OK/WW\\
+Grid adaptation      & ADP & *.adp & todo & \\
+Output parameter     & OUT & *.out & 4.0.06 & OK \\
+Parallel computing   & DOM & *.ddc & 3.9.18 & DK \\
+\hline
+Geometric data       & GEO & *.gli & 3.9 & CC \\
+Mesh data            & MSH & *.rfi & 3.X & TK \\
+Restart data         & RFR & *.rfr & 3.X & \\
+Output data          & RFO & *.rfo & 3.X & \\
+\hline
+\end{tabular*}
+\end{center}
+
+\LastModified{OK \today}

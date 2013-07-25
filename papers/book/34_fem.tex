@@ -1,0 +1,160 @@
+\section{General finite element formulations}
+\label{sec:fem}
+
+The method of weighted residuals is applied to derive the weak
+formulation of the balance equations given in section
+\ref{sec:balance_equations}.
+
+Assume $\TestS^{\mathrm{n}}\subset
+H^1_{\scriptscriptstyle{\Gamma}}(\Omega)^{\mathrm{n}}$ is the test
+function space. For all $\test\in \TestS^{\mathrm{1}}$, we have
+the weak form of the mass balance equation (\ref{eqn:phase_mass_balance}) as
+%
+\begin{gather}
+\int_\Omega 
+\left(
+nS^{\gamma} \frac{\partial\rho^{\gamma R}}{\partial t} + nS^{\gamma} \mio{v}{\gamma s}{} \cdot \nabla \rho^{\gamma R}
++
+n\rho^{\gamma R}\frac{\partial S^{\gamma}}{\partial t} + n\rho^{\gamma R} \mio{v}{\gamma s}{} \cdot \nabla S^{\gamma}
+\nonumber  %[1.5ex]
++
+\nabla \cdot
+(\rho^{\gamma}nS^{\gamma} \mio{v}{\gamma s}{} )
++S^{\gamma}\rho^{\gamma R}\nabla\cdot\mio{u}{s}{\dot} 
+- q^{\gamma}
+\right)
+\test\dDom = 0
+\label{eq:wkmass0}
+\end{gather}
+%
+Applying integration by parts, divergence terms can be rewritten as
+%
+\begin{gather}
+\int_\Omega \nabla\cdot\mio{A}{}{} \omega d\Omega
+=
+\int_\Omega \mio{A}{}{} \cdot \nabla\omega \dDom
++
+\int_\Gamma \mio{A}{}{} \cdot \mathbf{n} \omega \dBdry
+\label{eq:wkmass}
+\end{gather}
+
+Under the same assumption, the weak form of heat balance equation (\ref{eqn:energy_balance}) can be obtained as
+\begin{gather}
+\int_\Omega \sum_{\gamma}(\varepsilon^\alpha\rho^\alpha c_p^\alpha)\pD{T}{t}\test\dDom
+-
+\int_\Omega \miu{j}{\mathrm{th}}{} \cdot \nabla\omega \dDom
++
+\int_\Gamma \miu{j}{\mathrm{th}}{} \cdot \mathbf{n} \omega \dBdry
+-
+\intD Q_{\mbox{\tiny T}}^{\gamma}\test\dDom=0
+\label{eq:wkhTmass}
+\end{gather}
+
+Taking account of nonlinearity, the weak form of the momentum balance equation
+(\ref{eq:4}) must be fulfilled throughout the load history, i.e.,
+%
+\begin{equation}
+\intD \frac{1}{2}(\miu{\sigma}{\mathrm{eff}}{} - \sum_\gamma\sat^\gamma p^\gamma \I ):(\nabla \Test+(\nabla \Test)^{\mathrm T}) \dDom 
+-
+\intD\Test^{\mathrm T} \cdot \dens \grv \dDom  - \intB
+\Test^{\mathrm T} \cdot {\mathbf{t}} \dBdry = 0 \label{eq:wkstress}
+\end{equation}
+for all $\Test\in \TestS^{\mathrm{n}}, \, \mathrm{n}=2,3$.
+In principle, vector form of stress and strain tensor (cf. section \ref{sec:m_properties})
+are used to developing  the system equation of the discretized form of (\ref{eq:wkstress}). Under this form,
+ the constitutive law for the effective stress tensor can be expressed as
+\[
+    \miu{\sigma}{\mathrm{eff}}{} = \miu{C}{}{}\, \miu{\varepsilon}{}{}
+\]
+with the corresponding strain-displacement relationship
+\[
+    \miu{\varepsilon}{}{} = \mathcal{L} \,\mio{u}{s}{}
+\]
+where $\mathcal{L}$ is an differential operator.
+
+\begin{equation}
+\mathcal{L} =
+\left(%
+\begin{array}{ccc}
+ \partial/\partial x & 0 & 0 \\
+ 0 & \partial/\partial y & 0 \\
+ 0 & 0 & \partial/\partial z \\
+ \partial/\partial y & \partial/\partial x & 0 \\
+ 0 & \partial/\partial z & \partial/\partial y \\
+ \partial/\partial z & 0 & \partial/\partial x
+\end{array}%
+\right)
+\label{eqn:diffop}
+\end{equation}
+
+We use the Galerkin finite element method to solve the weak forms of
+balance equations above. All variables are approximated by
+admissible finite element functions in the Taylor-Hood finite
+element space, i.e, low order interpolation $\Sh_1\in
+\mathbb{R}^{\mathrm{n}}$ for pressure and temperature variables and
+high order interpolation $\Sh_2 \in \mathbb{R}^{\mathrm{n}}$ for
+displacement, respectively. As a result of the finite element
+discretization of the weak forms (\ref{eq:wkmass}),
+(\ref{eq:wkhTmass}) and (\ref{eq:wkstress}), we obtain local
+matrices and vectors for the global system equations
+\cite{Kol:02}. Element matrices and vectors can be classified
+into following types (Table \ref{tab:types})
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lll}
+\hline
+Type & Name & Equations
+\\
+%-------------------------------------------------------------------------
+\hline
+$ \intD \Sh_1^{\mathrm{T}} \mathcal{M} \Sh_1 \dDom $ %\label{eq:massM} $
+& Mass matrix
+& (\ref{eq:wkmass}),(\ref{eq:wkhTmass})
+\\
+%-------------------------------------------------------------------------
+$ \intD (\Sh_1)^{\mathrm{T}} \mathcal{M} \nabla \Sh_1 \dDom $ %\label{eq:LapM} $
+& Advection matrix
+& (\ref{eq:wkhTmass})
+\\
+%-------------------------------------------------------------------------
+$ \intD (\nabla \Sh_1)^{\mathrm{T}} \mathcal{M} \nabla \Sh_1 \dDom $ %\label{eq:LapM1} $
+& Laplace matrix
+& (\ref{eq:wkmass}),(\ref{eq:wkhTmass})
+\\
+%-------------------------------------------------------------------------
+$ \intD \mathbf B^{\mathrm{T}} \mathcal{M}  \mathbf B \dDom $ %\label{eq:Tang} $
+& Tangential matrix
+& (\ref{eq:wkstress})
+\\
+%-------------------------------------------------------------------------
+$ \intD \mathcal{M} {\mathbf B}^{\mathrm{T}} \mathbf{m} \Sh_1 \dDom $ %\label{eq:CDMatrix} $
+& Displacement coupling matrix
+& (\ref{eq:wkmass})
+\\
+%-------------------------------------------------------------------------
+$ \intD \mathcal{M}\Sh_1^{\mathrm{T}} \mathbf{m}^{\mathrm{T}} \mathbf B\dDom $ %\label{eq:CMatrix} $
+& Pressure coupling matrix
+& (\ref{eq:wkstress})
+\\
+%-------------------------------------------------------------------------
+$ \intD Q \Sh_1 \dDom \quad \mbox{,} \,\intD Q \Sh_2 \dDom $ %\label{eq:SourceV} $
+& Source term vector
+& (\ref{eq:wkmass}),(\ref{eq:wkhTmass}),(\ref{eq:wkstress})
+\\
+%-------------------------------------------------------------------------
+$ \intB q \Sh^{\scriptscriptstyle \Gamma} \dBdry $ %\label{eq:NeuV} $
+& Neumann vector
+& (\ref{eq:wkmass}),(\ref{eq:wkhTmass}),(\ref{eq:wkstress})
+\\
+%-------------------------------------------------------------------------
+\hline
+\end{tabular}
+\caption{Matrix and vector types} \label{tab:types}
+\end{table}
+
+where $\mathcal{M}$ are a process-specific material functions,
+$\mathbf B= \mathcal L \Sh_2$ is so called strain-displacement
+matrix, $\mathbf m = (1,\,1,\,1,\,0,\,0,\,0)^T$ is mapping vector. Based on
+this classification of matrix and vector types the finite element
+object is designed (section \ref{sec:ele_fem}).

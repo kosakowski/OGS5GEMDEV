@@ -1,0 +1,14 @@
+GeoSys-ST: Source Terms ------------------------------------------------
+#SOURCE_TERM
+$PCS_TYPE
+TNEQ
+$PRIMARY_VARIABLE
+PRESSURE1
+$GEO_TYPE
+POINT POINT0
+$DIS_TYPE
+CONSTANT 0.0000000001
+#STOP
+
+
+

@@ -1,0 +1,46 @@
+
+\textbf{Theory}
+
+Water flow in a saturated porous medium is influenced by the pressure gradient over a given distance and the hydraulic conductivity of the aquifer. By Darcy's Law (equ. \ref{eq21}) the flow rate by considering these influences can be calculated.
+\begin{equation}
+v_f\,=\,k_f\cdot i
+\label{eq21}
+\end{equation}
+{\small
+with
+\begin{itemize}
+\item[$v_f$] -- flow rate (m/s),
+\item[$k_f$] -- hydraulic conductivity (m/s),
+\item[$i$] -- pressure gradient (-).
+\end{itemize}
+}
+
+The hydraulic conductivity is calculated by the following relation.
+\begin{equation}
+k_f\,=\,\frac{\kappa\cdot\rho\cdot g}{\mu}
+\label{eq22}
+\end{equation}
+{\small
+with
+\begin{itemize}
+\item[$\kappa$] -- permeability (m$^2$)
+\item[$\rho$] -- density of the fluid (kg$\cdot$m$^{-3}$)
+\item[$g$] -- gravity constant (m$\cdot$s$^{-2}$)
+\item[$\mu$] -- dynamic viscosity of the fluid (Pa$\cdot$s)
+\end{itemize}
+}
+
+By using the law of continuity the discharge through a defined cross section can be calculated.
+\begin{equation}
+Q\,=\,v_f\cdot A
+\label{eq23}
+\end{equation}
+{\small
+with
+\begin{itemize}
+\item[$Q$] -- discharge (m$^3$/s)
+\item[$A$] -- cross section (m$^2$)
+\end{itemize}
+}
+
+Layered soil material is possibly less permeable in one direction than in the direction perpendicular to it. In this case the input of different values for the permeability $\kappa$ in dependence on the direction of anisotropy is possible in RockFlow.

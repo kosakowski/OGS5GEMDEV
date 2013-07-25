@@ -1,0 +1,12 @@
+ncols                 43
+nrows                 33
+xllcorner      4423656.0
+yllcorner      5716944.0
+cellsize            1000
+NODATA_value       -9999
+0 mHM_sim_Percolation_1991_1.asc.bin
+1 mHM_sim_Percolation_1991_2.asc.bin
+2 mHM_sim_Percolation_1991_3.asc.bin
+3 mHM_sim_Percolation_1991_4.asc.bin
+4 mHM_sim_Percolation_1991_5.asc.bin
+#STOP

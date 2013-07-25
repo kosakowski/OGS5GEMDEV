@@ -1,0 +1,179 @@
+\section{Unsaturated consolidation}
+
+\input{HM/unsat_theory}
+
+\subsection{Liakopoulos Experiment}
+\label{sec:Liakopoulos} \index{example - Liakopoulos}
+
+\subsubsection*{Problem definition}
+The first example
+is a drainage test
+based on an experiment by Liakopoulos (1965).
+Desaturation takes place due to gravitational effects.
+This example was studied previously by several authors,
+e.g.
+Liakopoulos (1965),
+Narasimhan \& Witherspoon (1978),
+Zienkiewicz et al. (1990),
+Schrefler \& Zhan (1993).
+Therefore, this example is well suited as benchmark,
+moreover, because of the lack of any analytical solutions
+for this type of coupled, non-linear problems.
+In this test example,
+multiphase flow in a deforming porous medium is studied.
+At first we employ the Richards approximation,
+i.e. air remains at atmospheric pressure.
+
+The physical experiment of Liakopoulos was conducted in a column
+packed with so-called Del Monte sand. Moisture content and tension
+at several points along the column were measured with tensiometers
+(Fig. \ref{fig:liakop1}, Fig. \ref{fig:liakop2}).
+
+% *** EPS-Grafik ***
+\begin{figure}[htb!]
+\begin{center}
+\footnotesize
+\includegraphics[width=0.6\columnwidth]{HM/HM_unsat/liakop1.eps}  % Filename.eps
+\caption{Hydraulic conductivity vs pressure,
+with $K = k\Density\Gravity/\Viscosity$ and $\Psi = \Pressure/\Density\Gravity$
+(Liakopoulos 1965)
+}
+\label{fig:liakop1}
+\end{center}
+\end{figure}
+%
+
+% *** EPS-Grafik ***
+\begin{figure}[htb!]
+\begin{center}
+\footnotesize
+\includegraphics[width=0.5\columnwidth]{HM/HM_unsat/liakop2.eps}  % Filename.eps
+\caption{Hydraulic head vs water content,
+with
+$\Psi = \Pressure/\Density\Gravity$
+and
+$\MoistureContent = \Porosity\Saturation$
+(Liakopoulos 1965)
+}
+\label{fig:liakop2}
+\end{center}
+\end{figure}
+%
+
+In the simulation, the column is assumed has size of $0.1m\times1m$ and discretized into 20 quadrilateral elements (Fig. \ref{fig:modelia}).
+
+\subsubsection*{Initial and boundary conditions}
+Based on the experiment, we assume that the initial pressure is zero everywhere in the domain.
+Boundary conditions for both fluid and displacement fields is depicted in Fig. \ref{fig:modelia}.
+\begin{figure}[!htb]
+\begin{center}
+\footnotesize
+\input{HM/HM_unsat/liako.eepic}
+\caption{Boundary conditions}
+\label{fig:modelia}
+\end{center}
+\end{figure}
+%
+Such initial boundary conditions imply that the sample in fully saturated at the beginning, the water is allowed to
+flow out from the bottom boundary.
+
+\subsubsection*{Material properties}
+The capillary pressure $\CapillaryPressure(\Saturation)$
+\begin{eqnarray}
+\CapillaryPressure
+=
+\left(
+\frac{1-\Saturation}{1.9722}
+\times 10^{11}
+\right)^{\frac{1}{2.4279}}
+\label{eq:hm_sat_p_s}
+\end{eqnarray}
+as well as the relative permeability relationships
+$\PermRelP(\Saturation)$
+\begin{eqnarray}
+\PermRelP
+=
+1 - 2.207
+(1-\Saturation)^{1.0121}
+\label{eq:hm_sat_rs}
+\end{eqnarray}
+fit the measured data for saturations larger than 0.84. The physical parameter are given in the table below.
+%
+
+ \begin{table}[!htb]
+\centering
+\begin{tabular}{lll}
+\hline\hline\noalign{\smallskip}
+Property & Value & Unit \\
+\noalign{\smallskip}\hline\noalign{\smallskip}
+Young's modulus, $E$  &  $MPa$   &  1.3   \\
+Poisson's ratio,  $\nu$  & -- &  0.4 \\
+Solid grain density, $\Density^s$  &$kg m^{-3}$ & $2000$ \\
+Liquid density, $\Density^l$       &$kg m^{-3}$ & $kg m^{-3}$ \\
+Porosity, $\Porosity$            & --  & $0.2975$ \\
+Permeability, $\Perm$         & $ m^2$     & $4.5\times 10^{-13}$ \\
+Water viscosity,  $\mu$      & $Pa s$     & $10^{-3} $ \\
+Gravity,   $\Gravity$    &  $m s^{-2}$ & $9.806 $ \\
+capillary pressure $\CapillaryPressure(\Saturation)$   &  $Pa$ & eqn. (\ref{eq:hm_sat_p_s}) \\
+Relative permeability, $\PermRelP(\Saturation)$   &  -- & eqn. (\ref{eq:hm_sat_rs})\\
+\noalign{\smallskip}\hline\hline
+\end{tabular}
+\caption{Material parameters}
+\label{tab:hm_sat}
+\end{table}
+
+
+
+
+%The boundary conditions are illustrated in the below figure.
+
+\subsubsection*{Results}
+
+We conduct two kinds of simulation such as:
+ one is taking account of the gravity force as a load for displacement field, while the other ignore the the gravity force.
+
+For the case of non-gravity force, Fig. \ref{fig_HM_sat_nog} shows history profile of water pressure
+$\Pressure$, water saturation $\Saturation$, vertical solid
+displacement $u_y$ and vertical stress $\stress_{yy}$.
+\begin{figure}[!htb]
+  \begin{center}
+  \epsfig{figure=HM/HM_unsat/pre_nog.eps,height=0.49\textwidth, width=0.49\textwidth}
+  \epsfig{figure=HM/HM_unsat/sat_nog.eps,height=0.49\textwidth, width=0.49\textwidth}
+  \epsfig{figure=HM/HM_unsat/uy_nog.eps,height=0.49\textwidth, width=0.49\textwidth}
+  \epsfig{figure=HM/HM_unsat/syy_nog.eps,height=0.49\textwidth, width=0.49\textwidth}
+  \end{center}
+\caption{Simulated results (without gravity force), $\Pressure$, $\Saturation$,
+ $u_y$, $\stress_{yy}$ }
+  \label{fig_HM_sat_nog}
+\end{figure}
+Results of $\Pressure$, water saturation $\Saturation$, vertical solid
+displacement $u_y$ agree with what given in \cite{LewSch:98} (see pages 167-172).
+
+
+The vertical profile of results obtained by taking account of the gravity force are shown in Fig. \ref{fig_HM_sat_g}.
+If compare the saturation result with that obtained by ignoring the gravity fore, one can easily find the
+ desaturated procedure is enhanced apparently. This highlights the impact of displacement to water pressure and
+  the coupling effects.
+\begin{figure}[!htb]
+  \begin{center}
+  \epsfig{figure=HM/HM_unsat/pre_g.eps,height=0.49\textwidth, width=0.49\textwidth}
+  \epsfig{figure=HM/HM_unsat/sat_g.eps,height=0.49\textwidth, width=0.49\textwidth}
+  \epsfig{figure=HM/HM_unsat/uy_g.eps,height=0.49\textwidth, width=0.49\textwidth}
+  \epsfig{figure=HM/HM_unsat/syy_g.eps,height=0.49\textwidth, width=0.49\textwidth}
+  \end{center}
+\caption{Simulated results (with gravity force), $\Pressure$, $\Saturation$,
+ $u_y$, $\stress_{yy}$}
+  \label{fig_HM_sat_g}
+\end{figure}
+
+Benchmark deposit
+
+\begin{tabular}{|l|l|l|}
+  \hline
+  Benchmark & Problem type & Path in benchmark deposit \\
+  \hline
+ \emph{hm\_unsat}& HM & benchmarks\verb\HM\ \\
+  \hline
+\end{tabular}
+%%%%%%%%%%%%%%%%%
+

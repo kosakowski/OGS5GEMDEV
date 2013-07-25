@@ -1,0 +1,69 @@
+\subsection{Stationary creep in rock salt}
+\label{subsec:Mc3}
+
+\subsubsection{Definition}
+\label{subsubsec:Mc3_def}
+
+With respect to the benchmark discussed in the previous section Sec.~\ref{subsec:Mc2}, the creep process is now assumed to be caused by a constant external load at the bottom of the solid and a constant high temperature at the same time. The aim of this example is to calculate the resulting strain variation with time using the stationary creep model BGRa (\ref{Mc_eqn:BGRa_model}).
+
+\subsubsection{Solution}
+\label{subsubsec:Mc3_sol}
+
+For the simulation with OpenGeoSys almost the same finite element models (i.\,e., axisymmetric and threedimensional case) as for the previous benchmark in Sec.~\ref{subsec:Mc2} are selected. The only difference is in the height of the model, which is now $0.25\,$m. The initial temperature in the whole domain is $373.15\,$K. A constant load of $5\,$MPa is applied at the bottom surface of the model. The numerical simulation of the creep process over a time of $100\,$days is performed within 100 time steps of constant time step length.
+
+In order to compare numerical solutions with an analytical one, Eq.~(\ref{Mc_eqn:BGRa_model}) is transformed into the following expression:
+%
+\begin{equation}
+A
+=
+\frac
+{\Delta\varepsilon_{\mathrm{eff}}}
+{e^{-Q/RT} \sigma_{\mathrm{eff}}}
+\label{Mc_eqn:BGRa_model_4}
+\end{equation}
+%
+with
+%
+\begin{eqnarray}
+\sigma_{\mathrm{eff}}
+&=&
+\frac{1}{\sqrt{2}}
+\sqrt{(\sigma_1-\sigma_2)^2 + (\sigma_2-\sigma_3)^2 + (\sigma_3-\sigma_1)^2}
+\nonumber
+\\
+\Delta\varepsilon_{\mathrm{eff}}
+&=&
+\frac
+{\varepsilon_{\mathrm{eff}}(t+\Delta t) - \varepsilon_{\mathrm{eff}}(t)}
+{\Delta t}
+\\
+\varepsilon_{\mathrm{eff}}
+&=&
+\frac{\sqrt{2}}{3}
+\sqrt{(\miu{\varepsilon}{1}{}-\miu{\varepsilon}{2}{})^2 + (\miu{\varepsilon}{2}{}-\miu{\varepsilon}{3}{})^2 + (\miu{\varepsilon}{3}{}-\miu{\varepsilon}{1}{})^2}
+\nonumber
+\label{Mc_eqn:BGRa_model_5}
+\end{eqnarray}
+
+For the considered calculation steps, the stresses of the corresponding time period are assumed to be constant. Eq.~(\ref{Mc_eqn:BGRa_model_4}) is solved for node 25 (see Fig.~\ref{Mc_fig:creep_salt_4}) of the axisymmetric finite element model.
+%
+\begin{figure}[htb]
+\centering
+\includegraphics[scale=0.26]{PART_II/M/creep_salt_4}
+\caption{Comparison of numerical strain results ($x$- and $z$-directions) for the axisymmetric and the threedimensional models}
+\label{Mc_fig:creep_salt_4}
+\end{figure}
+
+\subsubsection{Results}
+\label{subsubsec:Mc3_res}
+
+The effective stress value $\sigma_{\mathrm{eff}}$ at node 25 for the given time period is $5.03\,$MPa, which was calculated using Eq.~(\ref{Mc_eqn:BGRa_model_5}). The strain at the end of the first time step is $\varepsilon_{\mathrm{eff}}(t_1)=1.72\times 10^{-3}$, and at the end of the second time step: $\varepsilon_{\mathrm{eff}}(t_2)=1.73\times 10^{-3}$, which, again, is calculated using Eq.~(\ref{Mc_eqn:BGRa_model_5}). Considering Eq.~(\ref{Mc_eqn:BGRa_model_4}) the analytically obtained value of the parameter $A$ is equal to $0.19$, which corresponds approximately to the input value of $A$ of $0.18$ defined in the previous example. The results of the comparison between the axisymmetric model and the threedimensional model are shown in Figs.~\ref{Mc_fig:creep_salt_4} and \ref{Mc_fig:creep_salt_5}. These results are identical.
+%
+\begin{figure}[htb]
+\centering
+\includegraphics[scale=0.37]{PART_II/M/creep_salt_5}
+\caption{Comparison of numerical strain results ($y$-direction) for the axisymmetric and the threedimensional models}
+\label{Mc_fig:creep_salt_5}
+\end{figure}
+
+\clearpage

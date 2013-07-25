@@ -1,0 +1,196 @@
+\documentclass[twoside,a4paper,10pt]{article} % Voreinst.: 10pt, oneside
+%\documentclass[a4paper,12pt,dvips,headrule,footrule]{foils}
+%\documentclass[oneside,10pt]{article} % double side
+
+% --- Grafik
+\usepackage[dvips]{graphicx}
+\usepackage{epsfig}
+\usepackage{ifthen}
+\usepackage{color}
+\usepackage{amsmath, amsthm, amssymb, mathrsfs, bm}
+
+
+% --- Papierformat soll A4 sein
+\usepackage{a4}
+%\usepackage{a5}
+
+% --- Verwenden der deutschen Trennmuster
+%%\usepackage{german}
+% --- Unterstuetzen von deutschen Umlauten
+\usepackage[ansi]{stys/umlaute}
+
+% Definitions
+\include{macros/macros} % maximal 8 Buchstaben
+
+% --- Symbole
+
+%%\usepackage{latexsym}
+%%\usepackage{amsmath}
+%%\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{stys/fancybox}
+\usepackage{hyperref}
+\hypersetup {colorlinks,pdftex}
+
+% Absaetze nicht einruecken
+\setlength{\parindent}{0pt} \setlength{\parskip}{5pt plus 2pt
+minus 1pt}
+
+%\usepackage{../../../MyDocuments/tex_makros/fheading}           % Seitenkopf gestalten
+\usepackage{stys/fheading}           % Seitenkopf gestalten
+\pagestyle{fancy}
+\lhead[\fancyplain{}{\footnotesize\textsf\thepage}]%
+      {\fancyplain{}{\footnotesize\textsf\rightmark}}
+\rhead[\fancyplain{}{\footnotesize\textsf\leftmark}]%
+      {\fancyplain{}{\footnotesize\textsf\thepage}}
+\cfoot{\RFVersion} %
+\rfoot{\today} %
+
+% Seite einrichten
+%\setlength{\textwidth}{8.5cm}
+%%\setlength{\textheight}{26cm}
+%\setlength{\textwidth}{17.5cm}
+%\setlength{\oddsidemargin}{-0.5cm}
+%\setlength{\evensidemargin}{-0.5cm}
+%\setlength{\columnsep}{0.5cm}
+%\setlength{\textheight}{18cm}
+
+% Zeilenabstaende
+%\renewcommand{\baselinestretch}{2}
+
+% --- Fonts
+\renewcommand{\rmdefault}{cmss}
+\include{fonts}
+
+
+%===============================================================================
+% Definitions
+\include{defs/rfsdef} % maximal 8 Buchstaben
+\include{defs/rfddef} % maximal 8 Buchstaben
+\include{defs/stnddef} % maximal 8 Buchstaben
+\include{defs/colors} % maximal 8 Buchstaben
+
+\def \ThermalConductivity {\lambda}
+\def \Flux {{\mathbf J}}
+\def \HeatDiffusivity {\boldsymbol{\kappa}}
+\def \Compressibility {\beta}
+\def \EnthalpyVap {h_{\mbox{\footnotesize vap}}}
+\def \Enthalpy {h}
+\def \Energy {e}
+\def \MassFraction {X}
+\def \Stres {{\boldsymbol{\sigma}}\!\!}
+\def \MassFractionVec {\mathbf\MassFraction}
+\def \MolarMass {M}
+\def \VapourPressure {\Pressure^g_{w,sat}}
+\def \GasConstant {R}
+\def \InternalEnergy {u}
+\def \Tortuosity {\tau}
+\def \HeatFluxAdvective {{\Flux^{\Phase s}_\InternalEnergy}}
+\def \HeatFluxDiffusive {{\Flux^g_\InternalEnergy}}
+\def \HeatFluxConductive {{\Flux_t}}
+\def \CapillaryPressureVec {\mathbf\CapillaryPressure}
+\def \CapillaryPressureMax {\Pressure_{\mbox{\footnotesize c max}}}
+\def \Jacobian {J}
+\def \Comp {k}
+\def \stress {\sigma}
+\def \strain {\epsilon}
+
+
+%===============================================================================
+\begin{document}
+% Titel-Seite %
+\include{title_new}
+%------------------------------------------
+% Contents
+\newpage
+\tableofcontents
+%------------------------------------------
+% Intro
+\include{preface}
+%------------------------------------------
+% Data concept
+\include{concept}
+%------------------------------------------
+% GEOLib
+\include{gli_file}
+%------------------------------------------
+% MSHLib
+\include{rfi_file}
+%------------------------------------------
+% Domain decomposition
+\include{ddc}
+%------------------------------------------
+% PCS processes
+\include{pcs}
+% Numerical control
+\include{num_new}
+%--------------------------------
+----------
+% IC - Initial conditions
+\include{ic_new}
+%------------------------------------------
+% BC - Boundary conditions
+\include{bc_new}
+%------------------------------------------
+% ST - Source terms
+\include{st_new}
+%------------------------------------------
+% OUT - Output
+\include{out_new}
+%------------------------------------------
+% TIM - Time discretization
+\include{tim}
+%------------------------------------------
+% MFP - Fluid properties
+\include{mfp_new}
+%------------------------------------------
+% MSP - Solid properties
+\include{msp_new}
+%------------------------------------------
+% MMP - Medium properties
+\include{mmp_new}
+%------------------------------------------
+% MCP - Component properties
+\include{mcp_new}
+%------------------------------------------%
+  CHM - ChemApp data
+\include{chm}
+%------------------------------------------
+% FCT - Functions
+\include{fct}
+%------------------------------------------
+% UNITS - Units
+\include{unit}
+%------------------------------------------
+% Benchmarks
+%OK\include{benchmarks}
+%------------------------------------------
+% ToDo list
+%%\include{remarks}
+
+%===============================================================================
+% Anlagen
+%\include{authors}
+%\include{history}
+
+%===============================================================================
+% Verzeichnisse
+%% Inhaltsverzeichnis
+%\newpage
+%\tableofcontents
+%% Abbildungsverzeichnis
+%\newpage
+%\listoffigures
+%% Tabellenverzeichnis
+%\newpage
+%\listoftables
+
+\end{document}
+
+
+%Zaehler
+%\setcounter{page}{65}
+%\setcounter{section}{8}
+%\setcounter{equation}{213}
+%\setcounter{figure}{24}
+%\setcounter{table}{9}

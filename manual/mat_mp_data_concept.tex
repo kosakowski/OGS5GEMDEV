@@ -1,0 +1,119 @@
+
+\subsection{Data Concept}
+
+The soil properties data is stored under the following data
+structure.
+
+\vspace{5mm}
+
+\textbf{Data Object - MAT-MP}
+
+
+\begin{verbatim}
+
+typedef struct
+  {                                       /* for soil properties */
+    long type;                            /* Item-Typ */
+    char *name;                           /* Group name */
+    long material_group_element_number;
+
+
+    /* Geometry */
+    int dimension;
+    double area;                          /* 1D: Area, 2D: Thickness, 3D: No parameter */
+
+    int porosity_model;                   /* Porosity model */
+    int porosity_dependence_model;
+
+
+    int count_of_porosity_model_values;   /* Porosity model parameters */
+    double *porosity_model_values;
+    int count_of_porosity_model_field_values;
+    double *porosity_model_field_values;
+
+    double porosity;                      /* Porosity */
+    double tortuosity;                    /* Tortuosity */
+    double specific_area;                 /* Specific surface */
+
+    /* Mobile-Immobile-Model and required values */
+
+    int mobile_immobile_model;                  /* Mobile-Immobile-Model */
+    int count_of_mobile_immobile_model_values;  /* No. Mob.- immob. model parameters*/
+    double *mobile_immobile_model_values;       /* Values*/
+
+    /* Maximum Sorption model*/
+
+    int maximum_sorption_model;                  /* Mobil-Immobile-Model */
+    int count_of_maximum_sorption_model_values;  /* No. Mob.- immob. model parameters */
+    double *maximum_sorption_model_values;       /* Values*/
+
+    /* Lytho component */
+
+    int number_grain_classes;        /* Number of grain classes */
+    double *grain_radius;            /* Grain radius */
+    double *grain_percent;           /* Percentage of total material */
+
+
+    /* Fluid flow */
+    int nonlinearflowelement;        /* Flow model (linear or non linear) */
+    double nonlinearflowparameter;   /* Exponent for non linear flow model. */
+
+    double storativity;              /* Storage coefficient */
+    int fluid_storativity_model;     /* Storage coefficient model and parameters */
+    int fluid_storativity_num_val;   /* No. parameters */
+    double *fluid_storativity_val;   /* Values */
+
+    int fluid_exchange_model;        /* Exchange between two continua */
+    int fluid_exchange_num_val;      /* No. parameters */
+    double *fluid_exchange_val;      /* Values */
+
+    int permeability_model;          /* Permeability model */
+    int permeability_tensor;         /* Permeability tensor */
+    double k[9];                     /* Values */
+    double perm[7];                  /* rel. Perm. */
+    double kap[7];                   /* Capillary press. dependent Perm. */
+
+    int rel_perm_press_model;        /* Rel Perm. as a function of press. */
+    int rel_perm_press_num_val;      /* Number of values */
+    double *rel_perm_press_val;      /* Values */
+
+    int rel_perm_velo_model;         /* Rel Perm. as a function of velocity */
+    int rel_perm_velo_num_val;       /* Number of values */
+    double *rel_perm_velo_val;       /* Values */
+
+    int rel_perm_satu_model;         /* Rel. Perm. as a function of saturation*/
+    int rel_perm_satu_num_val;       /* Number of values */
+    double *rel_perm_satu_val;       /* Values */
+
+    int rel_perm_defo_model;         /* Rel. Perm. as a function of deformation */
+    int rel_perm_defo_num_val;       /* Number of values */
+    double *rel_perm_defo_val;       /* Values */
+
+    int cap_press_satu_model;        /* Cap. press. as a function of saturation. */
+    int cap_press_satu_num_val;      /* Number of values */
+    double *cap_press_satu_val;      /* Values */
+
+    /* Mass transport */
+    double massdispL;                /* Longitudinal dispersion  */
+    double massdispT;                /* Transverse dispersion */
+
+    /* Heat transport */
+    double heatdispL;                /* Longitudinal heat dispersion   */
+    double heatdispT;                /* Transverse heat dispersion */
+
+    /* Solid properties */
+    int heatconductivitymodel;         /* Heat transport model */
+    double heatconductivitytensor[3];  /* Conductivity tensor of the rock*/
+    double densityrock;                /* Rock density */
+    double heatcapacityrock;           /* Specific heat capacity of the rock */
+
+    int electric_conductivity_model;   /* Electrical conductivity of the rock */
+    int electric_conductivity_num_val; /* Number of values */
+    double *electric_conductivity_val; /* Values */
+
+
+  }
+SOIL_PROPERTIES;
+\end{verbatim}
+
+\newpage

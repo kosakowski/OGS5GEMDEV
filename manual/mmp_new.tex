@@ -1,0 +1,457 @@
+\textcolor[rgb]{0.98,0.00,0.00}{\section{Porous Medium Properties}}
+
+\begin{tabular*}{8.35cm}{|p{2.5cm}|p{5cm}|} \hline
+Object acronym & MMP \\
+C++ class      & CMediumProperties \\
+Source files   & rf\_mmp.h/cpp \\
+\hline
+File extension & *.mmp \\
+Object keyword & \#MEDIUM\_PROPERTIES \\
+\hline
+\end{tabular*}
+
+\Developer{
+%----------------------------------------------------------
+\subsection{Theory}
+}
+%-------------------------------------------------------------------------------
+\textcolor[rgb]{0.98,0.00,0.00}{\subsection{\texttt{\bf\#MEDIUM\_PROPERTIES - TORTUOSITY Changed}}}
+
+%\subsubsection{Keyword structure}
+
+\begin{verbatim}
+#MEDIUM_PROPERTIES
+// Data base
+ $MEDIUM_TYPE
+   CLAY
+   SILT
+   SAND
+   GRAVEL
+   CRYSTALLINE
+// Geometric properties
+ $GEOMETRY_DIMENSION
+   dim // 1,2,3-D
+ $GEOMETRY_AREA
+   area // area for 1D element, thickness for 2D element
+   FILE file.dat // input of distributed data (node or element wise)
+ $GEO_TYPE
+  POINT    point_name
+  POLYLINE polyline_name
+  SURFACE  surface_name
+  VOLUME   volume_name
+  LAYER    Layer_number
+ $POROSITY
+  model model_parameters
+ $TORTUOSITY
+  model model_parameters
+  or
+  ISOTROPIC   tortuosity
+  ANISOTROPIC tortuosities
+  FILE file_name
+// Hydraulic properties
+ $STORATIVITY
+  model model_parameters
+ $PERMEABILITY_TENSOR
+  ISOTROPIC   permeability
+  ORTHOTROPIC permeabilities
+  ANISOTROPIC permeabilities
+  FILE file_name
+ $UNCONFINED
+ $PERMEABILITY_FUNCTION_SATURATION
+  model model_parameters for first fluid phase
+  model model_parameters for second fluid phase
+  ...
+ $PERMEABILITY_FUNCTION_DEFORMATION
+  model model_parameters
+ $PERMEABILITY_FUNCTION_PRESSURE
+  model model_parameters
+ $PERMEABILITY_FUNCTION_STRESS
+  model model_parameters
+ $PERMEABILITY_FUNCTION_VELOCITY
+  model model_parameters
+ $PERMEABILITY_FRAC_APERTURE
+  average_type roughness_correction
+ $CAPILLARY_PRESSURE
+  model model_parameters
+ // Thermal properties
+ $HEAT_DISPERSION
+  model model_parameters
+ // Mass transport properties
+ $MASS_DISPERSION
+  model model_parameters
+ // Electric properties
+ $ELECTRIC_CONDUCTIVITY
+  model model_parameters
+ // Multi-continua properties
+ $FLUID_EXCHANGE
+  model model_parameters
+ $MASS_EXCHANGE
+  model model_parameters
+ $PERMEABILITY_DISTRIBUTION
+  file_name
+ $MANNING_COEFFICIENT
+  value
+ $FRACTURE_DATA
+  number_of_fractures names_of_fractures
+#STOP
+\end{verbatim}
+
+%==========================================================
+\subsection{Medium model data input}
+%----------------------------------------------------------
+\subsubsection{Porosity}
+\paragraph*{Case 11: Read in a file}
+\begin{verbatim}
+$POROSITY
+ 11 poro_layer1.dat
+\end{verbatim}
+
+%----------------------------------------------------------
+%----------------------------------------------------------
+\subsubsection{Friction coefficient for overland or channel flow}
+\begin{verbatim}
+$MANNING_COEFFICIENT
+ 0.15
+
+$CHEZY_COEFFICIENT
+ 10
+\end{verbatim}
+
+%----------------------------------------------------------
+%----------------------------------------------------------
+\subsubsection{Permeability}
+\paragraph*{PERMEABILITY\_TENSOR}
+\begin{verbatim}
+$PERMEABILITY_TENSOR
+ FILE perm_layer1.dat
+\end{verbatim}
+%----------------------------------------------------------
+%----------------------------------------------------------
+\subsubsection{Discrete Fracture Permeability}
+\begin{verbatim}
+$PERMEABILITY_FRAC_APERTURE
+  average_type roughness_correction
+\end{verbatim}
+\begin{itemize}
+  \item average\_type: Arithmetic, Geometric, or Harmonic
+  \item roughness\_correction: corr\_roughness OR no\_corr\_roughness
+\end{itemize}
+The average type describes how the average aperture (which is subsequently used to calculate the permeability) will be calculated. The permeability calculation is based on the cubic law. If $corr\_roughness$ is entered, this cubic law permeability will be corrected depending on the roughness of the fracture walls and the closure ratio of the fracture. This correction is based on:
+
+Zimmerman RW, Bodvarsson GS (1996) Hydraulic Conductivity of Rock Fractures.
+\emph{Transport in Porous Media} 23: 1-30
+
+\emph{Note:} For this function to work polylines must be defined for the upper and lower fracture surface profiles. See \emph{frac\_test.gli}.
+
+%----------------------------------------------------------
+%----------------------------------------------------------
+\subsubsection{Confined or unconfined flow}
+Standard is the confined flow is modelled. No additional keyword
+is required. If the mmp group is unconfined the keyword
+\begin{verbatim}
+$UNCONFINED
+\end{verbatim}
+has to be used.
+%----------------------------------------------------------
+%----------------------------------------------------------
+\subsubsection{Relative permeability - saturation}
+%----------------------------------------------------------
+
+
+%-------------------------------------------------------------------------------
+\paragraph*{Case 0: User-defined function by \#CURVE}
+\begin{eqnarray}
+  \PermRelS^\Phase= f(u)
+\end{eqnarray}
+\begin{verbatim}
+$PERMEABILITY_SATURATION
+ 0 curve_number
+\end{verbatim}
+
+%-------------------------------------------------------------------------------
+\paragraph*{Case 2: Linear function}
+
+\paragraph*{Case 21: Linear function from saturation}
+\begin{eqnarray}
+\PermRelS^\Phase = 1-\Saturation^\Phase
+\end{eqnarray}
+\begin{verbatim}
+$PERMEABILITY_SATURATION
+ 21
+\end{verbatim}
+
+%-------------------------------------------------------------------------------
+\paragraph*{Case 4: van Genuchten (1980)}
+\begin{eqnarray}
+\SaturationEff
+&=&
+\frac{\Saturation^\Phase-\SaturationRes^\Phase}{\SaturationMax^\Phase-\SaturationRes^\Phase}
+\\
+\PermRelS^l &=& \SaturationEff^{1/2} \left[
+1-(1-\SaturationEff^{1/m})^m \right]^2
+\end{eqnarray}
+\begin{verbatim}
+$PERMEABILITY_SATURATION
+ 4  s_res  s_max  m
+\end{verbatim}
+
+%-------------------------------------------------------------------------------
+\paragraph*{Case 14: van Genuchten 2 (1980)}
+\begin{eqnarray}
+\SaturationEff &=&
+\frac{\Saturation^\Phase-\SaturationRes^\Phase}{\SaturationMax^\Phase-\SaturationRes^\Phase}
+\\
+\PermRelS^l &=& \SaturationEff^{0.5} \left[
+1-(1-\SaturationEff^{1/m})^m \right]^2
+\end{eqnarray}
+\begin{verbatim}
+$PERMEABILITY_SATURATION
+ 14  s_res  s_max  m
+\end{verbatim}
+
+
+%-------------------------------------------------------------------------------
+\paragraph*{Case 14: van Genuchten (1980) for non-wettable phase}
+\begin{eqnarray}
+\SaturationEff &=&
+\frac{\Saturation^\Phase-\SaturationRes^\Phase}{\SaturationMax^\Phase-\SaturationRes^\Phase}
+\\
+\PermRelS^g &=& (1-\SaturationEff)^{0.5} \left[
+1-(1-\SaturationEff) \right]^{2m}
+\end{eqnarray}
+\begin{verbatim}
+$PERMEABILITY_SATURATION
+ 15  s_res  s_max  m
+\end{verbatim}
+
+%----------------------------------------------------------
+\subsubsection{Capillary pressure}
+
+%-------------------------------------------------------------------------------
+\textcolor[rgb]{0.98,0.00,0.00}{\paragraph*{Case 4: van Genuchten
+(1980)}}
+\begin{eqnarray}
+p_c &=& \frac{\rho^lg}{\alpha}(\SaturationEff^{1/m}-1 )^{(1-m)}
+\end{eqnarray}
+\begin{verbatim}
+ $CAPILLARY_PRESSURE
+ 4  alpha
+ \end{verbatim}
+%==========================================================
+\Examples{
+\newpage
+%-------------------------------------------------------------------------------
+%----------------------------------------------------------
+\subsubsection{Discrete Fracture Data}
+\begin{verbatim}
+ $FRACTURE_DATA
+  number_of_fractures names_of_fractures
+\end{verbatim}
+\begin{itemize}
+  \item number\_of\_fractures: The number of discrete fractures in the model domain. Each fracture is handled as a separate entity.  
+  \item names\_of\_fractures: The names of each of these fractures. For each fracture, polylines must be created representing the upper and lower fracture surface profiles. These polylines must have the names \emph{name\_of\_fracture\_top} and \emph{name\_of\_fracture\_bot}. See \emph{frac\_test.gli}.
+\end{itemize}
+%----------------------------------------------------------
+\subsection{Examples}
+
+%-------------------------------------------------------------------------------
+\subsubsection{Single phase flow}
+
+\begin{verbatim}
+benchmark: h_line.mmp
+#MEDIUM_PROPERTIES
+ $GEOMETRY_DIMENSION
+  1
+ $GEOMETRY_AREA
+  1.000000e+000
+ $POROSITY
+  1 2.000000e-001
+ $TORTUOSITY
+  1  1.000000e+000
+ $PERMEABILITY_TENSOR
+  ISOTROPIC 1.000000e-07
+#STOP
+\end{verbatim}
+
+
+%-------------------------------------------------------------------------------
+\subsubsection{Unconfined groundwater flow}
+
+\begin{verbatim}
+benchmark: beerze-reuzel.mmp
+#MEDIUM_PROPERTIES
+ $NAME
+  Layer1
+ $GEO_TYPE
+  LAYER 1
+ $GEOMETRY_DIMENSION
+  2
+ $GEOMETRY_AREA
+  1.000000000000e+000
+ $POROSITY
+   11 sf1_1x.dat1
+ $PERMEABILITY_TENSOR
+   FILE   kd1_simgroq.dat1
+ $UNCONFINED
+\end{verbatim}
+
+%-------------------------------------------------------------------------------
+\subsubsection{Two phase flow}
+
+\begin{verbatim}
+benchmark: h2_line.mmp
+#MEDIUM_PROPERTIES
+ $GEOMETRY_DIMENSION
+  1
+ $GEOMETRY_AREA
+  1.000000e+000
+ $POROSITY
+  1 2.000000e-001
+ $TORTUOSITY
+  1 1.000000e+000
+ $PERMEABILITY_TENSOR
+  ISOTROPIC 1.000000e-07
+ $PERMEABILITY_SATURATION
+  3 0.2 0.8 2.
+  3 0.2 0.8 2.
+ $CAPILLARY_PRESSURE
+  0:
+#STOP
+\end{verbatim}
+
+%-------------------------------------------------------------------------------
+\subsubsection{Non-isothermal two phase flow}
+
+\begin{verbatim}
+benchmark: th2_line.mmp
+#MEDIUM_PROPERTIES
+ $GEOMETRY_DIMENSION
+  1
+ $GEOMETRY_AREA
+  1.000000e-2
+ $POROSITY
+  1 0.407407407
+ $TORTUOSITY
+  1 0.8
+ $PERMEABILITY_TENSOR
+  ISOTROPIC: 8.22854E-20
+ $PERMEABILITY_SATURATION
+  21 0.0 0.9
+  4  0.1 1.0 1.0
+ $PERMEABILITY_DEFORMATION
+  1 1.0 1.0 7.0 3293673.0 -0.165 3.0
+ $CAPILLARY_PRESSURE
+  0 5
+#STOP
+\end{verbatim}
+
+%-------------------------------------------------------------------------------
+
+\subsubsection{Richards flow}
+\begin{verbatim}
+benchmark: h_us_line.mmp #MEDIUM_PROPERTIES
+ $GEOMETRY_DIMENSION
+  3
+ $GEOMETRY_AREA
+  1.000000e+000
+ $POROSITY
+  1 2.000000e-001
+ $TORTUOSITY
+  1 1.000000e+000
+ $PERMEABILITY_TENSOR
+  ISOTROPIC 1.000000e-07
+ $PERMEABILITY_SATURATION
+  4  0  0.6452  0.791667
+ $CAPILLARY_PRESSURE
+  4  320
+#STOP
+\end{verbatim}
+
+%-------------------------------------------------------------------------------
+\subsubsection{Consolidation}
+
+\begin{verbatim}
+benchmark: hm_tri.mmp
+#MEDIUM_PROPERTIES
+ $GEOMETRY_DIMENSION
+  2
+ $GEOMETRY_AREA
+  1.0
+ $POROSITY
+  1 0.000000e-001
+ $TORTUOSITY
+  1 1.000000e+000
+ $PERMEABILITY_TENSOR
+  ISOTROPIC 1.000000e-10
+#STOP
+\end{verbatim}
+
+%-------------------------------------------------------------------------------
+\subsubsection{Heat transport}
+
+\begin{verbatim}
+benchmark: ht_line.mmp
+#MEDIUM_PROPERTIES
+ $GEOMETRY_DIMENSION
+  1
+ $GEOMETRY_AREA
+  1.0
+ $POROSITY
+  1 2.000000e-001
+ $PERMEABILITY_TENSOR
+  ISOTROPIC 1.000000e-11
+ $HEAT_DISPERSION
+  1 5.000000e+000 0.000000e+000
+#STOP
+
+\end{verbatim}
+
+%-------------------------------------------------------------------------------
+\subsubsection{Discrete Fracture Deformation}
+
+\begin{verbatim}
+benchmark: frac_test.mmp
+#MEDIUM_PROPERTIES
+ $GEOMETRY_DIMENSION
+  2
+ $GEOMETRY_AREA
+  1.000000e+000
+ $POROSITY
+  1 1.000000e-001
+ $TORTUOSITY
+  1 1.000000e+000
+ $PERMEABILITY_TENSOR
+  ORTHOTROPIC 1 1
+ $PERMEABILITY_FRAC_APERTURE
+  Arithmetic corr_roughness
+ $FRACTURE_DATA
+  1 Frac0
+#MEDIUM_PROPERTIES
+ $GEOMETRY_DIMENSION
+  2
+ $GEOMETRY_AREA
+  1.000000e+000
+ $POROSITY
+  1 1.000000e-005
+ $TORTUOSITY
+  1 1.000000e+000
+ $PERMEABILITY_TENSOR
+  ISOTROPIC 1.000000e-16
+#STOP
+
+\end{verbatim}
+The two material groups represent the medium properties of the fracture and matrix material respectively.  
+%-------------------------------------------------------------------------------
+\subsubsection{Distributed data}
+
+\begin{verbatim}
+benchmark: fracnet02.mmp
+#MEDIUM_PROPERTIES
+ $PERMEABILITY_DISTRIBUTION
+  permeabilities.txt
+\end{verbatim}
+
+
+} % Examples
+
+\LastModified{OK - \today}

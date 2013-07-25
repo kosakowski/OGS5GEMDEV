@@ -1,0 +1,184 @@
+\section{Solid Properties}
+
+\begin{tabular*}{8.35cm}{|p{2.5cm}|p{5cm}|} \hline
+Object acronym & MSP \\
+C++ class      & CSolidProperties \\
+Source files   & rf\_msp.h/cpp \\
+\hline
+File extension & *.msp \\
+Object keyword & \#SOLID\_PROPERTIES \\
+\hline
+\end{tabular*}
+
+\Developer{
+%----------------------------------------------------------
+\subsection{Theory}
+}
+
+%-------------------------------------------------------------------------------
+\subsection{\texttt{\bf\#SOLID\_PROPERTIES}}
+
+%\subsubsection{Keyword structure}
+
+\begin{verbatim}
+#SOLID_PROPERTIES
+// Data base
+ $SOLID_TYPE
+  BENTONITE
+  CLAY
+// Mechanical properties
+ $DENSITY
+  model model_parameters
+ $ELASTICITY
+  poisson_model model_parameters
+  elasticity_model model_parameters
+ $PLASTICITY
+  model_name model_parameters
+ $VISCOSITY
+  model model_parameters
+// Thermal properties
+ $HEAT_CAPACITY
+  model model_parameters
+ $HEAT_CONDUCTIVITY
+  model model_parameters
+ $THERMAL_EXPANSION
+  model model_parameters
+...
+#STOP
+\end{verbatim}
+
+\subsection{Heat capacity}
+\begin{itemize}
+  \item mode 0: User defined curve (not available)
+  \item mode 1: Constant number
+  \item mode 2: Boiling mode, medium property. Input format: [mode] [\mbox{wet capacity}]
+                     [\mbox{dry capacity}]   [\mbox{boiling temperature}]
+                     [\mbox{duration temperature}]  [\mbox{heat latent}]
+ \item mode 3: Temperature and saturation dependent heat capacity, solid property.  (DECOVALEX IV)
+\end{itemize}
+
+\subsection{Heat conductivity}
+\begin{itemize}
+  \item mode 0: User defined curve (not available)
+  \item mode 1: Constant number
+  \item mode 2: Boiling mode, medium properties. Input format: [mode] [\mbox{wet conductivity}]
+                     [\mbox{dry conductivity}]   [\mbox{boiling temperature}]
+                     [\mbox{duration temperature}]
+  \item mode 3: Temperature and saturation dependent heat conductivity, solid property. (DECOVALEX IV)
+\end{itemize}
+
+
+
+\Examples{
+%-------------------------------------------------------------------------------
+\subsection{Examples}
+
+%-------------------------------------------------------------------------------
+\subsubsection{Drucker-Prager elasto-plasticity}
+\begin{verbatim}
+benchmark: m_dp_tri.msp
+#SOLID_PROPERTIES
+ $ELASTICITY
+  1 3.0000e-001 // Poisson ratio
+ $PLASTICITY
+  DRUCKER-PRAGER
+  1.0e6
+  -1.0e+6
+  20.0
+  5.0
+#STOP
+\end{verbatim}
+
+%-------------------------------------------------------------------------------
+\subsubsection{Cam-Clay elasto-plasticity}
+\begin{verbatim}
+benchmark: m_cc_tri_s.msp, m_cc_quad_s.msp,  hm_cc_tri_s.msp
+ #SOLID_PROPERTIES
+ $ELASTICITY
+  1 3.0000e-001 // Poisson ratio
+ $PLASTICITY
+  CAM-CLAY
+   1.0    // M
+   0.045  // Virgin compression index
+   0.016  // Internal frictional angle
+   4.2e4  // Initial pre-consolidation pressure
+   0.285  // Initial void ratio
+   1.0    // OCR
+   -0.9e4 // Initial stress_xx
+   -2.1e4 // Initial stress_yy
+   -0.9e4 // Initial stress_zz
+   0.0    // Minimum (stress_xx+stress_yy+stress_zz). Only for some special cases
+#STOP
+\end{verbatim}
+
+\subsubsection{Norton creep model}
+\begin{verbatim}
+benchmark: m_crp_tri.msp
+#SOLID_PROPERTIES
+  $DENSITY
+  1 0.0
+  $ELASTICITY
+    POISSION  0.3
+    YOUNGS_MODULUS
+      1 100.0
+  $CREEP_NORTON
+    10e-10 5.0
+#STOP
+\end{verbatim}
+
+%-------------------------------------------------------------------------------
+\subsubsection{Single-Yield-Surface elasto-plasticity (Ehlers)}
+\begin{verbatim}
+benchmark: m_dp_tri.msp
+#SOLID_PROPERTIES
+ $ELASTICITY
+  1 3.0000e-001 // Poisson ratio
+  1 1.90139e+08 // Youngs modulus
+ $PLASTICITY
+  SINGLE-YIELD-SURFACE
+   0.      // alpha0
+   0.26    // beta0
+   3.5e-7  // delta0
+   1.0e-7  // epsilon0
+   0.0     // kappa0
+   0.0     // gamma0
+   0.569   // m0
+   0.      // alpha1
+   0.29    // beta1
+   8.81e-9 // delta1
+   1.5e-8  // epsilon1
+   0.      // kappa1
+   0.0     // gamma1
+   1.0     // m1
+   0.55    // psi1
+    -0.26  // psi2
+   0.81e-3 // ch
+   0.60e-3 // cd
+   100.0   // br
+   1.0     // mr
+   0.0     // s_xx
+   0.0     // s_yy
+   0.0     // s_zz
+#STOP
+\end{verbatim}
+
+\subsubsection{Discrete Fracture Deformation}
+\begin{verbatim}
+benchmark: frac_test.msp
+#SOLID_PROPERTIES
+  $ELASTICITY
+    POISSION 1e-001
+    YOUNGS_MODULUS:
+     2 10.0e6 40.0e9 0.0006
+#SOLID_PROPERTIES
+  $ELASTICITY
+    POISSION 1e-001
+    YOUNGS_MODULUS:
+     1 40.0e9
+#STOP
+\end{verbatim}
+The two material groups represent the elastic properties of the fracture and matrix material. For the fracture, Young's modulus type 2 is defined. The value 10.0e6 is the modulus (in Pa) of the open fracture sections, the value 40.0e9 is the elastic modulus of closed fracture segments. The final parameter is the aperture (in m) below which the fracture is considered closed. The second material group defines the properties of the rock matrix, here it is defined as an elastic continuum with a constant Young's modulus of 40.0e9 Pa.
+
+} % Examples
+
+\LastModified{OK - \today}

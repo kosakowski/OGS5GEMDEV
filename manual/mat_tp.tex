@@ -1,0 +1,421 @@
+\section{Component Properties}
+
+\begin{verbatim}
+
+;One Example of the Input Data for TRACER_Properties (From the
+examples in Benchmarks like: tce1d.rfd, decay1d.rfd, noneq1d.rfd,
+pnm1d.rfd and saltsol.rfd)
+
+#TRACER_PROPERTIES
+ 1 1.157407407407e-6 ; Diffusionsmodell und Molekulare Diffusionkonstante
+                     %/(\ref{sec:diffusion_model})
+ 1 0.000008125  1.0  ; Zerfallsmodell und Zerfallsrate in geloester Phase
+                        f*lambda=0.3*2.708333333333e-4=0.000008125
+                        %/(\ref{sec: Aqueous_Decay_Model}
+ 1 7.32e-11  1.0    ; decay model in sorbed phase, lambda_s
+                        %/(\ref{Sorptive_Decay_Model}
+ 1  6.800000e-004    ; isotherm-type, k1
+                        %/(\ref{Isotherm_Model}
+ 1  1.000000e-007    ; chemical nonequilibrium model, alpha 0
+                        %/(\ref{Chemical_Nonequilibrium_Model}
+ 1  1.e-8           ; physical nonequilibrium model
+                        %/(\ref{Physical_Nonequilibrium_Model}
+ 1 1 0.2679212 1.e-5 ; solubility model
+                        %/(\ref{Solution_Precipitation_Model}
+\end{verbatim}
+
+\pagebreak
+
+\subsection{Diffusion model}
+
+\begin{tabular}{|c|ll|c|c|c|}
+%\lebel{sec:diffusion_model}
+\hline
+\multicolumn{6}{|c|} {Diffusion Model} \\
+\hline
+N1& n & Description                  &Parameter   &  Equation       & Remarks \\[0.5ex]
+\hline
+\hline
+0 & 0 & without Diffusion            &         & (\ref{eqn:DM0}) & \\
+1 & 1 & constant value of diffusion  & c       & (\ref{eqn:DM1}) & $P_{33}$ \\
+2 & 1 & variable value of diffusion  & $\eta$, m & (\ref{eqn:DM2}) & $P_{33}$ \\
+3 & 1 & Worch, 1993                  &       & (\ref{eqn:DM3}) & $P_{33}$ \\
+4 & 1 & Hayduk u. Laudie, 1974       &       & (\ref{eqn:DM4}) & $P_{33}$ \\
+5 & 2 & Wilke and Chang, 1995        &       & (\ref{eqn:DM5}) & $P_{33}$ \\
+6 & 1 & Stokes-Einstein, 1993         &      & (\ref{eqn:DM6}) & $P_{33}$ \\
+7 & 2 & FSG-Method, Lyman et al., 1990&      & (\ref{eqn:DM7}) & $P_{33}$ \\
+\hline
+N2 & \multicolumn{5}{|l|}{Diffusion rate {$[m^2/s]$}}\\
+\hline
+\end{tabular}
+
+\begin{eqnarray}
+D_m=0 \label{eqn:DM0}
+\end{eqnarray}
+
+\begin{eqnarray}
+D_m=c
+\label{eqn:DM1}
+\end{eqnarray}
+
+\begin{eqnarray}
+D_m=D_m(t)
+\label{eqn:DM2}
+\end{eqnarray}
+
+\begin{eqnarray}
+D_{aq}=\frac{3.595*10^{-7}*T}{\eta*m^{0.53}}
+\label{eqn:DM3}
+\end{eqnarray}
+
+\begin{eqnarray}
+D_{aq}
+=
+\frac{13.26 \times 10^{-5}}{\eta \times V^{0.589}}
+\label{eqn:DM4}
+\end{eqnarray}
+
+\begin{eqnarray}
+D_{aq}=\frac{7.4*10^{-8}*T*[\sqrt{X*m_{sol}}]}{\eta*V'^{0.589}}
+\label{eqn:DM5}
+\end{eqnarray}
+
+\begin{eqnarray}
+D_{aq}=\frac{K_B*T}{6*\pi*r_m*\eta}
+\label{eqn:DM6}
+\end{eqnarray}
+
+\begin{eqnarray}
+D_{g}=\frac{0.001*T^{1.75}*[\frac{1}{m_g}+\frac{1}{m}]^{0.5}}{P*[V_g^{\frac{1}{3}}+V^{\frac{1}{3}}]}
+\label{eqn:DM7}
+\end{eqnarray}
+
+Input example (tce1d.rfd)
+\begin{verbatim}
+#TRACER_PROPERTIES_NEW
+ $DIFFUSION
+ 1 1.1574e-6 ; diffusion model type, diffusion coefficient [m^2/s]
+\end{verbatim}
+
+\newpage
+
+\subsection{Aqueous Decay model}
+
+\begin{tabular}{|c|l|c|c|c|}
+\hline
+\multicolumn{5}{|c|} {Aqueous Decay Model} \\
+\hline
+N3& Description                                  & Parameter &  Equation         & Remarks\\[0.5ex]
+\hline \hline
+0 & without Decay                                & - &                   & \\
+1 & First order decay with constant decay rate   & $\lambda$ & (\ref{eqn:ADM1})  & $P_{18}$ \\
+2 & First order decay with variable decay rate   & $\lambda_1$ & (\ref{eqn:ADM2})  & $P_{18}$ \\
+3 & n-th order decay with constant power kinetics & $\lambda_1$,$\lambda_2$ & (\ref{eqn:ADM3})  & $P_{18}$ \\
+4 & n-th order decay with variable power kinetics & $\lambda_1$,$\lambda_2$ & (\ref{eqn:ADM3})  & $P_{18}$ \\
+5 & Monod or Michaelis-Menten Kinetics            &  &  (\ref{eqn:ADM5})  & $P_{24}$ \\
+  & with constant coefficient                     &  &                 &   \\
+6 & Monod or Michaelis-Menten Kinetics            &  & (\ref{eqn:ADM5})  & $P_{24}$ \\
+  &  with variable coefficient                    &  &                   &   \\
+\hline
+N4 & \multicolumn{4}{|l|}{Aqueous decay rate {$[1/s]$}}\\
+N5 & \multicolumn{4}{|l|}{?}\\
+\hline
+\end{tabular}
+\\
+\\
+\begin{eqnarray}
+\phi =-\lambda*C
+\label{eqn:ADM1}
+\end{eqnarray}
+
+\begin{eqnarray}
+\phi =-\lambda_1*C
+\label{eqn:ADM2}
+\end{eqnarray}
+
+\begin{eqnarray}
+\phi =-\lambda_1*C^{\lambda_2}
+\label{eqn:ADM3}
+\end{eqnarray}
+
+\begin{eqnarray}
+\phi =\frac{\mu_{max}*C}{K_s+C}
+\label{eqn:ADM5}
+\end{eqnarray}
+
+
+Input example (tce1d.rfd)
+\begin{verbatim}
+#TRACER_PROPERTIES
+ $AQUEOUS_DECAY
+ 1 2.847e-5 1.0 ; decay model type,
+                 decay rate in solution [1/s], ?order of decay
+\end{verbatim}
+
+\newpage
+
+\subsection{Sorptive Decay model}
+
+\begin{tabular}{|c|cl|c|c|c|}
+\hline
+\multicolumn{6}{|c|} {Sorptive Decay Model} \\
+\hline
+N6 & n & Description                               & Parameter &  Equation        & Remarks  \\[0.5ex]
+\hline \hline
+0 & 0 & without Decay                              &  &                  &          \\
+1 & 2 & First order decay                          &  & (\ref{eqn:sdm1}) & $P_{24}$ \\
+  &   &  with constant decay rate                  &  &                  &         \\
+2 & 3 & First order decay                          &  & (\ref{eqn:sdm1}) & $P_{24}$ \\
+  &   &  with variable decay rate                  &  &                  &          \\
+3 & 3 & Second order decay                         &  & (\ref{eqn:sdm2}) & $P_{24}$ \\
+  &   &   with constant power kinetics             &  &                  &          \\
+4 & 4 & Second order decay                         &  & (\ref{eqn:sdm2}) & $P_{24}$ \\
+  &   &  with variable power kinetics              &  &                  &          \\
+5 & 3 & Monod or Michaelis-Menten                  &  & (\ref{eqn:sdm3}) & $P_{24}$ \\
+  &   &   Kinetics with constant coefficient       &  &                  &          \\
+6 & 4 & Monod or Michaelis-Menten                  &  & (\ref{eqn:sdm3}) & $P_{24}$ \\
+  &   &   Kinetics with variable coefficient       &  &                  &          \\
+7 & 3 & First order decay                          &  & ?                &          \\
+  &   &  with constant decay rate                  &  &                  &          \\
+  &   &  and constant fraction of parent           &  &                  &          \\
+  &   &  that form the daughter product            &  &                  &          \\
+\hline
+N7 & \multicolumn{5}{|l|}{Sorptive decay rate {$[1/s]$}}\\
+N8 & \multicolumn{5}{|l|}{?}\\
+\hline
+\end{tabular}
+\\
+\begin{eqnarray}
+\phi=-\lambda1*C
+\label{eqn:sdm1}
+\end{eqnarray}
+
+\begin{eqnarray}
+\phi =-\lambda1*C^{\lambda2}
+\label{eqn:sdm2}
+\end{eqnarray}
+
+\begin{eqnarray}
+\phi =\frac{\mu_{max}*C}{K_s+C}
+\label{eqn:sdm3}
+\end{eqnarray}
+
+
+Input example (decay1d.rfd)
+\begin{verbatim}
+#TRACER_PROPERTIES_NEW
+ $SORPTIVE_DECAY
+  1 7.32e-11  1.0    ; decay model type in sorbed phase,
+                      lambda_s, ?order of decay
+\end{verbatim}
+
+\newpage
+%\vspace{1cm}
+
+\subsection{Isotherm model}
+
+\begin{tabular}{|c|l|c|c|c|}
+\hline
+\multicolumn{5}{|c|} {Isotherm Model} \\
+\hline
+N9& Description                  & Parameter &  Equation        & Remarks      \\[0.5ex]
+\hline \hline
+0 & No Isotherm                  &    &                  &              \\
+1 & Henry Isotherm               &    & (\ref{eqn:Ith1}) & $P_{19, 43}$ \\
+2 & Freundlich Isotherm          &    & (\ref{eqn:Ith2}) & $P_{43}$     \\
+3 & Langmuir Isotherm            &    & (\ref{eqn:Ith3}) & $P_{43}$     \\
+4 & Freundlich Langmuir Isotherm &    & (\ref{eqn:Ith4}) & $P_{19, 43}$ \\
+5 & Double Langmuir Isotherm     &    & ?                &              \\
+6 & Extended Freundlich Isotherm &    & ?                &              \\
+7 & Gunary Isotherm              &    & (\ref{eqn:Ith5}) & $P_{19}$     \\
+8 & No Diffusion                 &    & ?                &              \\
+9 & Fitter-Sutton Isotherm       &    & ?                &              \\
+10 & Power Isotherm              &    & ?                &              \\
+11 & Modified Kielland Isotherm  &    & ?                &              \\
+\hline
+N10 & \multicolumn{4}{|l|}{Coefficient of distribution} \\
+\hline
+\end{tabular}
+\\
+\begin{eqnarray}
+S =k_d*C
+\label{eqn:Ith1}
+\end{eqnarray}
+
+\begin{eqnarray}
+S =k_1*C^{k_2}
+\label{eqn:Ith2}
+\end{eqnarray}
+
+\begin{eqnarray}
+S =\frac{k_1*C}{1+{k_2}*C}
+\label{eqn:Ith3}
+\end{eqnarray}
+
+\begin{eqnarray}
+S =\frac{k_1*C^{k_3}}{1+{k_2}*C^{k_3}}
+\label{eqn:Ith4}
+\end{eqnarray}
+
+\begin{eqnarray}
+S =\frac{k_1*C}{1+{k_2}*C^{k_3}+{k_3}*\sqrt C}
+\label{eqn:Ith5}
+\end{eqnarray}
+
+
+Input example (decay1d.rfd)
+\begin{verbatim}
+#TRACER_PROPERTIES_NEW
+ $ISOTHERM
+ 1 6.8e-5      ; isotherm model type, kd
+\end{verbatim}
+
+
+\newpage
+
+\subsection{Chemical Nonequilibrium Model}
+
+%\begin{sidewaystable}
+\begin{tabular}{|c|l|c|c|c|}
+\hline
+\multicolumn{5}{|c|} {Chemical Nonequilibrium Model} \\
+\hline
+N11& Description              & Parameter &  Eqn              & Remarks  \\[0.5ex]
+\hline \hline
+0 & No Reaction                        &  &                   &          \\
+\hline
+1 & First order reaction with          &  & ?(\ref{eqn:cnm1}) & $P_{40}$ \\
+  &  constant transfer coefficient     &  &                   &          \\
+\hline
+2 & Second order reaction with         &  & ?(\ref{eqn:cnm2}) & $P_{40}$ \\
+  & constant transfer coefficient      &  &                   &          \\
+\hline
+3 & ?                                  &  &                   &          \\
+\hline
+4 & ?                                  &  &                   &          \\
+\hline
+5 & ?                                  &  &                   &          \\
+\hline
+6 & First order reaction with          &  & (\ref{eqn:cnm3})  & $P_{40}$ \\
+  &  constant transfer coefficient     &  &              &              \\
+  &  ( 2 parameters)                   &  &              &              \\
+\hline
+7 & Second order reaction with         &  & (\ref{eqn:cnm4}) & $P_{40}$ \\
+  & constant transfer coefficient      &  &              &              \\
+  & ( 2 parameters)                    &  &              &              \\
+\hline
+N12 & \multicolumn{4}{|l|}{Coefficient of chemical nonequilibrium reaction {$\alpha$}}\\
+\hline
+\end{tabular}
+%\end{sidewaystable}
+
+\begin{eqnarray}
+\frac{\partial S}{\partial t}
+=
+k_1*\frac{\theta}{\rho_b}*C
+\label{eqn:cnm1}
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial S}{\partial t} =k_1*\frac{\theta}{\rho_b}*C^2
+\label{eqn:cnm2}
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial S}{\partial t} =k_1*\frac{\theta}{\rho_b}*C-k_2*S
+\label{eqn:cnm3}
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial S}{\partial t} =k_1*\frac{\theta}{\rho_b}*C^2-k_2*S
+\label{eqn:cnm4}
+\end{eqnarray}
+
+
+Input example (noneq1d.rfd)
+\begin{verbatim}
+#TRACER_PROPERTIES_NEW
+ $CHEMICAL_NONEQUILIBRIUM
+ 1 1.00e-7  ;  chemical nonequilibrium model type, alpha [?-]
+\end{verbatim}
+
+
+\newpage
+
+\subsection{Physical Nonequilibrium Model}
+
+\begin{tabular}{|c|l|c|c|c|}
+\hline
+\multicolumn{5}{|c|} {Physical Nonequilibrium Model} \\
+\hline
+N13& Description                            & Parameter &  Eqn             & Remarks     \\[0.5ex]
+\hline \hline
+0 & Model type (Non- or equilibrium)            &  &                  &             \\
+\hline
+1 & First order reaction with constant           &  & ?(\ref{eqn:pn1}) & $P_{38-39}$ \\
+  &  transfer coefficient (Coats and Smith 1964) &  &                  &             \\
+\hline
+2 & First order reaction with variable           &  & ?(\ref{eqn:pn1}) & $P_{38-39}$ \\
+  &  transfer coefficient (Coats and Smith 1964) &  &                  &             \\
+\hline
+N14 & \multicolumn{4}{|l|}{Coefficient of chemical nonequilibrium reaction {$\alpha$}}\\
+\hline
+\end{tabular}
+
+
+\begin{eqnarray}
+\theta_{im}*R_{im}\frac{\partial C_{im}}{\partial t} =\alpha*(C_m-C_{im})
+\label{eqn:pn1}
+\end{eqnarray}
+
+
+Input example (pnm1d.rfd)
+\begin{verbatim}
+#TRACER_PROPERTIES_NEW
+ $PHYSICAL_NONEQUILIBRIUM
+ 1 1.00e-7  ; physical nonequilibrium model type, alpha [?-]
+\end{verbatim}
+
+
+\subsection{Solution-Precipitation Model}
+
+%\begin{sidewaystable}
+\begin{tabular}{|c|cl|c|c|c|}
+\hline
+\multicolumn{6}{|c|} {Solution-Precipitation Model} \\
+\hline
+N11& n & Description                             & Parameter &  Eqn     & Remarks \\[0.5ex]
+\hline \hline
+0 &   & No Solution                                    &   &  & \\
+\hline
+1 &   & With Solution                                  &   &  & \\
+  & 0 & Constant concentration in case of saturation   &   & ?       &          \\
+  & 1 & Dependence on Pressure                         &   &         &          \\
+  & 2 & Dependence on temperature                      &   &         &          \\
+\hline
+N12 & \multicolumn{4}{|l|}{Coefficient of dissolution {$\ge 0$}} & \\
+\hline
+\end{tabular}
+%\end{sidewaystable}
+
+\hspace{1cm}
+Input example
+\begin{verbatim}
+#TRACER_PROPERTIES_NEW
+ $SOLUTION_PRECIPITATION
+ 1 1 0.26292 1.0e-5  ; model type, solution dependence type,
+                       ?dissolution coefficient [?g/l] ?
+\end{verbatim}
+
+Input example
+\begin{verbatim}
+#Reference
+[1]Habber, A. (2001): Direckte und Inverse Modellierung
+reaktiver Transportprozesse in klüftig-porösen Medien,
+Uni-Dissertation, Uni-Hannover
+
+[2]Kohlmeier, M. et al. (2001): Modling of Coupled
+Geohydraulic/Geomechanical/Geochemical Processes in Salt Rock,
+Technical Report, Universität Hannover
+
+\end{verbatim}

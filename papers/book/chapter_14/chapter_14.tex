@@ -1,0 +1,22 @@
+% Chapter 14
+%\chapter{Consolidation processes}
+%\textit{by Joshua Taron, Norihiro Watanabe, Wenqing Wang}
+
+The purpose of the benchmarks in this chapter is to test the validity of coupled hydro-mechanical (HM) and two-phase hydro-mechanical (H$^2$M) processes. Mechanical compression generates a fluid pressure response, while pressure storage and dissipation modify the mechanical condition via the effective stress. The tests we use are convenient and fundamental validations of the deformation and flow modules, most importantly guaranteeing that the coupling is correct between them. 
+
+We examine real systems, where fluids, solids, and solid grains are compressible. In the single phase case, comparisons are made between two finite element coupling schemes: 1) Monolithic: solid and fluid equations solved in a single matrix and 2) Staggered: solid and fluid equations solved iteratively. Two-phase flow consolidation is also examined and then an adapted form of extended finite elements (XFEM) is used to observe the fluid-mechanical interaction in a discrete fracture-matrix system. 
+
+%.........................................................................
+%\section{Single Phase}
+\input{chapter_14/section_14_1}
+
+%\section{Unsaturated}
+\input{chapter_14/section_14_2}
+
+%\section{Two-Phase}
+\input{chapter_14/section_14_3}
+
+%\section{Discrete Fractures}
+\input{chapter_14/section_14_4}
+
+%.........................................................................

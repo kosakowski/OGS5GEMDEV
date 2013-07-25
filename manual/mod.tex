@@ -1,0 +1,172 @@
+\section{Models / Processes}
+
+%%- #Process ----------------------------------------------------%%
+\subsection{Process (keyword: \#PROCESS\_{\it process\_name})}
+
+The keywords {\bf \#PROCESS\_{\it process\_name}} specify the
+thermal--hydraulic--mechanical (and chemical) model (THM(C)) where the string {\it
+process\_name} defines the considered processes:
+
+\begin{center}
+\begin{tabular}{|l|c|l|} \hline
+{\it process\_name} & Acronym & Process \\ \hline \hline
+%
+{\bf HEAT\_TRANSPORT} &  {\bf T}   & Thermal \\
+{\bf FLUID\_FLOW} & {\bf H} & Hydraulic\\
+{\bf SOLID\_DEFORMATION}   & {\bf M} & Mechanical \\
+{\bf MASS\_TRANSPORT}   & {\bf C} & Chemical \\
+(not yet realized in the THM model) & & \\ \hline
+\end{tabular}
+\end{center}
+
+
+These keywords must only be specified if the appropriate processes should be considered.
+Otherwise the processes are disabled and the data structures are not generated. If a
+process is enabled by specifying the appropriate keyword, its data structure is
+generated and the output file (\*.rfo) is accordingly adjusted. \\
+
+Each of these keywords can contain a number of standard or of standard or dedicated to
+sub-keywords (labeled by a \$ sign).
+
+Standard sub-keywords, which are valid for each process, are described below.
+
+\vspace{0.5cm}
+
+\hspace{1cm} {\bf \$ACTIVATION}
+
+\begin{center}
+\begin{tabular*}{13cm}{|p{2.cm}|p{1.cm}|p{8.75cm}|} \hline
+Parameter& Value & Meaning \\ \hline \hline
+%
+N1 &     & Process (in)activation \\
+   &$0$ & Inactive (No element routines, no assembling or solving,
+   process dependent data structures are generated) \\
+   &$ \mathbf 1$ & Active \\ \hline
+\end{tabular*}
+\end{center}
+
+\vspace{0.5cm}
+\newpage
+\hspace{1cm} {\bf \$INFLUENCING\_PROCESSES}
+
+\begin{center}
+\begin{tabular*}{13.5cm}{p{13.cm}}
+Currently, these coupling specifications are not implemented in the dedicated coupling
+algorithms. Controllable couplings will be listed below as soon as they are available.
+\end{tabular*}
+\end{center}
+
+
+
+\begin{center}
+\begin{tabular*}{13cm}{|p{2.cm}|p{3.75cm}|p{6.0cm}|} \hline
+Parameter& Value & Meaning \\ \hline \hline
+%
+N1, N2,    &                                    &    Activation of specified couplings        \\
+..., Nn    & '{\bf process\_name}\,1'             &    Activation of the coupling from      \\
+           & '{\bf process\_name}\,2'             &    n specified processes \\
+           & ... '{\bf process\_name}\,n'         &                          \\
+           & ' '                                &    No couplings activated  \\ \hline
+\end{tabular*}
+\end{center}
+
+\vspace{1cm}
+
+
+Sub-keywords that are appendant to a process are described separately in the ensuing
+sections.
+
+
+\subsection{Process Heat Transport (\#PROCESS\_HEAT\_TRANSPORT)}
+
+No sub-keywords necessary.
+
+\subsection{Process Fluid Flow (\#PROCESS\_FLUID\_FLOW)}
+
+
+\hspace{1cm} {\bf \$NUMBER\_OF\_PHASES}
+
+\begin{center}
+\begin{tabular*}{13.5cm}{p{13.cm}}
+The keyword specifies the number of moving fluid phases (default: $\mathbf 1$).
+\end{tabular*}
+\end{center}
+
+\vspace{0.5cm}
+
+\hspace{1cm} {\bf \$NUMBER\_OF\_FLUID\_COMPONENTS}
+
+\begin{center}
+\begin{tabular*}{13.5cm}{p{13.cm}}
+The keyword specifies the number of fluid components (e.g. air, water) contained in a
+fluid phase (default: $\mathbf 0$).
+\end{tabular*}
+\end{center}
+
+\vspace{0.5cm}
+
+\hspace{1cm} {\bf \$NON\_ISOTHERMAL\_FLOW}
+
+\begin{center}
+\begin{tabular*}{13cm}{|p{2.cm}|p{1.cm}|p{8.75cm}|} \hline
+Parameter& Value & Meaning \\ \hline \hline
+%
+N1 &     & Nonisothermal flow \\
+   &$\mathbf 0$ & Disable \\
+   &$ 1$ & Enable (corresponding phase changes are taken into account \\ \hline
+\end{tabular*}
+\end{center}
+
+\vspace{0.5cm}
+
+\newpage
+\hspace{1cm} {\bf \$FLUID\_FLOW\_MODEL}
+
+\begin{center}
+\begin{tabular*}{13cm}{|p{2.cm}|p{1.cm}|p{8.75cm}|} \hline
+Parameter& Value & Meaning \\ \hline \hline
+%
+N1 &     & Fluid flow model \\
+   &$\mathbf 0$ & Darcy law (linear flow behavior) \\
+   &$ 1$ & Forchheimer law (non-linear flow behavior) \\
+   &$ 2$ & Richards formulation (unsaturated flow) \\ \hline
+\end{tabular*}
+\end{center}
+
+
+\hspace{0.5cm}{\bf Keyword combinations for flow processes}
+
+\begin{center}
+\begin{tabular*}{14.9cm}{|p{4.cm}|p{2.cm}|p{3.cm}|p{2.3cm}|p{1.5cm}|} \hline
+FLUID FLOW  & NUMBER\_   & NUMBER\_OF\_        & NON\_ISO-    & FLUID\_ \\
+PROCESS     & OF\_       & FLUID\_             &THERMAL\_      & FLOW\_  \\
+            & PHASES     &COMPONENTS           &FLOW           & MODEL        \\\hline \hline
+Saturated liquid     & $1$   & $0$   & $0$   & $0$, $1$ \\
+flow                 &       &       &       &
+\\\hline
+Unsaturated flow &$1$ $(2)$ &$0$ &$0$ & $2$ \\
+(Richards model) &    &    &    &     \\\hline
+%
+Multiphase flow  &$2$ & $0$ & $0$ & $0$, $1$ \\
+(two-phase flow) &    &    &    &      \\\hline
+%
+Non-isothermal &$2$ & $2$ & $1$ & $2$ \\
+unsaturated flow &    &    &    &      \\
+(Richards model) &    &    &    &      \\\hline
+%
+Non-isothermal &$2$ & $2$ & $1$ & $0$, $1$ \\
+multiphase flow &    &    &    &      \\
+%
+\hline
+\end{tabular*}
+\end{center}
+
+
+
+\subsection{Process Solid Deformation (\#PROCESS\_SOLID\_DEFORMATION)} No sub-keywords
+necessary.
+%%- End #Process ----------------------------------------------------%%
+
+\LastModified{RK/MK July 10, 2003}
+
+\newpage

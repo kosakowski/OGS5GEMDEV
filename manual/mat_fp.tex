@@ -1,0 +1,382 @@
+\section{Fluid Properties}
+\subsection{Keywords}
+The following keywords have been introduced for fluid
+properties:
+
+\begin{tabular}{lp{6.5cm}}
+\#FLUID\_PROPERTIES\_NEW & Announces fluid properties input,
+indicates that the formulation including keywords is used.
+Generally, if more than one phase is described, first the gas
+phase is described, then the liquid phase.\\
+\$DENSITY & Starts the input for the density case for the phase
+density. The first number is the density case that will be used,
+followed by the
+parameters needed for that model.\\
+\$VISCOSITY & Starts the input for the viscosity case. The first
+number is the density case that will be used, followed by the
+parameters needed for that model.\\
+\$HEAT\_CAPACITY & The first number, 0, stands for constant model,
+the second is the heat capacity of the fluid.\\
+\$HEAT\_CONDUCTIVITY & The first number, 0, stands for constant
+model,
+the second is the heat conductivity of the fluid.\\
+\end{tabular}
+
+To illustrate this, two input examples are shown below.  The first
+input example is an example of the old input, without
+sub-keywords. The second example is an example with the new
+keywords.  All new files should be written with the keywords, as
+some model additions require them.  A description of the individual phase density and
+viscosity cases can be found in the following sections.
+\\
+
+\begin{minipage}{12cm}
+Input example 1: No sub-keywords
+\hrule
+\begin{verbatim}
+#FLUID_PROPERTIES ; gas
+ 0  1.15 ; density function, parameter
+ 0  1.800000e-005 ; viscosity function, parameter
+ 3.000000e+003  1.000000e+000 ; heat capacity, heat conductivity
+#FLUID_PROPERTIES ; liquid
+ 0  1.050000e+003 ; density function, parameter
+ 0  0.0012 ; viscosity function, parameter
+ 0.000000 ; real gas factor
+ 4.000000e+003  2.000000e+000 ; heat capacity, heat conductivity
+\end{verbatim}
+\hrule
+\end{minipage}
+\\
+\begin{minipage}{12cm}
+Input example 2: With sub-keywords
+\hrule
+\begin{verbatim}
+#FLUID_PROPERTIES_NEW
+$DENSITY
+ 0   1000.                      ; rho_0: reference density,
+; 1   1000.  1e-4               ; rho_0,drho/dp:compressibility
+; 2 3 10 1000.  0.2             ; rho_0,drho/dC:expansion coeff.
+; 11 1000.  0.2  1e-4           ; rho_0,drho/dC,drho/dT:therm. expan. coeff.
+; 12 1000.  1e-4                ; rho_0,drho/dT
+; 13                            ; no parameters needed
+; 14 1000. 10100 1e-4 285 1e-4  ; rho_0, p_0, drho_/dp, T_0, drho/dT
+$VISCOSITY
+ 0   1e-3            ; my_0: reference viscosity
+$HEAT_CAPACITY
+ 0   4800.           ; c_0: reference heat capacity
+$HEAT_CONDUCTIVITY
+ 0   0.6             ; lamda_0: reference heat conductivity
+\end{verbatim}
+\hrule
+\end{minipage}
+
+The following sections describe the choice of models for the
+keywords \$DENSITY and \$VISCOSITY.
+
+\subsection{Fluid phase density - \$DENSITY}
+
+\subsubsection*{Nomenclature}
+\begin{tabular}{ll}
+$\Conc$ & concentration\\
+$\MolarMass_a$ & molar mass of air\\
+$\MolarMass_w$ & molar mass of water\\
+$\Pressure$ & pressure\\
+$\VapourPressure$ & saturated vapor pressure\\
+$\GasConstant$ & ideal gas constant\\
+$\Temperature$ & temperature\\
+$\FluidCompressibility$ & compressibility\\
+$\ThermalExpansionCoefficient$ & thermal expansion coefficient\\
+$\Phase$ & phase\\
+$\Density$ & density\\
+subscript 0 &  reference value\\
+\end{tabular}
+
+\subsubsection*{Cases}
+It is important to state that there are two functions calculating
+density, \texttt{CalcFluidDensity} and
+\texttt{MATCalcFluidDensity}. The function
+\texttt{MATCalcFluidDensity} does not have a variable parameter
+list.  There are more density computation choices available
+through this function.  Up to now, only models 100102 (TH
+non-isotherm) and 10333 (unconfined flow) use this function, as
+well as hydraulic and thermal processes.
+
+Table \ref{table:density case} shows the available fluid density
+calculation methods. It is important to state that for multiphase
+applications, it is assumed that phase numbering starts from 0,
+and that phase 0 is a gaseous phase.  Single phase calculations
+are not influenced by this.  Case 0 is the constant density case.
+Cases 1 and 4 compute density as a function of pressure. Cases 2,
+3, and 10 compute density as a function of concentration. In case
+3, more than one component can be present and case 10 uses a
+reference concentration and a concentration expansion coefficient.
+Case 11 computes density as a function of concentration and
+temperature.Case 12 computes density as a function of temperature.
+Case 13 computes density as a function of pressure and
+temperature. Case 13 is limited to calculations of the gas phase
+density. Additionally, one has to take care that the difference
+between gas pressure and saturated vapour pressure is positive.
+
+\begin{table}[!h]
+\centering \caption{Fluid density calculation methods} $\odot:$
+Cases only available with model 100102 and 10333 or process
+approach.
+\begin{tabular}{|c|c|}
+\hline
+\rule[-3mm]{0mm}{8mm}{\textbf{Case}} & \textbf{Function} \\
+\hline
+  0
+  &
+  $
+  \Density^\Phase= \Density_0^\Phase
+  $
+  \\
+  1
+  &
+  $
+  \Density^\Phase(\Pressure)= \Density_0^\Phase(1
+  +\FluidCompressibility^\Phase\Pressure^\Phase)
+  $
+
+  \\
+  2
+  &
+  $
+  \Density^\Phase(\Conc)= \Density_0^\Phase+max(C)
+  $
+  \\
+  3
+  &
+  $
+  \Density^\Phase(\Conc_i)= \Density_0^\Phase+max(\Density_i^\Phase(C_i), \Density_0^\Phase
+  $
+  \\
+  4
+  &
+  $
+  \Density^\Phase(\Pressure)= \Density_0^\Phase+\FluidCompressibility^\Phase\Pressure^\Phase
+  $
+  \\
+  10
+  &
+  $
+  \Density^\Phase(\Conc)=
+  \Density_0^\Phase+\frac{\partial\Density^\Phase}{\partial\Conc}(\Conc-\Conc_0)
+  $
+  \\
+  11
+  &
+  $
+  \Density^\Phase(\Conc,\Temperature)= \Density_0^\Phase+max(\Conc, 0)\FluidCompressibility+max(\Temperature,
+  0)\ThermalExpansionCoefficient
+  $
+  \\
+ $ \odot\;12$
+  &
+  $
+   \Density^\Phase(\Temperature)=
+  \Density_0^\Phase+\frac{\partial\Density}{\partial\Temperature}(\Temperature-\Temperature_0)
+  $
+  \\
+  $\odot\;13$
+  &
+  $
+   \Density^g(\Pressure^g,\Temperature)=
+  \frac{\MolarMass_a}{\GasConstant\Temperature}\Pressure^g+\frac{(\MolarMass_w -
+  \MolarMass_a)}{\GasConstant\Temperature}\VapourPressure(\Temperature)
+  $
+   \\
+  $\odot\;14$
+  &
+  $
+   \Density^\Phase(\Pressure,\Temperature)=
+  \Density_0^\Phase+\frac{\partial\Density}{\partial\Temperature}(\Temperature-\Temperature_0)
+  +\frac{\partial\Density}{\partial\Pressure}(\Pressure-\Pressure_0)
+  $
+\\
+\hline
+\end{tabular}
+\label{table:density case}
+\end{table}
+
+
+\subsubsection*{Data Input}
+The table below summarizes the input for the keyword \$DENSITY.
+One of the cases with corresponding values can be chosen.
+
+\begin{table}[h]
+\centering
+\caption{Parameters for fluid density calculations}
+\begin{tabular}{|l|lllll|}
+\hline
+\rule[-3mm]{0mm}{8mm}\textbf{Case} & \multicolumn{5}{|c|}{\textbf{Parameters}}\\
+\hline
+0 & $\Density_0$ [$kg/m^3$]&&&&\\
+1 & $\Density_0$ [$kg/m^3$]& $\FluidCompressibility [1/Pa]$ & $\Pressure_0 [Pa]$&&\\
+2 & $\Density_0$ [$kg/m^3$] & &&&\\
+3 & $\Density_0$ [$kg/m^3$] & $\p\Density/\p\Conc [-] $&&&\\
+4 & $\Density_0$ [$kg/m^3$]& $\FluidCompressibility [kg/(m^3 Pa)]$ &&&\\
+10 & $\Density_0$ [$kg/m^3$] & $\p\Density/\p\Conc [-] $&&&\\
+11 & $\Density_0$[$kg/m^3$] & $\FluidCompressibility [1/Pa]$& $\p\Density/\p\Conc [1/mol] $&&\\
+12 & $\Density_0$ [$kg/m^3$] & $\ThermalExpansionCoefficient [1/K]$&&&\\
+13 & &&&&\\
+14 & $\Density_0$[$kg/m^3$] & $\Pressure_0 [Pa]$ & $\FluidCompressibility [1/Pa]$& $\Temperature_0 [K]$& $\ThermalExpansionCoefficient [1/K]$\\
+\hline
+\end{tabular}
+\label{table:density parameters}
+\end{table}
+
+
+\subsubsection*{Data access}
+The implementation of fluid density functions into the Rockflow
+code is as follows.
+
+\bigskip
+\begin{table}[htb]
+\centering
+\begin{tabular}{|lll|}
+\hline
+\rule[-3mm]{0mm}{8mm}{\textbf{Description}}& \textbf{Function} & \textbf{RF Object}\\
+\hline
+Access to fluid density in kernel& rho=MATCalcFluidDensity()&MPC/ENT\\
+\rule[0mm]{0mm}{8mm}Calculation of density & \texttt{MATCalcFluidDensity} & MAT\\
+\rule[0mm]{0mm}{8mm}Overwriting & \texttt{MATGetNodeIndexTemperature=} &MOD\\
+&\texttt{MODGetNodeIndexTemperature\_XX}&\\
+\rule[0mm]{0mm}{8mm}Definition of model function for &&\\
+access to node index &\texttt{MODGetNodeIndexTemperature\_XX}& MOD\\
+\hline
+\end{tabular}
+\caption{Fluid density functions in Rockflow}
+\end{table}
+\bigskip
+
+
+%\pagebreak
+\subsection{Fluid Viscosity}
+\subsubsection*{Nomenclature}
+\begin{tabular}{ll}
+$\Conc$ & concentration\\
+$\Pressure$ & pressure\\
+$\Temperature$ & temperature\\
+$\Phase$ & phase\\
+$\Viscosity$ & viscosity\\
+subscript 0 &  reference value\\
+subscript avg & average value\\
+\end{tabular}
+
+\subsubsection*{Cases}
+
+Fluid viscosity can be computed in one of the ways illustrated in
+Table \ref{Fluid viscosity methods}.  As for density, it is
+important to note that  viscosity can be calculated with two
+different functions in the code, \texttt{CalcFluidViscosity} and
+\texttt{MATCalcFluidViscosity}.  \texttt{MATCalcFluidViscosity} is
+only accessed by models 100102 and 10333 so far.  Case 0 is the
+constant viscosity case. Cases 1 and 2 compute viscosity as a
+function of pressure. Case 1 uses a curve, whereas case 2 uses a
+coefficient for the variation of viscosity with pressure.  Case 7
+computes the viscosity after Reichenberg (1971) as shown in Reid
+et al. (1988), p. 420 as a function of pressure and temperature.
+Equation \ref{eqn: Viscosity Reichenberg} complete the equation
+shown in Table \ref{Fluid viscosity methods} for this case.
+\\
+\hrule
+%\\
+Additional Equations for Case 7
+\begin{eqnarray}
+\centering
+\Viscosity_0 &=& 26.69 \sqrt{28.96} \frac{\sqrt{\Temperature}}{3.7^2} 1.0 10^{-6} 0.1\nonumber\\
+A &=& \frac{1.9824 10^{-3}}{\frac{\Temperature}{126.2}}\exp(5.2683(\frac{\Temperature}{126.2})^{-0.5767})\nonumber\\
+B &=& A ( 1.6552 \frac{\Temperature}{126.2} - 1.2760)\nonumber\\
+C &=& \frac{0.1319}{\frac{\Temperature}{126.2}} \exp(3.7035(\frac{\Temperature}{126.2})^{-79.8678})\nonumber\\
+D &=& \frac{2.9496}{\frac{\Temperature}{126.2}} \exp(2.9190(\frac{\Temperature}{126.2})^{-16.6169})\nonumber\\
+\label{eqn: Viscosity Reichenberg}
+\end{eqnarray}\nopagebreak
+\hrule
+
+Case 8 computes viscosity as a function of temperature following
+Yaws et al. (1976) as shown in Reid et al. (1988), p. 441/455.
+Case 9 also computes viscosity as a function of temperature
+following a logarithmical distribution.  Case 10 computes
+viscosity as a function of concentration and temperature.
+
+\bigskip
+\begin{table}[!h]
+\centering \caption{Fluid viscosity calculation
+methods}
+$\odot:$ Cases only available with model 100102 and 10333
+\begin{tabular}{|c|p{10cm}|}
+\hline
+\rule[-3mm]{0mm}{8mm}{\textbf{Case}} & \textbf{Function} \\
+\hline
+  0  &  $\Viscosity^\Phase(\Pressure)= \Viscosity_0^\Phase$
+  \\[1mm]
+  1  &  $\Viscosity^\Phase(\Pressure)= GetCurveValue (\mbox{get\_fp\_curve(fp)},
+  0, \Pressure_{\mbox{avg}}, gueltig)$
+  \\[1mm]
+  2  &  $\Viscosity^\Phase(\Pressure)= \Viscosity_0^\Phase+
+  \Pressure_{avg}\cdot\frac{d\Viscosity}{d\Pressure}$
+  \\[1mm]
+ $\odot$ 7 & $\Viscosity^\Phase(\Pressure,\Temperature)= \Viscosity_0 [1
++ \frac{A(\frac{\Pressure}{33.9
+10^4})^{1.5}}{B(\frac{\Pressure}{33.9 10^4}) +
+\frac{1}{C(\frac{\Pressure}{33.9 10^4})^D}}]$
+ \\
+$\odot$ 8 & $\Viscosity^\Phase(\Temperature) = 10^{-3} \exp(-2.471 10^1+\frac{4.209 10^3}{\Temperature}
++4.527 10^{-2}\Temperature-3.376 10^{-5}\Temperature^2)$
+\\
+$\odot$ 9 & $\Viscosity^\Phase(\Temperature) = 2.285\cdot10^{-5} + 1.01 \cdot10^{-3}\log{T}$
+\\
+  10 & $\Viscosity^\Phase(\Conc,\Temperature) =
+  \frac{\Viscosity}{f1 + f2}$ $ f1= f(\Conc), f2=f(\Temperature)$
+  \\
+  \hline
+\end{tabular}
+ \label{Fluid viscosity
+methods}
+\end{table}
+
+\subsubsection*{Data Input}
+
+\begin{table}[h]
+\begin{tabular}{|l|lll|}
+\hline
+\rule[-3mm]{0mm}{8mm}\textbf{Case} & \multicolumn{3}{|c|}{\textbf{Parameters}}\\
+\hline
+0 & $\Viscosity_0$ [$Pa\,s]$&&\\
+1 & $\Viscosity_0$ [$Pa\,s]$& curve number &\\
+2 & $\Viscosity_0$ [$Pa\,s]$ & $\p\Viscosity/\p\Pressure \;[Pa^{-1}s^{-1}]$&\\
+10 & $\Viscosity_0$ [$Pa\,s]$ & $\p\Viscosity/\p\Conc \;[1/mol] $&$\p\Viscosity/\p\Pressure \;[Pa^{-1}s^{-1}]$\\
+\hline
+\end{tabular}
+\label{table:density parameters}\caption{Parameters for viscosity
+calculations}
+\end{table}
+
+
+\subsubsection*{Data Access}
+To obtain fluid viscosity results, the structure shown in Table
+\ref{viscosity table} is implemented in the program.
+\begin{table}[htb]
+\centering
+\begin{tabular}{|lll|}
+\hline
+\rule[-3mm]{0mm}{8mm}{\textbf{Description}}& \textbf{Function} & \textbf{RF Object}\\
+\hline
+FE-Kernel needs fluid viscosity&& \\
+for finite element matrix&&\\
+calculation & \texttt{GetFluidViscosity} & MPL\\
+&&\\
+Calculation of viscosity using &&\\
+one of the cases &&\\
+as described above & \texttt{CalcFluidViscosity} & MAT\\
+&&\\
+%---
+Specification of model&& \\
+specific parameters for & \texttt{GetFluidViscosity =} & \\
+fluid viscosity calculation & \texttt{THMGetFluidViscosity} & MOD\\
+\hline
+\end{tabular}
+\caption{Fluid viscosity functions in Rockflow}\label{viscosity
+table}
+\end{table}

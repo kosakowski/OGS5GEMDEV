@@ -1,0 +1,28 @@
+\section{Theory}
+
+Heat transfer is the passage of thermal energy from a hot to a cold body. Transfer of thermal energy occurs, when a body and its surroundings have not reached thermal equilibrium yet. Heat transfer can occur in three different ways:
+\begin{itemize}
+\item Conduction,
+\item Advection and
+\item Radiation.
+\end{itemize}
+Conduction takes place when a temperature gradient in a solid or a stationary fluid medium occurs. It runs into the direction of decreasing temperature. The thermal conductivity is defined in order to quantify the ease with which a particular medium conducts. Against it, convection is caused by moving fluids of different temperatures, but in the following only conductive heat flow is considered.
+
+Temperature changes cause a change of fluid density and viscosity which influences again the behaviour of the fluid while flowing through a porous medium and therefore the velocity of heat transport by groundwater flow.
+The dependence of density on temperature changes is regarded by using the relation given in \eqref{eq41}
+\begin{equation}
+\rho(T)\, = \,\rho_0\cdot\left(1\,+\,\beta_T\left(T\,-\,T_0\right)\right).
+\label{eq41}
+\end{equation}
+Here $\rho_0$ represents the initial density, $T$ the temperature, $T_0$ the initial temperature and $\beta_T$ is a constant.
+The equation for the heat conduction is
+\begin{equation}
+\frac{\partial T}{\partial t} = \nabla\cdot(\alpha\nabla T),
+\label{EqHT}
+\end{equation}
+where $T$ is the temperature and $\alpha = \lambda/c\rho$ is the heat diffusivity constant.
+For the heat transport the following equation is given:
+\begin{equation}
+c\rho\frac{\partial T}{\partial t} + c\rho \mathbf v \cdot \nabla T - \nabla\cdot(\lambda\nabla T) = Q_T,
+\end{equation}
+where $c$ is the specific heat capacity, $\rho$ is the density, $\mathbf v$ is the advection velocity and $\lambda$ is the thermal conductivity.

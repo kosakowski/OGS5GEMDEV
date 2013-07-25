@@ -1,0 +1,23 @@
+
+\subsection{Data Access}
+
+\begin{verbatim}
+Access to MP objects is possible either from MAT list or from MAT
+table.
+
+- from MAT list by name
+
+sp = GetSoilPropertiesObject(name,sp)       // Object
+SetSoilPropertiesDefaults(sp)
+
+set_sp_property(property,sp)            // Properties value =
+get_sp_property(sp)
+
+- from MAT table by group number
+
+value = GetSoilProperty(number)         // Properties
+SetSoilPorosity(number, value)
+
+\end{verbatim}
+
+\newpage

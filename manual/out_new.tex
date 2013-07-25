@@ -1,0 +1,366 @@
+\section{Data Output}
+\label{sec:out}
+
+\begin{tabular*}{8.35cm}{|p{2.5cm}|p{5cm}|} \hline
+Object acronym & OUT \\
+C++ class      & COutput \\
+Source files   & rf\_out.h/cpp \\
+\hline
+File extension & *.out \\
+Object keyword & \#OUTPUT \\
+\hline
+\end{tabular*}
+
+Three types of data output are
+available:
+\begin{itemize}
+    \item VAR\_TYPE: Output for variables (primary and secondary).
+    If no PCS\_TYPE and no MSH\_TYPE are specified, all PCS are
+    screened for the given variables (standard case).
+    \item PCS\_TYPE: Output for processes. Output only for the
+    given PCS.
+    \item MSH\_TYPE: Output for meshes. Output only for the given
+    MSH.
+\end{itemize}
+
+%-------------------------------------------------------------------------------
+\subsection{\texttt{\bf\#OUTPUT}}
+
+%\subsubsection{Keyword structure}
+
+\begin{verbatim}
+#VERSION       //Given:  show version in all output file names
+#OUTPUT
+ $PCS_TYPE // physical process
+  LIQUID_FLOW       // H process (incompressible flow)
+  UNCONFINED_FLOW   // H process (incompressible flow)
+  GAS_FLOW          // H process (compressible flow)
+  TWO_PHASE_FLOW    // H2 process (incompressible/compressible flow)
+  COMPONENTAL_FLOW  // H2 process (incompressible/compressible flow)
+  RIVER_FLOW        // H process (incompressible flow)
+  RICHARDS_FLOW     // H process (incompressible flow)
+  OVERLAND_FLOW     // H process (incompressible flow)
+  HEAT_TRANSPORT    // T process (single/multi-phase flow)
+  DEFORMATION       // M process (single/multi-phase flow)
+  MASS_TRANSPORT    // C process (single/multi-phase flow)
+  GROUNDWATER_FLOW  // H process (incompressible flow)
+  FLUID_MOMENTUM
+ $MSH_TYPE // mesh
+  msh_name //4.2.14(OK)
+ $NOD_VALUES // specified node quantities
+  PRESSUREx
+  SATURATIONx
+  TEMPERATURE1
+  DISPLACEMENT1_X
+  DISPLACEMENT1_Y
+  DISPLACEMENT1_Z
+  CONCENTRATION1
+  CONCENTRATIONx
+  STRESS_XX
+  STRESS_XY
+  STRESS_YY
+  STRESS_ZZ
+  STRESS_XZ
+  STRESS_YZ
+  STRAIN_XX
+  STRAIN_XY
+  STRAIN_YY
+  STRAIN_ZZ
+  STRAIN_XZ
+  STRAIN_YZ
+  STRAIN_PLS
+  VELOCITY1_X
+  VELOCITY1_Y
+  VELOCITY1_Z
+ $ELE_VALUES // specified element quantities
+  VELOCITY1_X
+  VELOCITY1_Y
+  VELOCITY1_Z
+  MASS_FLUX1_X
+  MASS_FLUX1_Y
+  MASS_FLUX1_Z
+ $GEO_TYPE // geometry
+  POINT    name
+  POLYLINE name
+  SURFACE  name
+  VOLUME   name
+  DOMAIN
+  LAYER //4.3.20
+ $TIM_TYPE // output times
+  time1
+  ...
+  timex
+ $DAT_TYPE // output file format
+  TECPLOT
+  ROCKFLOW // 4.2.14(OK)
+  VTK      // 4.3.XX (GK)
+ $DIS_TYPE // 4.2.14(OK)
+  AVERAGE
+ $AMPLIFIER // to amplify output data
+  scale
+#STOP
+\end{verbatim}
+
+In the case of  axisymmetrical deformation problem, the output of
+stresses, strains and displacements have the following meanings:
+\begin{gather}
+   \stress_{xx}=\stress_{rr}, \quad  \stress_{yy}=\stress_{\theta\theta},\quad
+  \stress_{zz}=\stress_{zz}, \stress_{xy}=\stress_{rz} \nonumber\\
+   \strain_{xx}=\strain_{rr}, \quad  \strain_{yy}=\strain_{\theta\theta},\quad
+  \strain_{zz}=\strain_{zz}, \strain_{xy}=\strain_{rz} \nonumber\\
+  u_{x}=u_{r},\quad u_z=u_z \nonumber
+\end{gather}
+
+\begin{tabular*}{12.773cm}{|p{3.cm}|p{1.5cm}|p{7cm}|} \hline
+Subkeyword          & Acronym & Meaning \\ \hline \hline
+%
+\texttt{PCS\_TYPE}   & PCS &  Specified process for output \\
+\texttt{MSH\_TYPE}   & MSH &  Specified mesh for output \\
+\texttt{NOD\_VALUES} & NOD &  Specified node values for output \\
+\texttt{ELE\_VALUES} & ELE &  Specified element values for output \\
+\texttt{GEO\_TYPE}   & GEO &  Related geometric objects \\
+\texttt{TIM\_TYPE}   & TIM &  Specified output times \\
+\texttt{DAT\_TYPE}   & DAT &  Output file format \\
+\texttt{DIS\_TYPE}   & DIS &  Output methods (e.g. averaging) \\
+\hline
+\end{tabular*}
+
+\subsubsection{\texttt{\$PCS\_TYPE}}
+
+see section \ref{sec:pcs}.
+
+\subsubsection{\texttt{\$MSH\_TYPE}}
+
+see section \ref{sec:msh}.
+
+\subsubsection{\texttt{\$NOD\_VALUES}}
+
+see section \ref{sec:nod_values}
+
+\subsubsection{\texttt{\$GEO\_TYPE}}
+
+see section \ref{sec:geo_types}
+
+%OK
+\small
+\begin{verbatim}
+LAYER //4.3.20
+\end{verbatim}
+\normalsize \vspace{-2mm}
+%
+This specification produces layer output for regional processes
+(e.g. regional soil model).
+
+\subsubsection{\texttt{\$TIM\_TYPE}}
+
+\begin{tabular*}{12.773cm}{|p{3.cm}|p{8.9cm}|} \hline
+Parameter        & Meaning \\ \hline \hline
+%
+\texttt{...}     & List of output times \\
+\texttt{STEPS}   & Interval of output steps \\
+\hline
+\end{tabular*}
+
+\subsubsection{\texttt{\$DAT\_TYPE}}
+
+\begin{tabular*}{12.773cm}{|p{3.cm}|p{8.9cm}|} \hline
+Parameter        & Meaning \\ \hline \hline
+%
+\texttt{TECPLOT}  & Tecplot file format (tec file) \\
+\texttt{ROCKFLOW} & RockFlow file format (rfo file) \\
+\texttt{VTK} & Paraview file format (vtk file) \\
+\hline
+\end{tabular*}
+
+\subsubsection{\texttt{\$DIS\_TYPE}}
+
+\begin{tabular*}{12.773cm}{|p{3.cm}|p{8.9cm}|} \hline
+Parameter        & Meaning \\ \hline \hline
+%
+\texttt{AVERAGE} & nodal average \\
+\hline
+\end{tabular*}
+
+
+\Examples{
+%===============================================================================
+\subsection{Examples}
+
+%-------------------------------------------------------------------------------
+\subsubsection{VAR\_TYPE: Output for variables}
+
+%...............................................................................
+\subsubsection*{Output files}
+
+The names of the OUT files are generated automatically:
+
+\begin{tabular*}{12.773cm}{|p{3.cm}|p{8.9cm}|} \hline
+Parameter          & File name \\ \hline \hline
+%
+Domain      & node values: \texttt{filename\_dom\_nod.tec} \\
+Domain      & element values: \texttt{filename\_dom\_ele.tec} \\
+Time curves & \texttt{filename\_time\_GEOName.tec} \\
+Profiles    & \texttt{filename\_GEOName\_TIMStepNumber.tec} \\
+\hline
+\end{tabular*}
+
+%...............................................................................
+\subsubsection*{Domain output}
+
+Data output of \texttt{PRESSURE1} at $t$ = 4.320000e+003 sec for
+whole domain.
+
+\begin{verbatim}
+benchmark: h_tet3.out
+#OUTPUT // domain
+ $NOD_VALUES
+  PRESSURE1
+ $GEO_TYPE
+  DOMAIN
+ $DAT_TYPE
+  TECPLOT
+ $TIM_TYPE
+  4.320000e+003
+#STOP
+\end{verbatim}
+
+Data output of \texttt{PRESSURE1} each time step for whole domain.
+
+\begin{verbatim}
+#OUTPUT // domain
+ $NOD_VALUES
+  PRESSURE1
+ $GEO_TYPE
+  DOMAIN
+ $DAT_TYPE
+  TECPLOT
+ $TIM_TYPE
+  STEPS 1
+#STOP
+\end{verbatim}
+
+%...............................................................................
+\subsubsection{Time curve output}
+
+Data output of \texttt{PRESSURE1} and \texttt{TEMPERATURE1} in
+\texttt{POINT2} for all time steps.
+
+\begin{verbatim}
+benchmark: ht_line.out
+#OUTPUT // time curve
+ $NOD_VALUES
+  PRESSURE1
+  TEMPERATURE1
+ $GEO_TYPE
+  POINT POINT2
+ $DAT_TYPE
+  TECPLOT
+#STOP
+\end{verbatim}
+
+Data output of node average at surface \texttt{OUT} for all time steps.
+
+\begin{verbatim}
+benchmark: h2_line.out
+#OUTPUT // profile
+ $NOD_VALUES
+  CONCENTRATION
+ $GEO_TYPE
+  SURFACE OUT
+ $TIM_TYPE
+  STEPS 1
+ $DIS_TYPE
+  AVERAGE
+#STOP
+\end{verbatim}
+
+%...............................................................................
+\subsubsection{Profile output}
+
+Data output of \texttt{PRESSURE1} and \texttt{SATURATION2} along
+polyline \texttt{OUT} at times $t$ = 5e+5, 1e+6, 5e+6, 1e+7, 5e+7,
+1e+8 and 2e+8 sec.
+
+\begin{verbatim}
+benchmark: h2_line.out
+#OUTPUT // profile
+ $NOD_VALUES
+  PRESSURE1
+  SATURATION2
+ $GEO_TYPE
+  POLYLINE OUT
+ $DAT_TYPE
+  TECPLOT
+ $TIM_TYPE
+  5e+5
+  1e+6
+  5e+6
+  1e+7
+  5e+7
+  1e+8
+  2e+8
+#STOP
+\end{verbatim}
+
+%-------------------------------------------------------------------------------
+\subsubsection{MSH\_TYPE: Output for meshes}
+
+%...............................................................................
+\subsubsection*{Output files}
+
+The names of the OUT files are generated automatically:
+
+\begin{tabular*}{12.773cm}{|p{3.cm}|p{8.9cm}|} \hline
+Parameter          & File name \\ \hline \hline
+%
+Domain      & node values: \texttt{filename\_dom\_MSHName\_nod.tec} \\
+Domain      & element values: \texttt{filename\_dom\_MSHName\_ele.tec} \\
+Time curves & \texttt{filename\_time\_MSHName\_GEOName.tec} \\
+Profiles    & \texttt{filename\_MSHName\_GEOName\_TIMStepNumber.tec} \\
+\hline
+\end{tabular*}
+
+Output for two meshes (regional soil model).
+
+\begin{verbatim}
+benchmark: 2.out
+#OUTPUT
+ $MSH_TYPE
+  SURFACE0
+ $NOD_VALUES
+  PRESSURE1
+  SATURATION1
+ ...
+#OUTPUT
+ $MSH_TYPE
+  SURFACE1
+ $NOD_VALUES
+  PRESSURE1
+  SATURATION1
+ ...
+#STOP
+\end{verbatim}
+
+
+%-------------------------------------------------------------------------------
+\subsubsection{PCS\_TYPE: Output for meshes}
+
+%...............................................................................
+\subsubsection*{Output files}
+
+The names of the OUT files are generated automatically:
+
+\begin{tabular*}{12.773cm}{|p{3.cm}|p{8.9cm}|} \hline
+Parameter          & File name \\ \hline \hline
+%
+Domain      & node values: \texttt{filename\_dom\_PCSName\_nod.tec} \\
+Domain      & element values: \texttt{filename\_dom\_PCSName\_ele.tec} \\
+Time curves & \texttt{filename\_time\_PCSName\_GEOName.tec} \\
+Profiles    & \texttt{filename\_PCSName\_GEOName\_TIMStepNumber.tec} \\
+\hline
+\end{tabular*}
+
+
+}
+
+\LastModified{OK - 30.12.2005}

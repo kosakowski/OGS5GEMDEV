@@ -1,0 +1,254 @@
+\section{Boundary Conditions}
+\subsection{Keyword Description}
+
+The following keywords are available to specify boundary conditions for fluid flow,
+heat transport and mass transport.
+
+\begin{verse}
+ \#BOUNDARY\_CONDITIONS\_PRESSURE      \\
+ \#BOUNDARY\_CONDITIONS\_SATURATION    \\
+ \#BOUNDARY\_CONDITIONS\_TEMPERATURE   \\
+ \#BOUNDARY\_CONDITIONS\_CONCENTRATION \\
+ \#BOUNDARY\_CONDITIONS\_SORBED\_CONCENTRATION  \\
+ \#BOUNDARY\_CONDITIONS\_SOLUTE\_CONCENTRATION  \\
+ \#BOUNDARY\_CONDITIONS\_DISPLACEMENT\_X        \\
+ \#BOUNDARY\_CONDITIONS\_DISPLACEMENT\_Y        \\
+ \#BOUNDARY\_CONDITIONS\_DISPLACEMENT\_Z        \\
+ \#BOUNDARY\_CONDITIONS\_FREE\_OUTFLOW          \\
+\end{verse}
+
+By repeatedly use of the keywords, boundary conditions for corresponding phases and components are specified.
+
+
+\begin{tabular}{|l|p{2.75cm}|c|p{8.5cm}|}
+  \hline
+  Parameter &    RF Variable \quad      &  Values  & Meaning           \\
+  \hline
+%
+  \hline
+%
+  N1        & {\footnotesize type} &    0     & Individual nodes by node number  \\
+            &                      &    1     & Individual nodes by coordinates   \\
+            &                      &    2     & Linear distribution between two nodes by coordinates   \\
+            &                      &    3     & Linear distribution between two nodes by node number   \\
+            &                      &    4     & Constant value at plain given by 3 points   \\
+            &                      &    5     & Linear distribution along polygon   \\
+            &                      &    6     & Constant value at plain given by polygon node numbers   \\
+            &                      &    7     & Hydrostatic distribution at plain given by 3 points   \\
+            &                      &    8     & Constant value at plain given by polygon coordinates   \\
+            &                      &    9     & Bilinear distribution within rectangle by coordinates   \\
+            &                      &    10    & Bilinear distribution at plain given by coordinates   \\
+            &                      &    11/0  & Individual nodes by node number (eps)   \\
+            &                      &    12/5  & Linear distribution along polygon / coordinates (eps)   \\
+            &                      &    13    & Linear distribution along polygon / nodes (eps)   \\
+            &                      &    14    & Hydrostatic distribution in polygon / coordinates (eps)   \\
+            &                      &    15    & Hydrostatic distribution in polygon / nodes (eps)   \\
+            &                      &    16    & Bilinear distribution within rectangle by coordinates   \\
+            &                      &    17    & Hydrostatic distribution in rectangle / coordinates (eps)   \\
+%
+  \hline
+%
+  N2        & {\footnotesize node} &    0     & Overwrite    \\
+            &                      &    1     & Superimpose  \\
+%
+  \hline
+%
+  N3        & {\footnotesize curve}&    int   & Curve number    \\
+  \hline   \hline
+  if N1=0   & {\footnotesize begin\_node}    &      & Node number                       \\
+            & {\footnotesize values[0]}      &      & Nodal value        \hfill (AH)    \\
+%
+  \hline
+%
+  if N1=1   & {\footnotesize x[0] y[0] z[0]} &      & Node coordinates                  \\
+            & {\footnotesize radius[0]}      &      & Radius ($\>$0.0)                     \\
+            & {\footnotesize values[0]}      &      & Nodal value        \hfill (AH)    \\
+%
+  \hline
+%
+  if N1=2   & {\footnotesize x[0] y[0] z[0]} &      & First node coordinates            \\
+            & {\footnotesize x[1] y[1] z[1]} &      & First nodal value                 \\
+            & {\footnotesize radius[0]}      &      & "Radius", epsilon                 \\
+            & {\footnotesize values[0]}      &      & Second node coordinates           \\
+            & {\footnotesize values[1]}      &      & Second nodal value \hfill RFE-Data incorrect (AH)    \\
+%
+  \hline
+%
+\end{tabular}
+
+\newpage
+{\it Continuation from the previous page}
+
+\begin{tabular}{|p{1.5cm}|p{2.75cm}|c|p{8.5cm}|}
+%
+  \hline
+%
+  if N1=3   & {\footnotesize begin\_node}    &      & First node                        \\
+            & {\footnotesize end\_node}      &      & Second node                       \\
+            & {\footnotesize step\_nodes}    &      & Increment                         \\
+            & {\footnotesize values[0]}      &      & First nodal value                 \\
+            & {\footnotesize value[1]}       &      & Second nodal value  \hfill  (RFE-Data has to be adjusted) (AH) \\
+%
+  \hline
+%
+  if N1=4   & {\footnotesize x[0] y[0] z[0]} & \PlaceHolder{Values} & First node coordinates            \\
+            & {\footnotesize x[1] y[1] z[1]} &      & Second node coordinates           \\
+            & {\footnotesize x[2] y[2] z[2]} &      & Third node coordinates            \\
+            & {\footnotesize radius[0]}      &      & "Radius", epsilon                 \\
+            & {\footnotesize values[0]}      &      & Areal value  \hfill          (AH) \\
+%
+  \hline
+%
+  if N1=5   & {\footnotesize count\_of\_points}        & & Number of polygon points       \\
+            & {\footnotesize nodes[count\_of\_points]} & & Polygon nodes                  \\
+            & {\footnotesize values[count\_of\_points]}& & Nodal values   \hfill (AH/CT)  \\
+%
+  \hline
+%
+%
+  if N1=6   & {\footnotesize count\_of\_points}        & & Number of surface polygon points \\
+            & {\footnotesize nodes[count\_of\_points]} & & Surface polygon nodes            \\
+            & {\footnotesize radius [0]}               & & "Radius", epsilon \hfill (does not work properly!)  \\
+            & {\footnotesize value[0]}                 & & Areal value \hfill (RFE-Data not correct)  (AH) \\
+%
+  \hline
+%
+%
+  if N1=7   & {\footnotesize x[0] y[0] z[0]}           & & First node coordinates           \\
+            & {\footnotesize x[1] y[1] z[1]}           & & Second node coordinates          \\
+            & {\footnotesize x[2] y[2] z[2]}           & & Third node coordinates           \\
+            & {\footnotesize z[3]}                     & & Reference elevation              \\
+            & {\footnotesize values[0]}                & & Reference value \hfill  (not yet tested)  (AH) \\
+%
+  \hline
+%
+%
+  if N1=8   & {\footnotesize count\_of\_points}          & & Number of polygon points         \\
+            & {\footnotesize x[0] y[0] z[0]}           & & Polygon node coordinates         \\
+            & {\footnotesize ...}                      & & ...                              \\
+            & {\footnotesize x[count\_of\_points-1]}     & &                                  \\
+            & {\footnotesize y[count\_of\_points-1]}     & &                                  \\
+            & {\footnotesize z[count\_of\_points-1]}     & &                                  \\
+            & {\footnotesize radius[0]}                & & "Radius", epsilon  \hfill (does not work properly!)              \\
+            & {\footnotesize values[0]}                & & Value \hfill  (RFE-Data not correct) (AH)\\
+%
+  \hline
+%
+  if N1=9   & {\footnotesize x[0] y[0] z[0]} &      & Rectangle node coordinates  \\
+            & {\footnotesize values[0]}      &      & Value                                 \\
+            & {\footnotesize x[1] y[1] z[1]} &      & ...                                   \\
+            & {\footnotesize values[1]}      &      &                                       \\
+            & {\footnotesize x[2] y[2] z[2]} &      &                                       \\
+            & {\footnotesize values[2]}      &      &                                       \\
+            & {\footnotesize x[3] y[3] z[3]} &      &                                       \\
+            & {\footnotesize values[3]}      &      & \hfill (does not work properly!) (RK) \\
+%
+  \hline
+%
+%
+  if N1=10  & {\footnotesize x[0] y[0] z[0]} &      & Node coordinates                      \\
+            & {\footnotesize values[0]}      &      & Value                                 \\
+            & {\footnotesize x[1] y[1] z[1]} &      & ...                                   \\
+            & {\footnotesize values[1]}      &      &                                       \\
+            & {\footnotesize x[2] y[2] z[2]} &      &                                       \\
+            & {\footnotesize values[2]}      &      &                                       \\
+            & {\footnotesize x[3] y[3] z[3]} &      &                                       \\
+            & {\footnotesize values[3]}      &      & \hfill (does not work properly!) (RK) \\
+%
+  \hline
+%
+  if N1=11  & {\footnotesize x[0] y[0] z[0]} &      &                        \\
+            & {\footnotesize values[0]}      &      &                        \\
+            & {\footnotesize epsilon}        &      &         \hfill (CT)    \\
+%
+  \hline
+%
+\end{tabular}
+
+\newpage
+{\it Continuation from the previous page}
+
+\begin{tabular}{|p{1.5cm}|p{2.75cm}|c|p{8.5cm}|}
+%
+  \hline
+%
+  if N1=12  & {\footnotesize count\_of\_points}         &      &                        \\
+            & {\footnotesize x[count\_of\_points]}      &      &                        \\
+            & {\footnotesize y[count\_of\_points]}      &      &                        \\
+            & {\footnotesize z[count\_of\_points]}      &      &                        \\
+            & {\footnotesize values[count\_of\_points]} &      &                        \\
+            & {\footnotesize epsilon}                 &      &       \hfill (CT)      \\
+%
+  \hline
+%
+  if N1=13  & {\footnotesize count\_of\_points}         &  \PlaceHolder{Values} &                        \\
+            & {\footnotesize nodes[count\_of\_points]}  &      &                        \\
+            & {\footnotesize values[count\_of\_points]} &      &                        \\
+            & {\footnotesize epsilon}                   &      &      \hfill (CT)       \\
+%
+  \hline
+%
+  if N1=14  & {\footnotesize values[0]}            &      &                        \\
+            & {\footnotesize values[1]}            &      &                        \\
+            & {\footnotesize phase}                &      &                        \\
+            & {\footnotesize count\_of\_points}    &      &                        \\
+            & {\footnotesize x[count\_of\_points]} &      &                        \\
+            & {\footnotesize y[count\_of\_points]} &      &                        \\
+            & {\footnotesize z[count\_of\_points]} &      &                        \\
+            & {\footnotesize epsilon}              &      & \hfill (not yet tested) (CT)  \\
+%
+  \hline
+%
+  if N1=15  & {\footnotesize values[0]}            &      &                        \\
+            & {\footnotesize values[1]}            &      &                        \\
+            & {\footnotesize phase}                &      &                        \\
+            & {\footnotesize count\_of\_points}    &      &                        \\
+            & {\footnotesize nodes[count\_of\_points]} &  &                        \\
+            & {\footnotesize epsilon}              &      & \hfill (not yet tested) (CT)  \\
+%
+  \hline
+%
+  if N1=16  & {\footnotesize x[0] y[0] z[0]}     &      &                        \\
+            & {\footnotesize values[0]}          &      &                        \\
+            & {\footnotesize x[1] y[1] z[1]}     &      &                        \\
+            & {\footnotesize values[1]}          &      &                        \\
+            & {\footnotesize x[2] y[2] z[2]}     &      &                        \\
+            & {\footnotesize values[2]}          &      &                        \\
+            & {\footnotesize x[3] y[3] z[3]}     &      &                        \\
+            & {\footnotesize values[3]}          &      &                        \\
+            & {\footnotesize epsilon}            &      & \hfill  (CT)           \\
+%
+  \hline
+%
+
+  if N1=17  & {\footnotesize values[0]}          &      &                        \\
+            & {\footnotesize values[1]}          &      &                        \\
+            & {\footnotesize x[0] y[0] z[0]}     &      &                        \\
+            & {\footnotesize x[1] y[1] z[1]}     &      &                        \\
+            & {\footnotesize x[2] y[2] z[2]}     &      &                        \\
+            & {\footnotesize x[3] y[3] z[3]}     &      &                        \\
+            & {\footnotesize epsilon}            &      & \hfill (not yet tested) (CT)  \\
+%
+  \hline
+%
+\end{tabular}
+
+
+\subsection*{Specific boundary conditions}
+
+\#BOUNDARY\_CONDITIONS\_FREE\_OUTFLOW
+
+This keyword is intended for open boundaries under multiphase flow conditions.
+
+For a system with two or more phases it is necessary to specify BCs for the saturations on each boundary
+which is regarded "open" by specifying a pressure BC. If the user knows in advance that this will be a free
+outflow boundary, the free outflow BC can replace the saturation BCs and the saturations at the boundary will
+adjust freely in the simulation due to the conditions inside the system.
+
+If the simplified Richards solution is used, this BC specifies the free outflow of fluid over a boundary with
+no pressure BC specified. In the iterative process the pressure will be set to zero (which is the reference
+pressure for the transition between full and partially saturated conditions) if thereby an outflow is
+enabled, otherwise the boundary is regarded as impermeable.
+
+
+\LastModified{MK June 13, 2003}

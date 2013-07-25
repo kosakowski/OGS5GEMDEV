@@ -1,0 +1,113 @@
+\section{Domain Decomposition}
+
+\begin{tabular*}{5.35cm}{|p{2.5cm}|p{2cm}|} \hline
+Object acronym & DDC \\
+C++ class  & CPARDomain \\
+Source files   & par\_ddc.h/cpp \\
+\hline
+File extension & *.ddc\\
+Object keyword &  {\texttt{\#DOMAIN}} \\
+\hline
+\end{tabular*}
+
+
+%-------------------------------------------------------------------------------
+\subsection{\bf\texttt{\#DOMAIN}}
+
+\begin{verbatim}
+#DOMAIN
+ $ELEMENTS
+ element_numbers
+ $NODES_INNER
+ inner_node_numbers
+ $NODES_HALO
+ halo_node_numbers
+\end{verbatim}
+
+\begin{tabular*}{12.773cm}{|p{3.cm}|p{8.9cm}|} \hline
+Subkeyword         & Meaning \\ \hline \hline
+%
+\texttt{ELEMENTS}    & Element numbers of this domain \\
+\texttt{NODES\_INNER}& Numbers of inner nodes \\
+\texttt{NODES\_BORDER} & Numbers of domain boundary nodes \\
+\hline
+\end{tabular*}
+
+%-------------------------------------------------------------------------------
+
+\Examples{
+%-------------------------------------------------------------------------------
+\subsection{Examples}
+%-------------------------------------------------------------------------------
+\subsubsection{(confined) Groundwater flow}
+\begin{verbatim}
+benchmarks: h_tri.ddc
+#DOMAIN
+ $ELEMENTS
+ 0
+ 1
+ 2
+ 3
+ 8
+ 9
+ 10
+ 11
+ 16
+ 17
+ 18
+ 19
+ $NODES_INNER
+ 0
+ 1
+ 5
+ 6
+ 10
+ 11
+ 15
+ 16
+ $NODES_BORDER
+ 2
+ 7
+ 12
+ 17
+#STOP
+\end{verbatim}
+}
+%%WW
+When high order interpolation is required,  additional element nodes except vertex node will be intrdoduced.
+Under such situdation, nodes on so called borders, nodes on interfaces between adjecent domains,
+ will be computed in the programm. Therefore, as an alternative, all nodes of a domain can be listed
+ after keyword \mbox{\$NODES\_INNER} as
+\begin{verbatim}
+benchmarks: h_tri.ddc#DOMAIN
+ $ELEMENTS
+ 0
+ 1
+ 2
+ 3
+ 8
+ 9
+ 10
+ 11
+ 16
+ 17
+ 18
+ 19
+ $NODES_INNER
+ 0
+ 1
+ 5
+ 6
+ 10
+ 11
+ 15
+ 16
+ 2
+ 7
+ 12
+ 17
+#STOP
+\end{verbatim}
+
+\LastModified{WW \today}
+\newpage

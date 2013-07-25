@@ -1,0 +1,79 @@
+\section{Unsaturated (Richards) consolidation}
+
+\subsubsection*{Fluid mass and momentum balance}
+The general fluid mass balance equation for a multi-phase fluid system is simply an extension of Eq. \ref{eqch14:genmass},
+
+\begin{equation}
+\frac{\partial }{\partial t}\left( \phi {{S}_{\alpha }}\rho  \right)+\frac{\partial }{\partial {{x}_{i}}}\left( \phi {{S}_{\alpha }}\rho {{v}_{i}} \right)=Q
+\end{equation}
+
+where $S_\alpha$ is saturation of fluid $\alpha $ and $Q$ is the source term. We are interested in a Richards type model for the evolution of fluid pressure under the assumption that the gas phase is immobile, i.e. $v_{gi}=0$. Assuming incompressible grains, $\alpha =0$, and expanding terms as in the single phase case, we obtain the following Richards equation for an unsaturated deformable porous medium,
+
+\begin{eqnarray}
+\left( {{S}_{w}}\frac{\phi }{{{K}_{w}}}\frac{d{{p}_{w}}}{dt}-\phi {{\rho }_{w}}\frac{d{{S}_{nw}}}{d{{p}_{c}}} \right)\frac{d{{p}_{w}}}{dt}+\nabla \cdot \left\{ \frac{\mathbf{k}k_{w}^{r}}{{{\mu }_{w}}}\left( -\nabla {{p}_{w}}+{{\rho }_{w}}\mathbf{g} \right) \right\}+\nonumber\\
+{{\text{S}}_{w}}{{\rho }_{w}}\nabla \cdot \frac{d\mathbf{u}}{dt}=Q.
+\label{eqn:uc2}
+\end{eqnarray}
+
+A constitutive equation, the water content function obtained by experiments, characterizes the relationship between $p_c$ and $\sat _w$, and therefore the derivative $dS_w/dp_c$.
+
+\subsubsection*{Solid momentum balance}
+The deformation process is described in the same manner as for the single phase case, but now fluid pressure acting on the grains is also dependent on the liquid saturation,
+
+\begin{eqnarray}
+\nabla\cdot
+(\sigma - S_w p_w \bf I) + \rho g = 0
+\label{eqn:mb_us}
+\end{eqnarray}
+
+\subsubsection*{FEM solution scheme}
+The standard Galerkin finite element approach is applied for the numerical solution of the PDEs (\ref{eqn:uc2}) and (\ref{eqn:mb_us}) resulting into the following system of algebraic equations, here solved as a monolithic system,
+
+\begin{eqnarray}
+\left[
+\begin{array}{cc}
+\mathbf{C}_{pp} & \mathbf{C}_{pu}
+\\
+\mathbf{0} & \mathbf{0}
+\end{array}
+\right]
+\frac{d}{dt}
+\left\{
+\begin{array}{l}
+\mathbf{p_w}
+\\
+\mathbf{u}
+\end{array}
+\right\}
++
+\left[
+\begin{array}{ll}
+\mathbf{K}_{pp} & \mathbf{0}
+\\
+\mathbf{K}_{up} & \mathbf{K}_{uu}
+\end{array}
+\right]
+%
+\left\{
+\begin{array}{l}
+\mathbf{p_w}
+\\
+\mathbf{u}
+\end{array}
+\right\}
+=
+\left\{
+\begin{array}{l}
+\mathbf{r}_p
+\\
+\mathbf{r}_u
+\end{array}
+\right\}
+\nonumber
+\\
+\end{eqnarray}
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+
+\input{chapter_14/subsection_14_2_1}
+\input{chapter_14/subsection_14_2_2}

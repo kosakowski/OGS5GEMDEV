@@ -1,0 +1,73 @@
+\section{Transverse isotropic elasticity}
+
+If the material properties are independent of orientations and directions of the technical or natural object under consideration, the material behavior is called {\sl isotropic}. Otherwise, the material is known as {\sl anisotropic} one. Anisotropy is closely connected with distinguished orientations in the material structure. Among others, fiber-reinforced and layered materials are typical anisotropic materials.
+
+From the the point of view of modeling and numerical simulation special cases of anisotropy like {\sl orthotropy} are of particular interest. Orthotropic materials are characterized by mutually orthogonal two-fold axes of rotational symmetry. A special class of orthotropic materials represent the so called {\sl transverse isotropic} materials. They are characterized by a plane of isotropy featuring the same material properties independent of the direction of observation within this plane, and different material properties in the direction normal to this plane. Within this context, the normal to the plane of isotropy can be considered as the direction of anisotropy. Most of layered materials, biological membranes as well as rocks (e.\,g. sandstone, shale) are typical materials which can be considered as transverse isotropic ones.
+
+In case of transverse isotropy, the Hooke's law (\ref{eq:hook}) has to be modified establishing a unit vector $\miu{a}{}{}$ which defines the direction perpendicular to the plane of isotropy (normal vector, direction of anisotropy -- defining, e.\,g., the direction of a single fiber family of a fiber-reinforced material).
+\begin{eqnarray}
+\sigma_{ij}& = & \lambda\,\delta_{ij}\,\varepsilon_{kk}\,+\,2\mu_T\,\varepsilon_{ij} \nonumber \\[1.50ex]
+ &  & +\,2\,\left(\mu_L-\mu_T\right)\,\left(a_i\,\varepsilon_{jl}\,a_l+a_l\,\varepsilon_{li}\,a_j\right) 
+ \nonumber \\[1.50ex]
+ &  & +\,\alpha\,\left(a_i\,a_j\,\varepsilon_{kk}+a_k\,\varepsilon_{kl}\,a_l\,\delta_{ij}\right) 
+ \nonumber \\[1.50ex]
+ &  & +\,\beta\,a_k\,\varepsilon_{kl}\,a_l\,a_i\,a_j
+\label{hooke_transviso}
+\end{eqnarray}
+Linear elastic transverse isotropic material is characterized by 5 independent material parameters like $\lambda$, $\mu_T$, $\mu_L$, $\alpha$ and $\beta$ given in Eqn. (\ref{hooke_transviso}). In some cases these parameters are called {\sl invariants} of the transverse isotropic elastic Hooke's law. They can be defined w.l.o.g. by the following (engineering) elastic constants which can be obtained experimentally: 
+
+\begin{center}
+\begin{tabular}{p{0.08\textwidth}p{0.025\textwidth}p{0.8\textwidth}}
+$E_i$      & -- & Young's modulus within the plane of isotropy, \\[0.5ex]
+$\nu_i$    & -- & Poisson's ratio within the plane of isotropy, \\[1.5ex]
+$E_a$      & -- & Young's modulus w.r.t. the direction of anisotropy, \\[0.5ex]
+$\nu_{ia},\,\nu_{ai}$ & -- & Poisson's ratio w.r.t. the direction of anisotropy, \\[0.5ex]
+$G_a$      & -- & shear modulus w.r.t. the direction of anisotropy.
+\end{tabular}
+\end{center}
+
+There exist some relations between these parameters.
+\begin{eqnarray}
+G_i      & \!\!\!\!\!= & 
+\!\!\!\!\!\ttfrac{E_i}{2(1+\nu_i)}=\mu_i\;\;\mbox{(shear modulus within the plane of isotropy)} \\[2.0ex]
+\nu_{ai} & \!\!\!\!\!= & \!\!\!\!\!\nu_{ia}\,\ttfrac{E_a}{E_i}
+\end{eqnarray}
+
+As mentioned above, the invariants of the transverse isotropic elastic Hooke's law can be expressed by the presented elastic parameters.
+\begin{eqnarray*}
+\lambda & = &  \ttfrac{E_i(\nu_i+\nu_{ia}\nu_{ai})}{{\widetilde D}} \\[2.0ex]
+\mu_T   & = &  G_i \\[2.0ex]
+\mu_L   & = &  G_a \\[2.0ex]
+\alpha  & = &  \ttfrac{E_i(\nu_{ai}(1+\nu_i-\nu_{ia})-\nu_i)}{{\widetilde D}} \\[2.0ex]
+\beta   & = &  \ttfrac{E_a(1-\nu_i^2)-E_i[(\nu_i+\nu_{ia}\nu_{ai})+2(\nu_{ai}(1+\nu_i-\nu_{ia})-\nu_i)]}
+                      {{\widetilde D}} \\
+        &   & \,-\,4G_a\,+\,2G_i \\[4.0ex]
+        &   &  \mbox{with}\quad {\widetilde D}\,=\,
+               1\,-\,\nu_i^2\,-\,2\,\nu_{ia}\,\nu_{ai}\,-\,2\,\nu_{ia}\,\nu_{i}\,\nu_{ai} \nonumber \\[1.0ex]
+        &   &  \mbox{\hspace*{9.0ex}} =\,
+               (1\,+\,\nu_i)(1\,-\,\nu_i\,-\,2\,\nu_{ia}\,\nu_{ai})
+\end{eqnarray*}
+
+The coordinates of the material tensor for linear elastic transverse isotropic material are defined as follows:
+\begin{eqnarray}
+\mathcal{C}_{ijkl} & = & \lambda\,\delta_{ij}\,\delta_{kl}\,+\,
+                        2\mu_T\,\delta_{ik}\,\delta_{jl} \nonumber \\[1.50ex]
+                   &   & +\,2\,\left(\mu_L-\mu_T\right)\,
+                         \left(a_i\,\delta_{jk}\,a_l+a_k\,\delta_{il}\,a_j\right) \nonumber \\[1.50ex]
+                   &   & +\,\alpha\,\left(a_i\,a_j\,\delta_{kl}+a_k\,a_l\,\delta_{ij}\right) \nonumber \\[1.50ex]
+                   &   & +\,\beta\,a_i\,a_j\,a_k\,a_l
+\end{eqnarray}
+
+Tension of a quadratic plate according to Schr\"oder \cite{Schroeder:1996}, Kohlmeier \cite{Kohlmeier:2006} and Fiolka \cite{Fiolka:2007} is carried out to verify the linear elastic transverse isotropic material model. The model definition and the results are presented in the following examples.
+
+\clearpage
+
+\subsection{Tensile test (2D)}
+\label{subsec:transiso_tens2d}
+\input{M/tens_transiso2d}
+
+\clearpage
+
+\subsection{Tensile test (3D)}
+\label{subsec:transiso_tens3d}
+\input{M/tens_transiso3d}

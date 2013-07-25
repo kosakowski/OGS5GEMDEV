@@ -1,0 +1,50 @@
+\subsection{Momentum balance}
+\label{sec:momentum_balance}
+
+\input{242_mb_fluids}
+
+\subsubsection{Darcy's law}
+
+For linear momentum conservation in porous media we assume, in general, that inertial
+forces can be neglected (i.e. $d\mathbf{v}/dt\approx 0$) and
+body forces are gravity at all.
+Assuming furthermore that internal fluid friction is small in comparison to
+friction on the fluid-solid interface and that turbulence effects
+can be neglected we obtain the Darcy law for each fluid phase
+$\gamma$ in multiphase flow (cf. equation (\ref{eq22})).\index{law - Darcy}
+%
+\begin{eqnarray}
+\mio{w}{\gamma s}{}
+=
+n S^\gamma (\mio{v}{\gamma}{} - \mio{v}{s}{})
+=
+-
+n S^\gamma
+\left(
+\frac{k_{\mbox{\small rel}}^{\gamma} \bf k}{\mu^\gamma}
+(
+\nabla p^\gamma
+-
+\rho^\gamma \mio{g}{}{}
+)
+\right)
+\label{eqn:momentum_balance_fluid}
+\end{eqnarray}
+
+\subsubsection{Non-isothermal consolidation}
+
+Deformation processes in porous media are described by the momentum balance equation in terms of the total Cauchy's stress tensor $\miu{\sigma}{}{}$, which is additively decomposed into several partial stresses according to different physical events. The specific local overall linear momentum balance equation is given as follows:
+%
+\begin{eqnarray}
+\nabla\cdot\left[
+\phantom{\left(\fourtens{I}\right)}\!\!\!\!\!\!\!\!\!\!\!\!
+\miu{\sigma}{\mathrm{eff}}{}\right. & - & \sum_\gamma \left( \chi\left(S^{\mathrm\gamma}\right)\,p^{\mathrm\gamma} \right) \miu{I}{}{}
+\,-\,\miu{\sigma}{\mathrm{sw}}{}
+\nonumber \\
+& - & \left.\alpha_T\,\Delta T\,\left(\fourtens{C}\ccdot\miu{I}{}{}\right)
+\right]
+\,+\,\rho\,\miu{g}{}{}\,=\,\miu{0}{}{}
+\label{eq:4}
+\end{eqnarray}
+%
+The representation of the stress decomposition (\ref{eq:4}) is based on a modified effective stress law presented in \cite{RBCetal:2001}, where $\miu{\sigma}{\mathrm{eff}}{}$ is the macroscopic effective stress tensor, $\chi$ is the saturation dependent effective stress parameter of Bishop's type \cite{BB:1963}, $\miu{\sigma}{\mathrm{sw}}{}$ denotes the swelling stress, $\alpha$ is the thermal expansion coefficient, $\miu{I}{}{}$ represents the second-order identity tensor, $\fourtens{C}$ is the fourth-order elastic material tensor, which will be discussed later, and $\mio{g}{}{}$ is the gravity vector.

@@ -1,0 +1,110 @@
+Index: MSH/objects.mak
+===================================================================
+--- MSH/objects.mak	(revision 4430)
++++ MSH/objects.mak	(working copy)
+@@ -1,19 +1,15 @@
+-# GeoSys - Makefile for LINUX
+-#  06/02/2006  WW
+-#  22/07/2007  WW  
+-MSHOBJS = msh_rfi.o\
+-msh_pnt.o\
+-msh_nodes_rfi.o\
+-msh_node.o\
+-msh_mesh.o\
+-msh_mat.o\
+-msh_lin.o\
+-msh_lib.o\
+-msh_gen_pris.o\
+-msh_gen.o\
+-msh_elements_rfi.o\
+-msh_elem.o\
+-msh_edge.o\
+-msh_core.o\
+-moveGEOtoMSH.o
+-
++# GeoSys - Makefile for LINUX
++#  06/02/2006  WW
++#  22/07/2007  WW 
++# 4.11   24/02/2010 KG44
++MSHOBJS = msh_pnt.o\
++msh_node.o\
++msh_mesh.o\
++msh_mat.o\
++msh_lin.o\
++msh_lib.o\
++msh_gen_pris.o\
++msh_gen.o\
++msh_elem.o\
++msh_edge.o\
++msh_core.o
+Index: FEM/objects.mak
+===================================================================
+--- FEM/objects.mak	(revision 4430)
++++ FEM/objects.mak	(working copy)
+@@ -4,9 +4,9 @@
+ #        15/10/2008 WW
+ # 4.9    17/12/2008 WW
+ # 4.9.09 30/04/2009 WW
++# 4.11   24/02/2010 KG44
+ FEMOBJS = break.o\
+ display.o\
+-elements.o\
+ eos.o\
+ fem_ele.o\
+ fem_ele_std.o\
+@@ -16,14 +16,11 @@
+ mathlib.o\
+ matrix_class.o\
+ memory.o\
+-nodes.o\
+ par_ddc.o\
+ pcs_dm.o\
+ problem.o\
+-ptrarr.o\
+ rf.o\
+ rf_bc_new.o\
+-rf_db.o\
+ rf_fct.o\
+ rf_fluid_momentum.o\
+ rf_ic_new.o\
+@@ -39,9 +36,7 @@
+ rf_react.o\
+ rf_st_new.o\
+ rf_tim_new.o\
+-rfadt.o\
+ rfmat_cp.o\
+-rfstring.o\
+ Stiff_Bulirsch-Stoer.o\
+ timer.o\
+ tools.o\
+Index: GEO/objects.mak
+===================================================================
+--- GEO/objects.mak	(revision 4430)
++++ GEO/objects.mak	(working copy)
+@@ -1,13 +1,13 @@
+-# GeoSys - Makefile for LINUX
+-#  02/06/2006 MH
+-#  22/072007  WW
+-GEOOBJS = geo_vol.o\
+-geo_strings.o\
+-geo_sfc.o\
+-geo_pnt.o\
+-geo_ply.o\
+-geo_mathlib.o\
+-geo_lin.o\
+-geo_lib.o\
+-geo_dom.o
+-
++# GeoSys - Makefile for LINUX
++#  02/06/2006 MH
++#  22/072007  WW
++# 4.11   24/02/2010 KG44
++GEOOBJS = geo_vol.o\
++geo_sfc.o\
++geo_pnt.o\
++geo_ply.o\
++geo_mathlib.o\
++geo_lin.o\
++geo_lib.o\
++geo_dom.o
++

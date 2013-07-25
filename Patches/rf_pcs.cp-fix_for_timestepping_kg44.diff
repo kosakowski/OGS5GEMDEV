@@ -1,0 +1,25 @@
+Index: rf_pcs.cpp
+===================================================================
+--- rf_pcs.cpp	(revision 5602)
++++ rf_pcs.cpp	(working copy)
+@@ -3629,16 +3629,16 @@
+    //
+ #ifdef NEW_EQS //WW
+ #if defined(USE_MPI)
+-   dom->eqs->Solver(eqs_new->x, global_eqs_dim); //21.12.2007
++   iter=dom->eqs->Solver(eqs_new->x, global_eqs_dim); //21.12.2007
+ #else
+ #ifdef LIS
+-        eqs_new->Solver(this->m_num); //NW
++        iter=eqs_new->Solver(this->m_num); //NW
+ #else
+-        eqs_new->Solver();
++        iter=eqs_new->Solver();
+ #endif
+ #endif
+ #else
+-   ExecuteLinearSolver();
++   iter=ExecuteLinearSolver();
+ #endif
+    //
+ //PCSDumpModelNodeValues();

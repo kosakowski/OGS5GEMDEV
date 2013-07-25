@@ -1,0 +1,198 @@
+From be45911f92fbd92232606bf2b4f23ffca584dfc3 Mon Sep 17 00:00:00 2001
+From: Wenqing Wang <wenqing.wang@ufz.de>
+Date: Tue, 1 Feb 2011 14:52:08 +0100
+Subject: [PATCH] Sequential staggered scheme
+
+---
+ FEM/fem_ele_std.cpp |   28 ++++++++++++++++++++++------
+ FEM/rf_num_new.cpp  |   12 +++++++++++-
+ FEM/rf_num_new.h    |   17 ++++++++++++++++-
+ FEM/rf_pcs.cpp      |   35 ++++++++++++++++++++++++++++++++++-
+ 4 files changed, 83 insertions(+), 9 deletions(-)
+
+diff --git a/FEM/fem_ele_std.cpp b/FEM/fem_ele_std.cpp
+index 1294b88..a644697 100644
+--- a/FEM/fem_ele_std.cpp
++++ b/FEM/fem_ele_std.cpp
+@@ -6161,6 +6161,7 @@ namespace FiniteElement
+       01/2005   WW/OK
+       05/2005   WW dyn
+       07/2005   WW Change due to geometry element object
++      02/2011   WW Sequential staggered coupling scheme
+    **************************************************************************/
+    void CFiniteElementStd::Assemble_strainCPL()
+    {
+@@ -6202,13 +6203,28 @@ namespace FiniteElement
+       {                                           // Incorparate this after the first time step
+          if(Residual==0)                          // Partitioned
+          {
+-            for (i=0;i<nnodesHQ;i++)
++            double *f_pointer[3] = {NodalVal2, NodalVal3, NodalVal4};
++            /// Sequential staggered coupling scheme 
++            if(dm_pcs->m_num->Get_Staggered_Type()==1)
+             {
+-               NodalVal2[i] = -fac*(dm_pcs->GetNodeValue(nodes[i],Idx_dm1[0])-dm_pcs->GetNodeValue(nodes[i],Idx_dm0[0]));
+-               NodalVal3[i] = -fac*(dm_pcs->GetNodeValue(nodes[i],Idx_dm1[1])-dm_pcs->GetNodeValue(nodes[i],Idx_dm0[1]));
+-               if(dim==3)                         // 3D.
+-                  NodalVal4[i] = -fac*(dm_pcs->GetNodeValue(nodes[i],Idx_dm1[2])
+-                     -dm_pcs->GetNodeValue(nodes[i],Idx_dm0[2]));
++               int nidx_du[3];
++               string var_names[] = {"du_x", "du_y", "du_z"};
++               for (i=0;i<dim;i++) 
++                 nidx_du[i] = dm_pcs->GetNodeValueIndex(var_names[i].c_str());
++               for (i=0;i<nnodesHQ;i++)
++               {
++                  for(j=0; j<dim; j++)
++                     f_pointer[j][i] = -fac*dm_pcs->GetNodeValue(nodes[i],nidx_du[j]);
++               }
++
++            }
++            else
++            {
++               for (i=0;i<nnodesHQ;i++)
++               {
++                  for(j=0; j<dim; j++)
++                    f_pointer[j][i] = -fac*(dm_pcs->GetNodeValue(nodes[i],Idx_dm1[j])-dm_pcs->GetNodeValue(nodes[i],Idx_dm0[j]));
++               }
+             }
+          }
+          else if(Residual==1)                     //Mono
+diff --git a/FEM/rf_num_new.cpp b/FEM/rf_num_new.cpp
+index ccbee02..76b8156 100644
+--- a/FEM/rf_num_new.cpp
++++ b/FEM/rf_num_new.cpp
+@@ -56,7 +56,7 @@ Programing:
+ 10/2005 OK pcs_type_name
+ 07/2007 OK DEFORMATION
+ **************************************************************************/
+-CNumerics::CNumerics(string name)
++CNumerics::CNumerics(string name):staggered_type(0) //01.02.2011. WW
+ {
+    pcs_type_name = name;                          //OK
+    // GLOBAL
+@@ -332,6 +332,16 @@ ios::pos_type CNumerics::Read(ifstream *num_file)
+          line.clear();
+          continue;
+       }
++      /// Input the staggered coupling type. 01.02.2011. WW
++      /// 0: Default, red-black coupling
++      /// 1: Sequential coupling        
++      if(line_string.find("$STAGGERED_SCHEME")!=string::npos)
++      {
++         line.str(GetLineFromFile1(num_file));
++         line >> staggered_type;                    
++         line.clear();
++         continue;
++      }
+       //....................................................................
+       /*
+           if(line_string.find("$TIME_STEPS")!=string::npos) { // subkeyword found
+diff --git a/FEM/rf_num_new.h b/FEM/rf_num_new.h
+index 81f2e7d..af0cc9f 100644
+--- a/FEM/rf_num_new.h
++++ b/FEM/rf_num_new.h
+@@ -17,13 +17,28 @@ last modified:
+ #include <vector>
+ #include "prototyp.h"
+ //----------------------------------------------------------------
++namespace process{class CRFProcessDeformation;}
++class CRFProcess;
++using process::CRFProcessDeformation;
++
+ class CNumerics
+ {
+    private:
+-      // cf. Computational Geomachanics pp.62 WW
++      // cf. Computational Geomechanics pp.62 WW
+       double *DynamicDamping;
++
++      /// Index for staggered coupling methods. 01.02.2011. WW
++      /// 0: Default, red-black coupling
++      /// 1: Sequential coupling        
++      int  staggered_type;
++      friend class ::CRFProcess;
++      friend class process::CRFProcessDeformation; 
++      
+    public:
+       // method
++      int Get_Staggered_Type() const {return staggered_type;}
++
++
+       std::string method_name;                    //OK
+       // PCS
+       std::string pcs_type_name;
+diff --git a/FEM/rf_pcs.cpp b/FEM/rf_pcs.cpp
+index c600911..439f65f 100644
+--- a/FEM/rf_pcs.cpp
++++ b/FEM/rf_pcs.cpp
+@@ -2565,6 +2565,7 @@ void CRFProcess::ConfigDeformation()
+       num = num_vector[i];
+       if (num->pcs_type_name.find("DEFORMATION") != string::npos)
+       {
++         m_num = num;
+          num->pcs_type_name = convertProcessTypeToString(this->getProcessType());
+          if (num->nls_method == 1)                // Newton-Raphson
+          {
+@@ -2694,6 +2695,27 @@ void CRFProcess::VariableStaticProblem()
+       pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+       pcs_number_of_secondary_nvals++;
+    }
++     
++   /// To store the increment of displacement for sequential staggered scheme
++   // 01.02.2011. WW 
++   if(m_num->staggered_type == 1)
++   {
++      pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "du_x";
++      pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "--";
++      pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
++      pcs_number_of_secondary_nvals++;
++      pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "du_y";
++      pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "--";
++      pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
++      pcs_number_of_secondary_nvals++;
++      if(max_dim==2)                                 // 3D
++      {
++         pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "du_z";
++         pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "--";
++         pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
++         pcs_number_of_secondary_nvals++;
++      }
++   } 
+ 
+ }
+ 
+@@ -7020,6 +7042,8 @@ void CRFProcess::CopyTimestepNODValues(bool forward)
+    bool Quadr = false;                            //WW
+    if (type == 4 || type == 41)
+       Quadr = true;
++   int nidx_du = 0;
++   string var_names[] = {"du_x", "du_y", "du_z"};
+ 
+    for (int j = 0; j < pcs_number_of_primary_nvals; j++)
+    {
+@@ -7030,12 +7054,21 @@ void CRFProcess::CopyTimestepNODValues(bool forward)
+          nidx0++;
+          nidx1--;
+       }
++      /// If staggered scheme and deformation process, save du. 01.02.2011. WW 
++      if(m_num->staggered_type == 1&&type == 4)
++      {
++         nidx_du = GetNodeValueIndex(var_names[j].c_str());
++         for (long l = 0; l < m_msh->GetNodesNumber(Quadr); l++)
++            SetNodeValue(l, nidx_du, GetNodeValue(l, nidx1)-GetNodeValue(l, nidx0));
++      }
++
++
+       for (long l = 0; l < m_msh->GetNodesNumber(Quadr); l++)
+          SetNodeValue(l, nidx0, GetNodeValue(l, nidx1));
+       //WW
+       //		if (_pcs_type_name.find("RICHARDS") != string::npos || type == 1212) { //Multiphase. WW
+                                                   //Multiphase. WW
+-      if (this->getProcessType() == RICHARDS_FLOW || type == 1212)
++      if (getProcessType() == RICHARDS_FLOW || type == 1212)
+       {
+          if (j == 1 && type == 1212)              // Multiphase. WW
+             continue;
+-- 
+1.7.3.3
+

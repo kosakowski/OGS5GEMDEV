@@ -1,0 +1,87 @@
+%-------------------------------------------------------------------------
+\section{Isothermal two-phase flow}
+\label{sec:isothermal two-phase} \hspace{0.25cm} Here we just
+ignored temperature effect and treated partially saturated sample
+as isothermal two-phase system composed of constitutes with the
+voids of the solid skeleton filled with two immiscible fluid of
+two different phase, compressible gas with single component as air
+and incompressible liquid with single component as water. In the
+pressure-pressure formulation primary variables are gas pressure
+$\asup{\pres}{g}$, and capillary pressure $\asup{\pres}{c}$,
+whereas in pressure-saturation formulation primary variables are
+non-wetting phase saturation $S_{nw}$, and wetting phase pressure
+$p_{w}$.
+\subsection{Mass balance equation}
+\hspace{0.25cm} Consider two-phase flow in porous media, e.g liquid (denoted by $l$) and gas (denoted by $g$). For each phase in two-phase fluid flow, the mass conservation is given by the following equation:
+\begin{align}
+\pD{}{t}\left(\poro S^g\dens_k^g+\poro S^l\dens_k^l\right)+\nabla \cdot \left( \FlxDf_k^g+\FlxDf_k^l\right)=Q_k
+\label{eq:massb}
+\end{align}
+where $S$ is saturation, $\dens$ stands for phase density, $\poro$ is the porosity, $\FlxDf$ is total flux. The subscript $k$ in equation (\ref{eq:massb}) denotes the components of phase, e.g air ($k=a$) and water ($k=w$).
+For any phase $\gamma=(g,l)$, an advection vector ${{\FlxDf}_A}_k^{\gamma}$ and a diffusion vector  ${{\FlxDf}_D}_k^{\gamma}$ makes up a total flux, i.e
+\begin{align}
+\FlxDf_k^{\gamma}={{\FlxDf}_A}_k^{\gamma}+{{\FlxDf}_D}_k^{\gamma}
+\label{eq:tflx}
+\end{align}
+According to the Darcy's equation, the advective part of the total flux be written as
+\begin{align}
+{{\FlxDf}_A}_k^{\gamma}=-\dens_k^{\gamma}\dfrac{\perm \RelKa^{\gamma}}{\mu^{\gamma}}\left(\nabla \pres^{\gamma}-\dens^{\gamma} \mathbf g\right)
+\label{eq:flx_dc}
+\end{align}
+where $\perm$ is the intrinsic permeability, $\RelKa^{\gamma}$ is the relative permeability of the phase, and $\mu^{\gamma}$ is the viscosity.
+
+The diffusion part of the total flux is given by Fick's law as
+\begin{align}
+{{\FlxDf}_D}_k^{\gamma}=-\poro \sat^{\gamma}  \dens^{\gamma} {\mathbb D}_k^{\gamma} \nabla \left(\dfrac{\dens_k^{\gamma}}{\dens^{\gamma}}\right)
+\label{eq:flx_fk}
+\end{align}
+where $\mathbb D$ is a diffusion parameters in the terms of tensor.
+Since $\dens^{\gamma} = \dens_a^{\gamma}+\dens_w^{\gamma}$, we have
+ \begin{align}
+{{\FlxDf}_D}_w^{\gamma}+{{\FlxDf}_D}_a^{\gamma}=\mathbf 0
+\label{eq:dufblc}
+\end{align}
+under the assumption of ${\mathbb D}_a^{\gamma}  = {\mathbb D}_w^{\gamma} $
+
+Consider water-air mixture. We expand the mass balance equation (\ref{eq:massb}) with the flux defined in equations (\ref{eq:tflx}) based upon the above equations (\ref{eq:tflx}, \ref{eq:flx_dc}, \ref{eq:flx_fk}). For water component, the diffusion part of the total flux take the form
+\begin{align}
+{{\FlxDf}_D}_w^{l}=-\poro \Sat^{l}  \dens^{l} {\mathbb D}_w^{l} \nabla \left(\dfrac{\dens_w^{l}}{\dens^{l}}\right),\quad
+{{\FlxDf}_D}_w^{g}=-\poro \Sat^{g}  \dens^{g} {\mathbb D}_w^{g} \nabla \left(\dfrac{\dens_w^{g}}{\dens^{g}}\right)
+\label{eq:flx_fkw}
+\end{align}
+Obviously, ${\mathbb D}_w^{l} = \mathbf 0$. Therefore, the mass balance equation for water component can be written as follows
+\begin{align}
+\pD{}{t} \left(\poro S^g\dens_w^g+\poro S^l\dens_w^l\right)-
+\nabla \cdot \left[\dens_w^{l}\dfrac{\perm \RelKa^{l}}{\mu^{l}}\left(\nabla \pres^{l}-\dens^{l} \mathbf g\right)\right]\nonumber\\
+-\nabla \cdot \left[\dens_w^{g}\dfrac{\perm \RelKa^{g}}{\mu^{g}}\left(\nabla \pres^{g}-\dens^{g} \mathbf g\right)\right] -
+\nabla \cdot \left[\poro \Sat^{g}  \dens^{g} {\mathbb D}_w^{g} \nabla \left(\dfrac{\dens_w^{g}}{\dens^{g}}\right)\right] = Q_w
+\label{eq:massblq}
+\end{align}
+Since the capillary pressure $\pres^c$  is chosen as one of the two unknowns of equation (\ref{eq:massb}) and $S^g=1-S^l$, equation (\ref{eq:massblq}) becomes
+\begin{align}
+\poro (\dens_w^l -\dens_w^g)\pD{S^l}{t} +(1 -S^l)\poro \pD{\dens_w^{g}}{t} -
+\nabla \cdot \left[\dens_w^{l}\dfrac{\perm \RelKa^{l}}{\mu^{l}}\left(\nabla (\pres^{g}-\pres^{c}) -\dens^{l} \mathbf g\right)\right]\nonumber\\
+-\nabla \cdot \left[\dens_w^{g}\dfrac{\perm \RelKa^{g}}{\mu^{g}}\left(\nabla \pres^{g}-\dens^{g} \mathbf g\right)\right] -
+\nabla \cdot \left[\poro \Sat^{g}  \dens^{g} {\mathbb D}_w^{g} \nabla \left(\dfrac{\dens_w^{g}}{\dens^{g}}\right)\right] = Q_w
+\label{eq:msblq}
+\end{align}
+Similar to the previous procedure, the diffusion part of the total flux of air component can be written as
+\begin{align}
+{{\FlxDf}_D}_a^{l}=-\poro \Sat^{l}  \dens^{l} {\mathbb D}_a^{l} \nabla \left(\dfrac{\dens_a^{l}}{\dens^{l}}\right),\quad
+{{\FlxDf}_D}_a^{a}=-\poro \Sat^{g}  \dens^{g} {\mathbb D}_a^{g} \nabla \left(\dfrac{\dens_a^{g}}{\dens^{g}}\right)
+\label{eq:flx_fka}
+\end{align}
+The density shift from air component to liquid ${\dens_a^{l}}$ is very small and can be omitted. Therefore, we can assume ${{\FlxDf}_D}_a^{l}\thickapprox0$. As a consequence, the mass balance equation for air component is derived as:
+$$\pD{}{t} \left(\poro S^g\dens_a^g\right) -$$
+\begin{align}
+\nabla \cdot \left[\dens_a^{g}\dfrac{\perm \RelKa^{g}}{\mu^{g}}\left(\nabla \pres^{g}-\dens^{g} \mathbf g\right)\right]-\nabla \cdot \left[\poro \Sat^{g}  \dens^{g} {\mathbb D}_a^{g} \nabla \left(\dfrac{\dens_a^{g}}{\dens^{g}}\right)\right] =Q_a
+\label{eq:massba}
+\end{align}
+Expending the temporary derivative term of equation (\ref{eq:massba}) yields
+$$-\poro \dens_a^g \pD{S^l}{t} + (1 -S^l)\poro \pD{\dens_a^{g}}{t}-$$
+\begin{align}
+\nabla \cdot \left[\dens_a^{g}\dfrac{\perm \RelKa^{g}}{\mu^{g}}\left(\nabla \pres^{g}-\dens^{g} \mathbf g\right)\right] -
+\nabla \cdot \left[\poro \Sat^{g} \dens^{g} {\mathbb D}_a^{g} \nabla \left(\dfrac{\dens_a^{g}}{\dens^{g}}\right)\right] = Q_a
+\label{eq:msba}
+\end{align}
+Mass balance equations (\ref{eq:msblq}) and (\ref{eq:msba}) are exactly the same as that described in \cite{SanPesSch:06}.

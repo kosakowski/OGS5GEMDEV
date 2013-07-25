@@ -1,0 +1,70 @@
+\section{Control}
+\subsection{Control (keyword: \#CONTROL)}
+
+The keyword {\bf \#CONTROL} is the control unit of the general program execution (e.g.
+simu-lation mode, grid adaptation or parallel computing) and affects all processes
+defined in the
+process--keywords. Defaults are printed bold.\\
+
+{\bf \#CONTROL}
+
+The control--keyword can contain a number of optional subkeywords
+(labeled by a \$ sign):\\
+
+\hspace{1cm} {\bf \$MODEX}
+
+\begin{center}
+\begin{tabular*}{13cm}{|p{2.cm}|p{1.cm}|p{8.75cm}|} \hline
+Parameter& Value & Meaning \\ \hline \hline
+%
+N1 &     & Simulation control (mode) \\
+   &$-2$ & RFD input file will be tested. Result in RFE file. \\
+   &$-1$ & RFD and RFI input files will be tested. Result in RFE
+   file.
+   \\
+   &$ \mathbf 1$& Execution of the Simulation \\ \hline
+\end{tabular*}
+\end{center}
+
+\vspace{0.5cm}
+
+\hspace{1cm} {\bf \$GRIDADAPTATION}
+
+\begin{center}
+\begin{tabular*}{13cm}{|p{2.cm}|p{1.cm}|p{8.75cm}|} \hline
+Parameter& Value & Meaning \\ \hline \hline
+%
+N1 &     & Grid adaptation \\
+&&(not yet realized in the THM model)\\
+   &$\mathbf 0$ & Disable \\
+   &$1$ & Enable \\ \hline
+\end{tabular*}
+\end{center}
+
+\vspace{0.5cm}
+
+\hspace{1cm} {\bf \$PARALLEL\_COMPUTIMG}
+
+\begin{center}
+\begin{tabular*}{13cm}{|p{2.cm}|p{1.cm}|p{8.5cm}|} \hline
+Parameter& Value & Meaning \\ \hline \hline
+%
+N1 &     & Parallel Computing \\
+   &     & (not yet realized in the THM model) \\
+   &$\mathbf 0$ & Disable \\
+   &$1$ & Enable \\ \hline
+\end{tabular*}
+\end{center}
+
+\vspace{0.5cm}
+
+\hspace{1cm} {\bf \$NUMBER\_OF\_GROUPS}
+
+\begin{center}
+\begin{tabular*}{13.5cm}{p{13.cm}}
+The keyword specifies the number of material groups (default: $\mathbf 1$).
+\end{tabular*}
+\end{center}
+
+\LastModified{RK/MK July 10, 2003}
+\newpage

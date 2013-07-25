@@ -1,0 +1,164 @@
+\BOOKMARK [1][]{section.1}{1 Preface}{}
+\BOOKMARK [1][]{section.2}{2 Software Concept}{}
+\BOOKMARK [2][]{subsection.2.1}{2.1 File Concept}{section.2}
+\BOOKMARK [1][]{section.3}{3 GEOLib Data}{}
+\BOOKMARK [2][]{subsection.3.1}{3.1 GEO types}{section.3}
+\BOOKMARK [2][]{subsection.3.2}{3.2 Points}{section.3}
+\BOOKMARK [2][]{subsection.3.3}{3.3 Lines}{section.3}
+\BOOKMARK [2][]{subsection.3.4}{3.4 Polylines}{section.3}
+\BOOKMARK [2][]{subsection.3.5}{3.5 Surfaces}{section.3}
+\BOOKMARK [2][]{subsection.3.6}{3.6 Volumes}{section.3}
+\BOOKMARK [1][]{section.4}{4 MSHLib Data}{}
+\BOOKMARK [2][]{subsection.4.1}{4.1 RFI Data}{section.4}
+\BOOKMARK [3][]{subsubsection.4.1.1}{4.1.1 Example}{subsection.4.1}
+\BOOKMARK [3][]{subsubsection.4.1.2}{4.1.2 Data control area}{subsection.4.1}
+\BOOKMARK [3][]{subsubsection.4.1.3}{4.1.3 Node data}{subsection.4.1}
+\BOOKMARK [3][]{subsubsection.4.1.4}{4.1.4 Element data}{subsection.4.1}
+\BOOKMARK [2][]{subsection.4.2}{4.2 MultiMSH Data}{section.4}
+\BOOKMARK [3][]{subsubsection.4.2.1}{4.2.1 Example}{subsection.4.2}
+\BOOKMARK [3][]{subsubsection.4.2.2}{4.2.2 MSH-PCS relation}{subsection.4.2}
+\BOOKMARK [3][]{subsubsection.4.2.3}{4.2.3 MSH node data}{subsection.4.2}
+\BOOKMARK [3][]{subsubsection.4.2.4}{4.2.4 MSH element data}{subsection.4.2}
+\BOOKMARK [3][]{subsubsection.4.2.5}{4.2.5 MSH AddOn data}{subsection.4.2}
+\BOOKMARK [1][]{section.5}{5 Domain Decomposition}{}
+\BOOKMARK [2][]{subsection.5.1}{5.1 \043DOMAIN}{section.5}
+\BOOKMARK [2][]{subsection.5.2}{5.2 Examples}{section.5}
+\BOOKMARK [3][]{subsubsection.5.2.1}{5.2.1 \(confined\) Groundwater flow}{subsection.5.2}
+\BOOKMARK [1][]{section.6}{6 Processes}{}
+\BOOKMARK [2][]{subsection.6.1}{6.1 \043PROCESS}{section.6}
+\BOOKMARK [3][]{subsubsection.6.1.1}{6.1.1 Remarks}{subsection.6.1}
+\BOOKMARK [2][]{subsection.6.2}{6.2 Node values}{section.6}
+\BOOKMARK [2][]{subsection.6.3}{6.3 Coupling of processes}{section.6}
+\BOOKMARK [3][]{subsubsection.6.3.1}{6.3.1 Partitioning}{subsection.6.3}
+\BOOKMARK [2][]{subsection.6.4}{6.4 Examples}{section.6}
+\BOOKMARK [3][]{subsubsection.6.4.1}{6.4.1 \(confined\) Groundwater flow}{subsection.6.4}
+\BOOKMARK [3][]{subsubsection.6.4.2}{6.4.2 \(unconfined\) Groundwater flow}{subsection.6.4}
+\BOOKMARK [3][]{subsubsection.6.4.3}{6.4.3 Gas flow}{subsection.6.4}
+\BOOKMARK [3][]{subsubsection.6.4.4}{6.4.4 Two phase flow \(partitioned\)}{subsection.6.4}
+\BOOKMARK [3][]{subsubsection.6.4.5}{6.4.5 Multi-phase flow \(monolithic\)}{subsection.6.4}
+\BOOKMARK [3][]{subsubsection.6.4.6}{6.4.6 Heat transport}{subsection.6.4}
+\BOOKMARK [3][]{subsubsection.6.4.7}{6.4.7 Deformation}{subsection.6.4}
+\BOOKMARK [3][]{subsubsection.6.4.8}{6.4.8 Non-isothermal two-phase flow \(partitioned\)}{subsection.6.4}
+\BOOKMARK [3][]{subsubsection.6.4.9}{6.4.9 Mass transport}{subsection.6.4}
+\BOOKMARK [3][]{subsubsection.6.4.10}{6.4.10 River flow}{subsection.6.4}
+\BOOKMARK [3][]{subsubsection.6.4.11}{6.4.11 Unsaturated flow}{subsection.6.4}
+\BOOKMARK [3][]{subsubsection.6.4.12}{6.4.12 Unsaturated flow with the dual porosity model}{subsection.6.4}
+\BOOKMARK [3][]{subsubsection.6.4.13}{6.4.13 Monolithic schemes}{subsection.6.4}
+\BOOKMARK [3][]{subsubsection.6.4.14}{6.4.14 Consolidation \(monolithic\)}{subsection.6.4}
+\BOOKMARK [1][]{section.7}{7 Numerics}{}
+\BOOKMARK [2][]{subsection.7.1}{7.1 \043NUMERICS}{section.7}
+\BOOKMARK [1][]{section.8}{8 Initial Conditions}{}
+\BOOKMARK [2][]{subsection.8.1}{8.1 \043INITIAL\137CONDITION}{section.8}
+\BOOKMARK [3][]{subsubsection.8.1.1}{8.1.1 \044PCS\137TYPE}{subsection.8.1}
+\BOOKMARK [3][]{subsubsection.8.1.2}{8.1.2 \044GEO\137TYPE}{subsection.8.1}
+\BOOKMARK [3][]{subsubsection.8.1.3}{8.1.3 \044DIS\137TYPE}{subsection.8.1}
+\BOOKMARK [2][]{subsection.8.2}{8.2 Examples}{section.8}
+\BOOKMARK [3][]{subsubsection.8.2.1}{8.2.1 Initial condition in the domain}{subsection.8.2}
+\BOOKMARK [3][]{subsubsection.8.2.2}{8.2.2 Restart as initial conditions}{subsection.8.2}
+\BOOKMARK [1][]{section.9}{9 Boundary Conditions}{}
+\BOOKMARK [2][]{subsection.9.1}{9.1 \043BOUNDARY\137CONDITION}{section.9}
+\BOOKMARK [3][]{subsubsection.9.1.1}{9.1.1 \044PCS\137TYPE}{subsection.9.1}
+\BOOKMARK [3][]{subsubsection.9.1.2}{9.1.2 \044GEO\137TYPE}{subsection.9.1}
+\BOOKMARK [3][]{subsubsection.9.1.3}{9.1.3 \044DIS\137TYPE}{subsection.9.1}
+\BOOKMARK [3][]{subsubsection.9.1.4}{9.1.4 \044TIM\137TYPE}{subsection.9.1}
+\BOOKMARK [2][]{subsection.9.2}{9.2 Examples}{section.9}
+\BOOKMARK [3][]{subsubsection.9.2.1}{9.2.1 Boundary condition at point}{subsection.9.2}
+\BOOKMARK [3][]{subsubsection.9.2.2}{9.2.2 Boundary condition along polyline}{subsection.9.2}
+\BOOKMARK [3][]{subsubsection.9.2.3}{9.2.3 Boundary condition at surface}{subsection.9.2}
+\BOOKMARK [1][]{section.10}{10 Source Terms}{}
+\BOOKMARK [2][]{subsection.10.1}{10.1 \043SOURCE\137TERM}{section.10}
+\BOOKMARK [3][]{subsubsection.10.1.1}{10.1.1 \044PCS\137TYPE}{subsection.10.1}
+\BOOKMARK [3][]{subsubsection.10.1.2}{10.1.2 \044GEO\137TYPE}{subsection.10.1}
+\BOOKMARK [3][]{subsubsection.10.1.3}{10.1.3 \044DIS\137TYPE}{subsection.10.1}
+\BOOKMARK [3][]{subsubsection.10.1.4}{10.1.4 \044TIM\137TYPE}{subsection.10.1}
+\BOOKMARK [3][]{subsubsection.10.1.5}{10.1.5 \044DIS\137TYPE\137CONDITION}{subsection.10.1}
+\BOOKMARK [2][]{subsection.10.2}{10.2 Examples}{section.10}
+\BOOKMARK [3][]{subsubsection.10.2.1}{10.2.1 Excavation deformation}{subsection.10.2}
+\BOOKMARK [3][]{subsubsection.10.2.2}{10.2.2 Source at point}{subsection.10.2}
+\BOOKMARK [3][]{subsubsection.10.2.3}{10.2.3 Source along polyline}{subsection.10.2}
+\BOOKMARK [3][]{subsubsection.10.2.4}{10.2.4 Source along polyline}{subsection.10.2}
+\BOOKMARK [3][]{subsubsection.10.2.5}{10.2.5 River}{subsection.10.2}
+\BOOKMARK [3][]{subsubsection.10.2.6}{10.2.6 Data input from EXCEL files}{subsection.10.2}
+\BOOKMARK [3][]{subsubsection.10.2.7}{10.2.7 Analytical source term}{subsection.10.2}
+\BOOKMARK [1][]{section.11}{11 Data Output}{}
+\BOOKMARK [2][]{subsection.11.1}{11.1 \043OUTPUT}{section.11}
+\BOOKMARK [3][]{subsubsection.11.1.1}{11.1.1 \044PCS\137TYPE}{subsection.11.1}
+\BOOKMARK [3][]{subsubsection.11.1.2}{11.1.2 \044MSH\137TYPE}{subsection.11.1}
+\BOOKMARK [3][]{subsubsection.11.1.3}{11.1.3 \044NOD\137VALUES}{subsection.11.1}
+\BOOKMARK [3][]{subsubsection.11.1.4}{11.1.4 \044GEO\137TYPE}{subsection.11.1}
+\BOOKMARK [3][]{subsubsection.11.1.5}{11.1.5 \044TIM\137TYPE}{subsection.11.1}
+\BOOKMARK [3][]{subsubsection.11.1.6}{11.1.6 \044DAT\137TYPE}{subsection.11.1}
+\BOOKMARK [3][]{subsubsection.11.1.7}{11.1.7 \044DIS\137TYPE}{subsection.11.1}
+\BOOKMARK [2][]{subsection.11.2}{11.2 Examples}{section.11}
+\BOOKMARK [3][]{subsubsection.11.2.1}{11.2.1 VAR\137TYPE: Output for variables}{subsection.11.2}
+\BOOKMARK [3][]{subsubsection.11.2.2}{11.2.2 Time curve output}{subsection.11.2}
+\BOOKMARK [3][]{subsubsection.11.2.3}{11.2.3 Profile output}{subsection.11.2}
+\BOOKMARK [3][]{subsubsection.11.2.4}{11.2.4 MSH\137TYPE: Output for meshes}{subsection.11.2}
+\BOOKMARK [3][]{subsubsection.11.2.5}{11.2.5 PCS\137TYPE: Output for meshes}{subsection.11.2}
+\BOOKMARK [1][]{section.12}{12 Time Discretization}{}
+\BOOKMARK [2][]{subsection.12.1}{12.1 \043TIME\137STEPPING}{section.12}
+\BOOKMARK [3][]{subsubsection.12.1.1}{12.1.1 \044PCS\137TYPE}{subsection.12.1}
+\BOOKMARK [2][]{subsection.12.2}{12.2 Examples}{section.12}
+\BOOKMARK [3][]{subsubsection.12.2.1}{12.2.1 Domain output}{subsection.12.2}
+\BOOKMARK [1][]{section.13}{13 Fluid Properties}{}
+\BOOKMARK [2][]{subsection.13.1}{13.1 \043FLUID\137PROPERTIES}{section.13}
+\BOOKMARK [2][]{subsection.13.2}{13.2 Fluid model data input}{section.13}
+\BOOKMARK [3][]{subsubsection.13.2.1}{13.2.1 Fluid density}{subsection.13.2}
+\BOOKMARK [3][]{subsubsection.13.2.2}{13.2.2 Fluid viscosity}{subsection.13.2}
+\BOOKMARK [3][]{subsubsection.13.2.3}{13.2.3 Specific heat capacity}{subsection.13.2}
+\BOOKMARK [2][]{subsection.13.3}{13.3 Examples}{section.13}
+\BOOKMARK [3][]{subsubsection.13.3.1}{13.3.1 Single phase flow}{subsection.13.3}
+\BOOKMARK [3][]{subsubsection.13.3.2}{13.3.2 Two phase flow}{subsection.13.3}
+\BOOKMARK [3][]{subsubsection.13.3.3}{13.3.3 Non-isothermal two phase flow}{subsection.13.3}
+\BOOKMARK [3][]{subsubsection.13.3.4}{13.3.4 Consolidation}{subsection.13.3}
+\BOOKMARK [3][]{subsubsection.13.3.5}{13.3.5 Heat transport}{subsection.13.3}
+\BOOKMARK [1][]{section.14}{14 Solid Properties}{}
+\BOOKMARK [2][]{subsection.14.1}{14.1 \043SOLID\137PROPERTIES}{section.14}
+\BOOKMARK [2][]{subsection.14.2}{14.2 Heat capacity}{section.14}
+\BOOKMARK [2][]{subsection.14.3}{14.3 Heat conductivity}{section.14}
+\BOOKMARK [2][]{subsection.14.4}{14.4 Examples}{section.14}
+\BOOKMARK [3][]{subsubsection.14.4.1}{14.4.1 Drucker-Prager elasto-plasticity}{subsection.14.4}
+\BOOKMARK [3][]{subsubsection.14.4.2}{14.4.2 Cam-Clay elasto-plasticity}{subsection.14.4}
+\BOOKMARK [3][]{subsubsection.14.4.3}{14.4.3 Norton creep model}{subsection.14.4}
+\BOOKMARK [3][]{subsubsection.14.4.4}{14.4.4 Single-Yield-Surface elasto-plasticity \(Ehlers\)}{subsection.14.4}
+\BOOKMARK [3][]{subsubsection.14.4.5}{14.4.5 Discrete Fracture Deformation}{subsection.14.4}
+\BOOKMARK [1][]{section.15}{15 Porous Medium Properties}{}
+\BOOKMARK [2][]{subsection.15.1}{15.1 \043MEDIUM\137PROPERTIES - TORTUOSITY Changed}{section.15}
+\BOOKMARK [2][]{subsection.15.2}{15.2 Medium model data input}{section.15}
+\BOOKMARK [3][]{subsubsection.15.2.1}{15.2.1 Porosity}{subsection.15.2}
+\BOOKMARK [3][]{subsubsection.15.2.2}{15.2.2 Friction coefficient for overland or channel flow}{subsection.15.2}
+\BOOKMARK [3][]{subsubsection.15.2.3}{15.2.3 Permeability}{subsection.15.2}
+\BOOKMARK [3][]{subsubsection.15.2.4}{15.2.4 Discrete Fracture Permeability}{subsection.15.2}
+\BOOKMARK [3][]{subsubsection.15.2.5}{15.2.5 Confined or unconfined flow}{subsection.15.2}
+\BOOKMARK [3][]{subsubsection.15.2.6}{15.2.6 Relative permeability - saturation}{subsection.15.2}
+\BOOKMARK [3][]{subsubsection.15.2.7}{15.2.7 Capillary pressure}{subsection.15.2}
+\BOOKMARK [3][]{subsubsection.15.2.8}{15.2.8 Discrete Fracture Data}{subsection.15.2}
+\BOOKMARK [2][]{subsection.15.3}{15.3 Examples}{section.15}
+\BOOKMARK [3][]{subsubsection.15.3.1}{15.3.1 Single phase flow}{subsection.15.3}
+\BOOKMARK [3][]{subsubsection.15.3.2}{15.3.2 Unconfined groundwater flow}{subsection.15.3}
+\BOOKMARK [3][]{subsubsection.15.3.3}{15.3.3 Two phase flow}{subsection.15.3}
+\BOOKMARK [3][]{subsubsection.15.3.4}{15.3.4 Non-isothermal two phase flow}{subsection.15.3}
+\BOOKMARK [3][]{subsubsection.15.3.5}{15.3.5 Richards flow}{subsection.15.3}
+\BOOKMARK [3][]{subsubsection.15.3.6}{15.3.6 Consolidation}{subsection.15.3}
+\BOOKMARK [3][]{subsubsection.15.3.7}{15.3.7 Heat transport}{subsection.15.3}
+\BOOKMARK [3][]{subsubsection.15.3.8}{15.3.8 Discrete Fracture Deformation}{subsection.15.3}
+\BOOKMARK [3][]{subsubsection.15.3.9}{15.3.9 Distributed data}{subsection.15.3}
+\BOOKMARK [1][]{section.16}{16 Component Properties}{}
+\BOOKMARK [2][]{subsection.16.1}{16.1 \043COMPONENT\137PROPERTIES}{section.16}
+\BOOKMARK [2][]{subsection.16.2}{16.2 Data Input}{section.16}
+\BOOKMARK [3][]{subsubsection.16.2.1}{16.2.1 Component Name}{subsection.16.2}
+\BOOKMARK [3][]{subsubsection.16.2.2}{16.2.2 Component Mobility}{subsection.16.2}
+\BOOKMARK [3][]{subsubsection.16.2.3}{16.2.3 Component Phase}{subsection.16.2}
+\BOOKMARK [3][]{subsubsection.16.2.4}{16.2.4 Component Diffusion}{subsection.16.2}
+\BOOKMARK [3][]{subsubsection.16.2.5}{16.2.5 Component Decay}{subsection.16.2}
+\BOOKMARK [3][]{subsubsection.16.2.6}{16.2.6 Component Sorption}{subsection.16.2}
+\BOOKMARK [2][]{subsection.16.3}{16.3 Examples}{section.16}
+\BOOKMARK [3][]{subsubsection.16.3.1}{16.3.1 Mass transport}{subsection.16.3}
+\BOOKMARK [1][]{section.17}{17 ChemApp data}{}
+\BOOKMARK [1][]{section.18}{18 Functions}{}
+\BOOKMARK [2][]{subsection.18.1}{18.1 \043FUNCTION}{section.18}
+\BOOKMARK [2][]{subsection.18.2}{18.2 Examples}{section.18}
+\BOOKMARK [1][]{section.19}{19 Unit}{}
+\BOOKMARK [2][]{subsection.19.1}{19.1 Richards Flow}{section.19}
+\BOOKMARK [3][]{subsubsection.19.1.1}{19.1.1 Independent units}{subsection.19.1}
+\BOOKMARK [3][]{subsubsection.19.1.2}{19.1.2 Time dependent units}{subsection.19.1}

@@ -1,0 +1,123 @@
+%=========================================================================
+\subsection{Process related finite element objects -- ELE-PCS}
+\label{sec:ele_pcs}
+
+Only at this stage (last part of element object concept) we
+introduce process-related data. The element object
+\texttt{CFiniteElementPCS} should work for all processes: fluid
+flow, heat transport, deformation and reaction processes
+regardless of PDE type and type of unknown field functions (scalar
+or vector quantities).
+
+The finite element object ELE-PCS has two tasks: First, calculation 
+of element matrices, which are formed by shape functions 
+($\Sh_1,\nabla\Sh_1$) and process-specific material properties 
+(\texttt{MAT} objects) (Step 2 in Table \ref{tab:alg1}). Second, 
+provide local element contributions to the global equation system: 
+$A_{ij} x_i = b_j$, where $i,j$ are global node indices (Step 3 in 
+Table \ref{tab:alg1}).
+
+The C++ implementation of the process-related finite element
+object ELE-PCS is given in Fig. \ref{fig:fem_one}.
+
+\begin{itemize}
+%.........................................................................
+ \item ELE-FEM relation:
+Process related instances are derived from the finite element base
+class \texttt{CFiniteElement}. Therefore, they inherit all
+necessary geometric and topological data from ELE-GEO, ELE-FEM,
+and ELE-MSH objects.
+%.........................................................................
+ \item PCS relation:
+Process related finite element objects need a reference to the
+related PCS instance, which is conducted by the ELE-PCS class
+constructor.
+%.........................................................................
+ \item MAT relations:
+References to all \texttt{MAT} objects, i.e.
+\texttt{CFluidProperties* m\_mfp}, \texttt{CSolidProper\-ties*
+m\_msp} and \texttt{CMediumProperties* m\_mmp}, are used to get
+the required material parameters of the specified
+process(\texttt{CProcess* m\_pcs}). Member function
+\texttt{SetMaterial()} prepares the references to process-specific
+material properties to accelerate later computations. This insures
+that the ELE-FEM objects works properly for all THM processes,
+i.e. fluid flow, heat transport and deformation.
+%.........................................................................
+ \item Local assembly - Element matrices:
+Based on geometric and finite element base data (ELE-FEM relation)
+and the references to material data (PCS-MAT relation) the
+process-specific element matrices can be calculated now
+(\texttt{CalcXXXXMatrix()}). Member functions are used to
+calculate the material coefficients in the Gauss integration
+points (\texttt{CalcXXXXMatrixCoefficients()}). They are defined
+as \texttt{inline} types to improve the computation efficiency.
+Local element matrices and vectors are stored in the corresponding
+symmetric/unsymmetric matrix and vector constructs.
+%.........................................................................
+ \item Global assembly - Equation system:
+The global assembly is conducted by the \texttt{Assemble()}
+function. It updates the individual element contributions in the
+equation system, i.e. global left-hand-side (LHS) matrix
+($A_{ij}$) and global right-hand-side (RHS) vector ($b_j$). To
+this purpose the assembly functions needs the relations between
+local element node and global mesh node numbers, which is provided
+by the ELE-MSH topology (section \ref{sec:ele_msh}).
+\texttt{Assemble()} functions are available for different PDE
+types. How the \texttt{Assemble()} is implemented for a parabolic
+PDE is shown in Fig. \ref{fig:fem_asm}.
+\end{itemize}
+
+\begin{figure}[htb!]
+\centering
+\shadowbox{
+\begin{minipage}{\textwidth}
+\input{353_fem_std.tex}
+\end{minipage}
+}
+\caption{Process related finite element class}
+\label{fig:fem_one}
+\end{figure}
+
+
+\begin{figure}[H]
+\centering
+\shadowbox{
+\begin{minipage}{0.7\textwidth}
+\input{353_fem_assm.tex}
+\end{minipage}
+}
+\caption{Linear element assemble function}
+\label{fig:fem_asm}
+\end{figure}
+
+%-------------------------------------------------------------------------
+%\subsubsection{Finite element objects for vector field functions}
+
+%Deformation process is governed by the Navier's equation. The
+%local element matrices like tangential matrix (\ref{eq:Tang}) has
+%different expression in addition to those arise from the Laplace
+%type equations. Moreover, the non-linear analysis of such problems
+%involving complex local calculation. To this purpose, a
+%corresponding finite element object is derived from root finite
+%element object.
+%The C++ implementation of the quadratic FEOs for
+%deformation problems is given in Fig. \ref{fig:fem_dm}.
+
+%\input{code/fem_dm.tex}
+
+%In addition to the standard finite element object defined in section
+%\ref{sec:finone}, this class needs a reference to solid material
+%properties.
+
+%The solid phase material object (\texttt{MSP}) provides the
+%constitutive stress-strain relationships for linear as well as
+%nonlinear behavior. While fluid material object allows deformation
+%finite element object incorporate the coupling calculation.
+
+%Element stiffness matrix, eqn. (\ref{eq:Tang}), pressure coupling
+%matrix, eqn. (\ref{eq:CMatrix}), and RHS vector are calculated by
+%member function \texttt{LocalAssembly} and assembled to the global
+%equation system by member function \texttt{GlobalAssembly}.
+%Modified local assemble functions are required for enhanced strain
+%element calculations.

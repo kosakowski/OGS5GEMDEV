@@ -1,0 +1,11 @@
+Index: gems.cmake
+===================================================================
+--- gems.cmake	(revision 5379)
++++ gems.cmake	(working copy)
+@@ -9,5 +9,5 @@
+ ENDIF (MSVC)
+ 
+ IF(PARALLEL_USE_MPI)
+-	ADD_DEFINITIONS(-DUSE_MPI_GEM)
++	ADD_DEFINITIONS(-DUSE_MPI_GEMS)
+ ENDIF(PARALLEL_USE_MPI)

@@ -1,0 +1,38 @@
+{\sffamily \raggedright
+\footnotesize \texttt{class\ CNode:\textbf{public}\ CCore\\
+\{\\
+\ \ \ \textbf{private}: // Members\\
+\ \ \ \ \ \ \textbf{double}\ coordinate[3];\\
+\ \ \ \ \ \ Vector$<${}\textbf{long}$>${} ConnectedElements;\ \ \ \\
+\ \ \ \ \ \ \rev{Vector$<${}\textbf{long}$>${} ConnectedNodes;}\ \ \ \\
+\ \ \ \textbf{public}:\\
+\ \ \ \ \ \ \textsl{//\ Construction}\\
+\ \ \ \ \ \ Node(\textbf{const}\ \textbf{int}\ Index,\ \textbf{const}\ \textbf{double}\ x,\ \\
+\ \ \ \ \ \ \ \ \ \ \ \textbf{const}\ \textbf{double}\ y,\ \textbf{const}\ \textbf{double}\ z=0.0);\\
+\ \ \ \ \ \ Node()\ \{\}\\
+\ \ \ \ \ \ \textasciitilde Node()\ \{ConnectedElements.resize(0); ConnectedNodes.resize(0);\}\\
+\ \ \ \ \ \ \textsl{//\ Operators}\\
+\ \ \ \ \ \ \textbf{void}\ \textbf{operator}\ =\ (\textbf{const}\ Node\&\ n);\\
+\ \ \ \ \ \ \textbf{bool}\ \textbf{operator}\ ==\ (\textbf{const}\ Node\ \&\ n);\\
+\ \ \ \ \ \ \textsl{//\ Set members}\\
+\ \ \ \ \ \ \textbf{void}\ SetX(\textbf{const}\ \textbf{double}\ argX)\ \{\ coordinate[0]\ =\ argX;\}\\
+\ \ \ \ \ \ \textbf{void}\ SetY(\textbf{const}\ \textbf{double}\ argY)\ \{\ coordinate[1]\ =\ argY;\}\\
+\ \ \ \ \ \ \textbf{void}\ SetZ(\textbf{const}\ \textbf{double}\ argZ)\ \{\ coordinate[2]\ =\ argZ;\}\\
+\ \ \ \ \ \ \textbf{void}\ SetCoordinates(\textbf{const}\ \textbf{double}$\ast$\ argCoord);\ \\
+\ \ \ \ \ \ \textsl{//\ Get members}\\
+\ \ \ \ \ \ \textbf{double}\ GetX()\ \textbf{const}\ \{\textbf{return}\ coordinate[0];\}\\
+\ \ \ \ \ \ \textbf{double}\ GetY()\ \textbf{const}\ \{\textbf{return}\ coordinate[1];\}\\
+\ \ \ \ \ \ \textbf{double}\ GetZ()\ \textbf{const}\ \{\textbf{return}\ coordinate[2];\}\\
+%\ \ \ \ \ \ \textbf{void}\ Coordinates(\textbf{double}\ $\ast$xyz)\ \textbf{const}\\
+%\ \ \ \ \ \ \{\ \ \textbf{for}(\textbf{int}\ i=0;\ i$<${}3;\ i++)\ \ xyz[i]\ =\ Coordinate[i];\}\ \\
+\ \ \ \ \ \ \textbf{int}\ GetNumberOfConnectedElements()\ \textbf{const}\ \{\textbf{return}\ ConnectedElements.size();\ \}\ \ \ \ \ \\
+\ \ \ \ \ \ \rev{\textbf{int}\ GetNumberOfConnectedNodes()\ \textbf{const}\ \{\textbf{return}\ ConnectedNodes.size();}\ \}\ \ \ \ \ \\
+\ \ \ \ \ \ \textsl{//\ Output}\\
+\ \ \ \ \ \ \textbf{void}\ Write(ostream\&\ os=cout)\ \textbf{const};\\
+\ \ \ \textbf{private}: // Class relations\\
+\ \ \ \ \ \ \textbf{friend}\ \textbf{class}\ CEdge;\\
+\ \ \ \ \ \ \textbf{friend}\ \textbf{class}\ CElem;\\
+\};\\
+}
+ }
+\normalfont\normalsize

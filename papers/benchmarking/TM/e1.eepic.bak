@@ -1,0 +1,20 @@
+\setlength{\unitlength}{0.0004in}
+%
+\begingroup\makeatletter\ifx\SetFigFont\undefined%
+\gdef\SetFigFont#1#2#3#4#5{%
+  \reset@font\fontsize{#1}{#2pt}%
+  \fontfamily{#3}\fontseries{#4}\fontshape{#5}%
+  \selectfont}%
+\fi\endgroup%
+{\renewcommand{\dashlinestretch}{30}
+\begin{picture}(6776,5988)(0,-10)
+\path(825,5679)(6150,5679)(6150,354)
+    (825,354)(825,5679)
+\put(-300,3429){\makebox(0,0)[lb]{{\SetFigFont{10}{10.4}{\rmdefault}{\mddefault}{\updefault}$u_x=0$}}}
+\put(-300,3129){\makebox(0,0)[lb]{{\SetFigFont{10}{10.4}{\rmdefault}{\mddefault}{\updefault}$T=308K$}}}
+\put(6300,3204){\makebox(0,0)[lb]{{\SetFigFont{10}{10.4}{\rmdefault}{\mddefault}{\updefault}$u_x=0$}}}
+\put(6300,3429){\makebox(0,0)[lb]{{\SetFigFont{10}{10.4}{\rmdefault}{\mddefault}{\updefault}$T=308K$}}}
+\put(2550,-50){\makebox(0,0)[lb]{{\SetFigFont{10}{10.4}{\rmdefault}{\mddefault}{\updefault}$u_y=0,\,\nabla T \cdot \mathbf n=0$ }}}
+\put(1750,5829){\makebox(0,0)[lb]{{\SetFigFont{10}{10.4}{\rmdefault}{\mddefault}{\updefault}$u_y=0,\,\nabla T \cdot \mathbf n=0$ }}}
+\end{picture}
+}

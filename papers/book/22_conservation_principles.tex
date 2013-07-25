@@ -1,0 +1,200 @@
+%\section{Conservation principles}
+
+\footnote{Truesduell}
+
+Based on the kinematical foundation (section \ref{sec:kinematics}) we formulate the general conservation principle of continuum mechanics for both Eulerian and Lagrangian points of view (section \ref{sec:euler_lagrange}).
+%
+The amount of a (conservation) quantity in a defined volume $\Omega$ is given by
+
+\begin{eqnarray}
+\Psi =
+\int\limits_\Omega \psi d\Omega(t)
+\end{eqnarray}
+
+where $\Psi$ is an extensive conservation quantity\index{quantity
+- extensive } (i.e. mass, momentum, energy) and $\psi$ is the
+corresponding intensive conservation quantity\index{quantity -
+intensive} such as mass density $\rho$, momentum density $\rho \bf
+v$ or energy density $e$ (see Table
+\ref{tab:conservation_quantities}).
+
+%
+\begin{table}[htb!]
+\caption{Conservation quantities}
+\label{tab:conservation_quantities}
+\begin{center}
+\begin{tabular}{|ll|ll|}
+\hline
+Extensive  quantity &  Symbol    &  Intensive quantity      &  Symbol  \\
+\hline \hline
+%\mbox{\rule[1mm]{0cm}{3mm}Mass}
+Mass                &  $M$,$M_k$ & Mass density             & $\rho$,$\rho_k$  \\
+Linear momentum     &  $\bf m$   & Linear momentum density  & $\rho \bf v$ \\
+Energy              &  $E$       & Energy density           & $e = \rho i + \frac 1 2 \rho v^2 $
+\\[1pt]
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+%
+
+The balance equations for mass, momentum and energy conservation can be derived based on two fundamental principles, i.e. Eulerian and Lagrangian frameworks (e.g. \cite{Kol:02})
+%
+Both conservation principles are related by two different forms of derivatives
+\begin{equation}
+\frac{d \psi}{dt}
+=
+\frac{\p \psi}{\p t} + \v\cdot\nabla\psi
+\label{eqn:derivatives}
+\end{equation}
+the total (or material) $d$ and partial derivatives $\p$, respectively.
+%
+The general integral balance equation is given by
+%
+\begin{eqnarray}
+\frac{d}{dt} \int\limits_\Omega \psi~d\Omega
+=
+\int\limits_\Omega
+\left(
+\frac{\partial\psi}{\partial t}
++
+\nabla \cdot {\mathbf{\Phi}}
+\right)
+d\Omega
+=
+\int\limits_\Omega q^\psi d\Omega
+\label{eqn:general_balance_equation}
+\end{eqnarray}
+%
+where $\psi$ is a general conservation quantity, $\mathbf{\Phi}$ is the total flux of $\psi$, and $Q$ is a source/sink term for $\psi$.
+%
+The corresponding extensive and intensive conservation quantities are summarized in Tab. \ref{tab:conservation_quantities}.
+
+The total flux ${\bf\Phi}^\psi$ of a quantity $\psi$ is defined as
+\begin{eqnarray}
+{\bf\Phi}^\psi
+=
+{\bf v}^E \psi
+\end{eqnarray}
+
+where ${\bf v}^E$ is a mean particle velocity\index{quantity - velocity -
+particle}. Physically ${\bf\Phi}^\psi$ represents the quantity of
+$\psi$ passing through a unit area of the continuum, colinear with
+${\bf v}^E$, per unit time with respect to a fixed coordinate
+syste, i.e. Eulerian point of view.
+
+For the case of a multi-component continuum let ${\bf v}$ denote
+the mass-weighted velocity\index{quantity - velocity - mass-weighted}
+describing a more ordered motion of the particles of a fluid
+element. The total flux can be written as
+\begin{eqnarray}
+{\bf\Phi}^\psi
+=
+{\bf v}^E \psi
+=
+\underbrace{{\bf v} \psi}_{{\bf\Phi}^\psi_A}
++
+\underbrace{({\bf v}^E-{\bf v}) \psi}_{{\bf\Phi}^\psi_D}
+\end{eqnarray}
+
+and, therefore, decomposed into two parts: an advective flux
+${\bf\Phi}^\psi_A$ and a diffusive flux ${\bf\Phi}^\psi_D$
+relative to the mass-weighted velocity:
+
+\begin{itemize}
+ \item
+Advective flux\index{flux - advective} of quantity $\psi$
+\begin{eqnarray}
+{\bf\Phi}^\psi_A
+=
+{\bf v}\psi
+\end{eqnarray}
+
+ \item
+Diffusive flux\index{flux - diffusive} of quantity $\psi$
+(Fick's law)\index{law - Fick}
+\begin{eqnarray}
+{\bf\Phi}^\psi_D=
+-\alpha \nabla\psi
+\end{eqnarray}
+\end{itemize}
+
+where $\alpha$ is a diffusivity coefficient. The negative sign indicates, that diffusive flux is positive in the direction of negative gradient.
+
+If the conservation quantity is a vector (e.g. linear momentum)
+then the flux becomes a tensor and the source term a vector (e.g. body forces):
+
+\begin{itemize}
+
+\item Advective flux of vector quantity $\psi$
+%
+\begin{eqnarray}
+{\bf\Phi}^\psi_A
+=
+% {\bf v}:{\Boldmath\psi}
+{\bf v}:{\mathbf{\psi}}
+=
+\left[
+\begin{array}{ccc}
+v_x & v_y & v_z
+\end{array}
+\right]
+\left[
+\begin{array}{c}
+\psi_x \\ \psi_y \\ \psi_z
+\end{array}
+\right]
+=
+\left|
+\begin{array} {lll}
+v_x \psi_x &  v_x \psi_y & v_x \psi_z \\
+v_y \psi_x &  v_y \psi_y & v_y \psi_z \\
+v_z \psi_x &  v_z \psi_y & v_z \psi_z
+\end{array}
+\right|
+\end{eqnarray}
+
+\item Diffusive flux of vector quantity $\psi$
+%
+\begin{eqnarray}
+{\bf\Phi}^\psi_D
+=
+% -\rho \nabla:{\Boldmath\psi}
+-\rho \nabla:{\mathbf{\psi}}
+=
+-\alpha
+\left|
+\begin{array} {lll}
+\frac{\partial\psi_x}{\partial x} & \frac{\partial\psi_y}{\partial y} & \frac{\partial\psi_z}{\partial z} \\
+\frac{\partial\psi_x}{\partial x} & \frac{\partial\psi_y}{\partial y} & \frac{\partial\psi_z}{\partial z} \\
+\frac{\partial\psi_x}{\partial x} & \frac{\partial\psi_y}{\partial y} & \frac{\partial\psi_z}{\partial z}
+\end{array}
+\right|
+\end{eqnarray}
+\end{itemize}
+
+When substituting the flux definition into the general balance equation (\ref{eqn:general_balance_equation}),
+we yield the so-called transport equation
+
+\begin{eqnarray}
+\frac{d}{dt} \int\limits_\Omega \psi~d\Omega
+=
+\underbrace{\int\limits_\Omega \frac{\partial\psi}{\partial t}~d\Omega}_{1}
++
+\underbrace{\int\limits_\Omega \nabla \cdot ({\bf v}\psi)~d\Omega}_{2}
+-
+\underbrace{\int\limits_\Omega \nabla \cdot (\alpha\nabla\psi)~d\Omega}_{3}
+=
+\underbrace{\int\limits_\Omega q^\psi}_{4}
+\label{eqn:integral_balance_equation}
+\end{eqnarray}
+
+with the followind terms:
+
+\renewcommand{\arraystretch}{0.9}
+\begin{enumerate}
+ \item Rate of increase of $\psi$ within a fluid element
+ \item Net rate of $\psi$ due to flux out of the fluid element
+ \item Rate of increase / decrease of $\psi$ due to diffusion
+ \item Rate of increase / decrease of $\psi$ due to sources
+\end{enumerate}

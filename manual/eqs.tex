@@ -1,0 +1,164 @@
+\section{Solver}
+Solving linear equation systems arising from the finite element discretizations is a crucial and the most time consuming
+point in finite element analysis of PDE. Rockflow provides several most popular and efficient linear solvers.
+Nonlinear PDEs results in corresponding nonlinear equation system, which have to be linearized. Nonlinear problems of interest are: Forchheimer flow, gas flow, multi-phase flow, density driven flow, reactive
+transport, nonlinear deformations and so on. Two nonlinear solvers, methods to linearize the non-linear equation system,
+are available in Rockflow. They are Picard fix point method and Newton-Raphson method.
+
+\subsection{Nonlinear solver}
+The following keywords can be used to choose the nonlinear solver for corresponding problem:
+\begin{center}
+  \begin{verbatim}
+   #NONLINEAR_SOLVER_PROPERTIES_PRESSURE
+   #NONLINEAR_SOLVER_PROPERTIES_WATERCONTENT
+   #NONLINEAR_SOLVER_PROPERTIES_SATURATION
+   #NONLINEAR_SOLVER_PROPERTIES_CONCENTRATION
+   #NONLINEAR_SOLVER_PROPERTIES_SOLUTE_CONCENTRATION
+   #NONLINEAR_SOLVER_PROPERTIES_SORBED_CONCENTRATION
+   #NONLINEAR_SOLVER_PROPERTIES_TEMPERATURE_PHASE
+ \end{verbatim}
+\end{center}
+
+Data specifying the property of the chosen solve have to be followed after the corresponding key word and separated
+by blank space. The data appear in the order as
+
+
+\begin{itemize}
+    \item Solver type, \emph {integer},\\
+       1 for Picard fixed point ieration\\
+       2 for Newton-Raphson method
+    \item Maximum number of iteration,  \emph {integer}
+    \item Type of error calculation, integer,\\
+        1 for for difference in result vector\\
+        2 for difference in residuum
+    \item Absolute error tolerance,  \emph {float}
+    \item Relative error tolerance,  \emph {float}
+    \item Combined error tolerance with respect to linear iterative solver,  \emph {float}
+    \item Number of iterations before reassembly of the system equations,  \emph {float}
+    \item Flag to show time consumed,  \emph {integer}
+    \item Type of showing time consumed,  \emph {integer}
+\end{itemize}
+
+Following is a sample of defining a Newtion-Raphson solver for pressure analysis:\\
+
+%\begin{center}
+\shadowbox
+ {
+   \parbox[c]{10cm}
+   {
+
+         \#NONLINEAR\_SOLVER\_PROPERTIES\_PRESSURE\\
+         2 100 1 1.e06 1.e3 0.0 1 -1 0
+   }
+  }
+%\end{center}
+
+\subsection{Linear solver}
+Direct and iterative solvers are listed in the following box with their indeces.\\
+%\begin{center}
+ \begin{tabular}{||lllll||}
+  \hline
+  \hline
+   1: SpGAUSS & 2:SpBICGSTAB &3:SpBICG     & 4:SpQMRCGSTAB & 5: SpCG\\
+   6: SpCGNR  & 7:CGS        &8: SpRichard & 9:SpJOR       & 10:SpSOR\\
+  \hline
+  \hline
+  \end{tabular}\\
+%\end{center}
+Only the first one is direct solver.
+
+Using pre-conditioners, which is an approximate solution of the defect equation of the linear equation solver, is very
+helpful to accelerate the convergence of the iterative solver. There are three kinds of pre-conditioners available in
+Rockflow such as Jacobi, incomplete LU decomposition (ILU) and SOR splitting  of system matrix method.
+
+
+The following keywords can be used to choose the linear solver for corresponding problem:
+%\begin{center}
+  \begin{verbatim}
+    #LINEAR_SOLVER_PROPERTIES_PRESSURE
+    #LINEAR_SOLVER_PROPERTIES_WATER_CONTENT
+    #LINEAR_SOLVER_PROPERTIES_SATURATION
+    #LINEAR_SOLVER_PROPERTIES_CONCENTRATION
+    #LINEAR_SOLVER_PROPERTIES_SORBED_CONCENTRATION
+    #LINEAR_SOLVER_PROPERTIES_SOLUTE_CONCENTRATION
+    #LINEAR_SOLVER_PROPERTIES_TEMPERATURE_PHASE
+    #LINEAR_SOLVER_PROPERTIES_DISPLACEMENT
+    #LINEAR_SOLVER_PROPERTIES_IMMOBILE_SOLUTE_CONCENTRATION
+ \end{verbatim}
+%\end{center}
+
+The data of solver property following the keyword is in the order as
+
+{\ttfamily
+  \small
+\begin{tabular}{|l|c|l|l|}
+  \hline
+  Position &Value & Data type & Meaning \\
+  \hline
+  \hline % 1st row
+
+    1&   &Integer  &Type of solver:\\
+    & 1 &         &Gaussian (direct solver)\\
+    & 2 &         & BiCGSTAB (default for transport)\\
+    & 3 &         & BICG                             \\
+    & 4 &         & QMRCGSTAB \\
+    & 5 &         & CG  (default for flow analysis)\\
+    & 6 &         & CGNR  \\
+    & 7 &         & CGS   \\
+    & 8 &         & Richard \\
+    & 9 &         & JOR    \\
+    & 10 &         & SOR  \\
+  \hline % 2nd row
+   2&   &Integer &Norm of error:\\
+    & 0 &         &Maximum norm\\
+    & 1 &         &Unity norm\\
+    & 2 &         &Eucleadian norm  \\
+  \hline % 3rd row
+   3&   &Integer &Type of pre-conditioners\\
+    & 0 &      &No pre-conditioner   \\
+    & 1 &      &Jacobi    \\
+    & 10&      &SSOR    \\
+    &10 &      & ILU    \\
+  \hline % 4th row
+   4&   &      &Maximum number of solver iterations\\
+  \hline % 5th row
+   5&   &      &Number of repeated solving\\
+  \hline % 6th row
+   6&   & Integer   &Method of error calculation\\
+    &  0 &    &Absolute error\\
+    &  1 &    &Relative error with respect to the RHS vector $\| b_0\|$\\
+    &  2 &    &Relative error with respect to the residuum $\| r_0\|$\\
+    &  3 &    &variable error (if $\| r_0\|<1$) then 0 else 2 \\
+    &  4 &    &Relative error with respect to actual residuum $\| r_0\|/\| x\|$\\
+ \hline % 7th row
+\end{tabular}\\
+\begin{tabular}{|l|c|l|l|}
+\hline % 7th row
+   7\phantom{osition} &\phantom{Value} & Float\phantom{type}  &Tolerance of iteration\phantom{spect to actual residuum $\| r_0\|/\| x\|$}\\
+ \hline % 8th row
+   8& 0  & Integer   & \\
+ \hline % 9th row
+   9&    & Integer  & Validity time interval if BiCGSTAB is chosen\\
+    &    & Integer  & Matrix storage method: \\
+    &  1  &   & Full matrix \\
+    &  2  &   & Sparse matrix \\
+    &  4  &   & Unsymmetrical sparse matrix\\
+ \hline % 10th row
+\end{tabular}
+}
+
+
+Here is a sample of specifying BiCGSTAB solver for deformation analysis with Jacobi pre-conditioner
+and symmetrical sparse matrix storage:\\
+
+%\begin{center}
+\shadowbox
+ {
+   \parbox[c]{10cm}
+   {
+     \#LINEAR\_SOLVER\_PROPERTIES\_DISPLACEMENT\\
+     2   0  1  10000  0  0  1.000000e-9  0  2
+
+   }
+  }
+%\end{center}

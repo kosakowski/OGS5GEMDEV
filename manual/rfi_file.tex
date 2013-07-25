@@ -1,0 +1,294 @@
+\section{MSHLib Data}
+
+\subsection{RFI Data}
+
+This is an old file format, which will be no more developed and
+supported.
+
+\begin{verbatim}
+filename.rfi
+\end{verbatim}
+
+The RFI file is finite element mesh (topologic) information.
+It is the input file for node and element data. The RFI file
+contains 3 blocks: data control, data area for nodes and data area
+for elements.
+
+\subsubsection{Example}
+
+\small
+\begin{verbatim}
+// Data control - this line is not to put in the RFI file
+#0#0#0#1#0.0#0##################################################
+ 0   1733   3296
+// Data block for nodes  - this line is not to put in the RFI file
+ 0    4075.3790000000    1237.6610000000   -10000.000000000
+ 1    3248.3140000000    1550.1820000000   -8799.0780000000
+ 2    134.19960000000    1216.1690000000   -5316.9770000000
+ 3   -3434.3590000000   -1243.2360000000   -2755.8600000000
+ 4    3348.2520000000   -21.761480000000   -10000.000000000
+ 5   -2412.6870000000   -10000.000000000   -10000.000000000
+ 6   -10000.000000000   -10000.000000000   -956.06250000000
+ 7   -10000.000000000   -8610.7600000000    0.00020700000000000
+ 8   -6014.6410000000   -1707.9160000000    0.00000000000000
+ 9   -2160.1140000000    970.08530000000   -2751.5490000000
+ ...
+ 1730   -2557.9790848525    2911.3944854435   -941.30925539516
+ 1731   -1408.0551330575    2982.2914976413   -2263.2068487507
+ 1732   -3228.0124258355    2264.7447395733   -587.66012303999
+// Data block for elements - this line is not to put in the RFI file
+ 0   0  line  321    60
+ 1   4  tri    58   328    59
+ 2   5  quad  304     1   351    17
+ 3   2  tet   339   294   337   219
+ 4   1  pris  328   311   297    54    53   307
+ 5   3  hex   344   314   343    28   319    29   307   316
+ 6   0  line_radial 321    60              // radial-symmetric element
+ 7   4  tri_axial    58   328    59        // axial-symmetric element
+ 8   5  quad_axial  304     1   351    17  // axial-symmetric element
+ ...
+ 3295   6  tri  1729   1732   1711
+\end{verbatim}
+\normalsize
+
+\newpage
+%------------------------------------------------------------------
+\subsubsection{Data control area}
+
+The parameters of the head line are separated by double-crosses.
+
+\small
+\hrule
+\begin{minipage}[t]{4cm}
+Variable name
+\begin{verbatim}
+art
+bin
+nr
+geom
+startzeit
+zeitschritt
+rfi_filetype
+\end{verbatim}
+\end{minipage}
+%
+\begin{minipage}[t]{4cm}
+Parameter meaning
+\begin{verbatim}
+0: has to be zero
+0: ASCII format
+0: file number
+1: output of geometry
+0.0: start time of the simulation
+0: time step number of previous simulation
+3831: RF/RM version number // alternatively
+\end{verbatim}
+\end{minipage}
+\hrule
+\normalsize
+
+\bigskip
+The parameters of the second line are as follows.
+
+\small
+\hrule
+\begin{minipage}[t]{4cm}
+Variable name
+\begin{verbatim}
+d
+anz_n
+anz_e
+\end{verbatim}
+\end{minipage}
+%
+\begin{minipage}[t]{4cm}
+Parameter meaning
+\begin{verbatim}
+0: file type
+1733: number of nodes
+3296: number of elements
+\end{verbatim}
+\end{minipage}
+\hrule
+\normalsize
+
+
+%------------------------------------------------------------------
+\subsubsection{Node data}
+
+Geometric node data are: node number (has to start with 0) and node
+coordinates.
+
+\small
+\hrule
+\begin{minipage}[t]{4cm}
+\begin{verbatim}
+node number | x                  | y               | z
+
+       1732   -3228.0124258355    2264.7447395733   -587.66012303999
+
+\end{verbatim}
+\end{minipage}
+\hrule
+\normalsize
+
+%------------------------------------------------------------------
+\subsubsection{Element data}
+
+Topologic element data are: element number (has to start with 0),
+material group, geometric element type and element nodes. Number
+of nodes per element depends on the geometric element type.
+
+\begin{center}
+\begin{tabular}{|ll|l|l|}
+\hline
+Element type  & etyp & Name & Number of nodes \\
+\hline \hline
+%
+Line          & 1    & line & 2 \\
+Quadrilateral & 2    & quad & 4 \\
+Hexahedron    & 3    & hex  & 8 \\
+Triangle      & 4    & tri  & 3 \\
+Tetrahedron   & 5    & tet  & 4 \\
+Prism         & 6    & pris & 6 \\
+\hline
+\end{tabular}
+\end{center}
+
+
+\small
+\hrule
+\begin{minipage}[t]{4cm}
+\begin{verbatim}
+element number | material group | element type | element nodes
+
+ 0               0                line           321    60
+ ...
+ 3295            6                tri            1729   1732   1711
+
+\end{verbatim}
+\end{minipage}
+\hrule \normalsize
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\subsection{MultiMSH Data}
+\label{sec:msh}
+
+since 4.1.15
+
+\begin{tabular*}{5.85cm}{|p{2.5cm}|p{2.5cm}|} \hline
+Object acronym & MSH \\
+C++ class  & CFEMesh \\
+Source files   & rf\_ele\_msh.h/cpp \\
+\hline
+File extension & *.msh\\
+Object keyword &  {\texttt{\#FEM\_MSH}} \\
+\hline
+\end{tabular*}
+
+Each process can be provided with a different mesh by means of the
+\texttt{\$PCS\_TYPE} subkeyword. If only one mesh is provided it
+is used for all processes defined.
+
+%-------------------------------------------------------------------------
+\subsubsection{Example}
+
+\small
+\begin{verbatim}
+GeoSys-MSH: Mesh ------------------------------------------------
+#FEM_MSH
+ $PCS_TYPE
+  GROUNDWATER_FLOW
+ $GEO_TYPE //4.3.20
+  geo_type_name geo_type
+ $NODES
+  808
+  0 0.000000000000e+000 1.000000000000e+000 -5.000000000000e+000
+  ...
+ $ELEMENTS
+  300
+  0 1 -1 hex 0 4 103 3 202 206 305 205
+ $LAYER
+  5
+ $PCS_TYPE
+  RICHARDS_FLOW
+  ...
+ $PCS_TYPE
+  OVERLAND_FLOW
+  ...
+#STOP
+\end{verbatim}
+\normalsize
+
+%WW
+If keyword \texttt{\$AXISYMMETRY} is used, the mesh data are
+ready for the simulation of an axisymmetrical problem with
+coordinate (r, z, 0.0) of each node. More information of axisymmetry
+is given in section \ref{sec:pcs}.
+
+%OK
+\small
+\begin{verbatim}
+$GEO_TYPE //4.3.20
+\end{verbatim}
+\normalsize \vspace{-2mm}
+%
+This subkeyword describes a MSH-GEO relationship. It can be used
+e.g. for a regional soil model. The MSH contains numerous soil
+columns, which are treated as several local soil problems.
+
+
+%-------------------------------------------------------------------------
+\subsubsection{MSH-PCS relation}
+
+\small
+\begin{verbatim}
+ $PCS_TYPE
+  GROUNDWATER_FLOW
+ ...
+ $PCS_TYPE
+  RICHARDS_FLOW
+  ...
+ $PCS_TYPE
+  OVERLAND_FLOW
+  ...
+\end{verbatim}
+\normalsize
+
+%-------------------------------------------------------------------------
+\subsubsection{MSH node data}
+
+\small
+\begin{verbatim}
+ $NODES
+  808
+  0 0.000000000000e+000 1.000000000000e+000 -5.000000000000e+000
+  ...
+\end{verbatim}
+\normalsize
+
+%-------------------------------------------------------------------------
+\subsubsection{MSH element data}
+
+\small
+\begin{verbatim}
+ $ELEMENTS
+  300
+  0 1 -1 hex 0 4 103 3 202 206 305 205
+  ...
+\end{verbatim}
+\normalsize
+
+%-------------------------------------------------------------------------
+\subsubsection{MSH AddOn data}
+
+\small
+\begin{verbatim}
+ $LAYER
+  5
+\end{verbatim}
+\normalsize
+
+\vfill \LastModified{OK 28.06.2005}

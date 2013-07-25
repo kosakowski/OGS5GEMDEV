@@ -1,0 +1,27 @@
+%{\sffamily \raggedright \small
+{\ttfamily \raggedright \small
+void\ CFiniteElement::CalcLaplace()\\
+\{\\
+\ \ \textsl{//\ Loop\ over\ Gauss\ points}\\
+\ \ \textbf{for}\ (gp\ =\ 0;\ gp\ $<${}\ no\_gp;\ gp++)\\
+\ \ \{\\
+\mbox{\ \ \ \ \ GaussData();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textsl{//\ Integration\ points\ and\ weights}}\\
+\mbox{\ \ \ \ \ Jacobian();\ \ \ \ \ \ \ \ \ \ \ \  \ \ \ \ \ \ \textsl{//\ det\ $\mathbf{J}$,\ ${\mathbf J}^{-1}$}}\\
+\ \ \ \ \ GradShapefct();\ \ \ \ \ \  \ \ \ \ \ \ \ \ \textsl{//\ $\nabla \Sh$}\\
+\mbox{\ \ \ \ \ LaplaceMATFunction();\ \ \ \ \ \ \ \ \textsl{//\ Material\ parameters,\ $\mathbb{D}$}}\\
+\mbox{\ \ \ \ \ \textbf{for}\ (i=0;\ i$<${}nnodes;\ i++)\ \ \ \ \textsl{//\ Loop\ over\ element\ nodes}}\\
+\ \ \ \ \ \ \ \ \textbf{for}\ (j\ =\ 0;\ j\ $<${}\ nnodes;\ j++)\\
+\ \ \ \ \ \ \ \ \ \{\\
+\mbox{\ \ \ \ \ \ \ \ \ \ \ \ \textbf{if}(j$>${}i)\ \textbf{continue};\ \ \ \ \textsl{//\ Symmetry}}\\
+\mbox{\ \ \ \ \ \ \ \ \ \ \ \ \textbf{for}\ (k\ =\ 0;\ k\ <{}\ ele\underline\ dim;\ k++)}\\
+\mbox{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textbf{for}(l=0;\ l<{}ele\underline\ dim;\ l++)}\\
+\mbox{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ($\ast$Laplace)(i,j)\ +=\ fkt\ $\ast$\ dshapefct[k$\ast$nnodes+i]\ }\\
+\mbox{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ $\ast$\ mat[ele\underline\ dim$\ast$k+l]\ }\\
+\mbox{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ $\ast$\ dshapefct[l$\ast$nnodes+j];}\\
+\ \ \ \ \ \ \ \ \ \}\\
+\ \ \}\\
+\}\\
+\ \\
+ }
+\normalfont\normalsize
+

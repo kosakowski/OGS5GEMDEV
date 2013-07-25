@@ -1,0 +1,305 @@
+\section{Numerics}
+There are many alternative methods to solve initial-boundary-value problems arising from flow and transport processes in
+subsurface systems. In general these methods can be classified into analytical and numerical ones. Analytical solutions
+can be obtained for a number of problems involving linear or quasi-linear equations and calculation domains of simple
+geometry. For non-linear equation or problems with complex geometry or boundary conditions, exact solutions usually do not
+ exist, and approximate solutions must be obtained. For such problems the use of numerical methods is advantageous. Rockflow
+ uses the Finite Difference Method for time discretization and  uses Finite Element/Volume for spatial discretization.
+ The Gelerkin wighted residual method, which is more general in application than variational method, is employed to
+ provide the weak formula of the PDEs. The Gauss integral formula and modified Gauss integral formula for triangle
+ element/tedrahedron element are used to numerical integrate the integrals arising from the weak formula. This section
+ introduces the keywords and data that manage the numerical methods used in computation.
+
+
+
+%-------------------------------------------------------------------------------
+\subsubsection{\bf\$NUM\_TYPE}
+
+\begin{tabular*}{12.773cm}{|p{3.cm}|p{1.5cm}|p{7cm}|} \hline
+Parameter          &  & Meaning \\ \hline \hline
+%
+\bf FEM    &  & Finite element method \\
+FDM    &  & Finite difference method \\
+...    &  & e.g. particle tracking, MOC ... \\
+\hline
+\end{tabular*}
+
+Comments: Default is FEM. The finite difference method is
+available for 1-D Saint Venant equations.
+
+%-------------------------------------------------------------------------------
+\subsubsection{\bf\$NOL\_ITERATIONS}
+
+\begin{tabular*}{12.773cm}{|p{3.cm}|p{1.5cm}|p{7cm}|} \hline
+Parameter          & Value & Meaning \\ \hline \hline
+%
+number & \bf 1 & Number of non-linear iterations for this process \\
+\hline
+\end{tabular*}
+
+%-------------------------------------------------------------------------------
+\subsubsection{\bf\$CPL\_ITERATIONS}
+
+\begin{tabular*}{12.773cm}{|p{3.cm}|p{1.5cm}|p{7cm}|} \hline
+Parameter          & Value & Meaning \\ \hline \hline
+%
+number & \bf 1 & Number of coupling iterations over all processes per time step (partitioned process coupling) \\
+\hline
+\end{tabular*}
+
+
+
+
+
+Keyword \textbf{\#NUMERICS} leads the configuration of the basic numerical method given in
+Table \ref{tab_num1}.
+{\ttfamily
+  \small
+\begin{table}[htb]
+\begin{tabular}{|l|c|l|l|}
+  \hline
+  Position &Value & Data type & Meaning \\
+  \hline
+  \hline % 1st row
+  1 &   &Integer  &Method for the weak formula\\
+    & \textbf{0} &  &Bubnov-Galerkin-Method (Standard FEM)\\
+    & 1 &         &Petrov-Galerkin-Method (Upwind FEM)\\
+    & 2 &         &Eular-Taylor-Galerkin-Method (ETG) \\
+  \hline % 2nd row
+   2&   &String &Name, the identification of the object \\
+  \hline % 3rd row
+   3&   &Integer &Number of Gaussian integration points\\
+  \hline % 4th row
+   4&   &Float   &$\in [\textbf{0},1]$. Time collocation factor\\
+  \hline % 5th row
+   5&   &Float   &$\in [\textbf{0},1]$. Upwind parameter\\
+  \hline % 6th row
+   6&   & Integer   &Larange advection \\
+    &  \textbf{0} &    &Larange scheme for advective terms disabled\\
+    &  1 &    &Larange scheme enabled (Operator-Splitting)\\
+  \hline % 7th row
+   6&   & Float   &Larange quality \\
+    &  [0,1] &    &Parameter of Larange scheme for advection terms\\
+    &  \textbf{0.95} &    &To control approximation accuracy\\
+  \hline % 8th row
+\end{tabular}
+\caption{Data by keyword \textbf{\#NUMERICS}.
+ The default values are in bold face}
+\label{tab_num1}
+\end{table}
+}
+
+
+
+The following keywords can be used for different processes. Users can choose one or more than one of them for
+specified problem:
+\begin{center}
+  \begin{verbatim}
+   #NUMERICS_CONCENTRATION
+   #NUMERICS_DEFORMATION
+   #NUMERICS_GEOELECTRIC
+   #NUMERICS_ITERATION
+   #NUMERICS_PRESSURE
+   #NUMERICS_SATURATION
+   #NUMERICS_VELOCITY
+ \end{verbatim}
+\end{center}
+
+Followed these keywords can be a number of sub-keywords, which are labelled by a \$ sign and
+explained in the following.
+\begin{description}
+    \item[\$METHOD] Integer number
+    {
+      \begin{itemize}
+      \item \textbf{0}: No calculation
+      \item \textbf{1}: Finite element calation
+      \item \textbf{3}: For transport calculation only. Using Lagrange scheme for advective transport in
+                   2D fracture element. Compute everything else by FEM. Requires additional parameters.
+      \item \textbf{4}: For transport calculation only. Using Lagrange scheme for 2D fracture elements.
+                    Omit everything else. Requires additional parameters.
+      \item \textbf{5}: For transport calculation only. Using Lagrange scheme for 2D elements.
+                   Requires additional parameters.
+      \item \textbf{7}: For unsaturated flow (pressure and saturation). The Richards' formula is used to calculate
+                   pressure and saturation
+      \item \textbf{8}: For unsaturated flow (pressure and saturation). The Celia-Richards' formula is used to calculate
+                   pressure and saturation
+      \item \textbf{9}: For transport calculation only. Finite element calculation with artificial diffusion in critical
+                        regions. Reads additionally two float values. The first parameter $p_1$ specifies the
+                        concentration difference with marks an element as critical one. If the parameter is negative,
+                        concentration will be normalized with the span of all concentrations in the system before
+                        comparison (recommended value is 0.25, i.e. the front should be smoothed less than four elements
+                        wide. ). The second parameter $p_2$ specifies the additional diffusion multiplier. The diffusion
+                        multiplier is computed from $p_2^{(c\_max\_min-p_1)/p_1}$, where $c\_max\_min$ is the normalized
+                        concentration difference within the regarded element.
+      \item \textbf{11}: Same as \textbf{9}.
+      \end{itemize}
+    }
+    \item[\$GAUSS\_POINTS] Number of Gauss points in numerical integration.
+    \item[\$NONLINEAR\_COUPLING] Integer number 1 or 0 to specifies whether the regarded quantity shall be
+                                 regarded within the loop for non-linear iteration.
+    \item[\$TRANSPORT\_IN\_PHASE] Number of phases for which transport processes shall be regarded. For
+                  \textbf{-1}, all phases are regarded
+    \item[\$PLASTIC\_DEFORMATION] If \textbf{1}, the plastic deformation is regarded. Obsoleted.
+    \item[\$ITERATION\_METHOD]   \textbf{0} for Picard,  \textbf{1} for Newton-Raphson.
+    \item[\$REFERENCE\_PRESSURE\_METHOD]  Index of phases. It specifies which phase pressure shall be used as reference
+          in multi-phase flow calculations.
+    \item[\$CALC\_OTHER\_SATURATION\_METHOD] Integer number (-1,$\cdots$, number of phases). It specifies
+     the method to calculation the phase saturation in multi-phase flow.
+    {
+      \begin{enumerate}
+      \item If it is \textbf{-1},  all phases are modified, so that they sum up to unity (Not recommended)
+      \item The saturation of this phase will be computed from the other phase saturations. It is recommended
+            to use the index of the least moveable phase.
+      \end{enumerate}
+    }
+    \item[\$IRR\_NODES\_CORRECTION] no use
+    \item[\$UPWINDING] Integer number to specifies the upwinding scheme for matrices of
+    {
+      \begin{description}
+        \item[pressure ] field
+        {
+          \begin{enumerate}
+          \item Upwinding of Gaussian integration points (scaled), additional parameter (double) factor is required.
+          \item Upwinding of Gaussian integration points (unscaled), additional parameter (double) for upwinding
+                factor is required.
+          \end{enumerate}
+        }
+        \item[concentration] and temperature field
+        {
+          \begin{enumerate}
+          \item Streamline upwinding, additional parameter (double) for upwinding factor is required.
+          \item Streamline upwinding applied to advection matrices only,
+               additional parameter (double) for upwinding  factor is required.
+          \end{enumerate}
+        }
+        \item[saturation] field
+        {
+          \begin{enumerate}
+          \item Streamline upwinding, additional parameter (double) for upwinding factor is required.
+          \end{enumerate}
+        }
+      \end{description}
+    }
+    \item[\$MASS\_LUMPING] Integer number 1 or 0 to specifies whether mass lumping shall be used to reduce wiggles or not.
+       This can be very useful for multi-phase flow  or transport calculations with very steep front.
+    \item[\$PREDICTOR] Integer number 1 or 0 to specifies whether a linear predictor will be used to estimate solutions of
+      the next time step. An additional float number $p_1\in [0,1]$ is required. If $p_1=1.0$, then full predictor is used.
+    \item[\$RELAXATION] Integer number to specifies whether mass the scheme to compute the correction in non-linear iterations.
+    {
+      \begin{itemize}
+       \item \textbf{0} No relaxation.
+       \item \textbf{1} Fixed relaxation. An additional float number $p_1\in [0,1]$ is required.
+       \item \textbf{2} Dynamic relaxation on the basis of field oscillations. Four additional float numbers $\in [0,1]$
+       are required (recommended: 1.0, 0.25, 0.5, 0.5). Experimental option, not for common use.
+       \item \textbf{3} Dynamic relaxation on the basis of single node oscillations. Two additional float numbers $\in [0,1]$
+       are required (recommended: 1.0, 0.5). Experimental option, not for common use.
+      \end{itemize}
+     }
+    \item[\$EXTRACT\_VALUES\_FROM\_PDE] Integer number 1 or 0. Only valid for the pressure field. It specifies whether
+    the results of the last time step are extracted from the system of the linear equations while assembling it.
+    For systems with very large vertical extend, this procedure reduces "small differences of large numbers" accuracy
+    problems.
+    \item[\$TIMESTEPPING] not yet.
+    \item[\$TIMECOLLOCATION] Float number $\in [0,1]$. Specifies the time collocation. The time collocation value can be chosen globally for the
+    regarded partial differential equation and differently for certain parts. These are distinguished by optional sub-sub-keywords
+    (labelled with symbol \&) as follows:
+    {
+      \begin{description}
+       \item [\&GLOBAL]The main time collocation (recommended value: 0.6).
+       \item [\&UPWINDING] The time collocation for the upwinding scheme (recommended value: 0.0).
+       \item [\&SOURCE]The time collocation for sinks and sources (recommended value: should be same as to that by
+                       \textbf{\&GLOBAL}. For mass fluxes of compressible fluids, value 0.0 leads better stability )
+       \item [\&COND\_BC]The time collocation for boundary condition (recommended value: 0.0).
+       \item [\&OPEN\_BOUNDARY]The time collocation for free outflow boundary conditions (recommended value: 0.0).
+      \end{description}
+     }
+   \item[\$INTEGRATION\_POINTS] Specifies how certain variables (given by sub-sub-keyword) are to be treated during
+      integration. The sub-sub-keyword gives a boolean like integer to specify the method
+    {
+      \begin{description}
+       \item [\&NAME 1] Using the values of the gravity center of the element for integration.
+       \item [\&NAME 2] Using the values of Gaussian points of the element for integration.
+       \item [\&SOURCE]The time collocation for sinks and sources (recommended value: should be same as to that by
+                       \textbf{\&GLOBAL}. For mass fluxes of compressible fluids, value 0.0 leads better stability )
+       \item [\&COND\_BC]The time collocation for boundary condition (recommended value: 0.0).
+       \item [\&OPEN\_BOUNDARY]The time collocation for free outflow boundary conditions (recommended value: 0.0).
+      \end{description}.
+     }
+     In the velocity calculation, the following sub-sub-keywords are available (Obsoleted ):
+    {
+      \begin{description}
+       \item [\&DENSITY]
+       \item [\&VISCOSITY]
+       \item [\&REL\_PERM]
+      \end{description}.
+     }
+   \item[\$MATRIX\_REBUILD] Specifies the circumstance under which the system matrices are rebuild. As setting up the system
+          matrices is a substantial computational effort, choosing a conditional rebuild can significantly decrease
+          computation time, though the reduced accuracy  must be considered. This method is not available for milticontinua
+          calculations.
+
+          All entries follows the same style as:
+
+          \textbf{\&NAME method $p_1$, $p_2$, $\cdots$, $p_n$}
+
+          where \textbf{\&NAME} specifies the identifier for the regarded matrix (depends on the FE-kernel), \textbf{method}
+          is an integer value that characterizes that to evaluate the matrix rebuild, and $p_1$, $p_2$, $\cdots$, $p_n$
+          are additional factors. The following \textbf{method}s are available.
+
+    {
+      \begin{itemize}
+      \item \textbf{0}: Never rebuild
+      \item \textbf{1, $p_1$}: Rebuild if the characteristic value diverges more than $p_1$. Criterion: $|X-X_{ref}|>p_1$
+      \item \textbf{2, $p_1$}: Rebuild if the normalized characteristic value diverges more than $p_1$. Criterion: $2|X-X_{ref}|/|X+X_{ref}|>p_1$
+      \item \textbf{3, $p_1$, $p_2$}: Rebuild if both criterion \textbf{1} and criterion \textbf{2} are satisfied.
+      \item \textbf{11, $p_1$, $p_2$}: The rebuild is triggered by a probability approach. Probability $P$ is derived from the
+                    evaluating $P=\left(|X-X_{ref}|/p_1\right)^{p_2}$
+      \item \textbf{12,$p_1$, $p_2$}: The rebuild is triggered by a probability approach. Probability $P$ is derived from the
+                    evaluating $P=\left(2|X-X_{ref}|/p_1/|X+X_{ref}|\right)^{p_2}$
+      \item \textbf{13, $p_1$, $p_2$, $p_3$, $p_4$}: Rebuild if both criterion \textbf{11} (parameters \textbf{$p_1$} and \textbf{$p_2$}) and
+                                             criterion \textbf{12} (parameters \textbf{$p_3$} and \textbf{$p_4$}) are satisfied.
+      \end{itemize}
+    }
+
+    For the pressure kernel the following  \textbf{\&NAME} entries are recognized:
+    {
+      \begin{description}
+       \item [\&ELEMENT\_MOBILITY\_CHANGE]
+       \item [\&ELEMENT\_DENSITY\_CHANGE]
+       \item [\&ELEMENT\_SATURATION\_CHANGE]
+      \end{description}.
+    }
+
+    For the transport kernel the following  \textbf{\&NAME} entries are recognized:
+    {
+      \begin{description}
+       \item [\&ELEMENT\_SATURATION\_CHANGE]
+       \item [\&ELEMENT\_VELOCITY\_CHANGE]
+      \end{description}.
+    }
+
+ %  \item[.] ...
+
+\end{description}
+
+
+Here is a sample of numerical configuration for pressure field:
+
+\begin{center}
+\shadowbox
+ {
+   \parbox[c]{6cm}
+   {
+    \#NUMERICS\_PRESSURE\\
+    \$METHOD 1\\
+    \$TIMECOLLOCATION\\
+      \&GLOBAL 0 1.0\\
+    \$UPWINDING 2 10\\
+    \$MASS\_LUMPING 1\\
+    \$REFERENCE\_PRESSURE\_METHOD 0\\
+    \$PREDICTOR 1 1.\\
+    \$RELAXATION 1 0.5\\
+    \$GAUSS\_POINTS 1\\
+   }
+  }
+\end{center}
