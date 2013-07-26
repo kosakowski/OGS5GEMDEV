@@ -67,7 +67,7 @@ public:
     long *m_NodeHandle, *m_NodeStatusCH, *m_IterDone, *m_IterDoneCumulative, *m_IterDoneIndex;
     // this is for porosity calculated on volume of solids
     double *m_porosity;
-    /// this is used for kinetic law number 4
+    /// this is used for kinetic law number 4 and other lasws depending on initial amounts of stuff
     double  *m_porosity_initial, *m_volumes_initial;
 
     /// this we need for porosity coupling to groundwater flow & multiphase flow
@@ -102,7 +102,7 @@ public:
     double *m_Node_Volume;                      // Volume around the node;
 
     // this we need for kinetics
-    double *mol_phase, *omega_phase,*omega_components;
+    double *mol_phase, *mol_phase_initial, *omega_phase,*omega_components;
 
     double *dmdt;                               // kinetically controlled rates
     int CalcLimits ( long in, TNode* m_Node);

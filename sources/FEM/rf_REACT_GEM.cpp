@@ -215,6 +215,7 @@ REACT_GEM::~REACT_GEM ( void )
 		// -------------------------
 
 		delete [] mol_phase;
+		delete [] mol_phase_initial;
 		delete [] omega_phase;
 		delete [] omega_components;
 
@@ -421,6 +422,7 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 		omega_phase = new double [nNodes * nPH];
 		omega_phase_buff = new double [nNodes * nPH];
 		mol_phase = new double [nNodes * nPH];
+		mol_phase_initial = new double [nNodes * nPH];		
 		mol_phase_buff = new double [nNodes * nPH];
 		dmdt       = new double [nNodes * nPH];
 		dmdt_buff       = new double [nNodes * nPH];
@@ -556,6 +558,7 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 				omega_phase[in * nPH + ii ] = 0.0;
 				omega_phase_buff[in * nPH + ii ] = 0.0;
 				mol_phase[in * nPH + ii ] = 0.0;
+				mol_phase_initial[in * nPH + ii ] = 0.0;
 				mol_phase_buff[in * nPH + ii ] = 0.0;
 
 				dmdt[in * nPH + ii ] = 0.0;
@@ -2830,7 +2833,7 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
 		{
 			in.str ( GetLineFromFile1 ( gem_file ) );
 			in >> d_kin.phase_name >> d_kin.kinetic_model;
-			if ( d_kin.kinetic_model >= 1 && d_kin.kinetic_model <= 5 )
+			if ( d_kin.kinetic_model >= 1 && d_kin.kinetic_model < 7 )
 			{
 				cout << " found kinetics " << d_kin.kinetic_model << " " <<
 				        d_kin.phase_name << "\n";
@@ -2890,6 +2893,12 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
 			{
 				in >> d_kin.surface_area[0]; // surface: m*m / mol
 				cout << "mimic crunch: surface area " << d_kin.surface_area[0] <<
+				        "\n";
+			}
+			else if ( d_kin.kinetic_model == 6 ) // model 6 is kinetic for spherical grains
+			{
+				in >> d_kin.surface_area[0]; // surface: m*m / mol
+				cout << "const specific surface area for spherical particles" << d_kin.surface_area[0] <<
 				        "\n";
 			}
 			else if ( d_kin.kinetic_model == 5 ) // model 5 is for solid solutions, needed parameters are the number of endmembers and the surface area for each endmember
@@ -3038,6 +3047,8 @@ int REACT_GEM::CalcReactionRate ( long in, double temp,  TNode* m_Node )
 						mol_phase[in * nPH + k] += m_xDC[in * nDC + j];
 						// if (omega_phase[in*nPH+k] >1e6) cout << "Debug kin omega phase "<< omega_phase[in*nPH+k] << " fraction component " << omega_components[in*nDC+j] << "  mol phase " <<  mol_phase[in*nPH+k] << "\n"; // debug
 					}
+				if (aktueller_zeitschritt < 1)
+					mol_phase_initial[in * nPH + k]=mol_phase[in * nPH + k];  // this is for kinetic law 6...similar to crunch...	
 			}
 
 			//		        cout << omega_phase[k] << " " <<  mol_phase[k] << "\n"; // debug
@@ -3056,6 +3067,18 @@ int REACT_GEM::CalcReactionRate ( long in, double temp,  TNode* m_Node )
 
 					sa *= pow ( m_porosity[in] / m_porosity_initial[in],
 					            0.66666666667 );
+
+			}
+			if ( m_kin[ii].kinetic_model == 6 ) // in the next part we try to scale surface area accoridng to spherical particles
+			{
+				if ( omega_phase[in * nPH + k] < 1.0 ) // this is the dissolution case
+
+					sa *= pow ( mol_phase[in*nPH+k] / mol_phase_initial[in*nPH+k], 0.66666666667 );
+
+				else if ( omega_phase[in * nPH + k] >= 1.0 ) // this is the precipitation case
+
+
+					sa = 0.0;
 
 			}
 
@@ -3271,7 +3294,7 @@ int REACT_GEM::CalcLimits ( long in, TNode* m_Node)
 	{
 		k = m_kin[ii].phase_number;
 		// cout << " kinetics phase " << ii << " "  << m_kin[ii].kinetic_model << "\n";
-		if ( m_kin[ii].kinetic_model > 0 && m_kin[ii].kinetic_model < 6 ) // do it only if kinetic model is defined take model
+		if ( m_kin[ii].kinetic_model > 0 && m_kin[ii].kinetic_model < 7 ) // do it only if kinetic model is defined take model
 
 			// kinetic_model==1 dissolution+precipitation kinetics
 			// kinetic_model==2 only dissolution (no precipitation)
@@ -3324,6 +3347,7 @@ int REACT_GEM::CalcLimits ( long in, TNode* m_Node)
 						m_dul[in * nDC + j] = dummy;
 					}
 					// do some corrections
+					
 					// kinetic_model==2 only dissolution is kontrolled (free precipitation)
 					// kinetic_mocel==3 only precipitation is copntroleld (free dissolution)
 					if ( ( m_kin[ii].kinetic_model == 2 ) &&
@@ -4464,20 +4488,22 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 					cout << " or GEM weird result at node " << in <<
 					        " volume " <<  tdBR->Vs << " old volume " <<
 					oldvolume;
-					cout <<
-					        " repeat calculations and change kinetic constraintsby 0.1%"
-					     << "\n";
+//					cout <<
+//					        " repeat calculations and change kinetic constraintsby 0.1%"
+//					     << "\n";
 					rwmutex.unlock();
 //#endif
 					// change a bit the kinetic constraints -> make the system less stiff
+// change the constraints only a little bit
 					for ( j = 0; j < nDC; j++ )
 					{
+					  
 						m_dll[in * nDC +
-						      j] = 0.999 * m_dll[in * nDC + j] - 1.0e-6; // make smaller
+						      j] = 1.0 * m_dll[in * nDC + j] - 1.0e-6; // make smaller
 						if ( m_dll[in * nDC + j] < 0.0 )
 							m_dll[in * nDC + j] = 0.0;
 						m_dul[in * nDC +
-						      j] = 1.001 * m_dul[in * nDC + j] + 1.0e-6; // make bigger
+						      j] = 1.00 * m_dul[in * nDC + j] + 1.0e-6; // make bigger
 					}
 					REACT_GEM::SetReactInfoBackGEM ( in, t_Node); // needs to be done to for update dll dul
 
