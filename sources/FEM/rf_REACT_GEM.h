@@ -307,12 +307,20 @@ public:
         *      6-11  double p1,q1,p2,q2,p2,q2; // exponents for omega
         *      12,13, 14  double n_1, n_2, n_3; // exponents for acidic neutral and base cases for species one
         *      append for each species another set of n_1, n_2, n_3 (up to 10 sets -> up to ten species)
-        */
+        **/
         double kinetic_parameters[41];
         int surface_model;                       // currently only 1 implemented
         double surface_area[10];
         int ss_endmembers; // special model for solid solutions...only read for kinetic model == 5
         double *ss_scaling; // special model for solid solutions...only read for kinetic model == 5
+        /** for kinetically controlled phases we can set initial constraints
+	 *  first model: the initial amount for each phase is everywhere the same 
+	 * 
+	 **/
+	int constraint; // 0=off 1: model for bruno ..everywhere the same constraint
+	int n_constraint; // how many components do we need for the phase....
+	double *ll_constraint;
+	double *ul_constraint;
     } Kinetic_GEMS;
 
     vector<Kinetic_GEMS> m_kin;

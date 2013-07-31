@@ -800,12 +800,6 @@ short REACT_GEM::Init_RUN(string Project_path)
 //    else  test: we do this always! ...should be safe ;-)
 	{
 		GetInitialReactInfoFromMassTransport ( 1 ); //get the initial values from MD ...IC are total B vectors - last time step! this is not necessary for restart
-		cout <<
-		        "Attentione GEMS users: Initial kinetics calculated without restart! This probably kills kinetics, as phases in m_xDC are not yet properly initialized!"
-		     << "\n";
-		cout <<
-		        "No upper or lower constrains set during equilibration!...If your setup requires constrains, please contact georg.kosakowski@psi.ch"
-		     << "\n";
 	}
 
 	delete m_Node; //get rid of this GEMS instance
@@ -2925,6 +2919,51 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
 					in >> d_kin.ss_scaling[j];
 			}
 			in.clear();
+			// next line is constraint
+			in.str ( GetLineFromFile1 ( gem_file ) );
+			in >> d_kin.constraint;
+			cout << "constraint: " << d_kin.constraint << "\n";
+			if ( d_kin.constraint == 1 ) // only one model for constraint so far
+			{
+				in >> d_kin.n_constraint; // surface: m*m / mol
+				cout << "no. of constrained components in this phase " << d_kin.n_constraint << "\n";
+				// allocate memory
+				try
+				{
+					d_kin.ul_constraint = new double[d_kin.n_constraint];
+				}
+				catch ( bad_alloc )
+				{
+					cout <<
+					        "Reading Gems input: problem while allocating memory for constraint"
+					     << "\n";
+#if defined(USE_MPI_GEMS) || defined(USE_PETSC)
+					MPI_Finalize(); //make sure MPI exits
+#endif
+					exit ( 1 );
+				}
+				// allocate memory
+				try
+				{
+					d_kin.ll_constraint = new double[d_kin.n_constraint];
+				}
+				catch ( bad_alloc )
+				{
+					cout <<
+					        "Reading Gems input: problem while allocating memory for constraint"
+					     << "\n";
+#if defined(USE_MPI_GEMS) || defined(USE_PETSC)
+					MPI_Finalize(); //make sure MPI exits
+#endif
+					exit ( 1 );
+				}
+
+				for ( j = 0; j < d_kin.n_constraint; j++ )
+				{
+					in >> d_kin.ll_constraint[j];
+					in >> d_kin.ul_constraint[j];					
+				}
+			}
 
 			// push back vector
 			m_kin.push_back ( d_kin );
@@ -3236,7 +3275,7 @@ int REACT_GEM::CalcLimitsInitial ( long in, TNode* m_Node)
 				// kinetic_model==1 dissolution+precipitation kinetics
 				// kinetic_model==2 only dissolution (no precipitation)
 				// kinetic_mocel==3 only precipitation (no dissolution)
-
+			  
 				for ( j = m_kin[ii].dc_counter;
 				      j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )
 				{
@@ -3260,7 +3299,38 @@ int REACT_GEM::CalcLimitsInitial ( long in, TNode* m_Node)
 				}
 			//end kinetic model
 		}                                      // end loop over phases
-		return 1; // end restart
+		return 1; 
+	}  // end restart
+	else // we loop over all phases and test if kinetic constraints are set
+	{
+		for ( ii = 0; ii < ( int ) m_kin.size(); ii++ )
+		{
+			k = m_kin[ii].phase_number;
+
+			if ( m_kin[ii].kinetic_model > 0 ) // do it only if kinetic model is defined take model
+			        if (m_kin[ii].constraint == 1)  // implementation for model 1...everywhere the same ...ATTENTION: we do not check if number of contraints matches number of components in the phase
+				{
+				  if (dCH->nDCinPH[k] != m_kin[ii].n_constraint) 
+				    {
+				      rwmutex.lock();
+				     cout << " OGS_GEM CalcLimitsInitials: failed: number of consraints does not match number of componets in phase! Check input! \n";
+#if defined(USE_MPI_GEMS) || defined(USE_PETSC)
+				      MPI_Finalize();                   //make sure MPI exits
+#endif			     
+				      rwmutex.unlock();
+				     exit(1);
+				    }
+				    
+				for ( j = 0; j < dCH->nDCinPH[k]; j++ )
+				{
+					m_dll[in * nDC + m_kin[ii].dc_counter+j] = m_kin[ii].ll_constraint[j]; 
+					m_dul[in * nDC + m_kin[ii].dc_counter+j] = m_kin[ii].ul_constraint[j]; 
+				}
+				
+				} // end found constraint
+			//end kinetic model
+		}                                      // end loop over phases
+	  
 	}
 	return 1;
 }
@@ -4278,16 +4348,16 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 		if ( !( m_NodeStatusCH[in] == OK_GEM_AIA || m_NodeStatusCH[in] == OK_GEM_SIA ) )
 		{
 			rwmutex.lock();
-			//    cout << "Initial GEMs run first pass failed at node " << in ;
-			//    cout  << " repeat calculations and change kinetic constraintsby 0.1%" << "\n";
+			cout << "Initial GEMs run first pass failed at node " << in ;
+			cout  << " repeat calculations and change kinetic constraints minimaly" << "\n";
 			rwmutex.unlock();
 			// change a bit the kinetic constraints -> make the system less stiff
 			for ( j = 0; j < nDC; j++ )
 			{
-				m_dll[in * nDC + j] = 0.999 * m_dll[in * nDC + j] - 1.0e-6; // make smaller
+				m_dll[in * nDC + j] = 1.0 * m_dll[in * nDC + j] - 1.0e-6; // make smaller
 				if ( m_dll[in * nDC + j] < 0.0 )
 					m_dll[in * nDC + j] = 0.0;
-				m_dul[in * nDC + j] = 1.001 * m_dul[in * nDC + j] + 1.0e-6; // make bigger
+				m_dul[in * nDC + j] = 1.0 * m_dul[in * nDC + j] + 1.0e-6; // make bigger
 			}
 			REACT_GEM::SetReactInfoBackGEM ( in, t_Node); // needs to be done to
 
@@ -4350,6 +4420,10 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 				{
 					m_dll[in * nDC + j] /= m_Vs[in];
 					m_dul[in * nDC + j] /= m_Vs[in];
+			//	rwmutex.lock();
+			//	cout << " m_Vs, dll, dul "<< m_Vs[in] << " " << m_dll[in * nDC + j] << " " << m_dul[in * nDC + j] <<"\n";
+			//	rwmutex.unlock();
+					
 				}
 			}
 		// end if for restart
@@ -4365,16 +4439,16 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 		{
 			rwmutex.lock();
 			cout << "Initial GEMs run second pass failed at node " << in;
-			cout << " repeat calculations and change kinetic constraintsby 0.1%" <<
+			cout << " repeat calculations and change kinetic constraints minimaly" <<
 			        "\n";
 			rwmutex.unlock();
 			// change a bit the kinetic constraints -> make the system less stiff
 			for ( j = 0; j < nDC; j++ )
 			{
-				m_dll[in * nDC + j] = 0.999 * m_dll[in * nDC + j] - 1.0e-6; // make smaller
+				m_dll[in * nDC + j] = 1.0 * m_dll[in * nDC + j] - 1.0e-6; // make smaller
 				if ( m_dll[in * nDC + j] < 0.0 )
 					m_dll[in * nDC + j] = 0.0;
-				m_dul[in * nDC + j] = 1.001 * m_dul[in * nDC + j] + 1.0e-6; // make bigger
+				m_dul[in * nDC + j] = 1.00 * m_dul[in * nDC + j] + 1.0e-6; // make bigger
 			}
 			REACT_GEM::SetReactInfoBackGEM ( in, t_Node); // needs to be done to
 			//            m_Node->GEM_write_dbr ( "dbr_for_crash_node_fail1.txt" );
