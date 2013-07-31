@@ -3308,8 +3308,13 @@ int REACT_GEM::CalcLimitsInitial ( long in, TNode* m_Node)
 			k = m_kin[ii].phase_number;
 
 			if ( m_kin[ii].kinetic_model > 0 ) // do it only if kinetic model is defined take model
+			{
 			        if (m_kin[ii].constraint == 1)  // implementation for model 1...everywhere the same ...ATTENTION: we do not check if number of contraints matches number of components in the phase
 				{
+				      rwmutex.lock();
+				     cout << " OGS_GEM CalcLimitsInitials for phase "<< k <<  "\n";
+				      rwmutex.unlock();
+
 				  if (dCH->nDCinPH[k] != m_kin[ii].n_constraint) 
 				    {
 				      rwmutex.lock();
@@ -3321,14 +3326,14 @@ int REACT_GEM::CalcLimitsInitial ( long in, TNode* m_Node)
 				     exit(1);
 				    }
 				    
-				for ( j = 0; j < dCH->nDCinPH[k]; j++ )
-				{
+				  for ( j = 0; j < dCH->nDCinPH[k]; j++ )
+				  {
 					m_dll[in * nDC + m_kin[ii].dc_counter+j] = m_kin[ii].ll_constraint[j]; 
 					m_dul[in * nDC + m_kin[ii].dc_counter+j] = m_kin[ii].ul_constraint[j]; 
-				}
+				  }
 				
 				} // end found constraint
-			//end kinetic model
+			}//end kinetic model
 		}                                      // end loop over phases
 	  
 	}
