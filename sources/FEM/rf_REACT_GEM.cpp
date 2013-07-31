@@ -2823,153 +2823,152 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
 		 *     Quartz 1  1   0.0  0.0  0.0  0.0   -13.99 -16.29   0.0 1.0 0.0 1.0 1.0 1.0   H+  0.0  0.0 -0.5    ; this are the kinetic parameters
 		 *   1 1.0e4    ; this are the parameters for reactive surface area
 		 */
-		if ( line_string.find ( "$KINETIC_GEM" ) != string::npos )
-		{
-			in.str ( GetLineFromFile1 ( gem_file ) );
-			in >> d_kin.phase_name >> d_kin.kinetic_model;
-			if ( d_kin.kinetic_model >= 1 && d_kin.kinetic_model < 7 )
-			{
-				cout << " found kinetics " << d_kin.kinetic_model << " " <<
-				        d_kin.phase_name << "\n";
-				in >> d_kin.n_activities;
-				if ( d_kin.n_activities > 10 )
-				{
-					cout <<
-					        "To many dependent species for GEM kinetic model "
-					     <<
-					        d_kin.n_activities << "\n";
+        if ( line_string.find ( "$KINETIC_GEM" ) != string::npos )
+        {
+            in.str ( GetLineFromFile1 ( gem_file ) );
+            in >> d_kin.phase_name >> d_kin.kinetic_model;
+            if ( d_kin.kinetic_model >= 1 && d_kin.kinetic_model < 7 )
+            {
+                cout << " found kinetics " << d_kin.kinetic_model << " " <<
+                     d_kin.phase_name << "\n";
+                in >> d_kin.n_activities;
+                if ( d_kin.n_activities > 10 )
+                {
+                    cout <<
+                         "To many dependent species for GEM kinetic model "
+                         <<
+                         d_kin.n_activities << "\n";
 #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
-					MPI_Finalize(); //make sure MPI exits
+                    MPI_Finalize(); //make sure MPI exits
 #endif
-					exit ( 1 );
-				}
-				//                cout <<" activities " << n_activities << "\n";
-				// first general kinetic parameters
-				//	0,1,2  double E_acid,E_neutral,E_base; // activation energies
-				in >> d_kin.kinetic_parameters[0] >> d_kin.kinetic_parameters[1] >>
-				d_kin.kinetic_parameters[2];
-				//			cout << kinetic_parameters[0] << kinetic_parameters[1] << kinetic_parameters[1]<<"\n";
+                    exit ( 1 );
+                }
+                //                cout <<" activities " << n_activities << "\n";
+                // first general kinetic parameters
+                //	0,1,2  double E_acid,E_neutral,E_base; // activation energies
+                in >> d_kin.kinetic_parameters[0] >> d_kin.kinetic_parameters[1] >>
+                   d_kin.kinetic_parameters[2];
+                //			cout << kinetic_parameters[0] << kinetic_parameters[1] << kinetic_parameters[1]<<"\n";
 
-				//      3-5  double k_acid, k_neutral,k_base; // dissolution/precipitation rate constants
-				in >> d_kin.kinetic_parameters[3] >> d_kin.kinetic_parameters[4] >>
-				d_kin.kinetic_parameters[5];
-				//			cout << kinetic_parameters[3] << kinetic_parameters[4] << kinetic_parameters[5]<<"\n";
+                //      3-5  double k_acid, k_neutral,k_base; // dissolution/precipitation rate constants
+                in >> d_kin.kinetic_parameters[3] >> d_kin.kinetic_parameters[4] >>
+                   d_kin.kinetic_parameters[5];
+                //			cout << kinetic_parameters[3] << kinetic_parameters[4] << kinetic_parameters[5]<<"\n";
 
-				//      6-11  double q1,p1,q2,q3,p2,p3; // exponents for omega
-				in >> d_kin.kinetic_parameters[6] >> d_kin.kinetic_parameters[7] >>
-				d_kin.kinetic_parameters[8] >> d_kin.kinetic_parameters[9] >>
-				d_kin.kinetic_parameters[10] >> d_kin.kinetic_parameters[11];
-				for ( j = 0; j < d_kin.n_activities; j++ )
-				{
-					in >> d_kin.active_species[j];
-					//				cout << active_species[j] ;
-					//      12,13,14  double n_1, n_2,n_3; // exponents for acidic, neutral and base cases for species one
+                //      6-11  double q1,p1,q2,q3,p2,p3; // exponents for omega
+                in >> d_kin.kinetic_parameters[6] >> d_kin.kinetic_parameters[7] >>
+                   d_kin.kinetic_parameters[8] >> d_kin.kinetic_parameters[9] >>
+                   d_kin.kinetic_parameters[10] >> d_kin.kinetic_parameters[11];
+                for ( j = 0; j < d_kin.n_activities; j++ )
+                {
+                    in >> d_kin.active_species[j];
+                    //				cout << active_species[j] ;
+                    //      12,13,14  double n_1, n_2,n_3; // exponents for acidic, neutral and base cases for species one
 
-					in >>
-					d_kin.kinetic_parameters[j +
-					                         12] >>
-					d_kin.kinetic_parameters[j +
-					                         13] >>
-					d_kin.kinetic_parameters[j + 14];
-				}
-			}
-			in.clear();
-			// next line is surface area
-			in.str ( GetLineFromFile1 ( gem_file ) );
-			in >> d_kin.surface_model;
-			cout << d_kin.surface_model << "\n";
-			if ( d_kin.surface_model >= 1 || d_kin.surface_model < 4 ) // surface model 1, 2 and 3....only one parameter...
-			{
-				in >> d_kin.surface_area[0]; // surface: m*m / mol
-				cout << "surface area " << d_kin.surface_area[0] << "\n";
-			}
-			else if ( d_kin.kinetic_model == 4 ) // model 4 is kinetic a la crunch
-			{
-				in >> d_kin.surface_area[0]; // surface: m*m / mol
-				cout << "mimic crunch: surface area " << d_kin.surface_area[0] <<
-				        "\n";
-			}
-			else if ( d_kin.kinetic_model == 6 ) // model 6 is kinetic for spherical grains
-			{
-				in >> d_kin.surface_area[0]; // surface: m*m / mol
-				cout << "const specific surface area for spherical particles" << d_kin.surface_area[0] <<
-				        "\n";
-			}
-			else if ( d_kin.kinetic_model == 5 ) // model 5 is for solid solutions, needed parameters are the number of endmembers and the surface area for each endmember
-			{
-				// next line are SS parameters
-				in.str ( GetLineFromFile1 ( gem_file ) );
-				in >> d_kin.ss_endmembers;
-				try
-				{
-					d_kin.ss_scaling = new double[d_kin.ss_endmembers];
-				}
-				catch ( bad_alloc )
-				{
-					cout <<
-					        "Reading Gems input: problem while allocating memory for Solid Solution scaling parameters"
-					     << "\n";
+                    in >>
+                       d_kin.kinetic_parameters[j +
+                                                12] >>
+                       d_kin.kinetic_parameters[j +
+                                                13] >>
+                       d_kin.kinetic_parameters[j + 14];
+                }
+            }
+            in.clear();
+            // next line is surface area
+            in.str ( GetLineFromFile1 ( gem_file ) );
+            in >> d_kin.surface_model;
+            cout << d_kin.surface_model << "\n";
+            if ( d_kin.surface_model >= 1 || d_kin.surface_model < 4 ) // surface model 1, 2 and 3....only one parameter...
+            {
+                in >> d_kin.surface_area[0]; // surface: m*m / mol
+                cout << "surface area " << d_kin.surface_area[0] << "\n";
+            }
+            else if ( d_kin.kinetic_model == 4 ) // model 4 is kinetic a la crunch
+            {
+                in >> d_kin.surface_area[0]; // surface: m*m / mol
+                cout << "mimic crunch: surface area " << d_kin.surface_area[0] <<
+                     "\n";
+            }
+            else if ( d_kin.kinetic_model == 6 ) // model 6 is kinetic for spherical grains
+            {
+                in >> d_kin.surface_area[0]; // surface: m*m / mol
+                cout << "const specific surface area for spherical particles" << d_kin.surface_area[0] <<
+                     "\n";
+            }
+            else if ( d_kin.kinetic_model == 5 ) // model 5 is for solid solutions, needed parameters are the number of endmembers and the surface area for each endmember
+            {
+                // next line are SS parameters
+                in.str ( GetLineFromFile1 ( gem_file ) );
+                in >> d_kin.ss_endmembers;
+                try
+                {
+                    d_kin.ss_scaling = new double[d_kin.ss_endmembers];
+                }
+                catch ( bad_alloc )
+                {
+                    cout <<
+                         "Reading Gems input: problem while allocating memory for Solid Solution scaling parameters"
+                         << "\n";
 #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
-					MPI_Finalize(); //make sure MPI exits
+                    MPI_Finalize(); //make sure MPI exits
 #endif
-					exit ( 1 );
-				}
+                    exit ( 1 );
+                }
 
-				for ( j = 0; j < d_kin.ss_endmembers; j++ )
-					in >> d_kin.ss_scaling[j];
-			}
-			in.clear();
-			// next line is constraint
-			in.str ( GetLineFromFile1 ( gem_file ) );
-			in >> d_kin.constraint;
-			cout << "constraint: " << d_kin.constraint << "\n";
-			if ( d_kin.constraint == 1 ) // only one model for constraint so far
-			{
-				in >> d_kin.n_constraint; // surface: m*m / mol
-				cout << "no. of constrained components in this phase " << d_kin.n_constraint << "\n";
-				// allocate memory
-				try
-				{
-					d_kin.ul_constraint = new double[d_kin.n_constraint];
-				}
-				catch ( bad_alloc )
-				{
-					cout <<
-					        "Reading Gems input: problem while allocating memory for constraint"
-					     << "\n";
+                for ( j = 0; j < d_kin.ss_endmembers; j++ )
+                    in >> d_kin.ss_scaling[j];
+            }
+            in.clear();
+            // next line is constraint
+            in.str ( GetLineFromFile1 ( gem_file ) );
+            in >> d_kin.constraint;
+            cout << "constraint: " << d_kin.constraint << "\n";
+            if ( d_kin.constraint == 1 ) // only one model for constraint so far
+            {
+                in >> d_kin.n_constraint; // surface: m*m / mol
+                cout << "no. of constrained components in this phase " << d_kin.n_constraint << "\n";
+                // allocate memory
+                try
+                {
+                    d_kin.ul_constraint = new double[d_kin.n_constraint];
+                }
+                catch ( bad_alloc )
+                {
+                    cout <<
+                         "Reading Gems input: problem while allocating memory for constraint"
+                         << "\n";
 #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
-					MPI_Finalize(); //make sure MPI exits
+                    MPI_Finalize(); //make sure MPI exits
 #endif
-					exit ( 1 );
-				}
-				// allocate memory
-				try
-				{
-					d_kin.ll_constraint = new double[d_kin.n_constraint];
-				}
-				catch ( bad_alloc )
-				{
-					cout <<
-					        "Reading Gems input: problem while allocating memory for constraint"
-					     << "\n";
+                    exit ( 1 );
+                }
+                // allocate memory
+                try
+                {
+                    d_kin.ll_constraint = new double[d_kin.n_constraint];
+                }
+                catch ( bad_alloc )
+                {
+                    cout <<
+                         "Reading Gems input: problem while allocating memory for constraint"
+                         << "\n";
 #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
-					MPI_Finalize(); //make sure MPI exits
+                    MPI_Finalize(); //make sure MPI exits
 #endif
-					exit ( 1 );
-				}
+                    exit ( 1 );
+                }
 
-				for ( j = 0; j < d_kin.n_constraint; j++ )
-				{
-					in >> d_kin.ll_constraint[j];
-					in >> d_kin.ul_constraint[j];					
-				}
-			}
-
-			// push back vector
-			m_kin.push_back ( d_kin );
-		}                                   // subkeyword found
-	}
-	// End of looping over all the key words-----------
+                for ( j = 0; j < d_kin.n_constraint; j++ )
+                {
+                    in >> d_kin.ll_constraint[j];
+                    in >> d_kin.ul_constraint[j];
+                }
+            }
+             in.clear();
+            // push back vector
+            m_kin.push_back ( d_kin );
+        }                                   // subkeyword found
+   }	// End of looping over all the key words-----------
 	return position;
 }
 
@@ -3312,7 +3311,7 @@ int REACT_GEM::CalcLimitsInitial ( long in, TNode* m_Node)
 			        if (m_kin[ii].constraint == 1)  // implementation for model 1...everywhere the same ...ATTENTION: we do not check if number of contraints matches number of components in the phase
 				{
 				      rwmutex.lock();
-				     cout << " OGS_GEM CalcLimitsInitials for phase "<< k <<  "\n";
+//				     cout << " OGS_GEM CalcLimitsInitials for phase "<< k <<  "\n";
 				      rwmutex.unlock();
 
 				  if (dCH->nDCinPH[k] != m_kin[ii].n_constraint) 
