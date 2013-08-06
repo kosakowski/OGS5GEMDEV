@@ -160,6 +160,7 @@ public:
     int flag_transport_b;                       //1: transport only dissolved components of b vector; 0: transport full speciation
     long m_max_failed_nodes; ///maximum number of failed nodes
     int flag_disable_gems;             //disable gems calculations in main loop ..not for initialization!
+    bool *m_calculate_gems;     // size: nNodes: =1 (default) =0 (switch off calculation for specific nodes)
     //--------------
 
     long nNodes;                                // number of all nodes;
@@ -289,6 +290,15 @@ public:
     void WriteVTKGEMValues(fstream &vtk_file);    
     // timer 
     double GetTimeOfDayDouble();
+    
+    typedef struct // definition for conditions to switch off GEMS
+    {
+      int condition_type; //kind of model how to process GEMS nodes initially
+      int nB; //name of transport process we would like to control
+      double l_amount; // which lower amount 
+      double u_amount; // which upper amount
+    }Calculate_GEMS;
+    vector<Calculate_GEMS> m_calc;
     
     typedef struct
     {

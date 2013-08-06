@@ -153,6 +153,7 @@ REACT_GEM::~REACT_GEM ( void )
 		delete []m_xDC_MT_delta;
 		delete []m_xDC_Chem_delta;
 		delete []m_NodeHandle;
+		delete []m_calculate_gems;
 
 		delete [] m_NodeStatusCH;
 		delete [] m_IterDone;
@@ -321,6 +322,7 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 		// Get number of Elems
 		nElems = GetElemNumber_MT();
 		// kg44 03 april 2010 first we take all variables that we need for all nodes!
+		m_calculate_gems = new bool[nNodes]; // flag if gems is calculated for this node
 
 		// Allocating work memory for FMT part (here only chemical variables)
 		m_NodeHandle = new long [nNodes];
@@ -474,7 +476,9 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 			m_NodeHandle_buff[in] = 0;
 			m_NodeStatusCH_buff[in] = 0;
 			m_IterDone_buff[in] = 0;
+			m_calculate_gems[in]=1; // default is here 1: calculate GEMS everywhere!
 
+			
 			m_T[in] = 298.15;            //equivalent to 25°C
 			m_P[in] = 1.0e+5;
 			m_Vs[in] = 0.0;
@@ -753,6 +757,7 @@ short REACT_GEM::Init_RUN(string Project_path)
 #endif
 			exit ( 1 );
 		}
+		
 	} //end loop over all nodes
 // here we have to make sure that the flow process has all initial data to do the saturation!
 // synchronize pressures should be enough!
@@ -802,6 +807,27 @@ short REACT_GEM::Init_RUN(string Project_path)
 		GetInitialReactInfoFromMassTransport ( 1 ); //get the initial values from MD ...IC are total B vectors - last time step! this is not necessary for restart
 	}
 
+	        // now we can check if gems should be calculated at this node!
+	for ( i = 0; i < nNodes; i++ )
+	{
+	     	for ( ii = 0; ii < ( int ) m_calc.size(); ii++ ) // this loop is for identifying kinetically controlled phases
+		  {
+		    if (m_calc[ii].condition_type == 1) // condition 1 ...given lower and upper limit for a specific initial component and gems should be NOT calculated
+		      {
+//			cout << " DEBUG: found condition! " ;
+//			  cout << "Exclude node " << i <<" from calculation. value, lower- and upper limit: "<<m_bIC[i * nIC + m_calc[ii].nB] << " " 
+//			       <<  m_calc[ii].l_amount << " " << m_calc[ii].l_amount << "\n";
+			if ( (m_bIC[i * nIC + m_calc[ii].nB] >= m_calc[ii].l_amount) && (m_bIC[i * nIC + m_calc[ii].nB] <= m_calc[ii].u_amount) )
+			{
+			  m_calculate_gems[i] = 0; // we overwrite the default values (1) ...zero indicates no calculation		
+//			  cout << "Exclude node " << i <<" from GEMS calculations. Criteria given for species " << m_calc[ii].nB << " " <<" value, lower- and upper limit: "<<m_bIC[i * nIC + m_calc[ii].nB] << " " 
+//			       <<  m_calc[ii].l_amount << " " << m_calc[ii].l_amount << " " << m_calculate_gems[i] << "\n";
+			}
+		       }
+		  }
+	} //end loop over all nodes
+
+	
 	delete m_Node; //get rid of this GEMS instance
 	rwmutex.unlock(); // now it is save to release the lock
 // from here the gems threads are responsible for GEMS
@@ -2623,6 +2649,7 @@ bool GEMRead ( string base_file_name, REACT_GEM* m_GEM_p )
 ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
 {
 	Kinetic_GEMS d_kin;                        // dummy kinetic vector
+	Calculate_GEMS d_calculate;                // dummy calculate vector
 	int j;
 	// Initialization----------------
 	string sub_line;
@@ -2801,6 +2828,20 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
 			in.clear();
 			continue;
 		}        // ......................................................
+        if ( line_string.find ( "$CALCULATE_GEMS" ) != string::npos )
+        {
+            in.str ( GetLineFromFile1 ( gem_file ) );
+            in >> d_calculate.condition_type;
+	    if (d_calculate.condition_type == 1) 
+	    {
+	      in >> d_calculate.nB >> d_calculate.l_amount >> d_calculate.u_amount;
+	                  // push back vector
+            m_calc.push_back ( d_calculate );
+	     cout << " exclude nodes from GEMS calculations based on species: " << d_calculate.nB << " and lower-, upper-limit: " << d_calculate.l_amount << " " << d_calculate.u_amount << "\n";
+	    }
+	    in.clear(); // input finished	    
+	}    
+ 
 
 		// kg44 26.11.2008 read in parameters for kinetics and GEM
 		/** $KINETIC_GEM
@@ -4528,13 +4569,14 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 		for ( in = mystart; in < nNodes; in += mycount ) // myrank ist defined vi USE_MPI_GEMS
 		{
 			if ( ( !flag_calculate_boundary_nodes &&
-			       m_boundary[in] ) || ( CalcSoluteBDelta ( in ) < m_diff_gems ) )                       // do this only without calculation if  on a boundary or differences very small!!!
+			       m_boundary[in] ) || ( CalcSoluteBDelta ( in ) < m_diff_gems ) || (m_calculate_gems[in] != 1))                       // do this only without calculation if  on a boundary or differences very small!!!
 			{
+//			  cout <<"DEBUG: node " << in << " not calculated..flag is "<< m_calculate_gems[in] << "\n";
 #if defined(USE_MPI_GEMS)
 				REACT_GEM::CopyToMPIBuffer ( in ); // copy old values to buffer..otherwise we loose them
 #endif
 			}
-			else // calculate if not on a boundary or transport causes differences in solutes
+			else if (m_calculate_gems[in]) // calculate if m_calculate_gems is 1 aka true
 			{
 				// Convert from concentration
 				REACT_GEM::ConcentrationToMass ( in,1); // I believe this is save for MPI
