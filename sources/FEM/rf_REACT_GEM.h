@@ -294,7 +294,7 @@ public:
     typedef struct // definition for conditions to switch off GEMS
     {
       int condition_type; //kind of model how to process GEMS nodes initially
-      int nB; //name of transport process we would like to control
+      int nB; //number of transport process we would like to control (starting at zero)
       double l_amount; // which lower amount 
       double u_amount; // which upper amount
     }Calculate_GEMS;
@@ -323,18 +323,28 @@ public:
         double surface_area[10];
         int ss_endmembers; // special model for solid solutions...only read for kinetic model == 5
         double *ss_scaling; // special model for solid solutions...only read for kinetic model == 5
-        /** for kinetically controlled phases we can set initial constraints
-	 *  first model: the initial amount for each phase is everywhere the same 
-	 * 
-	 **/
-	int constraint; // 0=off 1: model for bruno ..everywhere the same constraint
-	int n_constraint; // how many components do we need for the phase....
-	double *ll_constraint;
-	double *ul_constraint;
     } Kinetic_GEMS;
-
     vector<Kinetic_GEMS> m_kin;
 
+    typedef struct
+    {
+        /** for kinetically controlled phases we can set initial constraints
+	 *  first model: the initial amount for a component is controled by one elemnt of b vector 
+	 * condition applies of b vector is between l_amount and u_amount
+	 * 
+	 **/
+	string component_name; // must be a dependent component name
+	int n_comp; // corresponding number in component list!
+	int condition_type;
+	int nB; //number of b element we use for control (starting at zero) 
+	double l_amount; // which lower amount 
+        double u_amount; // which upper amount
+	double ll_constraint;
+	double ul_constraint;
+    } Constraints_GEMS; 
+    vector<Constraints_GEMS> m_constraints;
+    
+    
     // here we define the variables we need for the threads
     unsigned int gem_nThread, gem_nbar; // number of threads, number of threads + 1 (number of threads + master that have to cross a barrier)
     boost::barrier* gem_barrier_start; // start barrier for calculations

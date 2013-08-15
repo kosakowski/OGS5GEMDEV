@@ -636,99 +636,127 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 
 short REACT_GEM::Init_RUN(string Project_path)
 {
-	nNodes = GetNodeNumber_MT();
-	nElems = GetElemNumber_MT();
-	long ii = 0,in = 0,i = 0,j;
-	//        CompProperties *m_cp = NULL;
-	CRFProcess* this_pcs;
-	double BCValue = 0.0;
-	string cstr;
+    nNodes = GetNodeNumber_MT();
+    nElems = GetElemNumber_MT();
+    long ii = 0,in = 0,i = 0,j;
+    //        CompProperties *m_cp = NULL;
+    CRFProcess* this_pcs;
+    double BCValue = 0.0;
+    string cstr;
 
-	rwmutex.lock(); // make sure we do not interfere with the threads
+    rwmutex.lock(); // make sure we do not interfere with the threads
 
-	TNode* m_Node;
-	// DATABR structure for exchange with GEMIPM
-	DATACH* dCH;                            //pointer to DATACH
-	DATABR* dBR;                            //pointer to DATABR
+    TNode* m_Node;
+    // DATABR structure for exchange with GEMIPM
+    DATACH* dCH;                            //pointer to DATACH
+    DATABR* dBR;                            //pointer to DATABR
 
-	// Creating TNode structure accessible trough node pointer
-	m_Node = new TNode();
-	// Here we read the files needed as input for initializing GEMIPM2K
-	// The easiest way to prepare them is to use GEMS-PSI code (GEM2MT module)
-	if ( Load_Init_File ( Project_path, m_Node ) )
-	{
-		// The init file is successfully loaded
-		// Getting direct access to DataCH structure in GEMIPM2K memory
-		dCH = m_Node->pCSD();
-		if ( !dCH )
-		{
+    // Creating TNode structure accessible trough node pointer
+    m_Node = new TNode();
+    // Here we read the files needed as input for initializing GEMIPM2K
+    // The easiest way to prepare them is to use GEMS-PSI code (GEM2MT module)
+    if ( Load_Init_File ( Project_path, m_Node ) )
+    {
+        // The init file is successfully loaded
+        // Getting direct access to DataCH structure in GEMIPM2K memory
+        dCH = m_Node->pCSD();
+        if ( !dCH )
+        {
 #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
-			MPI_Finalize();       //make sure MPI exits
+            MPI_Finalize();       //make sure MPI exits
 #endif
-			exit(1);
-		}
+            exit(1);
+        }
 
-		// Getting direct access to work node DATABR structure which
-		// exchanges data between GEMIPM and FMT parts
-		dBR = m_Node->pCNode();
-		if ( !dBR )
-		{
+        // Getting direct access to work node DATABR structure which
+        // exchanges data between GEMIPM and FMT parts
+        dBR = m_Node->pCNode();
+        if ( !dBR )
+        {
 #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
-			MPI_Finalize();       //make sure MPI exits
+            MPI_Finalize();       //make sure MPI exits
 #endif
-			exit(1);
-		}
-		// run GEMS once
-		dBR->NodeStatusCH = NEED_GEM_AIA;
-		m_Node->GEM_run ( false );
-	}
-	else
-	{
+            exit(1);
+        }
+        // run GEMS once
+        dBR->NodeStatusCH = NEED_GEM_AIA;
+        m_Node->GEM_run ( false );
+    }
+    else
+    {
 #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
-		MPI_Finalize();               //make sure MPI exits
+        MPI_Finalize();               //make sure MPI exits
 #endif
-		exit(1);
-		return 5;
-	}
+        exit(1);
+        return 5;
+    }
 
-	for ( i = 0; i < nNodes; i++ ) //after running GEMS once we initialize the OGS-GEMS data arrays
+    for ( i = 0; i < nNodes; i++ ) //after running GEMS once we initialize the OGS-GEMS data arrays
 
-		// initialize the arrays
-		REACT_GEM::GetReactInfoFromGEM ( i, m_Node); // get the data even if GEMS failed...this is necessary for initializing the arrays for example m_aPH
-		// unfortunately aPH is passed to GEMS and needs correct input for working with sorption
+        // initialize the arrays
+        REACT_GEM::GetReactInfoFromGEM ( i, m_Node); // get the data even if GEMS failed...this is necessary for initializing the arrays for example m_aPH
+    // unfortunately aPH is passed to GEMS and needs correct input for working with sorption
 
-	for ( ii = 0; ii < ( int ) m_kin.size(); ii++ ) // this loop is for identifying kinetically controlled phases
-	{
-		m_kin[ii].phase_number = -1;
-		m_kin[ii].dc_counter = 0;        //this is the starting dc
-		// phase numbers are not yet set...do it!
-		for ( j = 0; j < nPH; j++ )
-		{
-			cstr.assign ( dCH->PHNL[j] );
-			//   cout << m_kin[ii].phase_name  << " gems phase: " << cstr << " "<< " component start number " <<  m_kin[ii].dc_counter << "\n";
-			if ( m_kin[ii].phase_name == cstr )
-			{
-				m_kin[ii].phase_number = j;
-				break;
-			}
-			//add the number of components to the counter..after test for phasename...as this counter gives the starting position of the dependent components
-			m_kin[ii].dc_counter += dCH->nDCinPH[j];
-		}
+    for ( ii = 0; ii < ( int ) m_kin.size(); ii++ ) // this loop is for identifying kinetically controlled phases
+    {
+        m_kin[ii].phase_number = -1;
+        m_kin[ii].dc_counter = 0;        //this is the starting dc
+        // phase numbers are not yet set...do it!
+        for ( j = 0; j < nPH; j++ )
+        {
+            cstr.assign ( dCH->PHNL[j] );
+            //   cout << m_kin[ii].phase_name  << " gems phase: " << cstr << " "<< " component start number " <<  m_kin[ii].dc_counter << "\n";
+            if ( m_kin[ii].phase_name == cstr )
+            {
+                m_kin[ii].phase_number = j;
+                break;
+            }
+            //add the number of components to the counter..after test for phasename...as this counter gives the starting position of the dependent components
+            m_kin[ii].dc_counter += dCH->nDCinPH[j];
+        }
 
-		if ( m_kin[ii].phase_number < 0 || m_kin[ii].phase_number >= nPH )
-		{
-			cout << " GEMS: Error in Phase kinetics..check input for "  <<
-			        m_kin[ii].phase_name << "\n";
+        if ( m_kin[ii].phase_number < 0 || m_kin[ii].phase_number >= nPH )
+        {
+            cout << " GEMS: Error in Phase kinetics..check input for "  <<
+                 m_kin[ii].phase_name << "\n";
 #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
-			MPI_Finalize();           //make sure MPI exits
+            MPI_Finalize();           //make sure MPI exits
 #endif
-			exit ( 1 );
-		}
-		else
-			cout << "GEM Kinetics phase number:  " << m_kin[ii].phase_name <<
-			        " in phase number " << m_kin[ii].phase_number << "\n";
-	}
-	// Marking species with fixed concentrations (in boundary nodes)
+            exit ( 1 );
+        }
+        else
+            cout << "GEM Kinetics phase number:  " << m_kin[ii].phase_name <<
+                 " in phase number " << m_kin[ii].phase_number << "\n";
+    }
+    // and now identify the componets that are kinetically controlled
+    for ( ii = 0; ii < ( int ) m_constraints.size(); ii++ ) // this loop is for identifying kinetically controlled phases
+    {
+        m_constraints[ii].n_comp = -1; // set to something outside range
+        // component numbers are not yet set...do it!
+        for ( j = 0; j < nDC; j++ )
+        {
+            cstr.assign ( dCH->DCNL[j] );
+            //   cout << m_kin[ii].phase_name  << " gems phase: " << cstr << " "<< " component start number " <<  m_kin[ii].dc_counter << "\n";
+            if ( m_constraints[ii].component_name == cstr )
+            {
+                m_constraints[ii].n_comp = j;
+                break;
+            }
+
+        }
+        if (m_constraints[ii].n_comp == -1)
+        {
+            cout << " GEMS: Error in constraints..check input for "  <<
+                 m_constraints[ii].component_name << "\n";
+#if defined(USE_MPI_GEMS) || defined(USE_PETSC)
+            MPI_Finalize();           //make sure MPI exits
+#endif
+            exit ( 1 );
+        }
+
+
+    }
+   	// Marking species with fixed concentrations (in boundary nodes)
 	// first we check the boundary nodes with fixed concentrations
 	// this is adopted from rf_REACT_BRNS...we only look for the first species, as with GEMS we should define boundary conditions for ALL species
 	this_pcs = NULL;
@@ -2650,6 +2678,7 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
 {
 	Kinetic_GEMS d_kin;                        // dummy kinetic vector
 	Calculate_GEMS d_calculate;                // dummy calculate vector
+	Constraints_GEMS d_constraints;            // dummy constraint vector
 	int j;
 	// Initialization----------------
 	string sub_line;
@@ -2841,7 +2870,35 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
 	    }
 	    in.clear(); // input finished	    
 	}    
- 
+	
+	if ( line_string.find ( "$CONSTRAINT_GEMS" ) != string::npos )
+        {
+            // next line is constraint
+            in.str ( GetLineFromFile1 ( gem_file ) );
+            in >> d_constraints.component_name;
+            cout << "constraint: " << d_constraints.component_name << "\n";
+            in >> d_constraints.ll_constraint;
+            in >> d_constraints.ul_constraint;
+            in >> d_constraints.condition_type;
+	    if (d_constraints.condition_type == 1) 
+	    {
+	      in >> d_constraints.nB >> d_constraints.l_amount >> d_constraints.u_amount;
+	                  // push back vector
+	     cout << " add constraints for " << d_constraints.component_name << " based on species: " << d_constraints.nB << " and lower-, upper-limit: " << d_constraints.l_amount << " " << d_constraints.u_amount << "\n";
+	    }	    
+	    else
+	    {
+	     in.clear();
+	     cout << "Constraint for " << d_constraints.component_name << " not accepted!\n";
+	     #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
+                    MPI_Finalize(); //make sure MPI exits
+#endif
+                    exit ( 1 );
+	    }
+             in.clear();
+	     m_constraints.push_back(d_constraints);
+	}
+	
 
 		// kg44 26.11.2008 read in parameters for kinetics and GEM
 		/** $KINETIC_GEM
@@ -2960,52 +3017,6 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
                     in >> d_kin.ss_scaling[j];
             }
             in.clear();
-            // next line is constraint
-            in.str ( GetLineFromFile1 ( gem_file ) );
-            in >> d_kin.constraint;
-            cout << "constraint: " << d_kin.constraint << "\n";
-            if ( d_kin.constraint == 1 ) // only one model for constraint so far
-            {
-                in >> d_kin.n_constraint; 
-                cout << "no. of constrained components in this phase " << d_kin.n_constraint << "\n";
-                // allocate memory
-                try
-                {
-                    d_kin.ul_constraint = new double[d_kin.n_constraint];
-                }
-                catch ( bad_alloc )
-                {
-                    cout <<
-                         "Reading Gems input: problem while allocating memory for constraint"
-                         << "\n";
-#if defined(USE_MPI_GEMS) || defined(USE_PETSC)
-                    MPI_Finalize(); //make sure MPI exits
-#endif
-                    exit ( 1 );
-                }
-                // allocate memory
-                try
-                {
-                    d_kin.ll_constraint = new double[d_kin.n_constraint];
-                }
-                catch ( bad_alloc )
-                {
-                    cout <<
-                         "Reading Gems input: problem while allocating memory for constraint"
-                         << "\n";
-#if defined(USE_MPI_GEMS) || defined(USE_PETSC)
-                    MPI_Finalize(); //make sure MPI exits
-#endif
-                    exit ( 1 );
-                }
-
-                for ( j = 0; j < d_kin.n_constraint; j++ )
-                {
-                    in >> d_kin.ll_constraint[j];
-                    in >> d_kin.ul_constraint[j];
-                }
-            }
-             in.clear();
             // push back vector
             m_kin.push_back ( d_kin );
         }                                   // subkeyword found
@@ -3341,40 +3352,28 @@ int REACT_GEM::CalcLimitsInitial ( long in, TNode* m_Node)
 		}                                      // end loop over phases
 		return 1; 
 	}  // end restart
-	else // we loop over all phases and test if kinetic constraints are set
+	else // we test if kinetic constraints are set
 	{
-		for ( ii = 0; ii < ( int ) m_kin.size(); ii++ )
+		for ( ii = 0; ii < ( int ) m_constraints.size(); ii++ )
 		{
-			k = m_kin[ii].phase_number;
-
-			if ( m_kin[ii].kinetic_model > 0 ) // do it only if kinetic model is defined take model
+                        // get componet number for constraint!
+		        k = m_constraints[ii].n_comp;
+		    if (m_constraints[ii].condition_type == 1) // condition 1 ...given lower and upper limit for a specific initial component and gems should be NOT calculated
+		      {
+//			cout << " DEBUG: found condition! " ;
+//			  cout << "Exclude node " << i <<" from calculation. value, lower- and upper limit: "<<m_bIC[i * nIC + m_calc[ii].nB] << " " 
+//			       <<  m_calc[ii].l_amount << " " << m_calc[ii].l_amount << "\n";
+			if ( (m_bIC[in * nIC + m_constraints[ii].nB] >= m_constraints[ii].l_amount) && (m_bIC[in * nIC + m_constraints[ii].nB] <= m_constraints[ii].u_amount) )
 			{
-			        if (m_kin[ii].constraint == 1)  // implementation for model 1...everywhere the same ...ATTENTION: we do not check if number of contraints matches number of components in the phase
-				{
-				      rwmutex.lock();
-//				     cout << " OGS_GEM CalcLimitsInitials for phase "<< k <<  "\n";
-				      rwmutex.unlock();
+				m_dll[in * nDC + k] = m_constraints[ii].ll_constraint; 
+				m_dul[in * nDC + k] = m_constraints[ii].ul_constraint; 
 
-				  if (dCH->nDCinPH[k] != m_kin[ii].n_constraint) 
-				    {
-				      rwmutex.lock();
-				     cout << " OGS_GEM CalcLimitsInitials: failed: number of consraints does not match number of componets in phase! Check input! \n";
-#if defined(USE_MPI_GEMS) || defined(USE_PETSC)
-				      MPI_Finalize();                   //make sure MPI exits
-#endif			     
-				      rwmutex.unlock();
-				     exit(1);
-				    }
+//			  cout << "Exclude node " << i <<" from GEMS calculations. Criteria given for species " << m_calc[ii].nB << " " <<" value, lower- and upper limit: "<<m_bIC[i * nIC + m_calc[ii].nB] << " " 
+//			       <<  m_calc[ii].l_amount << " " << m_calc[ii].l_amount << " " << m_calculate_gems[i] << "\n";
+			}
+		       }
 				    
-				  for ( j = 0; j < dCH->nDCinPH[k]; j++ )
-				  {
-					m_dll[in * nDC + m_kin[ii].dc_counter+j] = m_kin[ii].ll_constraint[j]; 
-					m_dul[in * nDC + m_kin[ii].dc_counter+j] = m_kin[ii].ul_constraint[j]; 
-				  }
-				
-				} // end found constraint
-			}//end kinetic model
-		}                                      // end loop over phases
+		}                                      // end loop over constraints
 	  
 	}
 	return 1;
