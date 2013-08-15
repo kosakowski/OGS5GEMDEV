@@ -2966,7 +2966,7 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
             cout << "constraint: " << d_kin.constraint << "\n";
             if ( d_kin.constraint == 1 ) // only one model for constraint so far
             {
-                in >> d_kin.n_constraint; // surface: m*m / mol
+                in >> d_kin.n_constraint; 
                 cout << "no. of constrained components in this phase " << d_kin.n_constraint << "\n";
                 // allocate memory
                 try
