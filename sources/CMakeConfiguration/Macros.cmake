@@ -113,6 +113,9 @@ FUNCTION (ADD_BENCHMARK authorName benchmarkName ogsConfiguration numProcesses)
   IF (${ogsConfiguration} STREQUAL "OGS_FEM_PQC" AND OGS_FEM_PQC)
 	SET (CONFIG_MATCH TRUE)
   ENDIF (${ogsConfiguration} STREQUAL "OGS_FEM_PQC" AND OGS_FEM_PQC)
+  IF (${ogsConfiguration} STREQUAL "OGS_FEM_CAP" AND OGS_FEM_CAP)
+    SET (CONFIG_MATCH TRUE)
+  ENDIF (${ogsConfiguration} STREQUAL "OGS_FEM_CAP" AND OGS_FEM_CAP)
   IF (UNIX) # Only supported on Linux
 	IF (${ogsConfiguration} STREQUAL "OGS_FEM_LIS" AND OGS_FEM_LIS)
 	  SET (CONFIG_MATCH TRUE)
@@ -226,8 +229,8 @@ FUNCTION(CHECK_CONFIG)
 		"${OGS_FEM_LIS}"
 		"${OGS_FEM_CHEMAPP}"
 		"${OGS_FEM_PETSC}"
-		"${OGS_FEM_PETSC_GEMS}")
-
+		"${OGS_FEM_PETSC_GEMS}"
+        "${OGS_FEM_CAP}")
 	SET(counter 0)
 
 	FOREACH(config ${configs})
@@ -255,7 +258,8 @@ FUNCTION(CHECK_CONFIG)
 			OGS_FEM_LIS
 			OGS_FEM_CHEMAPP
 			OGS_FEM_PETSC
-			OGS_FEM_PETSC_GEMS")
+			OGS_FEM_PETSC_GEMS
+			OGS_FEM_CAP")
 	ENDIF (counter GREATER 1)
 
 ENDFUNCTION()

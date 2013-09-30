@@ -51,8 +51,6 @@ extern double gravity_constant;                   // TEST, must be put in input 
 #define T_KILVIN_ZERO  273.15                     //WW
 
 #define GAS_MASS_FORM
-#define PTC_LHS
-#define PTCM_LHS //TN - switch between LHS and RHS coupling for mass fraction equation
 
 using namespace std;
 #include "Eclipse.h"                              //BG 09/2009
@@ -697,6 +695,13 @@ void CFiniteElementStd::ConfigureCoupling(CRFProcess* pcs, const int* Shift, boo
 					//WW
 					idxS = cpl_pcs->GetNodeValueIndex("SATURATION1") + 1;
 			}
+            if(cpl_pcs == NULL) //CB_merge_05.13 
+            {
+               cpl_pcs = PCSGet("PS_GLOBAL");
+               if(cpl_pcs)
+                  idxS = cpl_pcs->GetNodeValueIndex("SATURATION1")+1;
+            }
+			
 			if(cpl_pcs == NULL) //23.02.2009 NB 4.9.05
 			{
 				cpl_pcs = PCSGet("TWO_PHASE_FLOW");
@@ -1669,6 +1674,11 @@ double CFiniteElementStd::CalCoefMass2(int dof_index)
 	//
 	if(pcs->m_num->ele_mass_lumping)
 		ComputeShapefct(1);
+    // CB_merge_0513 in case of het K, store local K in permeability_tensor
+    double *tensor = NULL;
+    tensor = MediaProp->PermeabilityTensor(Index);
+    MediaProp->local_permeability = tensor[0];
+	
 	switch(dof_index)
 	{
 	case 0:
@@ -1797,12 +1807,12 @@ double CFiniteElementStd::CalCoefMassTNEQ(int dof_index)
 		{
 		eos_arg[0] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal0) + pcs->m_num->ls_theta*interpolate(NodalVal1); //NW include theta
 		val=poro/eos_arg[0];
-		//val = poro/pressure_gp[gp];
+
 		#ifdef GAS_MASS_FORM
 		eos_arg[1] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_t0) + pcs->m_num->ls_theta*interpolate(NodalVal_t1); //NW include theta
 		eos_arg[2] =  (1-pcs->m_num->ls_theta)*interpolate(NodalVal_X0) + pcs->m_num->ls_theta*interpolate(NodalVal_X1); //NW include theta
 		val *=  FluidProp->Density(eos_arg);
-		//val *= rho_gas_gp[gp];
+
 		#endif
 		}
 		break;
@@ -1811,13 +1821,13 @@ double CFiniteElementStd::CalCoefMassTNEQ(int dof_index)
 		{
 		eos_arg[1] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_t0) + pcs->m_num->ls_theta*interpolate(NodalVal_t1); //NW include theta
 		val = - poro/eos_arg[1];
-		//val = -poro/T_gas_gp[gp];
+
 		
 		#ifdef GAS_MASS_FORM
 		eos_arg[0] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal0) + pcs->m_num->ls_theta*interpolate(NodalVal1); //NW include theta
 		eos_arg[2] =  (1-pcs->m_num->ls_theta)*interpolate(NodalVal_X0) + pcs->m_num->ls_theta*interpolate(NodalVal_X1); //NW include theta
 		val *= FluidProp->Density(eos_arg);
-		//val *= rho_gas_gp[gp];
+
 		#endif
 		}
 		break;
@@ -1831,27 +1841,14 @@ double CFiniteElementStd::CalCoefMassTNEQ(int dof_index)
 		eos_arg[0] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal0) + pcs->m_num->ls_theta*interpolate(NodalVal1); //NW include theta
 		eos_arg[1] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_t0) + pcs->m_num->ls_theta*interpolate(NodalVal_t1); //NW include theta
 		eos_arg[2] =  (1-pcs->m_num->ls_theta)*interpolate(NodalVal_X0) + pcs->m_num->ls_theta*interpolate(NodalVal_X1); //NW include theta
-		//double mol_frac_vapor = COMP_MOL_MASS_N2*eos_arg[2]/(COMP_MOL_MASS_N2*eos_arg[2] + COMP_MOL_MASS_WATER*(1.0-eos_arg[2])); //calculate mole fraction of vapor from mass fraction - TN
-		//double drho_dM = eos_arg[0]/(GAS_CONSTANT*eos_arg[1]);
-		//double dM_dxn = (COMP_MOL_MASS_WATER-COMP_MOL_MASS_N2);
-		//val = (COMP_MOL_MASS_WATER-COMP_MOL_MASS_N2)/(COMP_MOL_MASS_WATER*mol_frac_vapor +(1.0-mol_frac_vapor)*COMP_MOL_MASS_N2); //calculate drho/dmole_frac - TN
 
 		double dxn_dxm = (COMP_MOL_MASS_N2 * (COMP_MOL_MASS_N2 * eos_arg[2] + COMP_MOL_MASS_WATER * (1.0 - eos_arg[2]))-COMP_MOL_MASS_N2*eos_arg[2]*(COMP_MOL_MASS_N2-COMP_MOL_MASS_WATER));
 		dxn_dxm /= ((COMP_MOL_MASS_N2 * eos_arg[2] + COMP_MOL_MASS_WATER * (1.0 - eos_arg[2]))*(COMP_MOL_MASS_N2 * eos_arg[2] + COMP_MOL_MASS_WATER * (1.0 - eos_arg[2])));
-		//double dxn_dxm = (COMP_MOL_MASS_N2 * (COMP_MOL_MASS_N2 * water_frac_gp[gp] + COMP_MOL_MASS_WATER * (1.0 - water_frac_gp[gp]))-COMP_MOL_MASS_N2*water_frac_gp[gp]*(COMP_MOL_MASS_N2-COMP_MOL_MASS_WATER));
-		//dxn_dxm /= ((COMP_MOL_MASS_N2 * water_frac_gp[gp] + COMP_MOL_MASS_WATER * (1.0 - water_frac_gp[gp]))*(COMP_MOL_MASS_N2 * water_frac_gp[gp] + COMP_MOL_MASS_WATER * (1.0 - water_frac_gp[gp])));
-		//val = (COMP_MOL_MASS_N2-COMP_MOL_MASS_WATER)/(COMP_MOL_MASS_N2*water_frac_gp[gp] +(1-water_frac_gp[gp])*COMP_MOL_MASS_WATER);//NW - CHANGED
-		
-		//val = drho_dM * dM_dxn * dxn_dxm;
-
 		//alternative
 		val = (COMP_MOL_MASS_WATER-COMP_MOL_MASS_N2) * eos_arg[0] / (GAS_CONSTANT * eos_arg[1]) * dxn_dxm;
-		//val = (COMP_MOL_MASS_WATER-COMP_MOL_MASS_N2) * pressure_gp[gp] / (GAS_CONSTANT * T_gas_gp[gp]) * dxn_dxm;
 		val *= poro;
-		//val = (COMP_MOL_MASS_WATER-COMP_MOL_MASS_N2)/(COMP_MOL_MASS_WATER*eos_arg[2] +(1.0-eos_arg[2])*COMP_MOL_MASS_N2); //TN TEST
 		#ifndef GAS_MASS_FORM
 		val /=  FluidProp->Density(eos_arg);
-		//val /= rho_gas_gp[gp];
 		#endif
 		}
 		break;
@@ -1870,12 +1867,7 @@ double CFiniteElementStd::CalCoefMassTNEQ(int dof_index)
 		eos_arg[1] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_t0) + pcs->m_num->ls_theta*interpolate(NodalVal_t1); //NW include theta
 		eos_arg[2] =  (1-pcs->m_num->ls_theta)*interpolate(NodalVal_X0) + pcs->m_num->ls_theta*interpolate(NodalVal_X1); //NW include theta
 		val= poro*FluidProp->Density(eos_arg)*FluidProp->SpecificHeatCapacity(eos_arg);
-		//eos_arg[0] = pressure_gp[gp];
-		//eos_arg[1] = T_gas_gp[gp];
-		//eos_arg[2] = water_frac_gp[gp];
 
-		//val = poro*rho_gas_gp[gp]*FluidProp->SpecificHeatCapacity(eos_arg);
-		//val = poro*rho_gas_gp[gp]*spec_heat_cap_gas_gp[gp];
 		break;
 
 		case 6:
@@ -2732,6 +2724,9 @@ void CFiniteElementStd::CalCoefLaplace2(bool Gravity,  int dof_index)
 	dens_arg[1] = 293.15;
 	//
 	int Index = MeshElement->GetIndex();
+    // CB_merge_0513 in case of het K, store local K in permeability_tensor
+    tensor = MediaProp->PermeabilityTensor(Index);
+    MediaProp->local_permeability = tensor[0];
 	//
 	ComputeShapefct(1);                   //  12.3.2007 WW
 
@@ -2952,6 +2947,7 @@ void CFiniteElementStd::CalCoefLaplacePSGLOBAL(bool Gravity,  int dof_index)
 	double mat_fac = 1.0;                 //OK411 m_fac=0.;
 	double k_rel = 0.0;
 	double mfp_arg[2];
+    double variables[3];
 
 	int Index = MeshElement->GetIndex();
 	//
@@ -2974,8 +2970,12 @@ void CFiniteElementStd::CalCoefLaplacePSGLOBAL(bool Gravity,  int dof_index)
 			Sw = 1.0 - interpolate(NodalVal_SatNW);
 		k_rel = MediaProp->PermeabilitySaturationFunction(Sw,0);
 
-		mat_fac = k_rel / FluidProp->Viscosity();
+        // CB_merge_0513
+		variables[0] = interpolate(NodalVal1); // pressure
+        variables[1] = interpolate(NodalValC); // temperature
 
+        mat_fac = k_rel / FluidProp->Viscosity(variables);
+        //mat_fac = k_rel / FluidProp->Viscosity();
 		// Since gravity for water phase is handled directly in Assemble_Gravity,
 		// no need of any code for water phase here.
 		for(size_t i = 0; i < dim * dim; i++)
@@ -3560,8 +3560,6 @@ double CFiniteElementStd::CalCoefAdvection()
 		#ifdef GAS_MASS_FORM
 		val = 0.0;
 		#else
-		//eos_arg[0] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal0) + pcs->m_num->ls_theta*interpolate(NodalVal1); //NW include theta
-		//val = 1/eos_arg[0];
 	    val = 1.0/eos_arg[0];
 	
 		#endif
@@ -3576,7 +3574,7 @@ double CFiniteElementStd::CalCoefAdvection()
 		#else
 			eos_arg[1] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_t0) + pcs->m_num->ls_theta*interpolate(NodalVal_t1); //NW include theta
 		val = -1/eos_arg[1];
-			//val = -1.0/T_gas_gp[gp];
+
 		#endif
 		}
 		break;
@@ -3589,9 +3587,7 @@ double CFiniteElementStd::CalCoefAdvection()
 		#ifdef GAS_MASS_FORM
 		val = 0.0;
 		#else
-		//eos_arg[2] =  (1-pcs->m_num->ls_theta)*interpolate(NodalVal_X0) + pcs->m_num->ls_theta*interpolate(NodalVal_X1); //NW include theta
 		poro = MediaProp->Porosity(Index,pcs->m_num->ls_theta);
-		//val = 0*poro*(COMP_MOL_MASS_N2-COMP_MOL_MASS_WATER)/(COMP_MOL_MASS_N2*eos_arg[2] +(1-eos_arg[2])*COMP_MOL_MASS_WATER);
 		val = 0.0;
 		#endif
 		break;
@@ -3602,9 +3598,8 @@ double CFiniteElementStd::CalCoefAdvection()
 			val = -1.0;
 		else
 			val= -FluidProp->beta_T*eos_arg[1];
-			//val = -FluidProp->beta_T*T_gas_gp[gp];
 
-		if (MediaProp->PhaseHeatedByFriction.compare("FLUID") == 0) //If heat caused by interphase friction goes into fluid rather than solid
+		if (MediaProp->getFrictionPhase() == FiniteElement::FLUID) 
 			val += 1.0;
 		break;
 
@@ -3613,12 +3608,7 @@ double CFiniteElementStd::CalCoefAdvection()
 		eos_arg[1] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_t0) + pcs->m_num->ls_theta*interpolate(NodalVal_t1); //NW include theta
 		eos_arg[2] =  (1-pcs->m_num->ls_theta)*interpolate(NodalVal_X0) + pcs->m_num->ls_theta*interpolate(NodalVal_X1); //NW include theta
 
-		//eos_arg[0] = pressure_gp[gp];
-		//eos_arg[1] = T_gas_gp[gp];
-		//eos_arg[2] = water_frac_gp[gp];
 		val=FluidProp->Density(eos_arg)*FluidProp->SpecificHeatCapacity(eos_arg);
-		//val = rho_gas_gp[gp]*FluidProp->SpecificHeatCapacity(eos_arg);
-		//val = rho_gas_gp[gp]*spec_heat_cap_gas_gp[gp];
 		break;
 
 		case 6:
@@ -3662,9 +3652,9 @@ double CFiniteElementStd::CalCoefAdvection()
 		eos_arg[1] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_t0) + pcs->m_num->ls_theta*interpolate(NodalVal_t1); //NW include theta
 		eos_arg[2] =  (1-pcs->m_num->ls_theta)*interpolate(NodalVal_X0) + pcs->m_num->ls_theta*interpolate(NodalVal_X1); //NW include theta
 		val= FluidProp->Density(eos_arg);
-		//val = rho_gas_gp[gp];
 		break;
 		}
+
 		return val;
    }
 
@@ -3696,12 +3686,6 @@ double CFiniteElementStd::CalCoefAdvection()
            break;
        case 5:
            val = MediaProp->HeatTransferCoefficient(Index, pcs->m_num->ls_theta, this);
-		   //#ifdef PTC_LHS //TN LHS coupling
-		   //eos_arg[0] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal0) + pcs->m_num->ls_theta*interpolate(NodalVal1);  //TN
-		   //eos_arg[1] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_t0) + pcs->m_num->ls_theta*interpolate(NodalVal_t1); //TN
-		   //eos_arg[2] =  (1-pcs->m_num->ls_theta)*interpolate(NodalVal_X0) + pcs->m_num->ls_theta*interpolate(NodalVal_X1); //TN
-		   //val -= (1.0-MediaProp->Porosity(Index,pcs->m_num->ls_theta))*pcs->m_num->reaction_scaling*gp_ele->q_R[gp]*FluidProp->SpecificHeatCapacity(eos_arg); //TN
-		   //#endif
            break;
        case 6:
            val = - MediaProp->HeatTransferCoefficient(Index, pcs->m_num->ls_theta, this);
@@ -3718,25 +3702,14 @@ double CFiniteElementStd::CalCoefAdvection()
 		   eos_arg[0] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal0) + pcs->m_num->ls_theta*interpolate(NodalVal1);  //TN
 		   eos_arg[1] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_t0) + pcs->m_num->ls_theta*interpolate(NodalVal_t1); //TN
 		   eos_arg[2] =  1.0; //TN - only vapor component for specific heat capacity here!
-
-			//eos_arg[0] = pressure_gp[gp];
-			//eos_arg[1] = T_gas_gp[gp];
-			//eos_arg[2] = 1.0;//only vapor here
            val = - MediaProp->HeatTransferCoefficient(Index, pcs->m_num->ls_theta, this);
 		   val -= (1.0-MediaProp->Porosity(Index,pcs->m_num->ls_theta))*gp_ele->q_R[gp]*FluidProp->SpecificHeatCapacity(eos_arg); //TN
            break;
        case 10:
            val = MediaProp->HeatTransferCoefficient(Index, pcs->m_num->ls_theta, this);
-		 //  #ifdef PTC_LHS //TN LHS coupling
-			//val += (1.0-MediaProp->Porosity(Index,pcs->m_num->ls_theta))*pcs->m_num->reaction_scaling*gp_ele->q_R[gp]*SolidProp->Heat_Capacity(); //TN
-			////val += 50.0/(0.08*3.1416*0.055*0.055/4.0)*3.1416*0.055*0.08; //TN - TEST Wärmeverlust
-			//#endif
 		   eos_arg[0] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal0) + pcs->m_num->ls_theta*interpolate(NodalVal1);  //TN
 		   eos_arg[1] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_t0) + pcs->m_num->ls_theta*interpolate(NodalVal_t1); //TN
 		   eos_arg[2] =  1.0; //TN - only vapor component for specific heat capacity here!
-		 //  eos_arg[0] = pressure_gp[gp];
-			//eos_arg[1] = T_gas_gp[gp];
-			//eos_arg[2] = 1.0;
 
 		   val += (1.0-MediaProp->Porosity(Index,pcs->m_num->ls_theta))*gp_ele->q_R[gp]*FluidProp->SpecificHeatCapacity(eos_arg); //TN
            break;
@@ -3744,7 +3717,6 @@ double CFiniteElementStd::CalCoefAdvection()
            val = 0.0;
            break;
 
-       // reactive transport
        case 12:
 			val = 0.0;
 			break;
@@ -3756,14 +3728,13 @@ double CFiniteElementStd::CalCoefAdvection()
 			break;
        case 15:
            val = 0.0;
-		   #ifdef PTCM_LHS
-			val += (MediaProp->Porosity(Index,pcs->m_num->ls_theta) - 1.0)*gp_ele->q_R[gp];
-			//if vapour mass fraction supposed to remain constant (for testing) set to zero (also case 3 on RHS):
-			//val = 0.0;
-		   #endif
+		   val += (MediaProp->Porosity(Index,pcs->m_num->ls_theta) - 1.0)*gp_ele->q_R[gp];
            break;
        }
+
        return val;
+
+	  
    }
 
  /**************************************************************************
@@ -3800,9 +3771,7 @@ double CFiniteElementStd::CalCoefAdvection()
 		eos_arg[0] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal0) + pcs->m_num->ls_theta*interpolate(NodalVal1); //NW include theta
 		eos_arg[1] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_t0) + pcs->m_num->ls_theta*interpolate(NodalVal_t1); //NW include theta
 		eos_arg[2] =  (1-pcs->m_num->ls_theta)*interpolate(NodalVal_X0) + pcs->m_num->ls_theta*interpolate(NodalVal_X1); //NW include theta
-		//eos_arg[0] = pressure_gp[gp];
-		//eos_arg[1] = T_gas_gp[gp];
-		//eos_arg[2] = water_frac_gp[gp];
+
 		tensor = MediaProp->PermeabilityTensor(Index);
 		double k_rel = 1.0;
 		if (MediaProp->flowlinearity_model>0)
@@ -3810,10 +3779,9 @@ double CFiniteElementStd::CalCoefAdvection()
 		val = 1.0;
 #ifdef GAS_MASS_FORM
 		val = FluidProp->Density(eos_arg); //Moved here from CalcLaplace(); 
-		//val = rho_gas_gp[gp];
 #endif
 		val /= FluidProp->Viscosity(eos_arg);//Moved here from inside dim*dim loop
-		//val /= visc_gas_gp[gp];
+
 		val *= k_rel;
 
 		for(i=0;i<dim*dim;i++)
@@ -3822,36 +3790,21 @@ double CFiniteElementStd::CalCoefAdvection()
 		break;
 
 		case 1:
-		/*mat_fac = 0;
-		for(i=0;i<dim*dim;i++)
-		mat[i] = mat_fac;*/
 		break;
 
 		case 2:
-		/*mat_fac = 0;
-		for(i=0;i<dim*dim;i++)
-		mat[i] = mat_fac;*/
 		break;
 
 		case 3:
-		/*mat_fac = 0;
-		for(i=0;i<dim*dim;i++)
-		mat[i] = mat_fac;*/
 		break;
 
 		case 4:
-		/*mat_fac = 0;
-		for(i=0;i<dim*dim;i++)
-		mat[i] = mat_fac;*/
 		break;
 
 		case 5:
 		eos_arg[0] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal0) + pcs->m_num->ls_theta*interpolate(NodalVal1); //NW include theta
 		eos_arg[1] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_t0) + pcs->m_num->ls_theta*interpolate(NodalVal_t1); //NW include theta
 		eos_arg[2] =  (1-pcs->m_num->ls_theta)*interpolate(NodalVal_X0) + pcs->m_num->ls_theta*interpolate(NodalVal_X1); //NW include theta
-		//eos_arg[0] = pressure_gp[gp];
-		//eos_arg[1] = T_gas_gp[gp];
-		//eos_arg[2] = water_frac_gp[gp];
 		poro = MediaProp->Porosity(Index,pcs->m_num->ls_theta);
 		for (i = 0; i < dim; i++)
 				fluid_heat_conductivity_tensor[i*dim+i] = poro*FluidProp->HeatConductivity(eos_arg);
@@ -3861,27 +3814,15 @@ double CFiniteElementStd::CalCoefAdvection()
 		break;
 
 		case 6:
-		/*mat_fac = 0;
-		for(i=0;i<dim*dim;i++)
-		mat[i] = mat_fac;*/
 		break;
 
 		case 7:
-		/*mat_fac = 0;
-		for(i=0;i<dim*dim;i++)
-		mat[i] = mat_fac;*/
 		break;
 
 		case 8:
-		/*mat_fac = 0;
-		for(i=0;i<dim*dim;i++)
-		mat[i] = mat_fac; */      
 		break;
 
 		case 9:
-		/*mat_fac = 0;
-		for(i=0;i<dim*dim;i++)
-		mat[i] = mat_fac;*/
 		break;
 
 		case 10:
@@ -3894,36 +3835,21 @@ double CFiniteElementStd::CalCoefAdvection()
 		break;
 
 		case 11:
-		/*mat_fac = 0;
-		for(i=0;i<dim*dim;i++)
-		mat[i] = mat_fac;*/
 		break;
 
 		case 12:
-		/*mat_fac = 0;
-		for(i=0;i<dim*dim;i++)
-		mat[i] = mat_fac;*/
 		break;
 
 		case 13:
-		/*mat_fac = 0;
-		for(i=0;i<dim*dim;i++)
-		mat[i] = mat_fac;*/
 		break;
 
 		case 14:
-		/*mat_fac = 0;
-		for(i=0;i<dim*dim;i++)
-		mat[i] = mat_fac;*/
 		break;
 
 		case 15:
 		eos_arg[0] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal0) + pcs->m_num->ls_theta*interpolate(NodalVal1); //NW include theta
 		eos_arg[1] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_t0) + pcs->m_num->ls_theta*interpolate(NodalVal_t1); //NW include theta
 		eos_arg[2] =  (1-pcs->m_num->ls_theta)*interpolate(NodalVal_X0) + pcs->m_num->ls_theta*interpolate(NodalVal_X1); //NW include theta
-		//mol_frac_vapor = COMP_MOL_MASS_N2*eos_arg[2]/(COMP_MOL_MASS_N2*eos_arg[2] + COMP_MOL_MASS_WATER*(1.0-eos_arg[2])); //calculate mole fraction of vapor from mass fraction - TN
-		//M_G_total = COMP_MOL_MASS_WATER*mol_frac_vapor + COMP_MOL_MASS_N2*(1.0-mol_frac_vapor);//mol. Masse gas - TN
-		//dmole_dmass = (COMP_MOL_MASS_N2*M_G_total - COMP_MOL_MASS_N2*eos_arg[2]*(COMP_MOL_MASS_N2 - COMP_MOL_MASS_WATER))/(M_G_total*M_G_total); //derivative to correct diffusion term - TN
 		poro = MediaProp->Porosity(Index,pcs->m_num->ls_theta);
 		tort = MediaProp->TortuosityFunction(Index,unit,pcs->m_num->ls_theta);
 		double diffusion_coefficient_component = cp_vec[0]->CalcDiffusionCoefficientCP(Index,pcs->m_num->ls_theta,pcs);
@@ -3933,7 +3859,6 @@ double CFiniteElementStd::CalCoefAdvection()
 			//diffusion_coefficient_component *= 0.1;
 
 		for (i = 0; i < dim; i++)
-			//diffusion_tensor[i*dim+i] = tort*poro*rho_gas_gp[gp]*diffusion_coefficient_component;
 			diffusion_tensor[i*dim+i] = tort*poro*FluidProp->Density(eos_arg)*diffusion_coefficient_component; //9.5e-5
 		
 		for(i=0;i<dim*dim;i++)
@@ -4781,13 +4706,6 @@ void CFiniteElementStd::CalcMass2()
       double fkt,mat_fac;
       mat_fac = 1.0;
 
-	  //pressure_gp.clear();
-	  //T_gas_gp.clear();
-	  //T_solid_gp.clear();
-	  //water_frac_gp.clear();
-	  //rho_gas_gp.clear();
-	  //visc_gas_gp.clear();
-	  //spec_heat_cap_gas_gp.clear();
 
       //----------------------------------------------------------------------
       //======================================================================
@@ -4802,17 +4720,6 @@ void CFiniteElementStd::CalcMass2()
          // Compute geometry
          ComputeShapefct(1);                      // Linear interpolation function
 
-		 //Ablegen der Zustandsgrößen in Vector
-		 //pressure_gp.push_back((1-pcs->m_num->ls_theta)*interpolate(NodalVal0) + pcs->m_num->ls_theta*interpolate(NodalVal1));
-		 //T_gas_gp.push_back((1-pcs->m_num->ls_theta)*interpolate(NodalVal_t0) + pcs->m_num->ls_theta*interpolate(NodalVal_t1));
-		 //T_solid_gp.push_back((1-pcs->m_num->ls_theta)*interpolate(NodalVal_t2_0) + pcs->m_num->ls_theta*interpolate(NodalVal_t2_1));
-		 //water_frac_gp.push_back((1-pcs->m_num->ls_theta)*interpolate(NodalVal_X0) + pcs->m_num->ls_theta*interpolate(NodalVal_X1));
-		 //eos_arg[0] = pressure_gp[gp];
-		 //eos_arg[1] = T_gas_gp[gp];
-		 //eos_arg[2] = water_frac_gp[gp];
-		 //rho_gas_gp.push_back(FluidProp->Density(eos_arg));
-		 //visc_gas_gp.push_back(FluidProp->Viscosity(eos_arg));
-		 //spec_heat_cap_gas_gp.push_back(FluidProp->SpecificHeatCapacity(eos_arg));
 
          for(in=0; in<pcs->dof; in++)
          {
@@ -5283,8 +5190,8 @@ void CFiniteElementStd::CalcContent()
  **************************************************************************/
 void CFiniteElementStd::CalcLaplace()
 {
-  int i, j, k, l, in, jn;
-  
+  int i, j,  l, in, jn;
+  size_t k;
   // ---- Gauss integral
   int gp_r = 0, gp_s = 0, gp_t;
   gp_t = 0;
@@ -5379,7 +5286,7 @@ void CFiniteElementStd::CalcLaplace()
 			{
 			  const int ksh = k*nnodes + i; 
 			  const int km = dim *k ;
-			  for(l=0; l< dim; l++)
+			  for(l=0; l< (int)dim; l++)
 			    {
 			      (*Laplace)(iish, jjsh) += fkt * dshapefct[ksh] \
 				* mat[km + l] * dshapefct[l*nnodes+j];
@@ -5603,6 +5510,16 @@ void CFiniteElementStd::CalcAdvection()
 	CFluidProperties* m_mfp_g = NULL;
 	bool multiphase = false;
 	//18.02.2008, 04.09.2008 WW
+
+    // CB _ctx_
+	//bool _ctx_ = false;
+    //double  porosity =0;
+    //if(pcs->type==2){
+    //  if (cp_vec[pcs->pcs_component_number]->_ctx_Coefficient>0){
+    //    _ctx_ = true;
+    //    porosity = this->MediaProp->Porosity(Index,this->pcs->m_num->ls_theta);
+    //  }                                                  //18.02.2008, 04.09.2008 WW
+    //}
 	if(!cpl_pcs && (pcs->type != 2) && (pcs->type != 5))
 		return;
 	if(cpl_pcs && cpl_pcs->type == 1212)
@@ -5636,6 +5553,12 @@ void CFiniteElementStd::CalcAdvection()
 		vel[0] = mat_factor * gp_ele->Velocity(0, gp);
 		vel[1] = mat_factor * gp_ele->Velocity(1, gp);
 		vel[2] = mat_factor * gp_ele->Velocity(2, gp);
+        // CB _ctx_ : modify v if _ctx_ flux needs to be included
+        //if(_ctx_){
+        //  vel[0] -= porosity * gp_ele->_ctx_Gauss(0,gp);
+        //  vel[1] -= porosity * gp_ele->_ctx_Gauss(1,gp);
+        //  vel[2] -= porosity * gp_ele->_ctx_Gauss(2,gp);
+        //}
 		// If component is in non - wetting phase, as designated by transport_phase == 10 // SB, BG
 		if(cp_vec.size() > 0 && this->pcs->pcs_component_number>=0)
 			// // SB, BG
@@ -6669,10 +6592,10 @@ void CFiniteElementStd::Cal_rho_s_TS()
 									              gp_ele->rho_s_prev[gp],   // solid density, previous time step value
 												  1-poro,
 									              delta_t,
-												  this->SolidProp->reaction_system);            // time step size, same as PDE step size
+												  this->SolidProp->getSolidReactiveSystem());            // time step size, same as PDE step size
 		 
-		 if (this->SolidProp->reaction_system.compare("INERT") != 0){
-			 if (this->SolidProp->reaction_system.compare("SINUSOIDAL") == 0) {//For Benchmarks
+		 if (this->SolidProp->getSolidReactiveSystem() != FiniteElement::INERT){
+			 if (this->SolidProp->getSolidReactiveSystem() == FiniteElement::SINUSOIDAL) {//For Benchmarks
 				 gp_ele->rho_s_curr[gp] = 1.0 + 0.1*sin(2.0*3.1416*aktuelle_zeit)/(1.0-poro);//TN Test mass transfer
 				 gp_ele->q_R[gp] = 0.1*2.0*3.1416*cos(2.0*3.1416*aktuelle_zeit)/(1.0-poro); //TN Test mass transfer
 			 }
@@ -6899,8 +6822,10 @@ void CFiniteElementStd::Cal_Velocity()
 				}
 				else if(PcsType == P) // PCH 05.2009
 				{
-					vel[dim - 1] -= coef;
-					vel_g[dim - 1] += gravity_constant * GasProp->Density();
+                  //vel[dim-1] -= coef;
+				  // CB_merge_0513 ?? gravity term
+            	  vel[dim-1] += coef; // CB I think this should be added 
+				  vel_g[dim - 1] += gravity_constant * GasProp->Density();
 				}
 				else
 					vel[dim - 1] += coef;
@@ -7566,25 +7491,25 @@ string CFiniteElementStd::Cal_GP_Velocity_ECLIPSE(string tempstring,
 		temp_vel[1] = interpolate(NodalVal1);
 		temp_vel[2] = interpolate(NodalVal2);
 
-		// Set gauss point velocity
-		for(size_t i_dim = 0; i_dim < dim; i_dim++)
-			if (phase == "WATER")
-				gp_ele->Velocity(i_dim, gp) = temp_vel[i_dim];
-			else
-			{
-				if ((phase == "GAS") || (phase == "OIL"))
-					gp_ele->Velocity_g(i_dim, gp) = temp_vel[i_dim];
-				else
-				{
-					cout <<
-					"The program is canceled because there is a phase used which is not considered yet!"
-					     << "\n";
-					system("Pause");
-					exit(0);
-				}
-			}
+		// Set gauss point velocity //CB SB
+        for(size_t i_dim = 0; i_dim < dim; i_dim++){
 
-		// Data for Test Output
+          if (phase == "WATER"){
+              if (this->pcs->EclipseData->phase_shift_flag == false)
+				gp_ele->Velocity(i_dim, gp) = temp_vel[i_dim];
+          }
+  		  else if (phase == "GAS")
+		    gp_ele->Velocity_g(i_dim, gp) = temp_vel[i_dim];
+          else if(phase == "OIL")
+          {
+            if (this->pcs->EclipseData->phase_shift_flag == true)
+              gp_ele->Velocity(i_dim, gp) = temp_vel[i_dim];
+            else
+		      gp_ele->Velocity_g(i_dim, gp) = temp_vel[i_dim];
+          }
+	  
+        }
+        // Data for Test Output
 		if (output_average == true) //WW
 		{
 			for(size_t i_dim = 0; i_dim < dim; i_dim++)
@@ -7757,7 +7682,10 @@ void CFiniteElementStd::AssembleRHS(int dimension)
 		m_pcs = pcs_vector[i];
 		//		if (m_pcs->pcs_type_name.find("GROUNDWATER_FLOW") != string::npos) // TF
 		if (m_pcs->getProcessType () == GROUNDWATER_FLOW)
+		{
 			IsGroundwaterIntheProcesses = 1;
+   	        break;
+		}
 	}
 
 	// Checking the coordinateflag for proper solution.
@@ -9983,7 +9911,11 @@ void CFiniteElementStd::CalcSatution()
 	int i_s, i_e, ish;
 	//  int l1,l2,l3,l4; //, counter;
 	double sign, eS = 0.0;
-	//
+    // CB_merge_0513
+    double *tens = NULL;
+    int Index ;
+    Index = MeshElement->GetIndex();
+
 	MshElemType::type ElementType = MeshElement->GetElementType();
 	//----------------------------------------------------------------------
 	// Media
@@ -10001,6 +9933,8 @@ void CFiniteElementStd::CalcSatution()
 	MediaProp = mmp_vector[mmp_index];
 	MediaProp->m_pcs = pcs;
 	MediaProp->Fem_Ele_Std = this;
+    // CB_merge_0513
+	tens = MediaProp->PermeabilityTensor(Index);
 	//
 	sign = -1.0;
 	idx_cp = pcs->GetNodeValueIndex("PRESSURE1") + 1;
@@ -10040,6 +9974,8 @@ void CFiniteElementStd::CalcSatution()
 			continue;
 		ComputeShapefct(1);
 		//
+        // CB_merge_0513 in case of het K, store local K 
+        MediaProp->local_permeability  = tens[0];
 		PG = interpolate(NodalVal0);
 		NodalVal_Sat[i] = MediaProp->SaturationCapillaryPressureFunction(PG);
 	}
@@ -10314,8 +10250,14 @@ ElementValue::ElementValue(CRFProcess* m_pcs, CElem* ele) : pcs(m_pcs)
 		  rho_s_prev[i] = msp_vector[group]->Density() ;
 		  rho_s_curr[i] = rho_s_prev[i];
 		  q_R[i] = 0.0;	  
-}
+      }
 	}
+	
+    // CB _ctx_ CB_merge_0513
+	// SB electric field
+    //_ctx_Gauss.resize(3,NGPoints);
+    //_ctx_Gauss = 0.0;
+
 }
 //WW 08/2007
 void ElementValue::getIPvalue_vec(const int IP, double* vec)
@@ -10540,10 +10482,6 @@ double CFiniteElementStd::CalCoef_RHS_T_MPhase(int dof_index)
 		double Ts = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_t2_0) + pcs->m_num->ls_theta*interpolate(NodalVal_t2_1); //Ts
 		double Xw = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_X0) + pcs->m_num->ls_theta*interpolate(NodalVal_X1); //Xw
 
-		//double pg = pressure_gp[gp];
-		//double Tg = T_gas_gp[gp];
-		//double Ts = T_solid_gp[gp];
-		//double Xw = water_frac_gp[gp];
 
 		H_vap = -1.0*SolidProp->reaction_enthalpy; //sign convention: defined negative for exothermic composition reaction but equ. written as: AB + \Delta H <--> A + B
 
@@ -10560,17 +10498,10 @@ double CFiniteElementStd::CalCoef_RHS_T_MPhase(int dof_index)
 
 		case 1:
 		val = 0.0;
-		#ifndef PTC_LHS//TN: RHS coupling, inclusion of mass exchange heat capacity terms //check again if right values are used (gas/water wise)
-		eos_arg[0] = pg;
-		eos_arg[1] = Tg;
-		eos_arg[2] = Xw;
-		val += (1.0-poro)*q_r*FluidProp->SpecificHeatCapacity(eos_arg)*(Tg);
-		#endif
 		eos_arg[0] = pg;
 		eos_arg[1] = Tg;
 		eos_arg[2] = Xw;
 		val += FluidProp->Density(eos_arg)*poro*FluidProp->specific_heat_source;
-		//val += rho_gas_gp[gp]*poro*FluidProp->specific_heat_source;
 		break;
 
 		case 2:
@@ -10578,7 +10509,7 @@ double CFiniteElementStd::CalCoef_RHS_T_MPhase(int dof_index)
 		val = (1.0-poro)*q_r*H_vap;
 		val += gp_ele->rho_s_curr[gp]*(1.0-poro)*SolidProp->specific_heat_source;
 
-		if (MediaProp->PhaseHeatedByFriction.compare("SOLID") == 0) {
+		if (MediaProp->getFrictionPhase() == FiniteElement::SOLID) {
 			// HS, implementing the friction term here. 
 			double * grad_pg; // gradient of gas pressure. 
 			double * vel_Darcy; // velocity term; 
@@ -10617,30 +10548,20 @@ double CFiniteElementStd::CalCoef_RHS_T_MPhase(int dof_index)
 					vel_Darcy[i] += tensor[index_tmp] * grad_pg[i] ;
 				}
 				friction_term += vel_Darcy[i] * grad_pg[i] * k_rel / FluidProp->Viscosity(eos_arg); 
-				//friction_term += vel_Darcy[i] * grad_pg[i] * k_rel / visc_gas_gp[gp]; 
 			}
 
 			val += friction_term;
 
-			//std::cout << "Druckgradient " << grad_pg[0] << " Reibung: " << friction_term << "\n";
 			delete grad_pg;  // clean tmp memory
 			delete vel_Darcy; // clean the memory of velocity darcy
 		}
 		            
-		#ifndef PTC_LHS //TN: RHS coupling, inclusion of mass exchange heat capacity terms
-		val += -1.0*(1.0-poro)*q_r*SolidProp->Heat_Capacity()*(Ts);
-		#endif
-
+		
 		break;
 		case 3:
-		#ifdef PTCM_LHS //TN: LHS coupling
+
 		val = -1.0*(1.0-poro)*q_r;
-        #else
-		val = -(1-Xw)*(1-poro)*q_r;
-		#endif
-	 //   //TN - test mass transfer (nitrogen reactive fluid)
-		//if (SolidProp->reaction_system.compare("SINUSOIDAL") == 0)
-			//val = 0.0;
+
 		break;
 		}
 
@@ -12224,6 +12145,28 @@ void CFiniteElementStd::PrintTheSetOfElementMatrices(std::string mark)
 		(*pcs->matrix_file) << "\n";
 	}
 }
+
+//CB _ctx_ CB_merge_0513
+/*void CFiniteElementStd::Set_ctx_(long ele_index, double val, int gaussp, int i_dim){ 
+
+	ElementValue* gp_ele = ele_gp_value[Index];
+	//cout << " Index in SetElectricField: " << this->GetElementIndex() << "\n";
+	if(this->GetElementIndex() != ele_index) cout << "\n" << " Warning! Element Index does not fit! " << "\n";
+
+	gp_ele->_ctx_Gauss(i_dim,gaussp) = val;
+}
+
+
+double CFiniteElementStd::Get_ctx_(long ele_index, int gaussp, int i_dim){
+
+	double val=0.0;
+	ElementValue* gp_ele = ele_gp_value[Index];
+	//cout << " Index in GetElectricField: "  << this->GetElementIndex() << "\n";
+	if(this->GetElementIndex() != ele_index) cout << "\n" << " Warning! Element Index does not fit! " << "\n";
+	val = gp_ele->_ctx_Gauss(i_dim, gaussp);
+	return val;
+}*/
+
 }                                                 // end namespace
 
 //////////////////////////////////////////////////////////////////////////

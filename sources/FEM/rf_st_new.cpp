@@ -469,6 +469,8 @@ void CSourceTerm::ReadDistributionType(std::ifstream *st_file)
    {
       in >> geo_node_value;
       in.clear();
+      if (geo_node_value==.0)
+          std::cout << "Warning in CSourceTerm::ReadDistributionType (): Zero is set to the distribution type " << dis_type_name << ", which actually does nothing. There might be a mistake in yoru ST file. \n";
    }
 
    //outflux to surrounding depending on current value of solution at boundary (e.g. heat transfer to surrounding dependent on current wall temperature)
@@ -991,6 +993,7 @@ void CSourceTerm::Write(std::fstream* st_file)
 void CSourceTermGroup::Set(CRFProcess* m_pcs, const int ShiftInNodeVector,
 		std::string this_pv_name)
 {
+  bool set = false; // CB
 
    if (this_pv_name.size() != 0)                  //WW
       pcs_pv_name = this_pv_name;
@@ -1024,7 +1027,8 @@ void CSourceTermGroup::Set(CRFProcess* m_pcs, const int ShiftInNodeVector,
             m_msh_cond = FEMGet(source_term->pcs_type_name_cond);
 
          if (source_term->getProcessType() == FiniteElement::MASS_TRANSPORT)
-             if ( cp_vec[cp_name_2_idx[convertPrimaryVariableToString(source_term->getProcessPrimaryVariable())]]->getProcess() != m_pcs )
+             //if ( cp_vec[cp_name_2_idx[convertPrimaryVariableToString(source_term->getProcessPrimaryVariable())]]->getProcess() != m_pcs )
+             if ( cp_vec[source_term->getProcessCompVecIndex()]->getProcess() != m_pcs ) //CB cannot match CONCENTRATION with comp name!!
                  continue;
           //-- 23.02.3009. WW
          if (source_term->getProcessDistributionType()==FiniteElement::DIRECT || source_term->getProcessDistributionType()==FiniteElement::CLIMATE)
@@ -1032,12 +1036,28 @@ void CSourceTermGroup::Set(CRFProcess* m_pcs, const int ShiftInNodeVector,
            source_term->DirectAssign(ShiftInNodeVector);
            continue;
          }
+		 
+         //CB cannot match CONCENRATION with comp name!!
+         // modified to fix bug with MASS_TRANSPORT
+         if (convertProcessTypeToString (source_term->getProcessType ()).compare(pcs_type_name) == 0)
+         {
+           if(convertPrimaryVariableToString(source_term->getProcessPrimaryVariable()).compare(pcs_pv_name) == 0)
+             set = true;
+           else if ((source_term->getProcessType() == FiniteElement::MASS_TRANSPORT) 
+                && (cp_vec[source_term->getProcessCompVecIndex()]->compname.compare(pcs_pv_name) == 0))
+             set = true;
+         }		 
+		 
 
 		// 05/2012 BG, it does not work for mass transport if the second part with "CONCENTRATION" is not added !! problem identified by GK und HS
-         if ((convertProcessTypeToString (source_term->getProcessType ()).compare(pcs_type_name) == 0)
-            && ((convertPrimaryVariableToString(source_term->getProcessPrimaryVariable()).compare(pcs_pv_name) == 0) || (convertPrimaryVariableToString(source_term->getProcessPrimaryVariable()).compare("CONCENTRATION1") == 0)))
+         //if ((convertProcessTypeToString (source_term->getProcessType ()).compare(pcs_type_name) == 0)
+         //   && ((convertPrimaryVariableToString(source_term->getProcessPrimaryVariable()).compare(pcs_pv_name) == 0) || (convertPrimaryVariableToString(source_term->getProcessPrimaryVariable()).compare("CONCENTRATION1") == 0)))
          // if ( source_term->getProcess() == m_pcs )
+         //CB cannot match CONCENRATION with comp name!!
+         // modified to fix bug with MASS_TRANSPORT
+         if(set)
          {
+             set=false;
              source_term->setProcess (m_pcs);      // HS: 01.09.2009
              if (source_term->getGeoType() == GEOLIB::POINT)
                  SetPNT(m_pcs, source_term, ShiftInNodeVector);
@@ -1273,6 +1293,16 @@ std::vector<double>&node_value_vector) const
    this_number_of_nodes = (long) nodes_on_ply.size();
    std::vector<long> G2L(nSize);
    std::vector<double> NVal(this_number_of_nodes);
+
+// CB THMBM
+   // CB added to remove bug with deactivated Subdomains
+   //for(i=0;i<(long)pcs_vector.size();i++){
+   //  if(pcs_vector[i]->getProcessType()==this->getProcessType())
+   //  {
+   //    pcs_vector[i]->CheckMarkedElement();
+   //    break;
+   //  }
+   //}
 
    // Unmakr edges.
    for (i = 0; i < (long) msh->edge_vector.size(); i++)
@@ -1609,6 +1639,8 @@ void CSourceTerm::FaceIntegration(CFEMesh* msh, std::vector<long> const &nodes_o
 
    //filtering elements: elements should have nodes on the surface
    //Notice: node-elements relation has to be constructed beforehand
+   // CB THMBM 
+   //this->getProcess()->CheckMarkedElement(); // CB added to remove bug with deactivated Subdomains
    std::vector<long> vec_possible_elements;
    for (i = 0; i < this_number_of_nodes; i++)
    {
@@ -2912,7 +2944,7 @@ const int ShiftInNodeVector)
       }
    }
 
-   if (st->getProcessDistributionType() == FiniteElement::TRANSFER_SURROUNDING) { //TN - Belegung mit Flächenelementen
+   if (st->getProcessDistributionType() == FiniteElement::TRANSFER_SURROUNDING) { //TN - Belegung mit Flï¿½chenelementen
 		st->node_value_vectorArea.resize(1);
 	    st->node_value_vectorArea[0] = 1.0;
 		//nod_val->node_value = 0.0;
@@ -3490,7 +3522,7 @@ void CSourceTermGroup::SetPolylineNodeValueVector(CSourceTerm* st,
 				st->node_value_vectorArea);
 	}
 
-	if (distype == FiniteElement::TRANSFER_SURROUNDING) { //TN - Belegung mit Flächenelementen
+	if (distype == FiniteElement::TRANSFER_SURROUNDING) { //TN - Belegung mit Flï¿½chenelementen
 		st->node_value_vectorArea.resize(number_of_nodes);
 		for (size_t i = 0; i < number_of_nodes; i++){
 			st->node_value_vectorArea[i] = 1.0;
@@ -3504,7 +3536,7 @@ void CSourceTermGroup::SetPolylineNodeValueVector(CSourceTerm* st,
 			st->EdgeIntegration(m_msh, ply_nod_vector, st->node_value_vectorArea);
 
 		
-		//CNode * a_node; //Fläche wird hier im Knoten als patch area abgelegt
+		//CNode * a_node; //Flï¿½che wird hier im Knoten als patch area abgelegt
 		//for (size_t i = 0; i < number_of_nodes; i++) 
 		//{ 
 		//	a_node = m_msh->nod_vector[ply_nod_vector[i]]; 
@@ -4130,7 +4162,7 @@ double CSourceTerm::GetAnalyticalSolution(long location)
    CRFProcess* m_pcs = NULL;
    m_pcs = PCSGet(convertProcessTypeToString(this->getProcessType()), convertPrimaryVariableToString(this->getProcessPrimaryVariable()));
    CFEMesh* m_msh = m_pcs->m_msh;                 //WW
-   CElem* Ele = NULL;
+   MeshLib::CElem* Ele = NULL;
    long node_number = location;                   //WW m_pcs->st_node_value[location]->msh_node_number;
    CNode* Node = m_msh->nod_vector[node_number];
    double area = m_pcs->st_node_value[location]->node_area;

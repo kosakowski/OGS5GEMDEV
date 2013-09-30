@@ -101,6 +101,7 @@ public:
 	int GetNumGaussPoints() const {return nGaussPoints; }
 	int GetNumGaussSamples() const {return nGauss; }
 	int Dim() const {return ele_dim; }
+    double Getdshapefct(int in) {return dshapefct[in];}
 
 	// Integrate Neumman type BC
 	void FaceIntegration(double* NodeVal);

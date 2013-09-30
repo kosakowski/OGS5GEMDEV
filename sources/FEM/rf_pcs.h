@@ -116,7 +116,8 @@ typedef struct
 	double water_st_value;
 } Water_ST_GEMS;                                  // HS 11.2008
 
-typedef struct
+
+typedef struct // CB DL CO2 phase transition
 {
 	std::string name;                     //fluid name
 	double temperature;
@@ -128,7 +129,10 @@ typedef struct
 	double CO2;                           //mole of CO2
 	double H2O;                           //mole of H2O
 	double NaCl;                          //mole of NaCl
+	double C_GAS;	  //mole of CO2 in Gas
+	double H2;        //mole of H2
 }Phase_Properties;
+
 
 typedef struct
 {
@@ -802,7 +806,7 @@ public:
 	  void CalcSecondaryVariablesTNEQ();      //HS
 	void CalcSecondaryVariablesUnsaturatedFlow(bool initial = false);
 	void CalcSecondaryVariablesPSGLOBAL(); // PCH
-	                                       // PCH
+    void CalcSecondaryVariablesLiquidFlow();                                                  // PCH
 	double GetCapillaryPressureOnNodeByNeighobringElementPatches(int nodeIdx,
 	                                                             int meanOption,
 	                                                             double Sw);
@@ -1045,9 +1049,6 @@ extern bool pcs_created;
 extern std::vector<LINEAR_SOLVER*> PCS_Solver;    //WW
                                                   //OK
 extern void MMPCalcSecondaryVariablesNew(CRFProcess* m_pcs, bool NAPLdiss);
-extern void CalcNewNAPLSat(CRFProcess* m_pcs);     //CB 01/08
-                                                   //CB 01/08
-extern double CalcNAPLDens(CRFProcess* m_pcs, int node);
 extern void SetFlowProcessType();                 //CB 01/08
 extern void CopyTimestepNODValuesSVTPhF();        //CB 13/08
 #if !defined(USE_PETSC) && !defined(NEW_EQS) // && defined(other parallel libs)//03~04.3012. WW

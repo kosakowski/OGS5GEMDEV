@@ -111,6 +111,7 @@ public:
 	bool UsePrecalculatedFiles;
 	double Molweight_CO2; // [g/mol]
 	double TotalSimulationTime;
+	std::string dissolved_co2_pcs_name_DUMUX; // Keyword DISSOLVED_CO2_PCS_NAME; Name of MASS_TRANSPORT Process which is used to store total dissolved CO2 from DUMUX
 
 	//CFiniteElementStd* GetAssembler() {return fem; }
 

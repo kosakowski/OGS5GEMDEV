@@ -205,7 +205,7 @@ extern void DOMCreate();
 //---- MPI Parallel --------------
 //MH//HS
 #if defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL) || \
-        defined(USE_MPI_GEMS) || defined(USE_MPI_BRNS)
+        defined(USE_MPI_GEMS) || defined(USE_MPI_BRNS) || defined(USE_MPI_KRC)  
 extern int mysize;                                //WW
 extern int myrank;
 extern char t_fname[3];

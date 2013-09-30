@@ -17,8 +17,6 @@ GeoSys-OUT: Output ------------------------------------------------
 #OUTPUT // profile
  $ELE_VALUES
   VELOCITY1_X
-  POROSITY
-  PERMEABILITY
  $GEO_TYPE
   DOMAIN
  $DAT_TYPE

@@ -53,6 +53,11 @@
 #include "rf_kinreact.h"
 #include "rf_random_walk.h"                       // PCH
 #include "rf_react.h"
+#include "rf_react_int.h"
+//CB2406 #ifdef OGS_FEM_CAP // CAP_REACT
+  // CB_merge_0513 
+  #include "rf_react_cap.h"  
+
 #ifdef CHEMAPP
 #include "eqlink.h"                               //MX
 #endif
@@ -170,7 +175,10 @@ int ReadData ( char* dateiname, GEOLIB::GEOObjects& geo_obj, std::string& unique
 
 	MSPRead(dateiname);
 	MMPRead(dateiname);
+    REACINTRead(dateiname); // CB new reaction interface
 	RCRead(dateiname);
+    REACT_CAP_Read(dateiname, geo_obj, unique_name);  //DL/SB 11/2008 ChemASpp inteface new
+
 	KRRead(dateiname, geo_obj, unique_name);
 	KRWrite(dateiname);
 #ifdef CHEMAPP

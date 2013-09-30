@@ -112,6 +112,8 @@ private:
 	                               double n0 /*old porosity*/,
 	                               double n /*new porosity*/); //HS: 11.2008
 	//WW
+	double KozenyCarmanNew(double k_init, double n_init, double n_t); //AB
+	double VermaPruess(double k_init, double n_init, double n_t);     //AB
 	void CalStressPermeabilityFactor(double* kfac, const double T = 273.0);
 	//WW
 	void CalStressPermeabilityFactor2(double* kfac, const double T = 273.0);
@@ -145,14 +147,16 @@ private:
 	void SetDistributedELEProperties(std::string);
 
 	void WriteTecplotDistributedProperties(); //OK
-      double HeatTransferCoefficient(long number,double theta, CFiniteElementStd* assem); //NW
+    double HeatTransferCoefficient(long number,double theta, CFiniteElementStd* assem); //NW
     double ParticleDiameter();
-
+    unsigned GetGeoDimension(void ){ return geo_dimension; }
 	/**
 	 * the type of the geometric entity, the material property is assigned to
 	 * @return a value of the enum GEOLIB::GEOTYPE
 	 */
 	GEOLIB::GEOTYPE getGeoType() const { return _geo_type; }
+
+    CFEMesh* getMesh(void) { return _mesh; }
 
 	// Properties
 private:
@@ -170,6 +174,7 @@ private:
 	 * material property is assigned to
 	 */
 	GEOLIB::GEOTYPE _geo_type;
+	FiniteElement::FrictionPhase _fric_phase;
 public:
 	//GEO
 	std::string geo_name;
@@ -200,10 +205,14 @@ public:
 	int unconfined_flow_group;
 	int permeability_model;               // permeability
 	double permeability;
-	double permeability_tensor[9];       
+	double local_permeability; //CB
+	double permeability_tensor[9];
+	double permeability_porosity_updating_values[5]; //ABM: Maximum of 2 values in Verma-Pruess case
 	std::string permeability_tensor_type_name;
+    std::string permeability_porosity_updating_type_name; //ABM
 	std::string tortuosity_tensor_type_name;
 	int permeability_tensor_type;
+	int permeability_porosity_updating_type; //ABM
 	int tortuosity_tensor_type;
 
 	  std::string PhaseHeatedByFriction; //In TNEQ models: dissipated heat due to friction into solid or fluid energy balance
@@ -276,9 +285,20 @@ public:
       int heat_transfer_model; //NW
       int effective_heat_transfer_model; //NW
       double heat_transfer_model_value; //NW
-      
+
       int particle_diameter_model;
       double particle_diameter_model_value;
+	//Get friction phase - TN
+	FiniteElement::FrictionPhase getFrictionPhase () const;
+
+	//Set value for friction phase - TN
+	void setFrictionPhase (FiniteElement::FrictionPhase fric_phase);
+
+	//CB Chiogna et al alpha-t model
+	int alpha_t_model ;
+    double graindiameter;
+    double hydraulicrad;
+    double betaexpo;
 };
 
 class CMediumPropertiesGroup                      //YD

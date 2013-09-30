@@ -1,7 +1,6 @@
 /* reaction package header file */
 
 #ifndef reaction_INC
-
 #define reactions_INC
 
 #include <vector>
@@ -35,6 +34,7 @@ public:
 	int rcml_number_of_kinetics;          /* number of kinetic reactions  */
 	int rcml_number_of_ion_exchanges;     /* number of phases (in equilibrium) */
 	int rcml_number_of_gas_species;       /* number of species in gas phase */
+	size_t rcml_number_of_secondary_species; /* number of species in gas phase */
 	/* hier später reaction models reinhängen ?*/
 	int rcml_pH_flag;                     /* =0, pH constant; =1 (default), pH will change  */
 	int rcml_pe_flag;                     /* =0, pe constant; =1 (default), pe will change  */
@@ -43,12 +43,14 @@ public:
 	int rcml_pH_charge;                   /* =0, no charge balance for pH; =1, used for charge balance (keyword charge in line with pH*/
 	char* outfile;                        /* Ausgabefile von PHREEQC */
 	std::string file_name_pqc;            // Name of pqc file in GeoSys project (*.pqc)
+      std::string file_name_database;             // Name of pqc database file in GeoSys project (*.pqc)
 	std::string outfile_name;
 	std::string results_file_name;
 	std::vector < std::string > pqc_names; // species names in *-pqc input file
 	std::vector < int > pqc_index;        // index in process array
 	std::vector < int > pqc_process;      // process number in pcs_vector
 	double gamma_Hplus;                   //activity coefficent of H+ ion
+      std::vector < std::string > additional_punches;
 
 	// Member functions
 	REACT* GetREACT(void);
@@ -72,6 +74,7 @@ public:
 	void CalculateReactionRateFlag(void);
 	void SetNeighborNodesActive(long startnode, long level, int* help);
 	int  CheckNoReactionNodes(void);
+      int Teststeps(long nodes);
 	// Reaction at elements //MX
 	void InitREACT0(void);
 	void ExecuteReactionsPHREEQC0(void);
@@ -92,6 +95,10 @@ extern void DestroyREACT(void);
 extern void RCRead(std::string);
 extern double MATCalcIonicStrengthNew(long index);
 extern void REACTInit();                          //OK
+
+//Water moles per kg of water
+//#define MOLH2OPERKG 55.50843506
+
 #endif
 
 #ifdef LIBPHREEQC

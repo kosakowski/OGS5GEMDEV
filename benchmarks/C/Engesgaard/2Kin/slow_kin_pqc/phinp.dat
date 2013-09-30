@@ -1,0 +1,7592 @@
+SOLUTION 1 #New Version 
+#GRID 1
+units mol/kgw 
+temp 25.000000 
+C(4)       1.000000000000e-10     # comp 
+Ca       1.000000000000e-10     # comp 
+Mg       1.000000000000e-03     # comp 
+Cl       2.000000000000e-03     # comp 
+pH       6.945476486739e+00 charge        # comp 
+pe       -3.617389227057e+00       # comp 
+#ende
+
+KINETICS 1
+Calcite  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 1
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+
+PRINT
+ -reset true
+ -selected_output true
+#ende
+
+SELECTED_OUTPUT
+-file phout_sel.dat
+-high_precision
+-reset false
+#ende
+
+USER_PUNCH
+-head  C(4) Ca Mg Cl pH  H+  pe  Calcite Dolomite(dis)
+ 10 PUNCH  TOT("C(4)"), TOT("Ca"), TOT("Mg"), TOT("Cl"),
+ 20 PUNCH  -LA("H+"),  MOL("H+"),   -LA("e-")
+ 80 PUNCH  KIN("Calcite"), KIN("Dolomite(dis)"),
+END
+
+SOLUTION 2 #New Version 
+#GRID 2
+units mol/kgw 
+temp 25.000000 
+C(4)       7.450469878893e-09     # comp 
+Ca       7.450714160826e-09     # comp 
+Mg       9.999959589096e-04     # comp 
+Cl       1.999991911339e-03     # comp 
+pH       6.961852381286e+00 charge        # comp 
+pe       -3.336502592934e+00       # comp 
+#ende
+
+KINETICS 2
+Calcite  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 2
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 3 #New Version 
+#GRID 3
+units mol/kgw 
+temp 25.000000 
+C(4)       2.135874018524e-08     # comp 
+Ca       2.135824728304e-08     # comp 
+Mg       9.999883390763e-04     # comp 
+Cl       1.999976657829e-03     # comp 
+pH       6.992334813307e+00 charge        # comp 
+pe       -3.367888832125e+00       # comp 
+#ende
+
+KINETICS 3
+Calcite  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 3
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 4 #New Version 
+#GRID 4
+units mol/kgw 
+temp 25.000000 
+C(4)       4.585702412733e-08     # comp 
+Ca       4.585229119232e-08     # comp 
+Mg       9.999749939940e-04     # comp 
+Cl       1.999949938473e-03     # comp 
+pH       7.044217989156e+00 charge        # comp 
+pe       -3.422204646009e+00       # comp 
+#ende
+
+KINETICS 4
+Calcite  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 4
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 5 #New Version 
+#GRID 5
+units mol/kgw 
+temp 25.000000 
+C(4)       8.698279761942e-08     # comp 
+Ca       8.696384209680e-08     # comp 
+Mg       9.999527688225e-04     # comp 
+Cl       1.999905427144e-03     # comp 
+pH       7.125477095124e+00 charge        # comp 
+pe       -3.506897402387e+00       # comp 
+#ende
+
+KINETICS 5
+Calcite  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 5
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 6 #New Version 
+#GRID 6
+units mol/kgw 
+temp 25.000000 
+C(4)       1.536256730098e-07     # comp 
+Ca       1.535678852898e-07     # comp 
+Mg       9.999171261336e-04     # comp 
+Cl       1.999834015392e-03     # comp 
+pH       7.241024368862e+00 charge        # comp 
+pe       -3.625772537668e+00       # comp 
+#ende
+
+KINETICS 6
+Calcite  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 6
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 7 #New Version 
+#GRID 7
+units mol/kgw 
+temp 25.000000 
+C(4)       2.586903993833e-07     # comp 
+Ca       2.585380886500e-07     # comp 
+Mg       9.998616702038e-04     # comp 
+Cl       1.999722844221e-03     # comp 
+pH       7.387805946956e+00 charge        # comp 
+pe       -3.774481382664e+00       # comp 
+#ende
+
+KINETICS 7
+Calcite  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 7
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 8 #New Version 
+#GRID 8
+units mol/kgw 
+temp 25.000000 
+C(4)       4.206874118239e-07     # comp 
+Ca       4.203219978547e-07     # comp 
+Mg       9.997775563031e-04     # comp 
+Cl       1.999554091669e-03     # comp 
+pH       7.555086974948e+00 charge        # comp 
+pe       -3.942287621780e+00       # comp 
+#ende
+
+KINETICS 8
+Calcite  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 8
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 9 #New Version 
+#GRID 9
+units mol/kgw 
+temp 25.000000 
+C(4)       6.659052401625e-07     # comp 
+Ca       6.650859541008e-07     # comp 
+Mg       9.996527753425e-04     # comp 
+Cl       1.999303486966e-03     # comp 
+pH       7.731154005850e+00 charge        # comp 
+pe       -4.117873657513e+00       # comp 
+#ende
+
+KINETICS 9
+Calcite  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 9
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 10 #New Version 
+#GRID 10
+units mol/kgw 
+temp 25.000000 
+C(4)       1.031385248900e-06     # comp 
+Ca       1.029641203685e-06     # comp 
+Mg       9.994713133530e-04     # comp 
+Cl       1.998938530034e-03     # comp 
+pH       7.908212723239e+00 charge        # comp 
+pe       8.803164939424e+00       # comp 
+#ende
+
+KINETICS 10
+Calcite  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 10
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 11 #New Version 
+#GRID 11
+units mol/kgw 
+temp 25.000000 
+C(4)       1.569036014863e-06     # comp 
+Ca       1.565460385501e-06     # comp 
+Mg       9.992122072777e-04     # comp 
+Cl       1.998416408131e-03     # comp 
+pH       8.082401572384e+00 charge        # comp 
+pe       -4.447765437236e+00       # comp 
+#ende
+
+KINETICS 11
+Calcite  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 11
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 12 #New Version 
+#GRID 12
+units mol/kgw 
+temp 25.000000 
+C(4)       2.351409240825e-06     # comp 
+Ca       2.344239536128e-06     # comp 
+Mg       9.988485709575e-04     # comp 
+Cl       1.997681620169e-03     # comp 
+pH       8.252162302981e+00 charge        # comp 
+pe       -4.459653929989e+00       # comp 
+#ende
+
+KINETICS 12
+Calcite  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 12
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 13 #New Version 
+#GRID 13
+units mol/kgw 
+temp 25.000000 
+C(4)       3.479876187176e-06     # comp 
+Ca       3.465568260004e-06     # comp 
+Mg       9.983467842525e-04     # comp 
+Cl       1.996663344009e-03     # comp 
+pH       8.417021282779e+00 charge        # comp 
+pe       8.803075805465e+00       # comp 
+#ende
+
+KINETICS 13
+Calcite  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 13
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 14 #New Version 
+#GRID 14
+units mol/kgw 
+temp 25.000000 
+C(4)       5.096861859999e-06     # comp 
+Ca       5.067947160135e-06     # comp 
+Mg       9.976662989180e-04     # comp 
+Cl       1.995272612834e-03     # comp 
+pH       8.576947883089e+00 charge        # comp 
+pe       -4.103840595928e+00       # comp 
+#ende
+
+KINETICS 14
+Calcite  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 14
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 15 #New Version 
+#GRID 15
+units mol/kgw 
+temp 25.000000 
+C(4)       7.388375395672e-06     # comp 
+Ca       7.337474026429e-06     # comp 
+Mg       9.967520246382e-04     # comp 
+Cl       1.993399402021e-03     # comp 
+pH       8.731853597539e+00 charge        # comp 
+pe       9.405892184285e+00       # comp 
+#ende
+
+KINETICS 15
+Calcite  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 3.749562956204e-08
+#ende
+
+RATES 15
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 16 #New Version 
+#GRID 16
+units mol/kgw 
+temp 25.000000 
+C(4)       1.060392555777e-05     # comp 
+Ca       1.052887538379e-05     # comp 
+Mg       9.955317828580e-04     # comp 
+Cl       1.990909768801e-03     # comp 
+pH       8.879912461665e+00 charge        # comp 
+pe       -4.728410141785e+00       # comp 
+#ende
+
+KINETICS 16
+Calcite  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 1.696832860163e-07
+#ende
+
+RATES 16
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 17 #New Version 
+#GRID 17
+units mol/kgw 
+temp 25.000000 
+C(4)       1.508557501642e-05     # comp 
+Ca       1.499114920411e-05     # comp 
+Mg       9.939184049004e-04     # comp 
+Cl       1.987643226463e-03     # comp 
+pH       9.022159868721e+00 charge        # comp 
+pe       8.716393015878e+00       # comp 
+#ende
+
+KINETICS 17
+Calcite  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 3.005726190852e-07
+#ende
+
+RATES 17
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 18 #New Version 
+#GRID 18
+units mol/kgw 
+temp 25.000000 
+C(4)       2.129167143834e-05     # comp 
+Ca       2.118393333182e-05     # comp 
+Mg       9.918160082793e-04     # comp 
+Cl       1.983410573134e-03     # comp 
+pH       9.158357674429e+00 charge        # comp 
+pe       -5.364198694256e+00       # comp 
+#ende
+
+KINETICS 18
+Calcite  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 4.302951725284e-07
+#ende
+
+RATES 18
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 19 #New Version 
+#GRID 19
+units mol/kgw 
+temp 25.000000 
+C(4)       2.981825088260e-05     # comp 
+Ca       2.970516925083e-05     # comp 
+Mg       9.891130033566e-04     # comp 
+Cl       1.977992427359e-03     # comp 
+pH       9.287593152425e+00 charge        # comp 
+pe       -5.200065285716e+00       # comp 
+#ende
+
+KINETICS 19
+Calcite  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 5.589412785835e-07
+#ende
+
+RATES 19
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 20 #New Version 
+#GRID 20
+units mol/kgw 
+temp 25.000000 
+C(4)       4.165504589411e-05     # comp 
+Ca       4.154713435657e-05     # comp 
+Mg       9.856818293716e-04     # comp 
+Cl       1.971138750105e-03     # comp 
+pH       9.410739084438e+00 charge        # comp 
+pe       -5.330992811626e+00       # comp 
+#ende
+
+KINETICS 20
+Calcite  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 6.861286419822e-07
+#ende
+
+RATES 20
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 21 #New Version 
+#GRID 21
+units mol/kgw 
+temp 25.000000 
+C(4)       5.629250947366e-05     # comp 
+Ca       5.620326796783e-05     # comp 
+Mg       9.813795193313e-04     # comp 
+Cl       1.962569580131e-03     # comp 
+pH       9.527593727107e+00 charge        # comp 
+pe       8.323206804327e+00       # comp 
+#ende
+
+KINETICS 21
+Calcite  # comp
+-m 7.091171894667e-06
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 8.099516039178e-07
+#ende
+
+RATES 21
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 22 #New Version 
+#GRID 22
+units mol/kgw 
+temp 25.000000 
+C(4)       7.158754478937e-05     # comp 
+Ca       7.153329570891e-05     # comp 
+Mg       9.760494559331e-04     # comp 
+Cl       1.951977336650e-03     # comp 
+pH       9.606145506599e+00 charge        # comp 
+pe       -4.602247627142e+00       # comp 
+#ende
+
+KINETICS 22
+Calcite  # comp
+-m 2.325217557955e-05
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 9.262150707588e-07
+#ende
+
+RATES 22
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 23 #New Version 
+#GRID 23
+units mol/kgw 
+temp 25.000000 
+C(4)       8.514166013564e-05     # comp 
+Ca       8.514058931293e-05     # comp 
+Mg       9.695242097948e-04     # comp 
+Cl       1.939030906396e-03     # comp 
+pH       9.661533700283e+00 charge        # comp 
+pe       -4.495557416766e+00       # comp 
+#ende
+
+KINETICS 23
+Calcite  # comp
+-m 3.796788395294e-05
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 1.029546141402e-06
+#ende
+
+RATES 23
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 24 #New Version 
+#GRID 24
+units mol/kgw 
+temp 25.000000 
+C(4)       9.678248054647e-05     # comp 
+Ca       9.685315412227e-05     # comp 
+Mg       9.616290751875e-04     # comp 
+Cl       1.923381667399e-03     # comp 
+pH       9.702004966094e+00 charge        # comp 
+pe       8.380028491368e+00       # comp 
+#ende
+
+KINETICS 24
+Calcite  # comp
+-m 5.107916915220e-05
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 1.115127238259e-06
+#ende
+
+RATES 24
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 25 #New Version 
+#GRID 25
+units mol/kgw 
+temp 25.000000 
+C(4)       1.066014080506e-04     # comp 
+Ca       1.067612025400e-04     # comp 
+Mg       9.521861127787e-04     # comp 
+Cl       1.904671400805e-03     # comp 
+pH       9.732533823291e+00 charge        # comp 
+pe       -4.868151187055e+00       # comp 
+#ende
+
+KINETICS 25
+Calcite  # comp
+-m 6.255031803577e-05
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 1.179526605436e-06
+#ende
+
+RATES 25
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 26 #New Version 
+#GRID 26
+units mol/kgw 
+temp 25.000000 
+C(4)       1.147848462812e-04     # comp 
+Ca       1.150485602437e-04     # comp 
+Mg       9.410189204716e-04     # comp 
+Cl       1.882542195078e-03     # comp 
+pH       9.756127896113e+00 charge        # comp 
+pe       8.477494611778e+00       # comp 
+#ende
+
+KINETICS 26
+Calcite  # comp
+-m 7.243649879046e-05
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 1.221079846925e-06
+#ende
+
+RATES 26
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 27 #New Version 
+#GRID 27
+units mol/kgw 
+temp 25.000000 
+C(4)       1.215206487543e-04     # comp 
+Ca       1.218994522854e-04     # comp 
+Mg       9.279581367862e-04     # comp 
+Cl       1.856648127046e-03     # comp 
+pH       9.774664396732e+00 charge        # comp 
+pe       -4.978918012311e+00       # comp 
+#ende
+
+KINETICS 27
+Calcite  # comp
+-m 8.085269898330e-05
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 1.239806065074e-06
+#ende
+
+RATES 27
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 28 #New Version 
+#GRID 28
+units mol/kgw 
+temp 25.000000 
+C(4)       1.269841587064e-04     # comp 
+Ca       1.274849529877e-04     # comp 
+Mg       9.128476027319e-04     # comp 
+Cl       1.826668403798e-03     # comp 
+pH       9.789418998803e+00 charge        # comp 
+pe       8.448272567221e+00       # comp 
+#ende
+
+KINETICS 28
+Calcite  # comp
+-m 8.794744613012e-05
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 1.237070442121e-06
+#ende
+
+RATES 28
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 29 #New Version 
+#GRID 29
+units mol/kgw 
+temp 25.000000 
+C(4)       1.313439838849e-04     # comp 
+Ca       1.319691602873e-04     # comp 
+Mg       8.955510341574e-04     # comp 
+Cl       1.792321503986e-03     # comp 
+pH       9.801320976273e+00 charge        # comp 
+pe       8.349282476252e+00       # comp 
+#ende
+
+KINETICS 29
+Calcite  # comp
+-m 9.388229331901e-05
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 1.215182920933e-06
+#ende
+
+RATES 29
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 30 #New Version 
+#GRID 30
+units mol/kgw 
+temp 25.000000 
+C(4)       1.347590526699e-04     # comp 
+Ca       1.355065768874e-04     # comp 
+Mg       8.759589716250e-04     # comp 
+Cl       1.753379724749e-03     # comp 
+pH       9.811061817272e+00 charge        # comp 
+pe       -4.647649232328e+00       # comp 
+#ende
+
+KINETICS 30
+Calcite  # comp
+-m 9.881754346927e-05
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 1.176904934153e-06
+#ende
+
+RATES 30
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 31 #New Version 
+#GRID 31
+units mol/kgw 
+temp 25.000000 
+C(4)       1.373725493650e-04     # comp 
+Ca       1.382362820378e-04     # comp 
+Mg       8.539956704946e-04     # comp 
+Cl       1.709683431767e-03     # comp 
+pH       9.819161723009e+00 charge        # comp 
+pe       8.388790601260e+00       # comp 
+#ende
+
+KINETICS 31
+Calcite  # comp
+-m 1.029034927475e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 1.125212823692e-06
+#ende
+
+RATES 31
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 32 #New Version 
+#GRID 32
+units mol/kgw 
+temp 25.000000 
+C(4)       1.393097234411e-04     # comp 
+Ca       1.402799024268e-04     # comp 
+Mg       8.296255293920e-04     # comp 
+Cl       1.661154236414e-03     # comp 
+pH       9.826016853084e+00 charge        # comp 
+pe       7.960507120828e+00       # comp 
+#ende
+
+KINETICS 32
+Calcite  # comp
+-m 1.062757739734e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 1.063043666498e-06
+#ende
+
+RATES 32
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 33 #New Version 
+#GRID 33
+units mol/kgw 
+temp 25.000000 
+C(4)       1.406784516081e-04     # comp 
+Ca       1.417422747351e-04     # comp 
+Mg       8.028586416016e-04     # comp 
+Cl       1.607806296627e-03     # comp 
+pH       9.831931865980e+00 charge        # comp 
+pe       -4.389496380337e+00       # comp 
+#ende
+
+KINETICS 33
+Calcite  # comp
+-m 1.090534881307e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 9.931524417013e-07
+#ende
+
+RATES 33
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 34 #New Version 
+#GRID 34
+units mol/kgw 
+temp 25.000000 
+C(4)       1.415707969039e-04     # comp 
+Ca       1.427130566929e-04     # comp 
+Mg       7.737550684327e-04     # comp 
+Cl       1.549754965121e-03     # comp 
+pH       9.837142177759e+00 charge        # comp 
+pe       -5.003314514062e+00       # comp 
+#ende
+
+KINETICS 34
+Calcite  # comp
+-m 1.113391222328e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 9.180738279048e-07
+#ende
+
+RATES 34
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 35 #New Version 
+#GRID 35
+units mol/kgw 
+temp 25.000000 
+C(4)       1.420648834478e-04     # comp 
+Ca       1.432686177291e-04     # comp 
+Mg       7.424274761950e-04     # comp 
+Cl       1.487222093248e-03     # comp 
+pH       9.841829580651e+00 charge        # comp 
+pe       8.365269447130e+00       # comp 
+#ende
+
+KINETICS 35
+Calcite  # comp
+-m 1.132195260049e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 8.399493925748e-07
+#ende
+
+RATES 35
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 36 #New Version 
+#GRID 36
+units mol/kgw 
+temp 25.000000 
+C(4)       1.422268513822e-04     # comp 
+Ca       1.434739841969e-04     # comp 
+Mg       7.090418509969e-04     # comp 
+Cl       1.420537439975e-03     # comp 
+pH       9.846133606594e+00 charge        # comp 
+pe       8.421886541937e+00       # comp 
+#ende
+
+KINETICS 36
+Calcite  # comp
+-m 1.147674298235e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 7.606626675514e-07
+#ende
+
+RATES 36
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 37 #New Version 
+#GRID 37
+units mol/kgw 
+temp 25.000000 
+C(4)       1.421127574834e-04     # comp 
+Ca       1.433847122678e-04     # comp 
+Mg       6.738161040856e-04     # comp 
+Cl       1.350135826713e-03     # comp 
+pH       9.850160034882e+00 charge        # comp 
+pe       -4.524782158909e+00       # comp 
+#ende
+
+KINETICS 37
+Calcite  # comp
+-m 1.160431773792e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 6.818403654801e-07
+#ende
+
+RATES 37
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 38 #New Version 
+#GRID 38
+units mol/kgw 
+temp 25.000000 
+C(4)       1.417703189207e-04     # comp 
+Ca       1.430485910456e-04     # comp 
+Mg       6.370164979897e-04     # comp 
+Cl       1.276549908654e-03     # comp 
+pH       9.853987393614e+00 charge        # comp 
+pe       8.471464996589e+00       # comp 
+#ende
+
+KINETICS 38
+Calcite  # comp
+-m 1.170964725115e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 6.047920869389e-07
+#ende
+
+RATES 38
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 39 #New Version 
+#GRID 39
+units mol/kgw 
+temp 25.000000 
+C(4)       1.412404388964e-04     # comp 
+Ca       1.425071179536e-04     # comp 
+Mg       5.989519520531e-04     # comp 
+Cl       1.200398686393e-03     # comp 
+pH       9.857672027412e+00 charge        # comp 
+pe       -4.893325970661e+00       # comp 
+#ende
+
+KINETICS 39
+Calcite  # comp
+-m 1.179680162075e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 5.305715576863e-07
+#ende
+
+RATES 39
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 40 #New Version 
+#GRID 40
+units mol/kgw 
+temp 25.000000 
+C(4)       1.405584924601e-04     # comp 
+Ca       1.417967269232e-04     # comp 
+Mg       5.599664158976e-04     # comp 
+Cl       1.122372139274e-03     # comp 
+pH       9.861252140076e+00 charge        # comp 
+pe       8.296451100416e+00       # comp 
+#ende
+
+KINETICS 40
+Calcite  # comp
+-m 1.186909785011e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 4.600829469784e-07
+#ende
+
+RATES 40
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 41 #New Version 
+#GRID 41
+units mol/kgw 
+temp 25.000000 
+C(4)       1.397553762782e-04     # comp 
+Ca       1.409497747627e-04     # comp 
+Mg       5.204296211939e-04     # comp 
+Cl       1.043212604270e-03     # comp 
+pH       9.864751105266e+00 charge        # comp 
+pe       8.346521271219e+00       # comp 
+#ende
+
+KINETICS 41
+Calcite  # comp
+-m 1.192922916705e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 3.939634858981e-07
+#ende
+
+RATES 41
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 42 #New Version 
+#GRID 42
+units mol/kgw 
+temp 25.000000 
+C(4)       1.388583394008e-04     # comp 
+Ca       1.399953040384e-04     # comp 
+Mg       4.807266263014e-04     # comp 
+Cl       9.636937319470e-04     # comp 
+pH       9.868180253998e+00 charge        # comp 
+pe       8.313011042198e+00       # comp 
+#ende
+
+KINETICS 42
+Calcite  # comp
+-m 1.197937566421e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 3.326995585440e-07
+#ende
+
+RATES 42
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 43 #New Version 
+#GRID 43
+units mol/kgw 
+temp 25.000000 
+C(4)       1.378916185983e-04     # comp 
+Ca       1.389596072511e-04     # comp 
+Mg       4.412466464731e-04     # comp 
+Cl       8.845980071342e-04     # comp 
+pH       9.871541286602e+00 charge        # comp 
+pe       8.330903707262e+00       # comp 
+#ende
+
+KINETICS 43
+Calcite  # comp
+-m 1.202129794728e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 2.766822801494e-07
+#ende
+
+RATES 43
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 44 #New Version 
+#GRID 44
+units mol/kgw 
+temp 25.000000 
+C(4)       1.368769048975e-04     # comp 
+Ca       1.378666202431e-04     # comp 
+Mg       4.023717080517e-04     # comp 
+Cl       8.066939136222e-04     # comp 
+pH       9.874828411154e+00 charge        # comp 
+pe       8.238986547433e+00       # comp 
+#ende
+
+KINETICS 44
+Calcite  # comp
+-m 1.205641599750e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 2.260663981996e-07
+#ende
+
+RATES 44
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 45 #New Version 
+#GRID 45
+units mol/kgw 
+temp 25.000000 
+C(4)       1.358336689058e-04     # comp 
+Ca       1.367381739005e-04     # comp 
+Mg       3.644656747440e-04     # comp 
+Cl       7.307138418525e-04     # comp 
+pH       9.878030274721e+00 charge        # comp 
+pe       8.371780629580e+00       # comp 
+#ende
+
+KINETICS 45
+Calcite  # comp
+-m 1.208587430972e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 1.810015353966e-07
+#ende
+
+RATES 45
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 46 #New Version 
+#GRID 46
+units mol/kgw 
+temp 25.000000 
+C(4)       1.347793720509e-04     # comp 
+Ca       1.355941329697e-04     # comp 
+Mg       3.278641670218e-04     # comp 
+Cl       6.573337849663e-04     # comp 
+pH       9.881131724995e+00 charge        # comp 
+pe       8.331675602516e+00       # comp 
+#ende
+
+KINETICS 46
+Calcite  # comp
+-m 1.211059618356e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 1.414444917684e-07
+#ende
+
+RATES 46
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 47 #New Version 
+#GRID 47
+units mol/kgw 
+temp 25.000000 
+C(4)       1.337295894682e-04     # comp 
+Ca       1.344524495834e-04     # comp 
+Mg       2.928658344615e-04     # comp 
+Cl       5.871557464778e-04     # comp 
+pH       9.884115416571e+00 charge        # comp 
+pe       8.245925584380e+00       # comp 
+#ende
+
+KINETICS 47
+Calcite  # comp
+-m 1.213132824915e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 1.073273619248e-07
+#ende
+
+RATES 47
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 48 #New Version 
+#GRID 48
+units mol/kgw 
+temp 25.000000 
+C(4)       1.326980682775e-04     # comp 
+Ca       1.333291571652e-04     # comp 
+Mg       2.597253507654e-04     # comp 
+Cl       5.206936028650e-04     # comp 
+pH       9.886963258245e+00 charge        # comp 
+pe       8.332741412107e+00       # comp 
+#ende
+
+KINETICS 48
+Calcite  # comp
+-m 1.214867720831e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 7.847650327295e-08
+#ende
+
+RATES 48
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 49 #New Version 
+#GRID 49
+units mol/kgw 
+temp 25.000000 
+C(4)       1.316967425492e-04     # comp 
+Ca       1.322383278847e-04     # comp 
+Mg       2.286483898969e-04     # comp 
+Cl       4.583629416666e-04     # comp 
+pH       9.889657685392e+00 charge        # comp 
+pe       8.296071925974e+00       # comp 
+#ende
+
+KINETICS 49
+Calcite  # comp
+-m 1.216313999253e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 5.466553040332e-08
+#ende
+
+RATES 49
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 50 #New Version 
+#GRID 50
+units mol/kgw 
+temp 25.000000 
+C(4)       1.307357222891e-04     # comp 
+Ca       1.311920132995e-04     # comp 
+Mg       1.997887177037e-04     # comp 
+Cl       4.004751484670e-04     # comp 
+pH       9.892182732917e+00 charge        # comp 
+pe       8.308335641998e+00       # comp 
+#ende
+
+KINETICS 50
+Calcite  # comp
+-m 1.217512847371e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 3.562564362082e-08
+#ende
+
+RATES 50
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 51 #New Version 
+#GRID 51
+units mol/kgw 
+temp 25.000000 
+C(4)       1.298232734390e-04     # comp 
+Ca       1.302001856553e-04     # comp 
+Mg       1.732474091069e-04     # comp 
+Cl       3.472357639097e-04     # comp 
+pH       9.894524876584e+00 charge        # comp 
+pe       8.209962448765e+00       # comp 
+#ende
+
+KINETICS 51
+Calcite  # comp
+-m 1.218498979812e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 2.103387510655e-08
+#ende
+
+RATES 51
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 52 #New Version 
+#GRID 52
+units mol/kgw 
+temp 25.000000 
+C(4)       1.289658045550e-04     # comp 
+Ca       1.292706945178e-04     # comp 
+Mg       1.490740831944e-04     # comp 
+Cl       2.987468934968e-04     # comp 
+pH       9.896673651595e+00 charge        # comp 
+pe       -5.134360556137e+00       # comp 
+#ende
+
+KINETICS 52
+Calcite  # comp
+-m 1.219302301773e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 1.055980928166e-08
+#ende
+
+RATES 52
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 53 #New Version 
+#GRID 53
+units mol/kgw 
+temp 25.000000 
+C(4)       1.281678524291e-04     # comp 
+Ca       1.284092398751e-04     # comp 
+Mg       1.272699347180e-04     # comp 
+Cl       2.550132449860e-04     # comp 
+pH       9.898622009305e+00 charge        # comp 
+pe       -4.653967700772e+00       # comp 
+#ende
+
+KINETICS 53
+Calcite  # comp
+-m 1.219949297813e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 3.839700128689e-09
+#ende
+
+RATES 53
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 54 #New Version 
+#GRID 54
+units mol/kgw 
+temp 25.000000 
+C(4)       1.274320408836e-04     # comp 
+Ca       1.276193505511e-04     # comp 
+Mg       1.077922524792e-04     # comp 
+Cl       2.159512036487e-04     # comp 
+pH       9.900366231836e+00 charge        # comp 
+pe       8.358429517010e+00       # comp 
+#ende
+
+KINETICS 54
+Calcite  # comp
+-m 1.220464188681e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 5.121906870587e-10
+#ende
+
+RATES 54
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 55 #New Version 
+#GRID 55
+units mol/kgw 
+temp 25.000000 
+C(4)       1.267596204208e-04     # comp 
+Ca       1.269026753243e-04     # comp 
+Mg       9.056037360690e-05     # comp 
+Cl       1.814002428934e-04     # comp 
+pH       9.901905982551e+00 charge        # comp 
+pe       8.232749192626e+00       # comp 
+#ende
+
+KINETICS 55
+Calcite  # comp
+-m 1.220869768992e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 55
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 56 #New Version 
+#GRID 56
+units mol/kgw 
+temp 25.000000 
+C(4)       1.261514295277e-04     # comp 
+Ca       1.262595280876e-04     # comp 
+Mg       7.546259315580e-05     # comp 
+Cl       1.511359102413e-04     # comp 
+pH       9.903249153129e+00 charge        # comp 
+pe       8.329511167246e+00       # comp 
+#ende
+
+KINETICS 56
+Calcite  # comp
+-m 1.221187218018e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 56
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 57 #New Version 
+#GRID 57
+units mol/kgw 
+temp 25.000000 
+C(4)       1.256080780860e-04     # comp 
+Ca       1.256891162433e-04     # comp 
+Mg       6.236301844467e-05     # comp 
+Cl       1.248836250435e-04     # comp 
+pH       9.904410476668e+00 charge        # comp 
+pe       8.369062966061e+00       # comp 
+#ende
+
+KINETICS 57
+Calcite  # comp
+-m 1.221434359400e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 57
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 58 #New Version 
+#GRID 58
+units mol/kgw 
+temp 25.000000 
+C(4)       1.251289990758e-04     # comp 
+Ca       1.251892659175e-04     # comp 
+Mg       5.110784129970e-05     # comp 
+Cl       1.023325691029e-04     # comp 
+pH       9.905405082588e+00 charge        # comp 
+pe       8.343305996445e+00       # comp 
+#ende
+
+KINETICS 58
+Calcite  # comp
+-m 1.221625308549e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 58
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 59 #New Version 
+#GRID 59
+units mol/kgw 
+temp 25.000000 
+C(4)       1.247119017846e-04     # comp 
+Ca       1.247563594187e-04     # comp 
+Mg       4.153152873141e-05     # comp 
+Cl       8.314903571937e-05     # comp 
+pH       9.906248455837e+00 charge        # comp 
+pe       8.307492395278e+00       # comp 
+#ende
+
+KINETICS 59
+Calcite  # comp
+-m 1.221771393294e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 59
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 60 #New Version 
+#GRID 60
+units mol/kgw 
+temp 25.000000 
+C(4)       1.243532060455e-04     # comp 
+Ca       1.243857353666e-04     # comp 
+Mg       3.346300040104e-05     # comp 
+Cl       6.698871569823e-05     # comp 
+pH       9.906956323135e+00 charge        # comp 
+pe       8.340235088331e+00       # comp 
+#ende
+
+KINETICS 60
+Calcite  # comp
+-m 1.221881861954e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 60
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 61 #New Version 
+#GRID 61
+units mol/kgw 
+temp 25.000000 
+C(4)       1.240484315736e-04     # comp 
+Ca       1.240720386094e-04     # comp 
+Mg       2.673108404707e-05     # comp 
+Cl       5.350752877472e-05     # comp 
+pH       9.907544338821e+00 charge        # comp 
+pe       8.344322221013e+00       # comp 
+#ende
+
+KINETICS 61
+Calcite  # comp
+-m 1.221964324516e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 61
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 62 #New Version 
+#GRID 62
+units mol/kgw 
+temp 25.000000 
+C(4)       1.237925273719e-04     # comp 
+Ca       1.238095185622e-04     # comp 
+Mg       2.116910708164e-05     # comp 
+Cl       4.237074420009e-05     # comp 
+pH       9.908027746297e+00 charge        # comp 
+pe       8.365190726396e+00       # comp 
+#ende
+
+KINETICS 62
+Calcite  # comp
+-m 1.222025038356e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 62
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 63 #New Version 
+#GRID 63
+units mol/kgw 
+temp 25.000000 
+C(4)       1.235801574418e-04     # comp 
+Ca       1.235922857947e-04     # comp 
+Mg       1.661856782962e-05     # comp 
+Cl       3.326026461796e-05     # comp 
+pH       9.908421058949e+00 charge        # comp 
+pe       8.234182693130e+00       # comp 
+#ende
+
+KINETICS 63
+Calcite  # comp
+-m 1.222069107450e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 63
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 64 #New Version 
+#GRID 64
+units mol/kgw 
+temp 25.000000 
+C(4)       1.234059409187e-04     # comp 
+Ca       1.234145262334e-04     # comp 
+Mg       1.293188080838e-05     # comp 
+Cl       2.588006450840e-05     # comp 
+pH       9.908737793296e+00 charge        # comp 
+pe       8.251661490145e+00       # comp 
+#ende
+
+KINETICS 64
+Calcite  # comp
+-m 1.222100639204e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 64
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 65 #New Version 
+#GRID 65
+units mol/kgw 
+temp 25.000000 
+C(4)       1.232646457107e-04     # comp 
+Ca       1.232706722587e-04     # comp 
+Mg       9.974240464178e-06     # comp 
+Cl       1.995987242249e-05     # comp 
+pH       9.908990274331e+00 charge        # comp 
+pe       8.328369461648e+00       # comp 
+#ende
+
+KINETICS 65
+Calcite  # comp
+-m 1.222122882821e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 65
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 66 #New Version 
+#GRID 66
+units mol/kgw 
+temp 25.000000 
+C(4)       1.231513360841e-04     # comp 
+Ca       1.231555309838e-04     # comp 
+Mg       7.624685774608e-06     # comp 
+Cl       1.525726150243e-05     # comp 
+pH       9.909189518755e+00 charge        # comp 
+pe       8.297167613464e+00       # comp 
+#ende
+
+KINETICS 66
+Calcite  # comp
+-m 1.222138359634e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 66
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 67 #New Version 
+#GRID 67
+units mol/kgw 
+temp 25.000000 
+C(4)       1.230614762737e-04     # comp 
+Ca       1.230643716069e-04     # comp 
+Mg       5.776473907517e-06     # comp 
+Cl       1.155836427279e-05     # comp 
+pH       9.909345191636e+00 charge        # comp 
+pe       8.268260454142e+00       # comp 
+#ende
+
+KINETICS 67
+Calcite  # comp
+-m 1.222148987081e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 67
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 68 #New Version 
+#GRID 68
+units mol/kgw 
+temp 25.000000 
+C(4)       1.229909940718e-04     # comp 
+Ca       1.229929755250e-04     # comp 
+Mg       4.336885517982e-06     # comp 
+Cl       8.677456326162e-06     # comp 
+pH       9.909465625558e+00 charge        # comp 
+pe       8.258373194249e+00       # comp 
+#ende
+
+KINETICS 68
+Calcite  # comp
+-m 1.222156194127e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 68
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 69 #New Version 
+#GRID 69
+units mol/kgw 
+temp 25.000000 
+C(4)       1.229363098874e-04     # comp 
+Ca       1.229376543923e-04     # comp 
+Mg       3.226588456246e-06     # comp 
+Cl       6.455661815186e-06     # comp 
+pH       9.909557888065e+00 charge        # comp 
+pe       8.355490193345e+00       # comp 
+#ende
+
+KINETICS 69
+Calcite  # comp
+-m 1.222161024878e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 69
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 70 #New Version 
+#GRID 70
+units mol/kgw 
+temp 25.000000 
+C(4)       1.228943377022e-04     # comp 
+Ca       1.228952422265e-04     # comp 
+Mg       2.378682424787e-06     # comp 
+Cl       4.759025165285e-06     # comp 
+pH       9.909627882663e+00 charge        # comp 
+pe       8.324025415800e+00       # comp 
+#ende
+
+KINETICS 70
+Calcite  # comp
+-m 1.222164227956e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 70
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 71 #New Version 
+#GRID 71
+units mol/kgw 
+temp 25.000000 
+C(4)       1.228624646438e-04     # comp 
+Ca       1.228630679584e-04     # comp 
+Mg       1.737536528527e-06     # comp 
+Cl       3.476172244245e-06     # comp 
+pH       9.909680469832e+00 charge        # comp 
+pe       8.358536029256e+00       # comp 
+#ende
+
+KINETICS 71
+Calcite  # comp
+-m 1.222166330754e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 71
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 72 #New Version 
+#GRID 72
+units mol/kgw 
+temp 25.000000 
+C(4)       1.228385156101e-04     # comp 
+Ca       1.228389145620e-04     # comp 
+Mg       1.257516808375e-06     # comp 
+Cl       2.515754555484e-06     # comp 
+pH       9.909719596768e+00 charge        # comp 
+pe       8.324532221037e+00       # comp 
+#ende
+
+KINETICS 72
+Calcite  # comp
+-m 1.222167698720e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 72
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 73 #New Version 
+#GRID 73
+units mol/kgw 
+temp 25.000000 
+C(4)       1.228207086868e-04     # comp 
+Ca       1.228209702270e-04     # comp 
+Mg       9.016836923385e-07     # comp 
+Cl       1.803835766697e-06     # comp 
+pH       9.909748427142e+00 charge        # comp 
+pe       8.364103260482e+00       # comp 
+#ende
+
+KINETICS 73
+Calcite  # comp
+-m 1.222168581304e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 73
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 74 #New Version 
+#GRID 74
+units mol/kgw 
+temp 25.000000 
+C(4)       1.228076061414e-04     # comp 
+Ca       1.228077761167e-04     # comp 
+Mg       6.405215235182e-07     # comp 
+Cl       1.281344402553e-06     # comp 
+pH       9.909769464680e+00 charge        # comp 
+pe       8.322202266024e+00       # comp 
+#ende
+
+KINETICS 74
+Calcite  # comp
+-m 1.222169146450e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 74
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 75 #New Version 
+#GRID 75
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227980647333e-04     # comp 
+Ca       1.227981742429e-04     # comp 
+Mg       4.507452632998e-07     # comp 
+Cl       9.016824778675e-07     # comp 
+pH       9.909784666550e+00 charge        # comp 
+pe       8.356569742898e+00       # comp 
+#ende
+
+KINETICS 75
+Calcite  # comp
+-m 1.222169505881e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 75
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 76 #New Version 
+#GRID 76
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227911880580e-04     # comp 
+Ca       1.227912579983e-04     # comp 
+Mg       3.142140762955e-07     # comp 
+Cl       6.285491325680e-07     # comp 
+pH       9.909795544338e+00 charge        # comp 
+pe       8.396862248412e+00       # comp 
+#ende
+
+KINETICS 76
+Calcite  # comp
+-m 1.222169733042e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 76
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 77 #New Version 
+#GRID 77
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227862827247e-04     # comp 
+Ca       1.227863270042e-04     # comp 
+Mg       2.169683737313e-07     # comp 
+Cl       4.340121333997e-07     # comp 
+pH       9.909803251733e+00 charge        # comp 
+pe       8.338816938866e+00       # comp 
+#ende
+
+KINETICS 77
+Calcite  # comp
+-m 1.222169875764e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 77
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 78 #New Version 
+#GRID 78
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227828194013e-04     # comp 
+Ca       1.227828471899e-04     # comp 
+Mg       1.483962965767e-07     # comp 
+Cl       2.968389731345e-07     # comp 
+pH       9.909808659004e+00 charge        # comp 
+pe       8.338647638923e+00       # comp 
+#ende
+
+KINETICS 78
+Calcite  # comp
+-m 1.222169964951e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 78
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 79 #New Version 
+#GRID 79
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227803991582e-04     # comp 
+Ca       1.227804164448e-04     # comp 
+Mg       1.005275726388e-07     # comp 
+Cl       2.010832528155e-07     # comp 
+pH       9.909812415062e+00 charge        # comp 
+pe       8.265291125969e+00       # comp 
+#ende
+
+KINETICS 79
+Calcite  # comp
+-m 1.222170020397e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 79
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 80 #New Version 
+#GRID 80
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227787251024e-04     # comp 
+Ca       1.227787357617e-04     # comp 
+Mg       6.744700610932e-08     # comp 
+Cl       1.349107221761e-07     # comp 
+pH       9.909814998208e+00 charge        # comp 
+pe       8.346920052013e+00       # comp 
+#ende
+
+KINETICS 80
+Calcite  # comp
+-m 1.222170054686e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 80
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 81 #New Version 
+#GRID 81
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227775789918e-04     # comp 
+Ca       1.227775855067e-04     # comp 
+Mg       4.481625259066e-08     # comp 
+Cl       8.964217613318e-08     # comp 
+pH       9.909816756975e+00 charge        # comp 
+pe       8.356125993366e+00       # comp 
+#ende
+
+KINETICS 81
+Calcite  # comp
+-m 1.222170075782e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 81
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 82 #New Version 
+#GRID 82
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227768023388e-04     # comp 
+Ca       1.227768062856e-04     # comp 
+Mg       2.949063150766e-08     # comp 
+Cl       5.898663000776e-08     # comp 
+pH       9.909817942440e+00 charge        # comp 
+pe       8.386792250187e+00       # comp 
+#ende
+
+KINETICS 82
+Calcite  # comp
+-m 1.222170088696e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 82
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 83 #New Version 
+#GRID 83
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227762814234e-04     # comp 
+Ca       1.227762837932e-04     # comp 
+Mg       1.921714841529e-08     # comp 
+Cl       3.843705851824e-08     # comp 
+pH       9.909818733431e+00 charge        # comp 
+pe       8.352804752680e+00       # comp 
+#ende
+
+KINETICS 83
+Calcite  # comp
+-m 1.222170096556e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 83
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 84 #New Version 
+#GRID 84
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227759356105e-04     # comp 
+Ca       1.227759370208e-04     # comp 
+Mg       1.240027832473e-08     # comp 
+Cl       2.480175714147e-08     # comp 
+pH       9.909819255871e+00 charge        # comp 
+pe       8.316468195204e+00       # comp 
+#ende
+
+KINETICS 84
+Calcite  # comp
+-m 1.222170101313e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 84
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 85 #New Version 
+#GRID 85
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227757083932e-04     # comp 
+Ca       1.227757092250e-04     # comp 
+Mg       7.923076377472e-09     # comp 
+Cl       1.584642718705e-08     # comp 
+pH       9.909819597428e+00 charge        # comp 
+pe       8.286738703344e+00       # comp 
+#ende
+
+KINETICS 85
+Calcite  # comp
+-m 1.222170104175e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 85
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 86 #New Version 
+#GRID 86
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227755606326e-04     # comp 
+Ca       1.227755611188e-04     # comp 
+Mg       5.012567408291e-09     # comp 
+Cl       1.002486552537e-08     # comp 
+pH       9.909819818450e+00 charge        # comp 
+pe       8.308931486977e+00       # comp 
+#ende
+
+KINETICS 86
+Calcite  # comp
+-m 1.222170105892e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 86
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 87 #New Version 
+#GRID 87
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227754655322e-04     # comp 
+Ca       1.227754658138e-04     # comp 
+Mg       3.139913266216e-09     # comp 
+Cl       6.279241269871e-09     # comp 
+pH       9.909819960007e+00 charge        # comp 
+pe       8.335618518424e+00       # comp 
+#ende
+
+KINETICS 87
+Calcite  # comp
+-m 1.222170106910e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 87
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 88 #New Version 
+#GRID 88
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227754049562e-04     # comp 
+Ca       1.227754051178e-04     # comp 
+Mg       1.947414559736e-09     # comp 
+Cl       3.894062129002e-09     # comp 
+pH       9.909820049736e+00 charge        # comp 
+pe       8.367713951468e+00       # comp 
+#ende
+
+KINETICS 88
+Calcite  # comp
+-m 1.222170107512e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 88
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 89 #New Version 
+#GRID 89
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227753667703e-04     # comp 
+Ca       1.227753668622e-04     # comp 
+Mg       1.195869815691e-09     # comp 
+Cl       2.390869204690e-09     # comp 
+pH       9.909820106025e+00 charge        # comp 
+pe       8.356314519890e+00       # comp 
+#ende
+
+KINETICS 89
+Calcite  # comp
+-m 1.222170107862e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 89
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 90 #New Version 
+#GRID 90
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227753429486e-04     # comp 
+Ca       1.227753430003e-04     # comp 
+Mg       7.271290028653e-10     # comp 
+Cl       1.453329318673e-09     # comp 
+pH       9.909820140970e+00 charge        # comp 
+pe       8.358463873768e+00       # comp 
+#ende
+
+KINETICS 90
+Calcite  # comp
+-m 1.222170108069e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 90
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 91 #New Version 
+#GRID 91
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227753282424e-04     # comp 
+Ca       1.227753282713e-04     # comp 
+Mg       4.378108715645e-10     # comp 
+Cl       8.746605850990e-10     # comp 
+pH       9.909820162438e+00 charge        # comp 
+pe       8.333774583771e+00       # comp 
+#ende
+
+KINETICS 91
+Calcite  # comp
+-m 1.222170108186e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 91
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 92 #New Version 
+#GRID 92
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227753192586e-04     # comp 
+Ca       1.227753192744e-04     # comp 
+Mg       2.610984918937e-10     # comp 
+Cl       5.212179192690e-10     # comp 
+pH       9.909820175488e+00 charge        # comp 
+pe       8.359005383323e+00       # comp 
+#ende
+
+KINETICS 92
+Calcite  # comp
+-m 1.222170108257e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 92
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 93 #New Version 
+#GRID 93
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227753138280e-04     # comp 
+Ca       1.227753138365e-04     # comp 
+Mg       1.542939430261e-10     # comp 
+Cl       3.075990516445e-10     # comp 
+pH       9.909820183338e+00 charge        # comp 
+pe       8.375238333653e+00       # comp 
+#ende
+
+KINETICS 93
+Calcite  # comp
+-m 1.222170108291e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 93
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 94 #New Version 
+#GRID 94
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227753105797e-04     # comp 
+Ca       1.227753105842e-04     # comp 
+Mg       9.041959590993e-11     # comp 
+Cl       1.798450838478e-10     # comp 
+pH       9.909820188010e+00 charge        # comp 
+pe       8.361088828064e+00       # comp 
+#ende
+
+KINETICS 94
+Calcite  # comp
+-m 1.222170108314e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 94
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 95 #New Version 
+#GRID 95
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227753086574e-04     # comp 
+Ca       1.227753086596e-04     # comp 
+Mg       5.262246168807e-11     # comp 
+Cl       1.042479994709e-10     # comp 
+pH       9.909820190761e+00 charge        # comp 
+pe       8.318541364024e+00       # comp 
+#ende
+
+KINETICS 95
+Calcite  # comp
+-m 1.222170108325e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 95
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 96 #New Version 
+#GRID 96
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227753075318e-04     # comp 
+Ca       1.227753075327e-04     # comp 
+Mg       3.049326602272e-11     # comp 
+Cl       5.998812100351e-11     # comp 
+pH       9.909820192364e+00 charge        # comp 
+pe       8.344752562223e+00       # comp 
+#ende
+
+KINETICS 96
+Calcite  # comp
+-m 1.222170108332e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 96
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 97 #New Version 
+#GRID 97
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227753068797e-04     # comp 
+Ca       1.227753068801e-04     # comp 
+Mg       1.767578316056e-11     # comp 
+Cl       3.435237759176e-11     # comp 
+pH       9.909820193288e+00 charge        # comp 
+pe       8.277330747447e+00       # comp 
+#ende
+
+KINETICS 97
+Calcite  # comp
+-m 1.222170108335e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 97
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 98 #New Version 
+#GRID 98
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227753065063e-04     # comp 
+Ca       1.227753065063e-04     # comp 
+Mg       1.033512068444e-11     # comp 
+Cl       1.967065217727e-11     # comp 
+pH       9.909820193815e+00 charge        # comp 
+pe       8.326253526399e+00       # comp 
+#ende
+
+KINETICS 98
+Calcite  # comp
+-m 1.222170108339e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 98
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 99 #New Version 
+#GRID 99
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227753062958e-04     # comp 
+Ca       1.227753062956e-04     # comp 
+Mg       6.196028790875e-12     # comp 
+Cl       1.139226323688e-11     # comp 
+pH       9.909820194110e+00 charge        # comp 
+pe       8.381850299505e+00       # comp 
+#ende
+
+KINETICS 99
+Calcite  # comp
+-m 1.222170108338e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 99
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 100 #New Version 
+#GRID 100
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227753061831e-04     # comp 
+Ca       1.227753061829e-04     # comp 
+Mg       3.981239489973e-12     # comp 
+Cl       6.962584936242e-12     # comp 
+pH       9.909820194268e+00 charge        # comp 
+pe       8.354393366701e+00       # comp 
+#ende
+
+KINETICS 100
+Calcite  # comp
+-m 1.222170108338e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 100
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+
+SOLUTION 101 #New Version 
+#GRID 101
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227753061457e-04     # comp 
+Ca       1.227753061454e-04     # comp 
+Mg       3.245458653380e-12     # comp 
+Cl       5.490991845873e-12     # comp 
+pH       9.909820194320e+00 charge        # comp 
+pe       8.354396071713e+00       # comp 
+#ende
+
+KINETICS 101
+Calcite  # comp
+-m 1.222170108339e-04
+-steps 1.000000000000e+02 in 1 steps
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+#ende
+
+RATES 101
+Calcite
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 14400
+14  logK25 = -0.299988938
+15  ny = 1.0
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 23500
+24  logK25 = -5.709965389
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .01
+70  rate = Area * rate * (1 - SR("Calcite")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+rem acidic mechanism
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+rem base term (neutral mechanism)
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = .001
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+100 save moles
+  -end
+#ende
+END
+

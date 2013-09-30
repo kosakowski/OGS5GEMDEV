@@ -1,15 +1,853 @@
-#!MC 1000
-$!VarSet |LFDSFN1| = '"1d_TCE_ION_ply_OUT_LINE_t0.tec"'
+#!MC 1400
+# Created by Tecplot 360 build 14.0.1.26249
+$!VarSet |LFDSFN1| = '"1d_TCE_Ion_ply_OUT_LINE_t0.tec"'
 $!VarSet |LFDSVL1| = '"DIST" "HEAD" "TCE-mob" "TCE-mat" "trans-DCE-mob" "trans-DCE-mat" "cis-DCE-mob" "cis-DCE-mat" "11-DCE-mob" "11-DCE-mat" "Acet-mob" "Acet-mat" "ClAcet-mob" "ClAcet-mat" "VC-mob" "VC-mat" "Ethylen-mob" "Ethylen-mat" "C4-mob" "Ethan-mob" "mobile"'
 $!SETSTYLEBASE FACTORY
-$!PAPER 
-  BACKGROUNDCOLOR = WHITE
-  ISTRANSPARENT = YES
-  ORIENTPORTRAIT = NO
-  SHOWGRID = YES
-  SHOWRULER = YES
-  SHOWPAPER = YES
-  PAPERSIZE = LETTER
+$!GLOBALLINKING 
+  LINKCOLORMAPS = YES
+$!GLOBALCOLORMAP  1
+  CONTOURCOLORMAP = SMRAINBOW
+$!COLORMAPCONTROL 1 RESETTOFACTORY
+$!GLOBALCOLORMAP  1
+  SMRAINBOW
+    {
+    CONTROLPOINT 1
+      {
+      COLORMAPFRACTION = 0
+      LEADRGB
+        {
+        R = 0
+        G = 0
+        B = 255
+        }
+      TRAILRGB
+        {
+        R = 0
+        G = 0
+        B = 255
+        }
+      }
+    CONTROLPOINT 2
+      {
+      COLORMAPFRACTION = 0.25
+      LEADRGB
+        {
+        R = 0
+        G = 255
+        B = 255
+        }
+      TRAILRGB
+        {
+        R = 0
+        G = 255
+        B = 255
+        }
+      }
+    CONTROLPOINT 3
+      {
+      COLORMAPFRACTION = 0.5
+      LEADRGB
+        {
+        R = 0
+        G = 255
+        B = 0
+        }
+      TRAILRGB
+        {
+        R = 0
+        G = 255
+        B = 0
+        }
+      }
+    CONTROLPOINT 4
+      {
+      COLORMAPFRACTION = 0.75
+      LEADRGB
+        {
+        R = 255
+        G = 255
+        B = 0
+        }
+      TRAILRGB
+        {
+        R = 255
+        G = 255
+        B = 0
+        }
+      }
+    CONTROLPOINT 5
+      {
+      COLORMAPFRACTION = 1
+      LEADRGB
+        {
+        R = 255
+        G = 0
+        B = 0
+        }
+      TRAILRGB
+        {
+        R = 255
+        G = 0
+        B = 0
+        }
+      }
+    }
+$!GLOBALCOLORMAP  2
+  CONTOURCOLORMAP = LGRAINBOW
+$!COLORMAPCONTROL 2 RESETTOFACTORY
+$!GLOBALCOLORMAP  2
+  LGRAINBOW
+    {
+    CONTROLPOINT 1
+      {
+      COLORMAPFRACTION = 0
+      LEADRGB
+        {
+        R = 0
+        G = 0
+        B = 255
+        }
+      TRAILRGB
+        {
+        R = 0
+        G = 0
+        B = 255
+        }
+      }
+    CONTROLPOINT 2
+      {
+      COLORMAPFRACTION = 0.1667
+      LEADRGB
+        {
+        R = 0
+        G = 255
+        B = 255
+        }
+      TRAILRGB
+        {
+        R = 0
+        G = 255
+        B = 255
+        }
+      }
+    CONTROLPOINT 3
+      {
+      COLORMAPFRACTION = 0.3333
+      LEADRGB
+        {
+        R = 0
+        G = 255
+        B = 0
+        }
+      TRAILRGB
+        {
+        R = 0
+        G = 255
+        B = 0
+        }
+      }
+    CONTROLPOINT 4
+      {
+      COLORMAPFRACTION = 0.5
+      LEADRGB
+        {
+        R = 255
+        G = 255
+        B = 0
+        }
+      TRAILRGB
+        {
+        R = 255
+        G = 255
+        B = 0
+        }
+      }
+    CONTROLPOINT 5
+      {
+      COLORMAPFRACTION = 0.6667
+      LEADRGB
+        {
+        R = 255
+        G = 0
+        B = 0
+        }
+      TRAILRGB
+        {
+        R = 255
+        G = 0
+        B = 0
+        }
+      }
+    CONTROLPOINT 6
+      {
+      COLORMAPFRACTION = 0.8333
+      LEADRGB
+        {
+        R = 255
+        G = 0
+        B = 255
+        }
+      TRAILRGB
+        {
+        R = 255
+        G = 0
+        B = 255
+        }
+      }
+    CONTROLPOINT 7
+      {
+      COLORMAPFRACTION = 1
+      LEADRGB
+        {
+        R = 255
+        G = 255
+        B = 255
+        }
+      TRAILRGB
+        {
+        R = 255
+        G = 255
+        B = 255
+        }
+      }
+    }
+$!GLOBALCOLORMAP  3
+  CONTOURCOLORMAP = MODERN
+$!COLORMAPCONTROL 3 RESETTOFACTORY
+$!GLOBALCOLORMAP  3
+  MODERN
+    {
+    CONTROLPOINT 1
+      {
+      COLORMAPFRACTION = 0
+      LEADRGB
+        {
+        R = 100
+        G = 35
+        B = 100
+        }
+      TRAILRGB
+        {
+        R = 100
+        G = 35
+        B = 100
+        }
+      }
+    CONTROLPOINT 2
+      {
+      COLORMAPFRACTION = 0.1429
+      LEADRGB
+        {
+        R = 35
+        G = 35
+        B = 100
+        }
+      TRAILRGB
+        {
+        R = 255
+        G = 0
+        B = 255
+        }
+      }
+    CONTROLPOINT 3
+      {
+      COLORMAPFRACTION = 0.2857
+      LEADRGB
+        {
+        R = 35
+        G = 100
+        B = 100
+        }
+      TRAILRGB
+        {
+        R = 0
+        G = 0
+        B = 255
+        }
+      }
+    CONTROLPOINT 4
+      {
+      COLORMAPFRACTION = 0.4286
+      LEADRGB
+        {
+        R = 35
+        G = 100
+        B = 35
+        }
+      TRAILRGB
+        {
+        R = 0
+        G = 255
+        B = 255
+        }
+      }
+    CONTROLPOINT 5
+      {
+      COLORMAPFRACTION = 0.5714
+      LEADRGB
+        {
+        R = 100
+        G = 100
+        B = 35
+        }
+      TRAILRGB
+        {
+        R = 0
+        G = 255
+        B = 0
+        }
+      }
+    CONTROLPOINT 6
+      {
+      COLORMAPFRACTION = 0.7143
+      LEADRGB
+        {
+        R = 85
+        G = 46
+        B = 10
+        }
+      TRAILRGB
+        {
+        R = 255
+        G = 255
+        B = 0
+        }
+      }
+    CONTROLPOINT 7
+      {
+      COLORMAPFRACTION = 0.8571
+      LEADRGB
+        {
+        R = 100
+        G = 35
+        B = 35
+        }
+      TRAILRGB
+        {
+        R = 217
+        G = 117
+        B = 26
+        }
+      }
+    CONTROLPOINT 8
+      {
+      COLORMAPFRACTION = 1
+      LEADRGB
+        {
+        R = 255
+        G = 0
+        B = 0
+        }
+      TRAILRGB
+        {
+        R = 255
+        G = 0
+        B = 0
+        }
+      }
+    }
+$!GLOBALCOLORMAP  4
+  CONTOURCOLORMAP = GRAYSCALE
+$!COLORMAPCONTROL 4 RESETTOFACTORY
+$!GLOBALCOLORMAP  4
+  GRAYSCALE
+    {
+    CONTROLPOINT 1
+      {
+      COLORMAPFRACTION = 0
+      LEADRGB
+        {
+        R = 0
+        G = 0
+        B = 0
+        }
+      TRAILRGB
+        {
+        R = 0
+        G = 0
+        B = 0
+        }
+      }
+    CONTROLPOINT 2
+      {
+      COLORMAPFRACTION = 0.125
+      LEADRGB
+        {
+        R = 32
+        G = 32
+        B = 32
+        }
+      TRAILRGB
+        {
+        R = 32
+        G = 32
+        B = 32
+        }
+      }
+    CONTROLPOINT 3
+      {
+      COLORMAPFRACTION = 0.25
+      LEADRGB
+        {
+        R = 64
+        G = 64
+        B = 64
+        }
+      TRAILRGB
+        {
+        R = 64
+        G = 64
+        B = 64
+        }
+      }
+    CONTROLPOINT 4
+      {
+      COLORMAPFRACTION = 0.375
+      LEADRGB
+        {
+        R = 96
+        G = 96
+        B = 96
+        }
+      TRAILRGB
+        {
+        R = 96
+        G = 96
+        B = 96
+        }
+      }
+    CONTROLPOINT 5
+      {
+      COLORMAPFRACTION = 0.5
+      LEADRGB
+        {
+        R = 128
+        G = 128
+        B = 128
+        }
+      TRAILRGB
+        {
+        R = 128
+        G = 128
+        B = 128
+        }
+      }
+    CONTROLPOINT 6
+      {
+      COLORMAPFRACTION = 0.625
+      LEADRGB
+        {
+        R = 160
+        G = 160
+        B = 160
+        }
+      TRAILRGB
+        {
+        R = 160
+        G = 160
+        B = 160
+        }
+      }
+    CONTROLPOINT 7
+      {
+      COLORMAPFRACTION = 0.75
+      LEADRGB
+        {
+        R = 192
+        G = 192
+        B = 192
+        }
+      TRAILRGB
+        {
+        R = 192
+        G = 192
+        B = 192
+        }
+      }
+    CONTROLPOINT 8
+      {
+      COLORMAPFRACTION = 0.875
+      LEADRGB
+        {
+        R = 224
+        G = 224
+        B = 224
+        }
+      TRAILRGB
+        {
+        R = 224
+        G = 224
+        B = 224
+        }
+      }
+    CONTROLPOINT 9
+      {
+      COLORMAPFRACTION = 1
+      LEADRGB
+        {
+        R = 255
+        G = 255
+        B = 255
+        }
+      TRAILRGB
+        {
+        R = 255
+        G = 255
+        B = 255
+        }
+      }
+    }
+$!GLOBALCOLORMAP  5
+  CONTOURCOLORMAP = SMRAINBOW
+$!COLORMAPCONTROL 5 RESETTOFACTORY
+$!GLOBALCOLORMAP  5
+  SMRAINBOW
+    {
+    CONTROLPOINT 1
+      {
+      COLORMAPFRACTION = 0
+      LEADRGB
+        {
+        R = 0
+        G = 0
+        B = 255
+        }
+      TRAILRGB
+        {
+        R = 0
+        G = 0
+        B = 255
+        }
+      }
+    CONTROLPOINT 2
+      {
+      COLORMAPFRACTION = 0.25
+      LEADRGB
+        {
+        R = 0
+        G = 255
+        B = 255
+        }
+      TRAILRGB
+        {
+        R = 0
+        G = 255
+        B = 255
+        }
+      }
+    CONTROLPOINT 3
+      {
+      COLORMAPFRACTION = 0.5
+      LEADRGB
+        {
+        R = 0
+        G = 255
+        B = 0
+        }
+      TRAILRGB
+        {
+        R = 0
+        G = 255
+        B = 0
+        }
+      }
+    CONTROLPOINT 4
+      {
+      COLORMAPFRACTION = 0.75
+      LEADRGB
+        {
+        R = 255
+        G = 255
+        B = 0
+        }
+      TRAILRGB
+        {
+        R = 255
+        G = 255
+        B = 0
+        }
+      }
+    CONTROLPOINT 5
+      {
+      COLORMAPFRACTION = 1
+      LEADRGB
+        {
+        R = 255
+        G = 0
+        B = 0
+        }
+      TRAILRGB
+        {
+        R = 255
+        G = 0
+        B = 0
+        }
+      }
+    }
+$!GLOBALCOLORMAP  6
+  CONTOURCOLORMAP = SMRAINBOW
+$!COLORMAPCONTROL 6 RESETTOFACTORY
+$!GLOBALCOLORMAP  6
+  SMRAINBOW
+    {
+    CONTROLPOINT 1
+      {
+      COLORMAPFRACTION = 0
+      LEADRGB
+        {
+        R = 0
+        G = 0
+        B = 255
+        }
+      TRAILRGB
+        {
+        R = 0
+        G = 0
+        B = 255
+        }
+      }
+    CONTROLPOINT 2
+      {
+      COLORMAPFRACTION = 0.25
+      LEADRGB
+        {
+        R = 0
+        G = 255
+        B = 255
+        }
+      TRAILRGB
+        {
+        R = 0
+        G = 255
+        B = 255
+        }
+      }
+    CONTROLPOINT 3
+      {
+      COLORMAPFRACTION = 0.5
+      LEADRGB
+        {
+        R = 0
+        G = 255
+        B = 0
+        }
+      TRAILRGB
+        {
+        R = 0
+        G = 255
+        B = 0
+        }
+      }
+    CONTROLPOINT 4
+      {
+      COLORMAPFRACTION = 0.75
+      LEADRGB
+        {
+        R = 255
+        G = 255
+        B = 0
+        }
+      TRAILRGB
+        {
+        R = 255
+        G = 255
+        B = 0
+        }
+      }
+    CONTROLPOINT 5
+      {
+      COLORMAPFRACTION = 1
+      LEADRGB
+        {
+        R = 255
+        G = 0
+        B = 0
+        }
+      TRAILRGB
+        {
+        R = 255
+        G = 0
+        B = 0
+        }
+      }
+    }
+$!GLOBALCOLORMAP  7
+  CONTOURCOLORMAP = SMRAINBOW
+$!COLORMAPCONTROL 7 RESETTOFACTORY
+$!GLOBALCOLORMAP  7
+  SMRAINBOW
+    {
+    CONTROLPOINT 1
+      {
+      COLORMAPFRACTION = 0
+      LEADRGB
+        {
+        R = 0
+        G = 0
+        B = 255
+        }
+      TRAILRGB
+        {
+        R = 0
+        G = 0
+        B = 255
+        }
+      }
+    CONTROLPOINT 2
+      {
+      COLORMAPFRACTION = 0.25
+      LEADRGB
+        {
+        R = 0
+        G = 255
+        B = 255
+        }
+      TRAILRGB
+        {
+        R = 0
+        G = 255
+        B = 255
+        }
+      }
+    CONTROLPOINT 3
+      {
+      COLORMAPFRACTION = 0.5
+      LEADRGB
+        {
+        R = 0
+        G = 255
+        B = 0
+        }
+      TRAILRGB
+        {
+        R = 0
+        G = 255
+        B = 0
+        }
+      }
+    CONTROLPOINT 4
+      {
+      COLORMAPFRACTION = 0.75
+      LEADRGB
+        {
+        R = 255
+        G = 255
+        B = 0
+        }
+      TRAILRGB
+        {
+        R = 255
+        G = 255
+        B = 0
+        }
+      }
+    CONTROLPOINT 5
+      {
+      COLORMAPFRACTION = 1
+      LEADRGB
+        {
+        R = 255
+        G = 0
+        B = 0
+        }
+      TRAILRGB
+        {
+        R = 255
+        G = 0
+        B = 0
+        }
+      }
+    }
+$!GLOBALCOLORMAP  8
+  CONTOURCOLORMAP = SMRAINBOW
+$!COLORMAPCONTROL 8 RESETTOFACTORY
+$!GLOBALCOLORMAP  8
+  SMRAINBOW
+    {
+    CONTROLPOINT 1
+      {
+      COLORMAPFRACTION = 0
+      LEADRGB
+        {
+        R = 0
+        G = 0
+        B = 255
+        }
+      TRAILRGB
+        {
+        R = 0
+        G = 0
+        B = 255
+        }
+      }
+    CONTROLPOINT 2
+      {
+      COLORMAPFRACTION = 0.25
+      LEADRGB
+        {
+        R = 0
+        G = 255
+        B = 255
+        }
+      TRAILRGB
+        {
+        R = 0
+        G = 255
+        B = 255
+        }
+      }
+    CONTROLPOINT 3
+      {
+      COLORMAPFRACTION = 0.5
+      LEADRGB
+        {
+        R = 0
+        G = 255
+        B = 0
+        }
+      TRAILRGB
+        {
+        R = 0
+        G = 255
+        B = 0
+        }
+      }
+    CONTROLPOINT 4
+      {
+      COLORMAPFRACTION = 0.75
+      LEADRGB
+        {
+        R = 255
+        G = 255
+        B = 0
+        }
+      TRAILRGB
+        {
+        R = 255
+        G = 255
+        B = 0
+        }
+      }
+    CONTROLPOINT 5
+      {
+      COLORMAPFRACTION = 1
+      LEADRGB
+        {
+        R = 255
+        G = 0
+        B = 0
+        }
+      TRAILRGB
+        {
+        R = 255
+        G = 0
+        B = 0
+        }
+      }
+    }
+$!PLOTOPTIONS 
+  SUBDIVIDEALLCELLS = NO
+$!GLOBALPAPER 
   PAPERSIZEINFO
     {
     LETTER
@@ -22,25 +860,36 @@ $!PAPER
       BOTTOMHARDCLIPOFFSET = 0.125
       }
     }
-  RULERSPACING = ONEINCH
-  PAPERGRIDSPACING = HALFINCH
-  REGIONINWORKAREA
+$!PAGE 
+  NAME = ''
+  PAPERATTRIBUTES
     {
-    X1 = -0.05
-    Y1 = -0.05
-    X2 = 11.05
-    Y2 = 8.55
+    BACKGROUNDCOLOR = WHITE
+    ISTRANSPARENT = YES
+    ORIENTPORTRAIT = NO
+    SHOWGRID = YES
+    SHOWRULER = YES
+    SHOWPAPER = YES
+    PAPERSIZE = LETTER
+    RULERSPACING = ONEINCH
+    PAPERGRIDSPACING = HALFINCH
+    REGIONINWORKAREA
+      {
+      X1 = -0.05
+      Y1 = -0.05
+      X2 = 11.05
+      Y2 = 8.55
+      }
     }
-$!COLORMAP 
-  CONTOURCOLORMAP = SMRAINBOW
-$!COLORMAPCONTROL RESETTOFACTORY
 ### Frame Number 1 ###
-$!READDATASET  '|LFDSFN1|' 
+$!READDATASET  '|LFDSFN1|'
   INITIALPLOTTYPE = XYLINE
   INCLUDETEXT = NO
   INCLUDEGEOM = NO
+  RESETSTYLE = NO
+  ASSIGNSTRANDIDS = YES
   VARLOADMODE = BYNAME
-  VARNAMELIST = '|LFDSVL1|' 
+  VARNAMELIST = '|LFDSVL1|'
 $!REMOVEVAR |LFDSVL1|
 $!REMOVEVAR |LFDSFN1|
 $!FRAMELAYOUT 
@@ -54,7 +903,9 @@ $!FRAMELAYOUT
   WIDTH = 9
   HEIGHT = 8
 $!PLOTTYPE  = XYLINE
-$!FRAMENAME  = 'Frame 001' 
+$!FRAMENAME  = 'Frame 001'
+$!GLOBALTIME 
+  SOLUTIONTIME = 0
 $!DELETELINEMAPS 
 $!ACTIVELINEMAPS  =  [2,4,6,8,10,12,14,16,18-20]
 $!GLOBALLINEPLOT 
@@ -67,7 +918,7 @@ $!GLOBALLINEPLOT
     SHOW = YES
     TEXTSHAPE
       {
-      FONT = HELV
+      ISBOLD = NO
       HEIGHT = 2
       }
     BOX
@@ -82,7 +933,7 @@ $!GLOBALLINEPLOT
       }
     }
 $!LINEMAP  [1]
-  NAME = '&DV&' 
+  NAME = '&DV&'
   ASSIGN
     {
     ZONE = 2
@@ -109,10 +960,10 @@ $!LINEMAP  [1]
     COLOR = RED
     }
 $!LINEMAP  [2]
-  NAME = '&DV&' 
+  NAME = '&DV&'
   ASSIGN
     {
-    ZONE = 3
+    ZONE = 2
     XAXISVAR = 1
     YAXISVAR = 3
     }
@@ -137,10 +988,10 @@ $!LINEMAP  [2]
     COLOR = GREEN
     }
 $!LINEMAP  [3]
-  NAME = '&DV&' 
+  NAME = '&DV&'
   ASSIGN
     {
-    ZONE = 1
+    ZONE = 2
     XAXISVAR = 1
     YAXISVAR = 4
     }
@@ -164,10 +1015,10 @@ $!LINEMAP  [3]
     COLOR = BLUE
     }
 $!LINEMAP  [4]
-  NAME = '&DV&' 
+  NAME = '&DV&'
   ASSIGN
     {
-    ZONE = 3
+    ZONE = 2
     XAXISVAR = 1
     YAXISVAR = 5
     YAXIS = 2
@@ -193,10 +1044,10 @@ $!LINEMAP  [4]
     COLOR = CYAN
     }
 $!LINEMAP  [5]
-  NAME = '&DV&' 
+  NAME = '&DV&'
   ASSIGN
     {
-    ZONE = 1
+    ZONE = 2
     XAXISVAR = 1
     YAXISVAR = 6
     }
@@ -220,10 +1071,10 @@ $!LINEMAP  [5]
     COLOR = YELLOW
     }
 $!LINEMAP  [6]
-  NAME = '&DV&' 
+  NAME = '&DV&'
   ASSIGN
     {
-    ZONE = 3
+    ZONE = 2
     XAXISVAR = 1
     YAXISVAR = 7
     }
@@ -248,10 +1099,10 @@ $!LINEMAP  [6]
     COLOR = PURPLE
     }
 $!LINEMAP  [7]
-  NAME = '&DV&' 
+  NAME = '&DV&'
   ASSIGN
     {
-    ZONE = 1
+    ZONE = 2
     XAXISVAR = 1
     YAXISVAR = 8
     }
@@ -275,10 +1126,10 @@ $!LINEMAP  [7]
     COLOR = RED
     }
 $!LINEMAP  [8]
-  NAME = '&DV&' 
+  NAME = '&DV&'
   ASSIGN
     {
-    ZONE = 3
+    ZONE = 2
     XAXISVAR = 1
     YAXISVAR = 9
     YAXIS = 2
@@ -304,10 +1155,10 @@ $!LINEMAP  [8]
     COLOR = GREEN
     }
 $!LINEMAP  [9]
-  NAME = '&DV&' 
+  NAME = '&DV&'
   ASSIGN
     {
-    ZONE = 1
+    ZONE = 2
     XAXISVAR = 1
     YAXISVAR = 10
     }
@@ -331,10 +1182,10 @@ $!LINEMAP  [9]
     COLOR = BLUE
     }
 $!LINEMAP  [10]
-  NAME = '&DV&' 
+  NAME = '&DV&'
   ASSIGN
     {
-    ZONE = 3
+    ZONE = 2
     XAXISVAR = 1
     YAXISVAR = 11
     }
@@ -359,10 +1210,10 @@ $!LINEMAP  [10]
     COLOR = CYAN
     }
 $!LINEMAP  [11]
-  NAME = '&DV&' 
+  NAME = '&DV&'
   ASSIGN
     {
-    ZONE = 1
+    ZONE = 2
     XAXISVAR = 1
     YAXISVAR = 12
     }
@@ -386,10 +1237,10 @@ $!LINEMAP  [11]
     COLOR = YELLOW
     }
 $!LINEMAP  [12]
-  NAME = '&DV&' 
+  NAME = '&DV&'
   ASSIGN
     {
-    ZONE = 3
+    ZONE = 2
     XAXISVAR = 1
     YAXISVAR = 13
     YAXIS = 2
@@ -415,10 +1266,10 @@ $!LINEMAP  [12]
     COLOR = PURPLE
     }
 $!LINEMAP  [13]
-  NAME = '&DV&' 
+  NAME = '&DV&'
   ASSIGN
     {
-    ZONE = 1
+    ZONE = 2
     XAXISVAR = 1
     YAXISVAR = 14
     }
@@ -442,10 +1293,10 @@ $!LINEMAP  [13]
     COLOR = RED
     }
 $!LINEMAP  [14]
-  NAME = '&DV&' 
+  NAME = '&DV&'
   ASSIGN
     {
-    ZONE = 3
+    ZONE = 2
     XAXISVAR = 1
     YAXISVAR = 15
     YAXIS = 2
@@ -471,10 +1322,10 @@ $!LINEMAP  [14]
     COLOR = GREEN
     }
 $!LINEMAP  [15]
-  NAME = '&DV&' 
+  NAME = '&DV&'
   ASSIGN
     {
-    ZONE = 1
+    ZONE = 2
     XAXISVAR = 1
     YAXISVAR = 16
     }
@@ -498,10 +1349,10 @@ $!LINEMAP  [15]
     COLOR = BLUE
     }
 $!LINEMAP  [16]
-  NAME = '&DV&' 
+  NAME = '&DV&'
   ASSIGN
     {
-    ZONE = 3
+    ZONE = 2
     XAXISVAR = 1
     YAXISVAR = 17
     }
@@ -526,10 +1377,10 @@ $!LINEMAP  [16]
     COLOR = CYAN
     }
 $!LINEMAP  [17]
-  NAME = '&DV&' 
+  NAME = '&DV&'
   ASSIGN
     {
-    ZONE = 1
+    ZONE = 2
     XAXISVAR = 1
     YAXISVAR = 18
     }
@@ -553,10 +1404,10 @@ $!LINEMAP  [17]
     COLOR = YELLOW
     }
 $!LINEMAP  [18]
-  NAME = '&DV&' 
+  NAME = '&DV&'
   ASSIGN
     {
-    ZONE = 3
+    ZONE = 2
     XAXISVAR = 1
     YAXISVAR = 19
     YAXIS = 2
@@ -582,10 +1433,10 @@ $!LINEMAP  [18]
     COLOR = PURPLE
     }
 $!LINEMAP  [19]
-  NAME = '&DV&' 
+  NAME = '&DV&'
   ASSIGN
     {
-    ZONE = 3
+    ZONE = 2
     XAXISVAR = 1
     YAXISVAR = 20
     }
@@ -610,10 +1461,10 @@ $!LINEMAP  [19]
     COLOR = RED
     }
 $!LINEMAP  [20]
-  NAME = '&DV&' 
+  NAME = '&DV&'
   ASSIGN
     {
-    ZONE = 3
+    ZONE = 2
     XAXISVAR = 1
     YAXISVAR = 21
     }
@@ -698,5 +1549,7 @@ $!ATTACHTEXT
     X = 5.60687237027
     Y = 93.9215949821
     }
-  TEXT = 'TCE degradation in an iro reactive barrier\nConcentrations after 50 d; See Schäfer et al. (2003)' 
+  TEXT = 'TCE degradation in an iro reactive barrier\nConcentrations after 50 d; See Schäfer et al. (2003)'
+$!FRAMECONTROL ACTIVATEBYNUMBER
+  FRAME = 1
 $!SETSTYLEBASE CONFIG

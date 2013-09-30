@@ -44,6 +44,10 @@ extern int ReadData(char*, GEOLIB::GEOObjects& geo_obj, std::string& unique_name
 #endif
 
 #include "rf_react.h"
+#include "rf_react_int.h"
+#include "rf_react_cap.h"  //CB merge CAP 0311 
+
+
 #include "rf_st_new.h"
 #include "rf_tim_new.h"
 #include "rfmat_cp.h"
@@ -182,23 +186,50 @@ Problem::Problem (char* filename) :
 	//OK if (!Check()) return; //OK
 	//----------------------------------------------------------------------
 	// REACTIONS
-	//CB before the first time step
-	//if(MASS_TRANSPORT_Process) // if(MASS_TRANSPORT_Process&&NAPL_Dissolution) //CB Todo
+   //CB before the first time step
+   if(REACTINT_vec.size()==0){
+     for(size_t i=0; i<mmp_vector.size(); i++){
+       if(mmp_vector[i]->porosity_model==13){
+         std::cout << " Error in Model setup: Porosity model 13 is used, " << "\n";
+         std::cout << " but no reaction interface is defined! Exiting now..." << "\n";
+         exit(0);
+       }
+     }
+   }
+   //if(MASS_TRANSPORT_Process) // if(MASS_TRANSPORT_Process&&NAPL_Dissolution) //CB Todo
+   CreateClockTime(); // CB time
 	if(transport_processes.size() > 0)    //12.12.2008. WW
 	{
-		// 1) set the id variable flow_pcs_type for Saturation and velocity calculation
-		//    in mass transport element matrices
-		SetFlowProcessType();
-		// 2) in case of Twophaseflow calculate NAPL- and the corresponding
-		//    Water phase Saturation from the NAPL concentrations
-		//if(pcs_vector[0]->pcs_type_name.compare("TWO_PHASE_FLOW")==0) //OK
-		//WW CRFProcess *m_pcs = NULL;
-		//WW if (m_pcs = PCSGet("TWO_PHASE_FLOW"))
-		// CB: this fct will set the initial NAPL Density in case of NAPL-Dissolution
-		//     should this fct be executed in all cases?? --> CHP
-		if(total_processes[3])    // 3: TWO_PHASE_FLOW. 12.12.2008. WW
-			PCSCalcSecondaryVariables();
-	}
+    // set the id variable flow_pcs_type for Saturation and velocity calculation
+    // in mass transport element matrices
+    SetFlowProcessType();
+    //----------------------------------------------------------------------
+      KRConfig(*_geo_obj, _geo_name);
+
+    // initialyse the reaction interface if  not done yet 
+    if(REACTINT_vec.size()>0){
+      if(REACTINT_vec[0]->unitconversion){
+        CRFProcess* flow_pcs = NULL;
+        flow_pcs = PCSGetFlow();
+        if( flow_pcs->type==1212) // in case of mutlltiphase flow, sat water must be calculated here, required by pgc interface
+          flow_pcs->CalcSecondaryVariables(true);  
+      }
+      REACTINT_vec[0]->InitREACTINT();
+    }
+    //----------------------------------------------------------------------
+    if(KinReactData_vector.size() > 0){
+      // Configure Data for Blobs (=>NAPL dissolution) 
+      KBlobConfig(*_geo_obj, _geo_name);
+      KBlobCheck();
+      // in case of Twophaseflow before the first time step 
+      if(total_processes[3] || total_processes[4]) 
+        if(KNaplDissCheck())  // 3: TWO_PHASE_FLOW. 12.12.2008. WW     
+          KNaplCalcDensity(); 	                     //PCSCalcSecondaryVariables(); 
+      // CB _drmc_ data for microbes
+      if(MicrobeData_vector.size()>0)
+        MicrobeConfig();
+    }
+  }
 	//----------------------------------------------------------------------
 	// REACTIONS
 	// Initialization of REACT structure for rate exchange between MTM2 and Reactions
@@ -286,6 +317,14 @@ Problem::Problem (char* filename) :
 		}
 		//  delete rc;
 	}
+//CB merge CAP 0311 
+  // Initialize using ChemApp
+  if(REACT_CAP_vec.size() > 0) {
+	  // SB 10/2009 do a first equilibrium calculation
+	  REACT_CAP_vec[0]->ExecuteReactionsChemApp(0, -1); // DL/SB 11/2008 //DL 2011.11.24 comment for AGU
+	  // Copy new timelevel to old time level
+	  REACT_CAP_vec[0]->ConvertIC2BC(*_geo_obj, _geo_name);
+  }
 #endif                                         // GEM_REACT
 
 #ifdef BRNS
@@ -308,6 +347,8 @@ Problem::Problem (char* filename) :
 #endif
 	//  delete rc;
 
+    if(REACTINT_vec.size()>0)
+      REACTINT_vec[0]->ReactionPostProcessing(true);
 	//----------------------------------------------------------------------
 	// DDC
 	size_t no_processes = pcs_vector.size();
@@ -351,16 +392,6 @@ Problem::Problem (char* filename) :
 #endif //#if !defined(USE_PETSC) // && !defined(other parallel libs)//03.3012. WW
 	//----------------------------------------------------------------------
 	PCSRestart();                         //SB
-	if(transport_processes.size() > 0)    //WW. 12.12.2008
-	{
-		//----------------------------------------------------------------------
-		KRConfig(*_geo_obj, _geo_name);
-		//----------------------------------------------------------------------
-		// Configure Data for Blobs (=>NAPL dissolution)
-		KBlobConfig(*_geo_obj, _geo_name);
-		KBlobCheck();
-		//WW CreateClockTime();
-	}
 	OUTCheck();                           // new SB
 	//========================================================================
 	// Controls for coupling. WW
@@ -818,8 +849,9 @@ void Problem::PCSCreate()
 		std::cout << "Create: " << FiniteElement::convertProcessTypeToString (pcs_type) << "\n";
 		//		if (!pcs_vector[i]->pcs_type_name.compare("MASS_TRANSPORT")) {
 		//YS   // TF
-		if (pcs_type != FiniteElement::MASS_TRANSPORT && pcs_type != FiniteElement::FLUID_MOMENTUM
-						&& pcs_type != FiniteElement::RANDOM_WALK)
+		//if (pcs_type != FiniteElement::MASS_TRANSPORT && pcs_type != FiniteElement::FLUID_MOMENTUM
+		//				&& pcs_type != FiniteElement::RANDOM_WALK)
+		if (pcs_type == FiniteElement::MASS_TRANSPORT )     //SB
 		{
 			std::cout << " for " << pcs_vector[i]->pcs_primary_function_name[0] << " ";
 			std::cout << " pcs_component_number " <<
@@ -961,12 +993,12 @@ void Problem::Euler_TimeDiscretize()
 	ScreenMessage("\n\n***Start time steps\n");
 	//
 	// Output zero time initial values
-#if defined(USE_MPI)
+#if defined(USE_MPI)  || defined(USE_MPI_KRC) 
 		if(myrank == 0)
 		{
 #endif
 	OUTData(0.0,aktueller_zeitschritt,true);
-#if defined(USE_MPI)
+#if defined(USE_MPI) || defined(USE_MPI_KRC) 
 		}
 #endif
 	
@@ -997,7 +1029,7 @@ void Problem::Euler_TimeDiscretize()
 		aktuelle_zeit = current_time;
 		//
 		// Print messsage
-#if defined(USE_MPI)
+#if defined(USE_MPI) || defined(USE_MPI_KRC) 
 		if(myrank == 0)
 		{
 #endif
@@ -1007,7 +1039,7 @@ void Problem::Euler_TimeDiscretize()
 		if(dt_rec > dt){
 			std::cout << "This time step size was modified to match a critical time!" << "\n";
 		}
-#if defined(USE_MPI)
+#if defined(USE_MPI) || defined(USE_MPI_KRC) 
 		}
 #endif
 		if(CouplingLoop())
@@ -1024,7 +1056,7 @@ void Problem::Euler_TimeDiscretize()
 					force_output = false;
 				else // JT: Make sure we printout on last time step
 					force_output = true;
-#if defined(USE_MPI)
+#if defined(USE_MPI) || defined(USE_MPI_KRC) 
 				if(myrank == 0)
 				{
 #endif
@@ -1076,7 +1108,7 @@ void Problem::Euler_TimeDiscretize()
 //		// executing only one time step for profiling
 //		current_time = end_time;
 	}
-#if defined(USE_MPI) // JT2012
+#if defined(USE_MPI) || defined(USE_MPI_KRC)  // JT2012
 	if(myrank == 0)
 	{
 #endif
@@ -1098,7 +1130,7 @@ void Problem::Euler_TimeDiscretize()
 		}
     }
     std::cout<<"\n----------------------------------------------------\n";
-#if defined(USE_MPI)
+#if defined(USE_MPI) || defined(USE_MPI_KRC) 
 	}
 #endif
 }
@@ -1117,6 +1149,7 @@ bool Problem::CouplingLoop()
 {
 	int i, index, cpl_index;
 	double max_outer_error, max_inner_error; //, error;
+    bool transient_bc = false;
 	bool run_flag[14];
 	int outer_index, inner_index, inner_max; //, inner_min;
 	//
@@ -1127,8 +1160,13 @@ bool Problem::CouplingLoop()
 	print_result = false;
 	int acounter = 0;
 	//
-	for(i = 0; i < (int)pcs_vector.size(); i++)
-		pcs_vector[i]->UpdateTransientBC();
+   for(i=0; i<(int)pcs_vector.size(); i++){
+      pcs_vector[i]-> UpdateTransientBC();
+      if(pcs_vector[i]->bc_transient_index.size() != 0)
+        transient_bc = true;
+   }
+   if(transient_bc) 
+     pcs_vector[0]->WriteBC();
 
 	for(i = 0; i < (int)total_processes.size(); i++)
 	{
@@ -1337,6 +1375,8 @@ void Problem::PreCouplingLoop(CRFProcess *m_pcs)
 void Problem::PostCouplingLoop()
 {
 	CRFProcess* m_pcs = NULL;
+    bool prqvec = false;
+    bool capvec = false;
 	if (total_processes[12])
 	{
 		CRFProcessDeformation* dm_pcs = (CRFProcessDeformation*)(total_processes[12]);
@@ -1357,20 +1397,33 @@ void Problem::PostCouplingLoop()
 		dm_pcs->Extropolation_GaussValue();
 	}
 
-	//CB new NAPL and Water Saturations after reactions for Two_Phase_Flow and NAPL-Dissolution
-	//WW if(MASS_TRANSPORT_Process) // if(MASS_TRANSPORT_Process&&NAPL_Dissolution) //CB Todo
-	// 12.2008. WW
-	if (transport_processes.size() > 0 && total_processes[3])
-		if (KNaplDissCheck())       // Check if NAPLdissolution is modeled
-			CalcNewNAPLSat(total_processes[3]);
+// Reaction postprocessing
+  if (REACT_CAP_vec.size() > 0) capvec = true;
 
-	/* CB 21/09 The next fct. was necessary in 4.08. Still needed here? I think so
-	   // for TWO_PHASE_FLOW the new time step results for secondary variables
-	   // PRESSURE2 and SATURATION1 are not copied below in the function
-	   // CopyTimestepNODValues(); but I can do it here:
-	   if (m_pcs = PCSGet("TWO_PHASE_FLOW"))
-	   CopyTimestepNODValuesSVTPhF();
-	 */
+
+  if( (KinReactData_vector.size() > 0) || (REACT_vec.size()>0) || capvec  || prqvec ){  
+    // map concentrations in radial model
+    if( KinReactData_vector.size() > 0)
+      if(KinReactData_vector[0]->copy_concentrations ) 
+        KinReactData_vector[0]->CopyConcentrations();
+    if(transport_processes.size()>0){ 
+      if(total_processes[3] || total_processes[4])
+        if(KNaplDissCheck()){   // Check if NAPLdissolution is modeled
+          // return P_new, and Phase_volumina 
+          CalcNewPhasePressure(); 
+        }
+    }
+    // update porosities and permeabilities from reactions
+    if(REACTINT_vec.size()>0)
+      REACTINT_vec[0]->ReactionPostProcessing(false);
+    if( KinReactData_vector.size() > 0){
+      if(KinReactData_vector[0]->NumberMineralkinetics>0) 
+        KinReactData_vector[0]->PostprocessMinKin(); // Set Mineral surface areas for next time step based on deltaC
+    }
+    m_pcs = PCSGetFlow();
+    m_pcs->Extropolation_GaussValue();
+  }
+
 
 	//  Update the results
 	for (int i = 0; i < (int)pcs_vector.size(); i++)
@@ -1637,7 +1690,10 @@ inline double Problem::MultiPhaseFlow()
 	else if (m_pcs->simulator.compare("DUMUX") == 0)
 	{
 		if(m_pcs->DuMuxData == NULL) //SBG if this is the first call, make a new instance
+		{
 			m_pcs->DuMuxData = new CDUMUXData();
+			m_pcs->DuMuxData->dissolved_co2_pcs_name_DUMUX = m_pcs->dissolved_co2_pcs_name; // hand over process name for storing dissolved CO2
+		}
 		// call DUMUX interface
 		success = m_pcs->DuMuxData->RunDuMux(m_pcs->Tim->step_current, m_pcs);
 		if (success == 0)
@@ -2256,7 +2312,7 @@ void Problem::OutputMassOfGasInModel(CRFProcess* m_pcs)
 	double porosity = 0.0;
 	int variable_index;
 	double concentration_Gas_water;
-	int indexConcentration_Gas;
+	int indexConcentration_Gas=0;
 	int ProcessIndex_GasInLiquid;
 	CRFProcess *n_pcs = NULL;
 	int group;
@@ -2687,6 +2743,7 @@ inline double Problem::GroundWaterFlow()
 	CRFProcess* m_pcs = total_processes[1];
 	if(!m_pcs->selected)
 		return error;             //12.12.2008 WW
+   ClockTimeVec[0]->StartTime(); // CB time
 
 	//----- For the coupling with the soil column approach. 05.2009. WW
 	MeshLib::GridsTopo* neighb_grid = NULL;
@@ -2797,7 +2854,11 @@ inline double Problem::GroundWaterFlow()
 		m_pcs->selected = false;
 	}
 #endif
-	return error;
+
+   ClockTimeVec[0]->StopTime("Flow"); // CB time
+   ClockTimeVec[0]->StartTime(); // CB time
+
+   return error;
 }
 
 /*-------------------------------------------------------------------------
@@ -2878,12 +2939,22 @@ inline double Problem::HeatTransport()
 	CRFProcess* m_pcs = total_processes[8];
 	if(!m_pcs->selected)
 		return error;             //12.12.2008 WW
+   //CB This is a cheat to map a 2D horizontal heat pump distribution on a vertical model
+   if(REACTINT_vec.size()>0)
+     if(REACTINT_vec[0]->heatpump_2DhTO2Dv)
+       REACTINT_vec[0]->Heatpump_2DhTO2Dv_Mapping(false); // Restore the old solution
 
 	error = m_pcs->ExecuteNonLinear(loop_process_number);
 	//if(m_pcs->non_linear)
 	//  error = m_pcs->ExecuteNonLinear();
 	//else
 	//  error = m_pcs->Execute();
+   
+   //CB This is a cheat to map a 2D horizontal heat pump distribution on a vertical model
+   if(REACTINT_vec.size()>0)
+     if(REACTINT_vec[0]->heatpump_2DhTO2Dv)
+       REACTINT_vec[0]->Heatpump_2DhTO2Dv_Mapping(true); // Map Heat plume CL to 2D vertical
+   
 	return error;
 }
 
@@ -2899,10 +2970,13 @@ inline double Problem::HeatTransport()
 inline double Problem::MassTrasport()
 {
 	double error = 1.0e+8;
+    bool capvec = false;
+    bool prqvec = false;
 	CRFProcess* m_pcs = total_processes[11];
 	//
 	if(!m_pcs->selected)
 		return error;             //12.12.2008 WW
+   //ClockTimeVec[0]->StartTime(); // CB time, remove if flow time is stopped
 
 	for(int i = 0; i < (int)transport_processes.size(); i++)
 	{
@@ -2929,15 +3003,31 @@ inline double Problem::MassTrasport()
 	//rc = REACT_vec[0]; //OK
 	//				if(rc->flag_pqc) rc->ExecuteReactions();
 	//				delete rc;
-	if(KinReactData_vector.size() > 0)    // WW moved the following lines into this curly braces. 12.12.2008
-		//SB4900    ClockTimeVec[0]->StopTime("Transport");
-		//SB4900    ClockTimeVec[0]->StartTime();
-		// Calculate Chemical reactions, after convergence of flow and transport
-		// Move inside iteration loop if couplingwith transport is implemented SB:todo
-		// First calculate kinetic reactions
-		KinReactData_vector[0]->ExecuteKinReact();
-	//SB4900 ClockTimeVec[0]->StopTime("KinReactions");
-	//SB4900 ClockTimeVec[0]->StartTime();
+//CB2406 #ifdef OGS_FEM_CAP // CAP_REACT  //CB merge CAP 0311
+   if (REACT_CAP_vec.size() > 0) capvec = true;
+
+
+  //if( (KinReactData_vector.size() > 0) || (REACT_vec.size()>0) ||  capvec || (REACT_PRQ_vec.size()>0) )  //CB merge CAP 0311
+   if(REACTINT_vec.size()>0)
+     REACTINT_vec[0]->ReactionPreProcessing();
+
+   if(KinReactData_vector.size() > 0)
+   {  // WW moved the following lines into this curly braces. 12.12.2008
+      ClockTimeVec[0]->StopTime("Transport"); // CB time
+      ClockTimeVec[0]->StartTime(); // CB time
+      // Calculate Chemical reactions, after convergence of flow and transport
+      // Move inside iteration loop if couplingwith transport is implemented SB:todo
+      // First calculate kinetic reactions
+
+      //DL --> for liquid phase only, 
+      // this will provide activities and speciation for kinetics
+      if(capvec && KinReactData_vector[0]->NumberMineralkinetics>0)
+        REACT_CAP_vec[0]->ExecuteReactionsChemApp(-1, -1);     
+
+      KinReactData_vector[0]->ExecuteKinReact();
+      ClockTimeVec[0]->StopTime("KinReactions");  // CB time
+      ClockTimeVec[0]->StartTime();  // CB time
+   }
 	if(REACT_vec.size() > 0)              //OK
 	{
 		if(REACT_vec[0]->flag_pqc)
@@ -2956,6 +3046,13 @@ inline double Problem::MassTrasport()
 #endif                                   // REACTION_ELEMENT
 		}
 	}
+
+		if(REACT_CAP_vec.size() > 0){ // use ChemApp
+			REACT_CAP_vec[0]->ExecuteReactionsChemApp(1, -1);  //DL
+		//REACT_CAP_vec[0]->ConvertIC2BC();
+		}
+
+
 #ifdef GEM_REACT
 	else                                  // WW moved these pare of curly braces inside  ifdef GEM_REACT
 	if (m_vec_GEM->initialized_flag == 1) //when it was initialized.
@@ -2994,7 +3091,7 @@ inline double Problem::MassTrasport()
 #endif
 
 	// if(KinReactData_vector.size() > 0)  //12.12.2008 WW
-	//SB4900    ClockTimeVec[0]->StopTime("EquiReact");
+      ClockTimeVec[0]->StopTime("EquiReact"); // CB time
 
 	return error;
 }

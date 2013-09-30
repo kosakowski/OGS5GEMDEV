@@ -33,7 +33,7 @@ CReadTextfiles_DuMux::~CReadTextfiles_DuMux(void)
 using std::string;
 using std::vector;
 using std::cout;
-//using std:endl;
+//using std:"\n";
 
 /*-------------------------------------------------------------------------
    GeoSys - Function: SplitStrings
@@ -134,7 +134,7 @@ bool CReadTextfiles_DuMux::Read_SeparatedText(string Filename, string delimiter)
 	{
 		error = true;
 		cout << "The file " << Filename.data() << " can not be opened!" << "\n";
-		system("Pause");
+		//system("Pause");
 	}
 	else
 	{
@@ -166,7 +166,7 @@ bool CReadTextfiles_DuMux::Read_SeparatedText(string Filename, string delimiter)
 						cout <<
 						"The number of columns in the textfile is not constant!"
 						     << "\n";
-						system("Pause");
+						//system("Pause");
 					}
 					else
 					{
@@ -402,7 +402,7 @@ int CDUMUXData::WriteInputForDuMux(CRFProcess* m_pcs, string Folder, long Timest
 			else
 			{
 				cout << "This time unit was not considered yet" << "\n";
-				system("Pause");
+				//system("Pause");
 				exit(0);
 			}
 		}
@@ -720,7 +720,7 @@ void CDUMUXData::ReadDuMuxData(CRFProcess* m_pcs, string Filename, long Timestep
 	if (Error == true)
 	{
 		cout << "The program is canceled" << "\n";
-		system("Pause");
+		//system("Pause");
 		exit(0);
 	}
 
@@ -735,7 +735,7 @@ void CDUMUXData::ReadDuMuxData(CRFProcess* m_pcs, string Filename, long Timestep
 			cout <<
 			"The header of the DUMUX result file does not fit to the definition!" <<
 			"\n";
-			system("Pause");
+			//system("Pause");
 			exit(0);
 		}
 	if (this->Phases.size() == 2)
@@ -753,7 +753,7 @@ void CDUMUXData::ReadDuMuxData(CRFProcess* m_pcs, string Filename, long Timestep
 			cout <<
 			"The header of the DUMUX result file does not fit to the definition!" <<
 			"\n";
-			system("Pause");
+			//system("Pause");
 			exit(0);
 		}
 
@@ -767,7 +767,7 @@ void CDUMUXData::ReadDuMuxData(CRFProcess* m_pcs, string Filename, long Timestep
 		{
 			cout << "The number of nodes is not equal between OGS and DUMUX! " <<
 			this->NodeData.size() << ", " << TextFile->NumberOfRows << "\n";
-			system("Pause");
+			//system("Pause");
 			exit(0);
 		}
 
@@ -783,7 +783,7 @@ void CDUMUXData::ReadDuMuxData(CRFProcess* m_pcs, string Filename, long Timestep
 			{
 				cout <<
 				"The node coordinates are not equal between OGS and DUMUX!" << "\n";
-				system("Pause");
+				//system("Pause");
 				exit(0);
 			}
 	}
@@ -1129,8 +1129,9 @@ void CDUMUXData::WriteDataToGeoSys(CRFProcess* m_pcs)
 		{
 			n_pcs = pcs_vector[i];
 			// identify your process and store idx of pcs-vector
-			if ((n_pcs->nod_val_name_vector[0] == "C(4)") ||
-			    (n_pcs->nod_val_name_vector[0] == "CO2_w"))                          // "C(4)"...Phreeqc, "CO2_w"...Chemapp
+			//if ((n_pcs->nod_val_name_vector[0] == "C(4)") ||
+			//    (n_pcs->nod_val_name_vector[0] == "CO2_w"))                          // "C(4)"...Phreeqc, "CO2_w"...Chemapp
+			if (n_pcs->nod_val_name_vector[0] == this->dissolved_co2_pcs_name_DUMUX)
 				this->ProcessIndex_CO2inLiquid = i;
 			if ((n_pcs->nod_val_name_vector[0] == "NaClinLiquid"))
 				this->ProcessIndex_NaClinLiquid = i;
@@ -1138,9 +1139,9 @@ void CDUMUXData::WriteDataToGeoSys(CRFProcess* m_pcs)
 	if (this->ProcessIndex_CO2inLiquid == -1)
 	{
 		cout <<
-		"In the model exists dissolved gas but there is no dissolved C in water defined. Please ad the mass transport for immobile C(4) or CO2_w!"
+		"In the model exists dissolved gas but there is no dissolved C in water defined. Please ad the mass transport for dissolved CO2!"
 		     << "\n";
-		system("Pause");
+		//system("Pause");
 		exit(0);
 	}
 
@@ -1168,7 +1169,7 @@ void CDUMUXData::WriteDataToGeoSys(CRFProcess* m_pcs)
 //			cout << "Node: " << i << " Druck: " << this->NodeData[i]->phase_pressure[1] << " X_CO2: " << this->NodeData[i]->CO2inLiquid << " Dichte: " << this->NodeData[i]->phase_density[0] << " C(4): " << value << "\n";
 			cout << "Node: " << i << " Druck: " << pnt_dumux->getPhasePressure()[1] <<
 			" X_CO2: " << this->NodeData[i]->getCO2InLiquid() << " Dichte: " <<
-			pnt_dumux->getPhaseDensity()[0] << " C(4): " << value << "\n";
+			pnt_dumux->getPhaseDensity()[0] << " dissolved CO2: " << value << "\n";
 			cout << "  Fehler in Berechnung von DIC: " << value << "\n";
 		}
 	}
@@ -1363,7 +1364,7 @@ int CDUMUXData::RunDuMux(long Timestep, CRFProcess* m_pcs)
 		cout <<
 		"There are problems with writing input data for DuMux! The run is terminated." <<
 		"\n";
-		system("Pause");
+		//system("Pause");
 		exit(0);
 	}
 
@@ -1414,7 +1415,7 @@ int CDUMUXData::RunDuMux(long Timestep, CRFProcess* m_pcs)
 			     << "\n";
 			cout << root_folder << "\n";
 			cout << geosys_folder << "\n";
-			system("Pause");
+			//system("Pause");
 		}
 	}
 
@@ -1460,7 +1461,7 @@ int CDUMUXData::RunDuMux(long Timestep, CRFProcess* m_pcs)
 	{
 		cout << "The DuMux execution does not work after " << number_loops << " trials!" <<
 		"\n";
-		system("Pause");
+		//system("Pause");
 		exit(0);
 	}
 

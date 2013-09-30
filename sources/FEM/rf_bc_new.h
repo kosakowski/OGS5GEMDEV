@@ -187,6 +187,10 @@ private:
 	long _msh_node_number;
 	std::string _msh_type_name; //OK4105
 
+	// copy values   SB 09.2012
+	std::string copy_geom;
+	std::string copy_geom_name;
+
 	// Excavation WX:12.2010
 	int bcExcav;
 	int MatGr;
@@ -210,6 +214,8 @@ public:
 	std::string fct_name;                 //WW
 	//FCT
 	int conditional;                      //OK
+	std::string bc_node_copy_geom;
+	std::string bc_node_copy_geom_name;
 	CBoundaryConditionNode();
 
 	// 25.08.2011. WW

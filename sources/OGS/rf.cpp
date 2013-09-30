@@ -20,7 +20,7 @@
 #include "Configure.h"
 
 #if defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL) || \
-        defined(USE_MPI_GEMS)
+        defined(USE_MPI_GEMS) || defined(USE_MPI_KRC) 
 #include "par_ddc.h"
 #include <mpi.h>
 #endif
@@ -57,7 +57,7 @@ void ShowSwitches ( void );
 // LB,string FilePath; //23.02.2009. WW
 // ------  12.09.2007 WW:
 #if defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL) || \
-        defined(USE_MPI_GEMS)
+        defined(USE_MPI_GEMS) || defined(USE_MPI_KRC) 
 double elapsed_time_mpi;
 // ------
 #endif
@@ -164,7 +164,7 @@ int main ( int argc, char* argv[] )
 #endif
 /*---------- MPI Initialization ----------------------------------*/
 #if defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL) || \
-	defined(USE_MPI_GEMS)
+	defined(USE_MPI_GEMS) || defined(USE_MPI_KRC) 
 	printf("Before MPI_Init\n");
 #if defined(USE_MPI_GEMS)
 	int prov;
@@ -281,6 +281,8 @@ int main ( int argc, char* argv[] )
 	aproblem->Euler_TimeDiscretize();
 	delete aproblem;
 	aproblem = NULL;
+  if(ClockTimeVec.size()>0)
+    ClockTimeVec[0]->PrintTimes();  //CB time
 #ifdef TESTTIME
 	std::cout << "Simulation time: " << TGetTimer(0) << "s" << "\n";
 #endif
@@ -288,7 +290,7 @@ int main ( int argc, char* argv[] )
 	/* Ctrl-C wieder normal */
 	StandardBreak();
 /*--------- MPI Finalize ------------------*/
-#if defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL)
+#if defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL) || defined(USE_MPI_KRC)
 	elapsed_time_mpi += MPI_Wtime(); // 12.09.2007 WW
 	std::cout << "\n *** Total CPU time of parallel modeling: " << elapsed_time_mpi <<
 	"\n";                                                                          //WW

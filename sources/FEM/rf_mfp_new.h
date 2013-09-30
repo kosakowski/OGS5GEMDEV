@@ -187,6 +187,10 @@ public:
 	// TF 11/2011 - only in read-method used
 //	std::string dif_fct_name;
 	int diffusion_model;                  /* SB:p2 */
+      // Phase diffusion (Daq, Yaws et al.)
+      double diff;
+      double A_Daq;
+      double B_Daq;
 
 	int heat_phase_change_curve;
 	// IO
@@ -194,6 +198,7 @@ public:
 	// PCS  YD
 	std::vector<std::string>density_pcs_name_vector;
 	std::vector<std::string>viscosity_pcs_name_vector;
+    std::vector<std::string>phase_diffusion_pcs_name_vector;
 	std::vector<std::string>specific_heat_capacity_pcs_name_vector;
 	std::vector<std::string>heat_conductivity_pcs_name_vector;
 	std::vector<std::string>enthalpy_pcs_name_vector;
@@ -224,6 +229,7 @@ public:
 	double ComponentDensity(int CIndex, double* variables = NULL);//AKS
 	double Viscosity(double* variables = NULL); //OK4709
 	                                            //NB Jan09
+      double PhaseDiffusion(double *variables = NULL);
 	double SpecificHeatCapacity(double* variables = NULL);
 	void therm_prop(std::string caption); //NB 4.9.05
 	double PhaseChange();                 // JOD
@@ -242,7 +248,9 @@ public:
 	{
 		return heat_capacity_model;
 	}
-	// Derivations of free Helmholtz energy, NB JUN 09
+	double GetDiffusion() {return diffusion; }
+    int getCompressibilityTModel() const {return compressibility_model_temperature;} //CB
+// Derivations of free Helmholtz energy, NB JUN 09
 	double phi_r_d (double rho, double T) const;
 	double phi_r_tt (double rho, double T) const;
 	double phi_0_t (double T) const;
@@ -277,6 +285,7 @@ private:
 	double LiquidViscosity_Marsily_1986(double);
 	double LiquidViscosity_NN(double,double);
 	double LiquidViscosity_CMCD(double p,double T,double C);
+    double PhaseDiffusion_Yaws_1976(double);
 	double MATCalcHeatConductivityMethod2(double p, double T, double C);
 	double MATCalcFluidHeatCapacityMethod2(double p, double T, double C);
 };

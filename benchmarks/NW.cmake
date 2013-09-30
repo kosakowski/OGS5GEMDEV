@@ -1,3 +1,6 @@
+ADD_BENCHMARK ("NW" T/t3d/t3d "OGS_FEM" 1
+	T/t3d/t3d_time_POINT12.tec)
+
 ADD_BENCHMARK ("NW" T/1d_thermal_expansion/exp1 "OGS_FEM" 1
 	T/1d_thermal_expansion/exp1_time_POINT_LEFT.tec
 	T/1d_thermal_expansion/exp1_time_POINT_RIGHT.tec)

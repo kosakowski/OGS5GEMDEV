@@ -821,6 +821,49 @@ bool CVTK::WriteNodalValue(std::fstream &fin,
         }
     }
 
+	//MFP
+      for ( size_t i=0; i<out->mfp_value_vector.size(); i++) {
+
+          const std::string &mfp_name = out->mfp_value_vector[i];
+          if (!useBinary || !output_data)
+          {
+              WriteDataArrayHeader(fin, type_Double, mfp_name, 0, str_format, offset);
+          }
+
+          if (output_data)
+          {
+              if (!useBinary)
+              {
+                  fin << "          ";
+                  for (size_t j = 0; j < msh->GetNodesNumber(false); j++)
+                  {
+                      const double v = MFPGetNodeValue(msh->nod_vector[j]->GetIndex(), mfp_name, atoi(&mfp_name[mfp_name.size() - 1]) - 1);
+                      fin << v << " ";
+                  }
+                  fin << endl;
+              }
+              else
+              {
+                  write_value_binary<unsigned int> (fin, sizeof(double)
+                      * msh->GetNodesNumber(false));
+                  for (size_t j = 0; j < msh->GetNodesNumber(false); j++)
+                  {
+                      const double v = MFPGetNodeValue(msh->nod_vector[j]->GetIndex(), mfp_name, atoi(&mfp_name[mfp_name.size() - 1]) - 1);
+                      write_value_binary(fin, v);
+                  }
+              }
+          }
+          else
+          {
+              offset += msh->GetNodesNumber(false) * sizeof(double)
+                  + SIZE_OF_BLOCK_LENGTH_TAG;
+          }
+
+          if (!useBinary || !output_data)
+          {
+              WriteDataArrayFooter(fin);
+          }
+      }
     return true;
 }
 

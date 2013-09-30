@@ -18,7 +18,7 @@
 // the names before including mpi.h or include mpi.h *before* stdio.h
 // or iostream.
 #if defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL) || \
-        defined(USE_MPI_GEMS)
+        defined(USE_MPI_GEMS) || defined(USE_MPI_KRC)
 //#undef SEEK_SET  //WW
 //#undef SEEK_END  //WW
 //#undef SEEK_CUR  //WW

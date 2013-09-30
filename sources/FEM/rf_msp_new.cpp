@@ -751,6 +751,7 @@ std::ios::pos_type CSolidProperties::Read(std::ifstream* msp_file)
          {
 	         in_sd.str(GetLineFromFile1(msp_file));
 			 in_sd >> reaction_system;
+			 this->setSolidReactiveSystem(FiniteElement::convertSolidReactiveSystem(reaction_system));
 			 in_sd.clear();
 			 if (reaction_system.compare("SINUSOIDAL") == 0) { //For Benchmarks
 				in_sd.str(GetLineFromFile1(msp_file));
@@ -944,6 +945,7 @@ CSolidProperties::CSolidProperties()
 
 	  //Reactive system
 	reaction_system = "INERT";
+	_reactive_system = FiniteElement::INERT;
 	lower_solid_density_limit = 0.0; 
 	upper_solid_density_limit = 0.0;
 	reaction_enthalpy = 0.0;
@@ -2988,7 +2990,7 @@ int CSolidProperties::StressIntegrationMOHR_Aniso(const int GPiGPj, const Elemen
 	double normdstr=0., TmpValue1, TmpValue2;
 	double LodeAngle, I1, J2, J3, sqrtJ2;
 	double AnisoParaComp, AnisoParaTens;
-	double shearsurf, tensionsurf, ep, dlamda, dlamda_0, dlamda_1, ddlamda, Jacob;
+	double shearsurf, tensionsurf, ep, dlamda, dlamda_0, dlamda_1; //, ddlamda, Jacob;
 
 	//initialize all vectors
 	double dstrs[6] = {0.}, TryStress_0[6]={0.}, TryStr_buff[6] ={0.}, TmpStress[6] = {0.};
@@ -7933,6 +7935,18 @@ double CSolidProperties::E_Function(int dim, const ElementValue_DM *ele_val, int
 	}
 	return return_value;
 }
+
+//TN - added for TNEQ process
+void CSolidProperties::setSolidReactiveSystem (FiniteElement::SolidReactiveSystem reactive_system)
+{
+	_reactive_system = reactive_system;
+}
+
+FiniteElement::SolidReactiveSystem CSolidProperties::getSolidReactiveSystem () const
+{
+	return _reactive_system;
+}
+
 }                                                 // end namespace
 
 /////////////////////////////////////////////////////////////////////////////
@@ -8195,3 +8209,4 @@ SolidProp::CSolidProperties* MSPGet(std::string mat_name)
 	}
 	return NULL;
 }
+

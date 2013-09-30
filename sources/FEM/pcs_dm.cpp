@@ -270,7 +270,7 @@ void CRFProcessDeformation::CalIniTotalStress()
 	CRFProcess *tmp_h_pcs=NULL;
 	tmp_h_pcs = fem_dm->h_pcs;
 	size_t i;
-	int j, k, gp, NGS, MatGroup, n_dom;
+	int j, gp, NGS, MatGroup; //, n_dom, k, ;
 	ElementValue_DM *eleV_DM = NULL;
 	CSolidProperties *SMat = NULL;
 	MeshLib::CElem* elem = NULL;

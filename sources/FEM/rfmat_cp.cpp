@@ -32,6 +32,9 @@ using namespace std;
 #include "rf_tim_new.h"
 #include "rfmat_cp.h"
 #include "tools.h"
+#include "rf_react.h"
+#include "rf_react_int.h"
+
 #ifdef GEM_REACT
 #include "rf_REACT_GEM.h"
 #endif
@@ -58,6 +61,7 @@ CompProperties::CompProperties(/* int n // HS we do not need this. */)
 	// if ( idx != std::numeric_limits<size_t>::max() ) // this means idx is set.
 
 	// compname = name1; // HS it will be loaded later.
+   iupac_formula = ""; // CB 0311 check
 	mobil = 1;  // by default, set to mobile species.
 	transport_phase = 0; // by default, set to the 1st phase.
 	fluid_phase = 0; // by default, set to water
@@ -74,6 +78,17 @@ CompProperties::CompProperties(/* int n // HS we do not need this. */)
 	bubble_velocity_model = -1;
 	bubble_velocity[0] = bubble_velocity[1] = bubble_velocity[2] = 0.0;
 	file_base_name = "nix";
+   valence = 0;
+   a_zero = 0;
+   mineral_density = 0;
+   molar_density = 0;
+   molar_weight = 0;
+   max_solubility = 0;
+
+//// CB _ctx_
+//   _ctx_ = false;
+//   ct_substratename = "";
+//   _ctx_Coefficient = 0;
 
 	this->setProcessType( FiniteElement::MASS_TRANSPORT );
 	this->setProcessPrimaryVariable( FiniteElement::CONCENTRATION );
@@ -230,6 +245,13 @@ ios::pos_type CompProperties::Read(ifstream* rfd_file)
 		}
 		//....................................................................
 		// subkeyword found
+      if(line_string.find("$FORMULA")!=std::string::npos) { // subkeyword found
+        in.str(GetLineFromFile1(rfd_file));
+        in >> iupac_formula; //sub_line
+        in.clear();
+      }
+      //....................................................................
+                                                  // subkeyword found
 		if(line_string.find("$MOBILE") != std::string::npos)
 		{
 			//      rfd_file->getline(line,MAX_ZEILE);
@@ -322,6 +344,13 @@ ios::pos_type CompProperties::Read(ifstream* rfd_file)
 			in >> Vd;
 			in.clear();
 		}
+    //....................................................................
+    if(line_string.find("$MINERAL_DENSITY")!=std::string::npos) { // subkeyword found [g/cm3]:AB
+ 	  in.str(GetLineFromFile1(rfd_file));
+	  in >> mineral_density;
+	  in.clear();
+    }
+
 		//....................................................................
 		// subkeyword found
 		if(line_string.find("$DIFFUSION") != std::string::npos)
@@ -529,6 +558,26 @@ ios::pos_type CompProperties::Read(ifstream* rfd_file)
 		{
 			OutputMassOfComponentInModel = 1;
 		}
+ //....................................................................
+ // parameters for MINERAL KINETICS CB0410
+	if(line_string.find("$VALENCE")!=std::string::npos) { // subkeyword found
+	  in.str(GetLineFromFile1(rfd_file));
+      in >> valence;
+	  in.clear();
+   if(fabs(double(valence)) >= 7){ // unphysical entry
+     DisplayMsgLn("Error in VALENCE - setting valence to 0!");
+		   valence = 0;
+	  }
+ } 
+	if(line_string.find("$A_ZERO")!=std::string::npos) { // subkeyword found
+	  in.str(GetLineFromFile1(rfd_file));
+    in >> a_zero;
+	  in.clear();
+    if(a_zero >= 10){ // unphysical entry
+     // DisplayMsgLn("Error in A_ZERO - setting valence to 0!");
+	    //a_zero = 0.0;
+	  }
+ } 
 	}                                     //end while
 	return position;
 }
@@ -565,7 +614,7 @@ void CPWrite(std::string base_file_name,int flag)
 	if(flag == 1)
 		rfe_file.seekp(0L,ios::end);  // go to end
 	//========================================================================
-	rfe_file << endl <<
+	rfe_file << "\n" <<
 	"; CompProperties ----------------------------------------------------------------- " <<
 	"\n";
 	// Output all components
@@ -575,7 +624,7 @@ void CPWrite(std::string base_file_name,int flag)
 		m_kr = cp_vec[i];
 		m_kr->Write(&rfe_file);
 	}
-	rfe_file << endl << "#STOP " << "\n";
+	rfe_file << "\n" << "#STOP " << "\n";
 	rfe_file.close();
 	//  delete rfe_file;
 }
@@ -593,13 +642,15 @@ void CompProperties::Write(ofstream* rfe_file)
 	// Write Keyword
 	*rfe_file << "#COMPONENT_PROPERTIES" << "\n";
 	// Name of component
-	*rfe_file << "$NAME" << endl << compname << "\n";
+	*rfe_file << "$NAME" << "\n" << compname << "\n";
+	// chemical formula
+    *rfe_file << "$FORMULA" << "\n" << iupac_formula<< "\n";
 	// mobile or not?
-	*rfe_file << "$MOBILE" << endl << mobil << "\n";
+	*rfe_file << "$MOBILE" << "\n" << mobil << "\n";
 	// TRANSPORT_PHASE
-	*rfe_file << "$TRANSPORT_PHASE" << endl << transport_phase << "\n";
+	*rfe_file << "$TRANSPORT_PHASE" << "\n" << transport_phase << "\n";
 	// FLUID_PHASE
-	*rfe_file << "$FLUID_PHASE" << endl << transport_phase << "\n";
+	*rfe_file << "$FLUID_PHASE" << "\n" << transport_phase << "\n";
 	// Diffusion
 	if(diffusion_model > -1 )
 	{
@@ -646,6 +697,22 @@ void CompProperties::Write(ofstream* rfe_file)
 		*rfe_file << max_solubility << "  ";
 		*rfe_file << "\n";
 	}
+if(a_zero>0){
+	*rfe_file << "$A_ZERO" << "\n";
+	*rfe_file << a_zero << "  ";
+	*rfe_file << "\n";
+}
+if(valence){
+	*rfe_file << "$VALENCE" << "\n";
+	*rfe_file << valence << "  ";
+	*rfe_file << "\n";
+}
+if(mineral_density>0){
+	*rfe_file << "$MINERAL_DENSITY" << "\n";
+	*rfe_file << mineral_density << "  ";
+	*rfe_file << "\n";
+} 
+
 
 	*rfe_file << "\n";
 }
@@ -682,6 +749,7 @@ double CompProperties::CalcDiffusionCoefficientCP(long index,double theta,CRFPro
 	double* k = NULL;
 	double Dm;
 	// static long *element_nodes;
+   CRFProcess* t_pcs = NULL;
 #ifdef GEM_REACT
 	static int count_nodes;
 	// TF unused variable - fix a compiler warning
@@ -711,7 +779,7 @@ double CompProperties::CalcDiffusionCoefficientCP(long index,double theta,CRFPro
 		return 0.0;               //no diffusion specified
 	case 0:                               /* curve value */
 	{
-		DisplayMsgLn("Not implemented");
+		//DisplayMsgLn("Not implemented");
 		return 0.0;
 	}
 	case 1:                               /* Konstanter Diffusionswert */
@@ -874,6 +942,39 @@ double CompProperties::CalcDiffusionCoefficientCP(long index,double theta,CRFPro
             return Dm;
         }
 #endif
+      case 10:  // Temperature dependence Yaws 
+        {
+        if (count_of_diffusion_model_values < 2)
+          return 0.0;
+        temperature_average = 0;
+        size_t nnodes =  m_pcs->m_msh->ele_vector[index]->GetNodesNumber(false);
+        if(REACTINT_vec.size()>0){
+          for(size_t i=0; i<nnodes ;i++){
+            long node = m_pcs->m_msh->ele_vector[index]->GetNodeIndex(i);
+            temperature_average+= REACTINT_vec[0]->GetTemperature(node)/ double(nnodes);
+          }
+        }
+        else if((t_pcs = PCSGet("HEAT_TRANSPORT"))){
+          //t_pcs = PCSGet("HEAT_TRANSPORT");
+          int idx_t = t_pcs->GetNodeValueIndex("TEMPERATURE1")+1;
+          for(size_t i=0; i< nnodes ;i++){
+            long node = m_pcs->m_msh->ele_vector[index]->GetNodeIndex(i);
+            temperature_average+= t_pcs->GetNodeValue(node, idx_t)/ double(nnodes);
+          }
+        }
+        //else
+        //  return 0;
+        if(temperature_average >0) 
+          Dm = pow(10, (k[0]+k[1]/temperature_average))  / 10000; //cm²/s -> m²/s;
+        else{ 
+          Dm = 0;
+          DisplayMsgLn("Something wrong in diffusion model 10! T = 0.");
+        }
+        //A = -1.4943; //Daq(T) PCE
+        //B = -1059.0; //Daq(T) PCE
+        return Dm;
+      }
+
 	default:
 		DisplayMsgLn("Unknown diffusion model!");
 		break;
@@ -1081,6 +1182,9 @@ int CompProperties::GetNumberDiffusionValuesCompProperties(int diffusion_model)
 	case 9:
 		n = 2;
 		break;                    /* Archies Law */
+    case 10:
+        n = 2;   break;                          /* Yaws empirical model*/
+		
 	}                                     /* switch */
 
 	/* switch */

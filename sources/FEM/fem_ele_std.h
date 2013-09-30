@@ -193,6 +193,9 @@ public:
          // Extrapolate reaction rates on TNEQ flow
     void ExtrapolateGauss_ReactRate_TNEQ(CRFProcess *m_pcs); 
 	void Copy_rho_s_curr_2_prev(size_t elem_idx);       // HS
+	// CB _ctx_ CB_merge_0513
+	//void Set_ctx_(long ele_index, double val, int gaussp, int i_dim);
+    //double Get_ctx_(long ele_index, int gaussp, int i_dim);
 
 private:
 	bool newton_raphson;                  //24.05.2007 WW
@@ -454,6 +457,8 @@ private:
 	CRFProcess* pcs;
 	// Data
 	Matrix Velocity_g;
+    // CB _ctx_ CB_merge_0513
+	//Matrix _ctx_Gauss;
 };
 }                                                 // end namespace
 

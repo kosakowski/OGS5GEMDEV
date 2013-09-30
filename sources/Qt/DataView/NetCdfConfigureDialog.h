@@ -4,11 +4,8 @@
 #ifndef NETCDFCONFIGUREDIALOG_H
 #define NETCDFCONFIGUREDIALOG_H
 
-#ifdef VTK_NETCDF_FOUND
-#include <vtknetcdf/netcdfcpp.h>
-#else
 #include <netcdfcpp.h>
-#endif
+
 #include <QDialog>
 #include "ui_NetCdfConfigure.h"
 
@@ -49,7 +46,7 @@ private:
 	double getResolution();
 	QString setName();
 	void reverseNorthSouth(double* data, size_t width, size_t height);
-	
+
 	NcFile *_currentFile;
 	NcVar *_currentVar;
 	QDateTime _currentInitialDateTime;

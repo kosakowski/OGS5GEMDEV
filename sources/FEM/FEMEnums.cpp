@@ -455,4 +455,53 @@ ErrorMethod convertErrorMethod(const std::string& error_method_string)
 	return INVALID_ERROR_METHOD;
 }
 
+FrictionPhase convertFrictionPhase( const std::string& friction_string)
+{
+	if (friction_string.compare("SOLID") == 0)
+		return SOLID;
+	if (friction_string.compare("FLUID") == 0)
+		return FLUID;
+	if (friction_string.compare("NONE") == 0)
+		return NONE;
+
+	std::cout << "Convert error: " << friction_string << " not found. \n";
+
+}
+std::string convertFrictionPhaseToString(FrictionPhase friction_phase)
+{
+	if (friction_phase == SOLID)
+		return "SOLID";
+	if (friction_phase == FLUID)
+		return "FLUID";
+	if (friction_phase == NONE)
+		return "NONE";
+
+	std::cout << "Invalid friction_phase type. \n";
+}
+
+SolidReactiveSystem convertSolidReactiveSystem( const std::string& reactive_string)
+{
+	if (reactive_string.compare("INERT") == 0)
+		return INERT;
+	if (reactive_string.compare("SINUSOIDAL") == 0)
+		return SINUSOIDAL;
+	if (reactive_string.compare("CaOH2") == 0)
+		return CaOH2;
+
+	std::cout << "Convert error: " << reactive_string << " not found. \n";
+
+}
+
+std::string convertSolidReactiveSystemToString(SolidReactiveSystem reactive_system)
+{
+	if (reactive_system == INERT)
+		return "INERT";
+	if (reactive_system == SINUSOIDAL)
+		return "SINUSOIDAL";
+	if (reactive_system == CaOH2)
+		return "CaOH2";
+
+	std::cout << "Invalid reactive system type. \n";
+}
+
 } // end namespace FiniteElement

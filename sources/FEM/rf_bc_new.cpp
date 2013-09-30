@@ -128,6 +128,9 @@ CBoundaryCondition::CBoundaryCondition() :
 	bcExcav = -1;                         //WX
 	MatGr = -1;                           //WX
 	NoDispIncre = -1;								//WX:12.2012
+    gradient_ref_depth = 0;             //CB
+    gradient_ref_depth_value = 0;       //CB
+    gradient_ref_depth_gradient = 0;    //CB	
 }
 
 // KR: Conversion from GUI-BC-object to CBoundaryCondition
@@ -436,6 +439,16 @@ std::ios::pos_type CBoundaryCondition::Read(std::ifstream* bc_file,
 		{
 			in.str(readNonBlankLineFromInputStream(*bc_file));
 			in >> NoDispIncre;
+			in.clear();
+		}
+        //....................................................................
+		//bc for copying of primary variables; give geometry type and name SB 09.2012
+		if (line_string.find("$COPY_VALUE") != std::string::npos)
+		{
+			// CB_merge_0513 ??
+			in.str(readNonBlankLineFromInputStream(*bc_file));
+			//in.str(GetLineFromFile1(bc_file));
+			in >> copy_geom >> copy_geom_name;
 			in.clear();
 		}
 		//....................................................................
@@ -1034,7 +1047,7 @@ void CBoundaryConditionsGroup::Set(CRFProcess* pcs, int ShiftInNodeVector,
 				//WW
 				pcs->bc_node_value.push_back(m_node_value);
 			}
-
+            //--------------------------------------------------------------------
 			if (bc->getGeoType() == GEOLIB::POLYLINE)
 			{
 				//CC
@@ -1076,6 +1089,10 @@ void CBoundaryConditionsGroup::Set(CRFProcess* pcs, int ShiftInNodeVector,
 							        bc->getCurveIndex();
 							//YD/WW
 							m_node_value->pcs_pv_name = _pcs_pv_name;
+							// SB copy values 09.2012
+							m_node_value->bc_node_copy_geom = bc->copy_geom;
+							m_node_value->bc_node_copy_geom_name = bc->copy_geom_name;
+
 							//WW
 							pcs->bc_node.push_back(bc);
 							//WW

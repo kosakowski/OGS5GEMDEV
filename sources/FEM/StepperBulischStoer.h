@@ -214,7 +214,7 @@ public:
 	
 		reject=false;
 		firstk=true;
-		hnew=abs(h);
+		hnew=fabs(h);
     
 	interp_error: // Restart here if interpolation error too big.
 
@@ -229,7 +229,7 @@ public:
 			reject=false;
 
 
-			// if ( abs(h) <= abs(x)*EPS )
+			// if ( fabs(h) <= fabs(x)*EPS )
 			// 	throw( "step size underflow  in  StepperBS");
 		
 
@@ -252,7 +252,7 @@ public:
 					
 						for (i=0;i<n;i++)
 						{
-							scale[i]=atol+rtol*MAX(abs(ysav[i]),abs(y[i]));
+							scale[i]=atol+rtol*MAX(fabs(ysav[i]),fabs(y[i]));
 							err+=SQR((y[i]-table(0,i))/scale[i]);
 						}
 					
@@ -268,7 +268,7 @@ public:
 							fac=MAX(facmin/STEPFAC4, MIN(1.0/facmin,fac));
 						}
 					
-						hopt[k]=abs(h*fac);
+						hopt[k]=fabs(h*fac);
 						work[k]=cost[k]/hopt[k];  // Work per unit step (17.3.13).
 					
 						if ((first_step ||  last_step)  &&  err  <=  1.0)
@@ -328,7 +328,7 @@ public:
 			// Stepsize based on interpolation error. 
 			if (err > 10.0)  // Interpolation error too big, reject step.
 			{
-				hnew=abs(hopt_int);
+				hnew=fabs(hopt_int);
 				reject=true;
 				prev_reject=true;
 				goto  interp_error;
@@ -366,7 +366,7 @@ public:
 		{ 
 			// size should increase. 
 			k_targ=MIN(kopt,k);
-			hnew=MIN((double)abs(h),(double)hopt[k_targ]);
+			hnew=MIN((double)fabs(h),(double)hopt[k_targ]);
 			prev_reject=false;
 		}
 		else // Stepsize control for next step.
@@ -384,7 +384,7 @@ public:
 		}
 	
 		if (dense) // Keep interpolation error small enough.
-		  hnew=MIN((double)hnew,(double)abs(hopt_int));
+		  hnew=MIN((double)hnew,(double)fabs(hopt_int));
 
 		if (forward)
 			hnext=hnew;

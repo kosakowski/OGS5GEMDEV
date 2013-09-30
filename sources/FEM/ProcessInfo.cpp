@@ -41,6 +41,11 @@ FiniteElement::PrimaryVariable ProcessInfo::getProcessPrimaryVariable () const
 	return _pcs_pv;
 }
 
+int ProcessInfo::getProcessCompVecIndex () const
+{
+   return _pcs->pcs_component_number;
+}
+
 CRFProcess* ProcessInfo::getProcess () const
 {
 	return _pcs;

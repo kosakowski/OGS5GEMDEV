@@ -328,6 +328,12 @@ void FCTRead(std::string base_file_name)
 	{
 		fct_file.getline(line,MAX_ZEILE);
 		line_string = line;
+
+      if (line_string.find("#STOP") != std::string::npos)
+      {
+        return ;
+      }
+
 		//----------------------------------------------------------------------
 		// keyword found
 		if(line_string.find("#FUNCTION") != std::string::npos)

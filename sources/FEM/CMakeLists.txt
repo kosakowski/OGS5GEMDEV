@@ -2,7 +2,7 @@
 
 set( SOURCES
 	Stiff_Bulirsch-Stoer.h
-  StepperBulischStoer.h
+    StepperBulischStoer.h
 	BoundaryCondition.h
 	break.h
 	ca_hydration.h
@@ -38,6 +38,7 @@ set( SOURCES
 	rf_pcs.h
 	rf_random_walk.h
 	rf_react.h
+	rf_react_int.h
 	rf_st_new.h
 	rf_tim_new.h
 	rfmat_cp.h
@@ -48,7 +49,6 @@ set( SOURCES
 	vtk.h
 	Eclipse.h
 	DUMUX.h
-	geochemcalc.h
 	GeoInfo.h
 	ProcessInfo.h
 	DistributionInfo.h
@@ -75,7 +75,7 @@ set( SOURCES
 	InitialCondition.cpp
 	mathlib.cpp
 	matrix_class.cpp
-  SparseMatrixDOK.cpp
+    SparseMatrixDOK.cpp
 	memory.cpp
 	pcs_dm.cpp
 	problem.cpp
@@ -93,6 +93,7 @@ set( SOURCES
 	rf_pcs.cpp
 	rf_random_walk.cpp
 	rf_react.cpp
+	rf_react_int.cpp
 	rf_st_new.cpp
 	rf_tim_new.cpp
 	rfmat_cp.cpp	
@@ -103,6 +104,10 @@ set( SOURCES
 	Eclipse.cpp
 	DUMUX.cpp
 	Output.cpp
+    CAP_IO.h 
+    CAP_IO.cpp
+    rf_react_cap.h 
+    rf_react_cap.cpp 	
 )
 
 IF(OGS_FEM_PETSC OR OGS_FEM_PETSC_GEMS)
@@ -128,6 +133,9 @@ IF(OGS_FEM_BRNS)
 	SET( SOURCES ${SOURCES} rf_REACT_BRNS.h rf_REACT_BRNS.cpp ) 
 ENDIF(OGS_FEM_BRNS)
 
+
+
+
 include_directories(
 	${CMAKE_SOURCE_DIR}/FEM/Eigen
 	${CMAKE_SOURCE_DIR}/FEM
@@ -140,6 +148,7 @@ include_directories(
 	${CMAKE_SOURCE_DIR}/MSH
 	${CMAKE_SOURCE_DIR}/GEM
 	${CMAKE_SOURCE_DIR}/OGSProject
+	${CMAKE_SOURCE_DIR}/GCC
 )
 
 IF (LIS)
@@ -164,6 +173,7 @@ target_link_libraries(
  	GEO
  	MSH
 	OGSProject
+	GCC
 )
 
 IF(OGS_FEM_PQC)
@@ -219,3 +229,23 @@ IF (OGS_FEM_CHEMAPP)
 	INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/EQL )
 	TARGET_LINK_LIBRARIES ( FEM EQL )
 ENDIF (OGS_FEM_CHEMAPP)
+
+
+IF (OGS_FEM_CAP)
+	INCLUDE_DIRECTORIES (  ${CMAKE_SOURCE_DIR}/CMP )
+	TARGET_LINK_LIBRARIES ( 	
+	 FEM
+ 	 GEO
+ 	 MSH
+ 	 CMP 
+ 	)
+    IF (UNIX)
+        TARGET_LINK_LIBRARIES ( 	
+          FEM
+          ChemAppCS_64
+          EChemAppS_64
+      )
+    ENDIF (UNIX)
+ENDIF (OGS_FEM_CAP)
+
+

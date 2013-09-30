@@ -10,9 +10,8 @@ GeoSys Kinetic Reactions
 	1.e-4       ; init Timestep
  $BACTERIACAPACITY
   100.0
- $NO_REACTIONS
-   POINT POINT0
-
+; $NO_REACTIONS
+;   POINT POINT0
 
 #REACTION ; 
  $NAME

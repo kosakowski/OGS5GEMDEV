@@ -2,6 +2,7 @@
 #define _CA_HYDRATION_H
 
 #include "Eigen/Eigen"
+#include "FEMEnums.h"
 
 class ca_hydration
 {
@@ -13,7 +14,8 @@ public:
 				 double rho_s_initial,
 				 double phi_S,
 				 double delta_t,
-				 std::string system);
+				 FiniteElement::SolidReactiveSystem system);
+
 	~ca_hydration(void);
 
 	void update_param(double T_solid, 
@@ -23,7 +25,7 @@ public:
 					  double rho_s_initial,
 					  double phi_S,
 					  double delta_t,
-					  std::string system); 
+					  FiniteElement::SolidReactiveSystem system); 
 	
 	void calculate_qR();
 	double get_qR(); 
@@ -53,7 +55,7 @@ private:
 	double rho_up; //upper density limit
 	double reaction_enthalpy;
 	double reaction_entropy;
-	std::string reaction_system;
+	FiniteElement::SolidReactiveSystem reaction_system;
 
 	Eigen::VectorXd x; 
 	size_t i;        // iterator

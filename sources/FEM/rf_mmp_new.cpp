@@ -50,6 +50,7 @@ using FiniteElement::CElement;
 using FiniteElement::ElementValue;
 using FiniteElement::CFiniteElementStd;
 using FiniteElement::ElementValue_DM;
+
 ////////////////////////////////////////////////////////////////////////////
 // CMediumProperties
 ////////////////////////////////////////////////////////////////////////////
@@ -85,6 +86,7 @@ CMediumProperties::CMediumProperties() :
 	permeability_tensor_type = 0;
 	tortuosity_tensor_type = 0;
 	permeability_tensor[0] = 1.e-13;
+	local_permeability = 1e-13;
 	residual_saturation[0] = 0.0;			// sgr: residual saturation, this phase
 	maximum_saturation[0] = 1.0;			// sgm: maximum saturation, this phase
 	saturation_exponent[0] = 1.0;			// (set exponent = 1 results in a linear k_rel function)
@@ -117,6 +119,10 @@ CMediumProperties::CMediumProperties() :
 	vol_mat_model = 0;
 	vol_bio_model = 0;
 	foc = 0.0;
+    alpha_t_model = -1;
+    graindiameter = 0; //CB Chiogna et al alpha-t model
+    hydraulicrad = 0;
+    betaexpo = 0;
 
 	permeability_pressure_model = -1; //01.09.2011. WW
 	permeability_strain_model = -1; //01.09.2011. WW
@@ -127,10 +133,11 @@ CMediumProperties::CMediumProperties() :
    heat_transfer_model = 0;
    effective_heat_transfer_model = 0;
    heat_transfer_model_value = .0;
-   particle_diameter_model = .0;
+   particle_diameter_model = 0;
    particle_diameter_model_value = .0;
 
    PhaseHeatedByFriction = "SOLID";
+   _fric_phase = FiniteElement::SOLID;
 	storage_effstress_model = 0;
 	permeability_effstress_model = 0;
 }
@@ -502,6 +509,9 @@ std::ios::pos_type CMediumProperties::Read(std::ifstream* mmp_file)
 			case 12:
 				in >> porosity_model_values[0]; //WX 03.2011, dependent on strain
 				break;
+		    case 13: // mineral precipitation / dissolution by ABM
+		        in >> porosity_model_values[0]; // Initial porosity
+		        break;				
 #ifdef GEM_REACT
 			case 15:
 				in >> porosity_model_values[0]; // set a default value for GEMS calculation
@@ -577,6 +587,10 @@ std::ios::pos_type CMediumProperties::Read(std::ifstream* mmp_file)
 				tortuosity_model = 1;
 				in >> tortuosity_model_values[0];
 				break;
+		    case '2': // t=n*factor
+    		   tortuosity_model = 2;
+               in >> tortuosity_model_values[0];
+               break;
 			case 'I':     // isotropic
 				tortuosity_tensor_type = 0;
 				tortuosity_model = 1;
@@ -1143,6 +1157,11 @@ std::ios::pos_type CMediumProperties::Read(std::ifstream* mmp_file)
 				//
 				case 10: // unconfined GW 6/2012 JOD
 					break;
+                case 61: //Brooks-Corey CB modified Seff
+					in >> residual_saturation[k];			// sgr: residual saturation, this phase
+					in >> maximum_saturation[k];			// sgm: maximum saturation, this phase
+					in >> saturation_exponent[k];			// exponent (always >= 1.0) (typical might be 2.0)
+                    break;					
 				case 66: // Brooks/Corey					   NON-WETTING
 					// krg = pow(1.0-se,2)*(1.0-pow(se,1.0+2.0/m))
 					// Se  = (sl - slr) / (slm - slr) --> slr = 1 - sgm --> slm = 1 - sgr
@@ -1329,7 +1348,7 @@ std::ios::pos_type CMediumProperties::Read(std::ifstream* mmp_file)
 				in >> permeability_effstress_model_value[0];
 				break;
 			default:
-				cout<< "Error in MMPRead: no valid permeability stress model" << endl;
+				cout<< "Error in MMPRead: no valid permeability stress model" << "\n";
 				break;
 			}
 			in.clear();
@@ -1435,6 +1454,23 @@ std::ios::pos_type CMediumProperties::Read(std::ifstream* mmp_file)
 				// this is prarameter k_fmin
 				in >> permeability_porosity_model_values[3];
 				break;
+	         case 8:// AB: 2010, Updating permeability due to change in porosity
+			    // Inital permeability provided in $PERMEABILITY_TENSOR will be read for initial condition
+		        permeability_model = 8;
+                in >> permeability_porosity_updating_type_name;
+                switch(permeability_porosity_updating_type_name[0]) {
+			            case 'K': // Kozeny-Carman formulation 
+				            permeability_porosity_updating_type = 0;
+				            break;
+			            case 'V': // Verma-Pruess formulation 
+				            permeability_porosity_updating_type = 1;
+				            in >> permeability_porosity_updating_values[0]; // critical porosity
+				            in >> permeability_porosity_updating_values[1]; // n: a power law exponent
+                            break;
+                }
+                if(this->permeability_tensor_type==2)
+                  std::cout << "Warning in MMPRead: permeability_model 8 is not implemented for permeability_tensor_type 2" << "\n";
+                break;
 			default:
 				std::cout << "Error in MMPRead: no valid permeability model" <<
 				"\n";
@@ -1573,7 +1609,7 @@ std::ios::pos_type CMediumProperties::Read(std::ifstream* mmp_file)
 				in >> storage_effstress_model_value[0];
 				break;
 			default:
-				cout<< "Error in MMPRead: no valid storage stress model" << endl;
+				cout<< "Error in MMPRead: no valid storage stress model" << "\n";
 				break;
 			}
 			in.clear();
@@ -1610,6 +1646,14 @@ std::ios::pos_type CMediumProperties::Read(std::ifstream* mmp_file)
 			in.clear();
 			continue;
 		}
+      // Chiogna et al ES&T model: Daq-dependent alpha_t
+      if(line_string.find("$COMPOUND_DEPENDENT_DT")!=std::string::npos) 
+	  { //subkeyword found
+        in.str(GetLineFromFile1(mmp_file));
+        in >> alpha_t_model >> graindiameter >> hydraulicrad >> betaexpo ;
+        in.clear();
+        continue;
+   	  }
 		//------------------------------------------------------------------------
 		//15 HEATDISPERSION
 		//			(1) LONGTIDUINAL
@@ -1852,8 +1896,9 @@ std::ios::pos_type CMediumProperties::Read(std::ifstream* mmp_file)
       {
          in.str(GetLineFromFile1(mmp_file));
          in >> PhaseHeatedByFriction;
-		 if (PhaseHeatedByFriction.compare("SOLID") != 0 && PhaseHeatedByFriction.compare("FLUID") != 0)
-			 std::cout << "Error in CMediumProperties::Read: $INTERPHASE_FRICTION must be either SOLID or FLUID";
+		 this->setFrictionPhase(FiniteElement::convertFrictionPhase(PhaseHeatedByFriction));
+		 if (PhaseHeatedByFriction.compare("SOLID") != 0 && PhaseHeatedByFriction.compare("FLUID") != 0 && PhaseHeatedByFriction.compare("NONE") != 0)
+			 std::cout << "Error in CMediumProperties::Read: $INTERPHASE_FRICTION must be either SOLID or FLUID or NONE";
          in.clear();
          continue;
       }
@@ -1983,6 +2028,9 @@ void CMediumProperties::Write(std::fstream* mmp_file)
 		case 1:
 			*mmp_file << tortuosity_model_values[0] << "\n";
 			break;
+		case 2:
+		     *mmp_file << tortuosity_model_values[0] << "\n";
+			 break;
 		}
 	}
 	//....................................................................
@@ -2483,6 +2531,16 @@ double CMediumProperties::PermeabilitySaturationFunction(const double wetting_sa
 				kr = minimum_relative_permeability;
 			break;
 		//
+	    case 61:  // Brooks Corey:  CB with modified effective saturation
+			slr = residual_saturation[phase];
+			slm = maximum_saturation[phase];
+			sl  = MRange(slr, sl, slm);
+			se  = (sl - slr)/(1 - slr);
+			m   = saturation_exponent[phase];
+	        kr = pow(se,(2.0+3.0*m)/m);
+	        kr = MRange(DBL_EPSILON,kr,1.);
+	      break;
+		
 		case 66: // 2-phase BROOKS/COREY --> NON-WETTING
 			slr = 1.0 - maximum_saturation[phase];          // slr = 1.0 - sgm
 			slm = 1.0 - residual_saturation[phase];         // slm = 1.0 - sgr
@@ -2963,6 +3021,7 @@ double* CMediumProperties::MassDispersionTensorNew(int ip, int tr_phase) // SB +
 	double l_char = 0.0;                  //OK411 volume=0.0;
 	double saturation = 1.0;
 	int set = 0;
+    double arg, Daq, Pec;
 	ElementValue* gp_ele = ele_gp_value[index];
 	CompProperties* m_cp = cp_vec[component];
 	CFluidProperties* m_mfp;
@@ -2971,6 +3030,8 @@ double* CMediumProperties::MassDispersionTensorNew(int ip, int tr_phase) // SB +
 	int Dim = m_pcs->m_msh->GetCoordinateFlag() / 10;
 	//----------------------------------------------------------------------
 	// Materials
+	Daq = m_cp->CalcDiffusionCoefficientCP(index,theta, m_pcs) ;
+	molecular_diffusion_value = Daq * TortuosityFunction(index,g, theta);
 	
 	molecular_diffusion_value = m_cp->CalcDiffusionCoefficientCP(index,theta, m_pcs) * TortuosityFunction(index,g, theta);
 
@@ -3057,6 +3118,15 @@ double* CMediumProperties::MassDispersionTensorNew(int ip, int tr_phase) // SB +
 	alpha_l = mass_dispersion_longitudinal;
 	alpha_t = mass_dispersion_transverse;
 
+  // transverse Dispersion model by Chiogna et al. ES&T 2010
+  // here, the dispersive part of Dmech = Dp + Ddisp is divided by vg to obtain a Daq-dependent alpha_t
+  // which is used in the dispersion tensor in the usual way
+  if(alpha_t_model == 1) {
+    Pec = vg*graindiameter/Daq; 
+    arg = pow(Pec, 2) / (Pec + 2 + 4 * pow(graindiameter/hydraulicrad, 2));
+    alpha_t = Daq * pow(arg, betaexpo); // D_disp_t (without the diffusion term)
+    alpha_t /= vg;                      // aT = D_disp_t/vg 
+  }
 	// hard stabilization
 	if(this->lgpn > 0.0)
 	{
@@ -3808,13 +3878,14 @@ void CMediumProperties::SetMediumPropertiesDefaultsBordenAquifer(void)
  *************************************************************************/
 double CMediumProperties::Porosity(long number,double theta)
 {
-	static int nidx0, nidx1;
+	static int nidx0, nidx1, idx_n;
 	double primary_variable[PCS_NUMBER_MAX];
 	int gueltig;
 #ifdef GEM_REACT
 	int idx;
 #endif
 	double porosity_sw;
+    CRFProcess *m_pcs_flow; // AB & CB
 	CFiniteElementStd* assem = m_pcs->GetAssember();
 	string str;
 	///
@@ -3822,6 +3893,11 @@ double CMediumProperties::Porosity(long number,double theta)
 
 	// CB Get idx of porosity in elements mat vector for het porosity
 	size_t por_index (0);
+	
+	if(porosity_model==13){
+      m_pcs_flow = PCSGetFlow();
+      idx_n = m_pcs_flow->GetElementValueIndex("POROSITY");
+    }
 	if (porosity_model == 11)
 		for (por_index = 0; por_index
 		     < m_pcs->m_msh->mat_names_vector.size(); por_index++)
@@ -3938,6 +4014,12 @@ double CMediumProperties::Porosity(long number,double theta)
 	case 12:                              // n = n0 + vol_strain, WX: 03.2011
 		porosity = PorosityVolStrain(number, porosity_model_values[0], assem);
 		break;
+    case 13:
+		// porosity change through dissolution/precipitation
+		// Here, you should access porosity from the element value vector of the flow process
+		// so you have to get the index of porosity above, if porosity model = 13
+		porosity = m_pcs_flow->GetElementValue(number, idx_n+1); 
+		break;
 #ifdef GEM_REACT
 	case 15:
 		porosity = porosity_model_values[0]; // default value as backup
@@ -4013,7 +4095,7 @@ double CMediumProperties::Porosity(long number,double theta)
 //WW
 double CMediumProperties::Porosity(CElement* assem)
 {
-	static int nidx0,nidx1;
+	static int nidx0,nidx1, idx_n;
 	double primary_variable[PCS_NUMBER_MAX];
 	int gueltig;
 	double porosity_sw, theta;
@@ -4026,6 +4108,7 @@ double CMediumProperties::Porosity(CElement* assem)
 	// Functional dependencies
 	number = assem->GetElementIndex();
 	CRFProcess* pcs_temp;
+    CRFProcess *m_pcs_flow;
 
 	const size_t no_pcs_names (porosity_pcs_name_vector.size());
 	for(size_t i = 0; i < no_pcs_names; i++)
@@ -4103,6 +4186,11 @@ double CMediumProperties::Porosity(CElement* assem)
 	case 12:                              // n = n0 + vol_strain
 		porosity = PorosityVolStrain(number, porosity_model_values[0], assem_tmp); //WX:03.2011
 		break;
+    case 13:
+		 m_pcs_flow = PCSGetFlow();
+		 idx_n = m_pcs_flow->GetElementValueIndex("POROSITY");
+		 porosity = m_pcs_flow->GetElementValue(number, idx_n+1); 
+		 break;
 #ifdef GEM_REACT
 	case 15:
 
@@ -4295,7 +4383,10 @@ double* CMediumProperties::PermeabilityTensor(long index)
 
 	int idx_k, idx_n;
 	double /*k_old, n_old,*/ k_new, n_new, k_rel, n_rel;
-
+	CRFProcess* m_pcs_tmp(NULL);
+    if ((permeability_model==8) && (porosity_model==13)) 
+      m_pcs_tmp = PCSGetFlow();
+    
 	// HS: move the following loop into the "if ( permeability_tensor_type == 0 )" scope.----
 	// this is not necessary for in-isotropic case;
 	// if(permeability_model==2)
@@ -4529,6 +4620,11 @@ double* CMediumProperties::PermeabilityTensor(long index)
 				tensor[0] = k_new;
 			}
 	}
+	  else if((permeability_model==8)&&(porosity_model==13))
+      {                                           // ABM 11.2010
+          idx_k = m_pcs->GetElementValueIndex("PERMEABILITY");
+          tensor[0] = m_pcs_tmp->GetElementValue( index, idx_k + 1 );
+	  }
 	// end of K-C relationship-----------------------------------------------------------------------------------
 
 	switch(geo_dimension)
@@ -4555,10 +4651,22 @@ double* CMediumProperties::PermeabilityTensor(long index)
 		}
 		else if(permeability_tensor_type == 1)
 		{
-			tensor[0] = permeability_tensor[0];
-			tensor[1] = 0.0;
-			tensor[2] = 0.0;
-			tensor[3] = permeability_tensor[1];
+            if((permeability_model==8)&&(porosity_model==13))
+            {                                           // AB 11.2010
+                idx_k = m_pcs_tmp->GetElementValueIndex("PERMEABILITY");
+                tensor[0]= m_pcs_tmp->GetElementValue( index, idx_k + 1 );
+                tensor[1] = 0.0;
+                tensor[2] = 0.0;
+                idx_k = m_pcs_tmp->GetElementValueIndex("PERMEABILITY_YY");
+                tensor[3]= m_pcs_tmp->GetElementValue( index, idx_k + 1 );
+            }
+            else
+            {
+                tensor[0] = permeability_tensor[0];
+                tensor[1] = 0.0;
+                tensor[2] = 0.0;
+                tensor[3] = permeability_tensor[1];
+            }
 		}
 		else if(permeability_tensor_type == 2)
 		{
@@ -4593,15 +4701,32 @@ double* CMediumProperties::PermeabilityTensor(long index)
 		}
 		else if(permeability_tensor_type == 1)
 		{
-			tensor[0] = permeability_tensor[0];
-			tensor[1] = 0.0;
-			tensor[2] = 0.0;
-			tensor[3] = 0.0;
-			tensor[4] = permeability_tensor[1];
-			tensor[5] = 0.0;
-			tensor[6] = 0.0;
-			tensor[7] = 0.0;
-			tensor[8] = permeability_tensor[2];
+            if((permeability_model==8)&&(porosity_model==13))
+            {                                           // AB 11.2010
+                idx_k = m_pcs_tmp->GetElementValueIndex("PERMEABILITY");
+                tensor[0]= m_pcs_tmp->GetElementValue( index, idx_k + 1 );
+                tensor[1] = 0.0;
+                tensor[2] = 0.0;
+                tensor[3] = 0.0;
+                idx_k = m_pcs_tmp->GetElementValueIndex("PERMEABILITY_YY");
+                tensor[4]= m_pcs_tmp->GetElementValue( index, idx_k + 1 );
+                tensor[5] = 0.0;
+                tensor[6] = 0.0;
+                tensor[7] = 0.0;
+                idx_k = m_pcs_tmp->GetElementValueIndex("PERMEABILITY_ZZ");
+                tensor[8]= m_pcs_tmp->GetElementValue( index, idx_k + 1 );
+            }
+            else{
+               tensor[0] = permeability_tensor[0];
+               tensor[1] = 0.0;
+               tensor[2] = 0.0;
+               tensor[3] = 0.0;
+               tensor[4] = permeability_tensor[1];
+               tensor[5] = 0.0;
+               tensor[6] = 0.0;
+               tensor[7] = 0.0;
+               tensor[8] = permeability_tensor[2];
+            }
 		}
 		else if(permeability_tensor_type == 2)
 		{
@@ -5643,12 +5768,12 @@ void CMediumProperties::SetDistributedELEProperties(string file_name)
 			return;
 		}
 		mmp_property_file_out << "#MEDIUM_PROPERTIES_DISTRIBUTED" << "\n";
-		mmp_property_file_out << "$MSH_TYPE" << endl << "  " << mmp_property_mesh << "\n";
-		//mmp_property_file_out << "$MSH_TYPE" << endl << "  " << mmp_property_mesh << "\n";
-		//mmp_property_file_out << "$MMP_TYPE" << endl << "  " << "PERMEABILITY" << "\n";
-		mmp_property_file_out << "$MMP_TYPE" << endl << "  " <<
+		mmp_property_file_out << "$MSH_TYPE" << "\n" << "  " << mmp_property_mesh << "\n";
+		//mmp_property_file_out << "$MSH_TYPE" << "\n" << "  " << mmp_property_mesh << "\n";
+		//mmp_property_file_out << "$MMP_TYPE" << "\n" << "  " << "PERMEABILITY" << "\n";
+		mmp_property_file_out << "$MMP_TYPE" << "\n" << "  " <<
 		_mesh->mat_names_vector[k] << "\n";
-		mmp_property_file_out << "$DIS_TYPE" << endl << "  " << "ELEMENT" << "\n";
+		mmp_property_file_out << "$DIS_TYPE" << "\n" << "  " << "ELEMENT" << "\n";
 		mmp_property_file_out << "$DATA" << "\n";
 		for(i = 0; i < (long)_mesh->ele_vector.size(); i++)
 		{
@@ -6323,6 +6448,57 @@ double CMediumProperties::KozenyCarman_normalized(double k0, double n0, double n
 	return rt;
 }
 
+/**************************************************************************
+FEMLib-Method:
+Task: Returns the new permeability which will be calculated using
+      Kozeny-Carman formulation. It takes intial permeability& porosity 
+	  and also the new/updated porosity as an input.
+Programing:
+11.2010 AB Implementation
+last modification:
+**************************************************************************/
+double CMediumProperties::KozenyCarmanNew(double k_init, double n_init, double n_t)
+{
+	double k_t = 0.0;
+
+	// Limit minimum and maximum values.
+	if (k_init <= 0.0 ||  n_init <=0. || n_init >= 1. || n_t <=0. || n_t >= 1. )
+		return k_init;
+	else
+	{
+		k_t = k_init * (pow( (1. - n_init) / (1 - n_t) , 2))*(pow( n_t / n_init , 3 )) ;
+	}
+
+return k_t;
+}
+
+/*************************************************************************************
+FEMLib-Method:
+Task: Returns the new permeability which will be calculated using
+      Verma-Pruess formulation. It takes intial permeability& porosity, 
+	  the new/updated porosity, critical porosity and a power law exponent as an input.
+Programing:
+11.2010 AB Implementation
+last modification:
+*************************************************************************************/
+double CMediumProperties::VermaPruess(double k_init, double n_init, double n_t)
+{
+	double k_t = 0.0;
+	double n_crit, a;
+
+	n_crit = permeability_porosity_updating_values[0]; // critical porosity
+	a = permeability_porosity_updating_values[1];      // a power law exponent
+
+	// Limit minimum and maximum values.
+	if (k_init <= 0.0 || k_init >= 1.0 || n_init <=0 || n_init >= 1 || n_t <=0 || n_t >= 1 )
+		return k_init;
+	else
+	{
+		k_t = k_init * (pow( (n_t - n_crit) / (n_init - n_crit) , a));
+	}
+
+return k_t;
+}
 ///////////////////////////////////////////////////////////////////////////
 // old data structure functions //OK411
 
@@ -6975,6 +7151,9 @@ double CMediumProperties::TortuosityFunction(long number,
 	case 1:                               // Constant Tortuosity
 		tortuosity = tortuosity_model_values[0];
 		break;
+    case 2:                      /* Tortuosity is lin. fct. of porosity*/
+        tortuosity = Porosity(number, theta) * tortuosity_model_values[0];
+        break;
 	default:
 		DisplayMsgLn("Unknown tortuosisty model!");
 		break;
@@ -8451,4 +8630,14 @@ double CMediumProperties::HeatTransferCoefficient(long number,double theta, CFin
     }
 
     return val;
+}
+//TN - added for TNEQ process
+void CMediumProperties::setFrictionPhase (FiniteElement::FrictionPhase fric_phase)
+{
+	_fric_phase = fric_phase;
+}
+
+FiniteElement::FrictionPhase CMediumProperties::getFrictionPhase () const
+{
+	return _fric_phase;
 }

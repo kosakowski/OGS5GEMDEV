@@ -1,0 +1,5674 @@
+SOLUTION 1 #New Version 
+#GRID 1
+units mol/kgw 
+temp 25.000000 
+C(4)       1.000000000000e-10     # comp 
+Ca       1.000000000000e-10     # comp 
+Mg       1.000000000000e-03     # comp 
+Cl       2.000000000000e-03     # comp 
+pH       6.944195566361e+00 charge        # comp 
+pe       -6.378314364417e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   1
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 1
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 1
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+
+PRINT
+ -reset true
+ -selected_output true
+#ende
+
+SELECTED_OUTPUT
+-file phout_sel.dat
+-high_precision
+-reset false
+#ende
+
+USER_PUNCH
+-head  C(4) Ca Mg Cl pH  H+  pe  Calcite Dolomite(dis)
+ 10 PUNCH  TOT("C(4)"), TOT("Ca"), TOT("Mg"), TOT("Cl"),
+ 20 PUNCH  -LA("H+"),  MOL("H+"),   -LA("e-")
+ 40 PUNCH  EQUI("Calcite"),
+ 80 PUNCH  KIN("Dolomite(dis)"),
+END
+
+SOLUTION 2 #New Version 
+#GRID 2
+units mol/kgw 
+temp 25.000000 
+C(4)       7.386540715299e-09     # comp 
+Ca       4.512694443954e-09     # comp 
+Mg       9.999989283532e-04     # comp 
+Cl       1.999991911305e-03     # comp 
+pH       6.960591156654e+00 charge        # comp 
+pe       -3.325213036102e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   2
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 2
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 2
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 3 #New Version 
+#GRID 3
+units mol/kgw 
+temp 25.000000 
+C(4)       2.159112127873e-08     # comp 
+Ca       1.297481099585e-08     # comp 
+Mg       9.999970448704e-04     # comp 
+Cl       1.999976657753e-03     # comp 
+pH       6.991614785469e+00 charge        # comp 
+pe       -3.357835505958e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   3
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 3
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 3
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 4 #New Version 
+#GRID 4
+units mol/kgw 
+temp 25.000000 
+C(4)       4.727189748202e-08     # comp 
+Ca       2.820177133843e-08     # comp 
+Mg       9.999941403263e-04     # comp 
+Cl       1.999949938335e-03     # comp 
+pH       7.045742679981e+00 charge        # comp 
+pe       1.115459909145e+01       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   4
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 4
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 4
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 5 #New Version 
+#GRID 5
+units mol/kgw 
+temp 25.000000 
+C(4)       9.188085047580e-08     # comp 
+Ca       5.449213513636e-08     # comp 
+Mg       9.999902051828e-04     # comp 
+Cl       1.999905426933e-03     # comp 
+pH       7.132998898929e+00 charge        # comp 
+pe       -3.506261825422e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   5
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 5
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 5
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 6 #New Version 
+#GRID 6
+units mol/kgw 
+temp 25.000000 
+C(4)       1.672307941919e-07     # comp 
+Ca       9.858184972642e-08     # comp 
+Mg       9.999857618109e-04     # comp 
+Cl       1.999834015126e-03     # comp 
+pH       7.260348710481e+00 charge        # comp 
+pe       -3.636955443341e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   6
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 6
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 6
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 7 #New Version 
+#GRID 7
+units mol/kgw 
+temp 25.000000 
+C(4)       2.919006954810e-07     # comp 
+Ca       1.709404135657e-07     # comp 
+Mg       9.999824901437e-04     # comp 
+Cl       1.999722843986e-03     # comp 
+pH       7.424793272608e+00 charge        # comp 
+pe       1.050696682145e+01       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   7
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 7
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 7
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 8 #New Version 
+#GRID 8
+units mol/kgw 
+temp 25.000000 
+C(4)       4.949371055781e-07     # comp 
+Ca       2.877405256750e-07     # comp 
+Mg       9.999843532540e-04     # comp 
+Cl       1.999554091701e-03     # comp 
+pH       7.613515141524e+00 charge        # comp 
+pe       -3.993061454097e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   8
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 8
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 8
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 9 #New Version 
+#GRID 9
+units mol/kgw 
+temp 25.000000 
+C(4)       8.215901818037e-07     # comp 
+Ca       4.738748772321e-07     # comp 
+Mg       9.999995731727e-04     # comp 
+Cl       1.999303487790e-03     # comp 
+pH       7.812996950188e+00 charge        # comp 
+pe       -4.187346401746e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   9
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 9
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 9
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 10 #New Version 
+#GRID 10
+units mol/kgw 
+temp 25.000000 
+C(4)       1.342233278975e-06     # comp 
+Ca       7.675989940085e-07     # comp 
+Mg       1.000044016838e-03     # comp 
+Cl       1.998938532710e-03     # comp 
+pH       8.014902954786e+00 charge        # comp 
+pe       -4.393236299419e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   10
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 10
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 10
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 11 #New Version 
+#GRID 11
+units mol/kgw 
+temp 25.000000 
+C(4)       2.165937219616e-06     # comp 
+Ca       1.227540739570e-06     # comp 
+Mg       1.000146721280e-03     # comp 
+Cl       1.998416414676e-03     # comp 
+pH       8.215356387601e+00 charge        # comp 
+pe       -3.735664343736e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   11
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 11
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 11
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 12 #New Version 
+#GRID 12
+units mol/kgw 
+temp 25.000000 
+C(4)       3.459933077031e-06     # comp 
+Ca       1.942693640715e-06     # comp 
+Mg       1.000358174922e-03     # comp 
+Cl       1.997681634216e-03     # comp 
+pH       8.412556998168e+00 charge        # comp 
+pe       -3.234418336636e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   12
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 12
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 12
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 13 #New Version 
+#GRID 13
+units mol/kgw 
+temp 25.000000 
+C(4)       5.478106681100e-06     # comp 
+Ca       3.046968365881e-06     # comp 
+Mg       1.000762944256e-03     # comp 
+Cl       1.996663371836e-03     # comp 
+pH       8.605223277888e+00 charge        # comp 
+pe       9.540530705847e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   13
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 13
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 13
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 14 #New Version 
+#GRID 14
+units mol/kgw 
+temp 25.000000 
+C(4)       8.598262962511e-06     # comp 
+Ca       4.738169920438e-06     # comp 
+Mg       1.001496547627e-03     # comp 
+Cl       1.995272664810e-03     # comp 
+pH       8.792285430577e+00 charge        # comp 
+pe       -5.163065508437e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   14
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 14
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 14
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 15 #New Version 
+#GRID 15
+units mol/kgw 
+temp 25.000000 
+C(4)       1.347583913971e-05     # comp 
+Ca       7.355239394380e-06     # comp 
+Mg       1.002820472891e-03     # comp 
+Cl       1.993399497045e-03     # comp 
+pH       8.973235014540e+00 charge        # comp 
+pe       9.157346234901e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   15
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 15
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 15
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 16 #New Version 
+#GRID 16
+units mol/kgw 
+temp 25.000000 
+C(4)       2.126696486523e-05     # comp 
+Ca       1.149020122363e-05     # comp 
+Mg       1.005231861990e-03     # comp 
+Cl       1.990909942557e-03     # comp 
+pH       9.153614856286e+00 charge        # comp 
+pe       -5.503614378167e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   16
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 16
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 16
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 17 #New Version 
+#GRID 17
+units mol/kgw 
+temp 25.000000 
+C(4)       3.348087259426e-05     # comp 
+Ca       1.791480959696e-05     # comp 
+Mg       1.009387961125e-03     # comp 
+Cl       1.987643536270e-03     # comp 
+pH       9.329964001173e+00 charge        # comp 
+pe       -5.163399967766e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   17
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 17
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 17
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 18 #New Version 
+#GRID 18
+units mol/kgw 
+temp 25.000000 
+C(4)       5.075206003758e-05     # comp 
+Ca       2.696708104337e-05     # comp 
+Mg       1.015490652037e-03     # comp 
+Cl       1.983411079133e-03     # comp 
+pH       9.486568115983e+00 charge        # comp 
+pe       8.629300291364e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   18
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 18
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 18
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 19 #New Version 
+#GRID 19
+units mol/kgw 
+temp 25.000000 
+C(4)       7.335267193075e-05     # comp 
+Ca       3.880793321435e-05     # comp 
+Mg       1.023541468232e-03     # comp 
+Cl       1.977993182696e-03     # comp 
+pH       9.609725308553e+00 charge        # comp 
+pe       6.821243343400e-01       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   19
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 19
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 19
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 20 #New Version 
+#GRID 20
+units mol/kgw 
+temp 25.000000 
+C(4)       9.293978989799e-05     # comp 
+Ca       4.929525338852e-05     # comp 
+Mg       1.029214497690e-03     # comp 
+Cl       1.971139633867e-03     # comp 
+pH       9.708742467240e+00 charge        # comp 
+pe       -4.959813920171e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   20
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 20
+Dolomite(dis)  # comp
+-m 5.905649643960e-05
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 20
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 21 #New Version 
+#GRID 21
+units mol/kgw 
+temp 25.000000 
+C(4)       1.026232618103e-04     # comp 
+Ca       5.501819423961e-05     # comp 
+Mg       1.028890398611e-03     # comp 
+Cl       1.962570358333e-03     # comp 
+pH       9.708139085174e+00 charge        # comp 
+pe       8.676382069388e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   21
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 21
+Dolomite(dis)  # comp
+-m 6.975836363726e-05
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 21
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 22 #New Version 
+#GRID 22
+units mol/kgw 
+temp 25.000000 
+C(4)       1.022276211939e-04     # comp 
+Ca       5.592844898433e-05     # comp 
+Mg       1.022288243451e-03     # comp 
+Cl       1.951977820098e-03     # comp 
+pH       9.707252726863e+00 charge        # comp 
+pe       -5.095402039590e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   22
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 22
+Dolomite(dis)  # comp
+-m 6.798255814913e-05
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 22
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 23 #New Version 
+#GRID 23
+units mol/kgw 
+temp 25.000000 
+C(4)       1.016516431385e-04     # comp 
+Ca       5.702025827249e-05     # comp 
+Mg       1.014147126388e-03     # comp 
+Cl       1.939031138382e-03     # comp 
+pH       9.706136338654e+00 charge        # comp 
+pe       8.708330043629e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   23
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 23
+Dolomite(dis)  # comp
+-m 6.859557357105e-05
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 23
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 24 #New Version 
+#GRID 24
+units mol/kgw 
+temp 25.000000 
+C(4)       1.009581562691e-04     # comp 
+Ca       5.837543901022e-05     # comp 
+Mg       1.004273748148e-03     # comp 
+Cl       1.923381690989e-03     # comp 
+pH       9.704816091720e+00 charge        # comp 
+pe       8.586190188381e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   24
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 24
+Dolomite(dis)  # comp
+-m 6.796852513296e-05
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 24
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 25 #New Version 
+#GRID 25
+units mol/kgw 
+temp 25.000000 
+C(4)       1.001394339867e-04     # comp 
+Ca       6.004608308751e-05     # comp 
+Mg       9.924291781751e-04     # comp 
+Cl       1.904671253644e-03     # comp 
+pH       9.703242373616e+00 charge        # comp 
+pe       -4.890724145545e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   25
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 25
+Dolomite(dis)  # comp
+-m 6.974318415817e-05
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 25
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 26 #New Version 
+#GRID 26
+units mol/kgw 
+temp 25.000000 
+C(4)       9.918364391139e-05     # comp 
+Ca       6.208765511740e-05     # comp 
+Mg       9.783671605571e-04     # comp 
+Cl       1.882541908452e-03     # comp 
+pH       9.701410153218e+00 charge        # comp 
+pe       -5.211518133980e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   26
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 26
+Dolomite(dis)  # comp
+-m 6.690465731387e-05
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 26
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 27 #New Version 
+#GRID 27
+units mol/kgw 
+temp 25.000000 
+C(4)       9.808690874023e-05     # comp 
+Ca       6.456476418377e-05     # comp 
+Mg       9.618462447333e-04     # comp 
+Cl       1.856647727134e-03     # comp 
+pH       9.699300147904e+00 charge        # comp 
+pe       -5.199300320490e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   27
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 27
+Dolomite(dis)  # comp
+-m 6.802768921057e-05
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 27
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 28 #New Version 
+#GRID 28
+units mol/kgw 
+temp 25.000000 
+C(4)       9.685045795708e-05     # comp 
+Ca       6.754935636376e-05     # comp 
+Mg       9.426353155477e-04     # comp 
+Cl       1.826667912778e-03     # comp 
+pH       9.696946412802e+00 charge        # comp 
+pe       8.005700084303e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   28
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 28
+Dolomite(dis)  # comp
+-m 6.819254735054e-05
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 28
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 29 #New Version 
+#GRID 29
+units mol/kgw 
+temp 25.000000 
+C(4)       9.548194188824e-05     # comp 
+Ca       7.112088036008e-05     # comp 
+Mg       9.205218121016e-04     # comp 
+Cl       1.792320940710e-03     # comp 
+pH       9.694369748759e+00 charge        # comp 
+pe       -4.966109197294e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   29
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 29
+Dolomite(dis)  # comp
+-m 6.702296837683e-05
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 29
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 30 #New Version 
+#GRID 30
+units mol/kgw 
+temp 25.000000 
+C(4)       9.399537001939e-05     # comp 
+Ca       7.536568225046e-05     # comp 
+Mg       8.953195446938e-04     # comp 
+Cl       1.753379105256e-03     # comp 
+pH       9.691614634063e+00 charge        # comp 
+pe       -4.875314403050e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   30
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 30
+Dolomite(dis)  # comp
+-m 6.843746125580e-05
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 30
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 31 #New Version 
+#GRID 31
+units mol/kgw 
+temp 25.000000 
+C(4)       9.240858515238e-05     # comp 
+Ca       8.037512060943e-05     # comp 
+Mg       8.668751788540e-04     # comp 
+Cl       1.709682769743e-03     # comp 
+pH       9.688781053521e+00 charge        # comp 
+pe       8.604455647434e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   31
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 31
+Dolomite(dis)  # comp
+-m 6.655153197989e-05
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 31
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 32 #New Version 
+#GRID 32
+units mol/kgw 
+temp 25.000000 
+C(4)       9.074728982615e-05     # comp 
+Ca       8.624696214472e-05     # comp 
+Mg       8.350774547088e-04     # comp 
+Cl       1.661153543652e-03     # comp 
+pH       9.685894495788e+00 charge        # comp 
+pe       -4.881807450271e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   32
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 32
+Dolomite(dis)  # comp
+-m 6.734925596612e-05
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 32
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 33 #New Version 
+#GRID 33
+units mol/kgw 
+temp 25.000000 
+C(4)       8.904379707459e-05     # comp 
+Ca       9.308417622376e-05     # comp 
+Mg       7.998627936109e-04     # comp 
+Cl       1.607805583395e-03     # comp 
+pH       9.683145039554e+00 charge        # comp 
+pe       -5.175424315947e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   33
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 33
+Dolomite(dis)  # comp
+-m 6.655001052633e-05
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 33
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 34 #New Version 
+#GRID 34
+units mol/kgw 
+temp 25.000000 
+C(4)       8.734100207607e-05     # comp 
+Ca       1.009963411347e-04     # comp 
+Mg       7.612221876438e-04     # comp 
+Cl       1.549754240525e-03     # comp 
+pH       9.680662158599e+00 charge        # comp 
+pe       8.558582129047e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   34
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 34
+Dolomite(dis)  # comp
+-m 6.691162079151e-05
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 34
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 35 #New Version 
+#GRID 35
+units mol/kgw 
+temp 25.000000 
+C(4)       8.567945159263e-05     # comp 
+Ca       1.100928129658e-04     # comp 
+Mg       7.191977519932e-04     # comp 
+Cl       1.487221365316e-03     # comp 
+pH       9.678613561916e+00 charge        # comp 
+pe       -4.964857343526e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   35
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 35
+Dolomite(dis)  # comp
+-m 6.603649659944e-05
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 35
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 36 #New Version 
+#GRID 36
+units mol/kgw 
+temp 25.000000 
+C(4)       8.410567620522e-05     # comp 
+Ca       1.204875115231e-04     # comp 
+Mg       6.738869758232e-04     # comp 
+Cl       1.420536715837e-03     # comp 
+pH       9.677197430769e+00 charge        # comp 
+pe       8.698512757485e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   36
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 36
+Dolomite(dis)  # comp
+-m 6.630902411531e-05
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 36
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 37 #New Version 
+#GRID 37
+units mol/kgw 
+temp 25.000000 
+C(4)       8.267109708804e-05     # comp 
+Ca       1.322998191527e-04     # comp 
+Mg       6.254393076397e-04     # comp 
+Cl       1.350135112726e-03     # comp 
+pH       9.676637257469e+00 charge        # comp 
+pe       -5.032199269048e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   37
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 37
+Dolomite(dis)  # comp
+-m 6.553736737514e-05
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 37
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 38 #New Version 
+#GRID 38
+units mol/kgw 
+temp 25.000000 
+C(4)       8.143526971410e-05     # comp 
+Ca       1.456395225508e-04     # comp 
+Mg       5.740708428896e-04     # comp 
+Cl       1.276549210539e-03     # comp 
+pH       9.677195550115e+00 charge        # comp 
+pe       8.599245825628e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   38
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 38
+Dolomite(dis)  # comp
+-m 6.546058079084e-05
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 38
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 39 #New Version 
+#GRID 39
+units mol/kgw 
+temp 25.000000 
+C(4)       8.046718881888e-05     # comp 
+Ca       1.606352882553e-04     # comp 
+Mg       5.200314092668e-04     # comp 
+Cl       1.200398009362e-03     # comp 
+pH       9.679204876526e+00 charge        # comp 
+pe       8.420717349178e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   39
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 39
+Dolomite(dis)  # comp
+-m 6.516177739996e-05
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 39
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 40 #New Version 
+#GRID 40
+units mol/kgw 
+temp 25.000000 
+C(4)       7.984786018616e-05     # comp 
+Ca       1.775144775260e-04     # comp 
+Mg       4.635196403172e-04     # comp 
+Cl       1.122371488166e-03     # comp 
+pH       9.683014270701e+00 charge        # comp 
+pe       -4.449632283261e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   40
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 40
+Dolomite(dis)  # comp
+-m 6.409552835711e-05
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 40
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 41 #New Version 
+#GRID 41
+units mol/kgw 
+temp 25.000000 
+C(4)       7.970977187126e-05     # comp 
+Ca       1.964231793064e-04     # comp 
+Mg       4.048931033902e-04     # comp 
+Cl       1.043211984135e-03     # comp 
+pH       9.689118685854e+00 charge        # comp 
+pe       8.629532893586e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   41
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 41
+Dolomite(dis)  # comp
+-m 6.455180304907e-05
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 41
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 42 #New Version 
+#GRID 42
+units mol/kgw 
+temp 25.000000 
+C(4)       8.018663466908e-05     # comp 
+Ca       2.167436747482e-04     # comp 
+Mg       3.452900533588e-04     # comp 
+Cl       9.636931481879e-04     # comp 
+pH       9.698437296226e+00 charge        # comp 
+pe       8.589302273436e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   42
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 42
+Dolomite(dis)  # comp
+-m 6.312669893058e-05
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 42
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 43 #New Version 
+#GRID 43
+units mol/kgw 
+temp 25.000000 
+C(4)       8.229072420853e-05     # comp 
+Ca       2.391483042130e-04     # comp 
+Mg       2.854416714876e-04     # comp 
+Cl       8.845974725073e-04     # comp 
+pH       9.711926628091e+00 charge        # comp 
+pe       -4.849828420619e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   43
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+KINETICS 43
+Dolomite(dis)  # comp
+-m 6.197922813023e-05
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 43
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 44 #New Version 
+#GRID 44
+units mol/kgw 
+temp 25.000000 
+C(4)       8.539860987353e-05     # comp 
+Ca       2.547810690790e-04     # comp 
+Mg       2.339647654676e-04     # comp 
+Cl       8.066934363667e-04     # comp 
+pH       9.739696087731e+00 charge        # comp 
+pe       8.517985216040e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   44
+Calcite 0.000000000000e+00  6.335518273155e-05       # comp 
+#ende
+
+KINETICS 44
+Dolomite(dis)  # comp
+-m 2.974295477998e-05
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 44
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 45 #New Version 
+#GRID 45
+units mol/kgw 
+temp 25.000000 
+C(4)       8.848184122123e-05     # comp 
+Ca       2.556063744704e-04     # comp 
+Mg       1.982326710147e-04     # comp 
+Cl       7.307134219592e-04     # comp 
+pH       9.749806300506e+00 charge        # comp 
+pe       8.363748651640e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   45
+Calcite 0.000000000000e+00  1.201896821878e-04       # comp 
+#ende
+
+KINETICS 45
+Dolomite(dis)  # comp
+-m 2.301479496791e-06
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 45
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 46 #New Version 
+#GRID 46
+units mol/kgw 
+temp 25.000000 
+C(4)       9.059139069407e-05     # comp 
+Ca       2.417042230624e-04     # comp 
+Mg       1.775543503251e-04     # comp 
+Cl       6.573334135084e-04     # comp 
+pH       9.763720108406e+00 charge        # comp 
+pe       8.527052086956e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   46
+Calcite 0.000000000000e+00  1.241086752702e-04       # comp 
+#ende
+
+KINETICS 46
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 46
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 47 #New Version 
+#GRID 47
+units mol/kgw 
+temp 25.000000 
+C(4)       9.316627166759e-05     # comp 
+Ca       2.269436874001e-04     # comp 
+Mg       1.598007509255e-04     # comp 
+Cl       5.871554235433e-04     # comp 
+pH       9.777584158204e+00 charge        # comp 
+pe       8.491302749150e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   47
+Calcite 0.000000000000e+00  1.238076178902e-04       # comp 
+#ende
+
+KINETICS 47
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 47
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 48 #New Version 
+#GRID 48
+units mol/kgw 
+temp 25.000000 
+C(4)       9.577853051883e-05     # comp 
+Ca       2.133313367067e-04     # comp 
+Mg       1.427942869585e-04     # comp 
+Cl       5.206933249891e-04     # comp 
+pH       9.791083458745e+00 charge        # comp 
+pe       8.463381364030e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   48
+Calcite 0.000000000000e+00  1.235217672633e-04       # comp 
+#ende
+
+KINETICS 48
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 48
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 49 #New Version 
+#GRID 49
+units mol/kgw 
+temp 25.000000 
+C(4)       9.838278030175e-05     # comp 
+Ca       2.009478675661e-04     # comp 
+Mg       1.266166690758e-04     # comp 
+Cl       4.583627050162e-04     # comp 
+pH       9.804132039855e+00 charge        # comp 
+pe       8.350885704715e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   49
+Calcite 0.000000000000e+00  1.232562717152e-04       # comp 
+#ende
+
+KINETICS 49
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 49
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 50 #New Version 
+#GRID 50
+units mol/kgw 
+temp 25.000000 
+C(4)       1.009507696993e-04     # comp 
+Ca       1.897701072028e-04     # comp 
+Mg       1.114185121066e-04     # comp 
+Cl       4.004749490858e-04     # comp 
+pH       9.816594705034e+00 charge        # comp 
+pe       8.420993185506e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   50
+Calcite 0.000000000000e+00  1.230160171475e-04       # comp 
+#ende
+
+KINETICS 50
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 50
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 51 #New Version 
+#GRID 51
+units mol/kgw 
+temp 25.000000 
+C(4)       1.034464352741e-04     # comp 
+Ca       1.797773473627e-04     # comp 
+Mg       9.728723180581e-05     # comp 
+Cl       3.472355977609e-04     # comp 
+pH       9.828342800580e+00 charge        # comp 
+pe       8.376041635305e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   51
+Calcite 0.000000000000e+00  1.228044875266e-04       # comp 
+#ende
+
+KINETICS 51
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 51
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 52 #New Version 
+#GRID 52
+units mol/kgw 
+temp 25.000000 
+C(4)       1.058348593789e-04     # comp 
+Ca       1.709285462381e-04     # comp 
+Mg       8.428000574659e-05     # comp 
+Cl       2.987467565721e-04     # comp 
+pH       9.839274791856e+00 charge        # comp 
+pe       8.446719300275e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   52
+Calcite 0.000000000000e+00  1.226233494224e-04       # comp 
+#ende
+
+KINETICS 52
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 52
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 53 #New Version 
+#GRID 53
+units mol/kgw 
+temp 25.000000 
+C(4)       1.080855248274e-04     # comp 
+Ca       1.631632706648e-04     # comp 
+Mg       7.242910446594e-05     # comp 
+Cl       2.550131334089e-04     # comp 
+pH       9.849315947939e+00 charge        # comp 
+pe       8.394599782886e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   53
+Calcite 0.000000000000e+00  1.224725275717e-04       # comp 
+#ende
+
+KINETICS 53
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 53
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 54 #New Version 
+#GRID 54
+units mol/kgw 
+temp 25.000000 
+C(4)       1.101734674043e-04     # comp 
+Ca       1.564081551258e-04     # comp 
+Mg       6.174112256961e-05     # comp 
+Cl       2.159511137578e-04     # comp 
+pH       9.858419668753e+00 charge        # comp 
+pe       8.418640667009e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   54
+Calcite 0.000000000000e+00  1.223504192430e-04       # comp 
+#ende
+
+KINETICS 54
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 54
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 55 #New Version 
+#GRID 55
+units mol/kgw 
+temp 25.000000 
+C(4)       1.120804147968e-04     # comp 
+Ca       1.505814990378e-04     # comp 
+Mg       5.219922566328e-05     # comp 
+Cl       1.814001713055e-04     # comp 
+pH       9.866567707028e+00 charge        # comp 
+pe       8.374997265623e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   55
+Calcite 0.000000000000e+00  1.222542586071e-04       # comp 
+#ende
+
+KINETICS 55
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 55
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 56 #New Version 
+#GRID 56
+units mol/kgw 
+temp 25.000000 
+C(4)       1.137953642721e-04     # comp 
+Ca       1.455971952073e-04     # comp 
+Mg       4.376629253894e-05     # comp 
+Cl       1.511358538931e-04     # comp 
+pH       9.873768242948e+00 charge        # comp 
+pe       8.441253580200e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   56
+Calcite 0.000000000000e+00  1.221805600930e-04       # comp 
+#ende
+
+KINETICS 56
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 56
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 57 #New Version 
+#GRID 57
+units mol/kgw 
+temp 25.000000 
+C(4)       1.153144795809e-04     # comp 
+Ca       1.413681069134e-04     # comp 
+Mg       3.638833383957e-05     # comp 
+Cl       1.248835812135e-04     # comp 
+pH       9.880052458577e+00 charge        # comp 
+pe       8.500983332792e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   57
+Calcite 0.000000000000e+00  1.221255512928e-04       # comp 
+#ende
+
+KINETICS 57
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 57
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 58 #New Version 
+#GRID 58
+units mol/kgw 
+temp 25.000000 
+C(4)       1.166404395630e-04     # comp 
+Ca       1.378087313716e-04     # comp 
+Mg       2.999812250169e-05     # comp 
+Cl       1.023325354180e-04     # comp 
+pH       9.885470228188e+00 charge        # comp 
+pe       -5.205536772929e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   58
+Calcite 0.000000000000e+00  1.220855328459e-04       # comp 
+#ende
+
+KINETICS 58
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 58
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 59 #New Version 
+#GRID 59
+units mol/kgw 
+temp 25.000000 
+C(4)       1.177813985523e-04     # comp 
+Ca       1.348371670256e-04     # comp 
+Mg       2.451886138714e-05     # comp 
+Cl       8.314901014724e-05     # comp 
+pH       9.890085388388e+00 charge        # comp 
+pe       8.301843248810e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   59
+Calcite 0.000000000000e+00  1.220571339144e-04       # comp 
+#ende
+
+KINETICS 59
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 59
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 60 #New Version 
+#GRID 60
+units mol/kgw 
+temp 25.000000 
+C(4)       1.187497268041e-04     # comp 
+Ca       1.323764824360e-04     # comp 
+Mg       1.986769782592e-05     # comp 
+Cl       6.698869652793e-05     # comp 
+pH       9.893971030904e+00 charge        # comp 
+pe       8.289940363120e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   60
+Calcite 0.000000000000e+00  1.220374589403e-04       # comp 
+#ende
+
+KINETICS 60
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 60
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 61 #New Version 
+#GRID 61
+units mol/kgw 
+temp 25.000000 
+C(4)       1.195606946069e-04     # comp 
+Ca       1.303555930372e-04     # comp 
+Mg       1.595894668888e-05     # comp 
+Cl       5.350751458918e-05     # comp 
+pH       9.897205160165e+00 charge        # comp 
+pe       8.519980885849e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   61
+Calcite 0.000000000000e+00  1.220241410377e-04       # comp 
+#ende
+
+KINETICS 61
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 61
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 62 #New Version 
+#GRID 62
+units mol/kgw 
+temp 25.000000 
+C(4)       1.202312312882e-04     # comp 
+Ca       1.287097511323e-04     # comp 
+Mg       1.270691969913e-05     # comp 
+Cl       4.237073384402e-05     # comp 
+pH       9.899866939970e+00 charge        # comp 
+pe       8.362437944356e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   62
+Calcite 0.000000000000e+00  1.220153269440e-04       # comp 
+#ende
+
+KINETICS 62
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 62
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 63 #New Version 
+#GRID 63
+units mol/kgw 
+temp 25.000000 
+C(4)       1.207788478760e-04     # comp 
+Ca       1.273807412837e-04     # comp 
+Mg       1.002829465273e-05     # comp 
+Cl       3.326025716388e-05     # comp 
+pH       9.902033647684e+00 charge        # comp 
+pe       8.293840741479e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   63
+Calcite 0.000000000000e+00  1.220096198587e-04       # comp 
+#ende
+
+KINETICS 63
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 63
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 64 #New Version 
+#GRID 64
+units mol/kgw 
+temp 25.000000 
+C(4)       1.212207707474e-04     # comp 
+Ca       1.263168546747e-04     # comp 
+Mg       7.843993939328e-06     # comp 
+Cl       2.588005922290e-05     # comp 
+pH       9.903778367870e+00 charge        # comp 
+pe       -5.266040354489e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   64
+Calcite 0.000000000000e+00  1.220060025848e-04       # comp 
+#ende
+
+KINETICS 64
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 64
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 65 #New Version 
+#GRID 65
+units mol/kgw 
+temp 25.000000 
+C(4)       1.215732989986e-04     # comp 
+Ca       1.254726986451e-04     # comp 
+Mg       6.080573506469e-06     # comp 
+Cl       1.995986873431e-05     # comp 
+pH       9.905168392417e+00 charge        # comp 
+pe       8.335294976512e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   65
+Calcite 0.000000000000e+00  1.220037572916e-04       # comp 
+#ende
+
+KINETICS 65
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 65
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 66 #New Version 
+#GRID 66
+units mol/kgw 
+temp 25.000000 
+C(4)       1.218513731796e-04     # comp 
+Ca       1.248088841316e-04     # comp 
+Mg       4.671149425261e-06     # comp 
+Cl       1.525725897325e-05     # comp 
+pH       9.906264251006e+00 charge        # comp 
+pe       8.375706870440e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   66
+Calcite 0.000000000000e+00  1.220023919355e-04       # comp 
+#ende
+
+KINETICS 66
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 66
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 67 #New Version 
+#GRID 67
+units mol/kgw 
+temp 25.000000 
+C(4)       1.220683275872e-04     # comp 
+Ca       1.242916244667e-04     # comp 
+Mg       3.555908790657e-06     # comp 
+Cl       1.155836257137e-05     # comp 
+pH       9.907119271419e+00 charge        # comp 
+pe       8.439331614455e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   67
+Calcite 0.000000000000e+00  1.220015783156e-04       # comp 
+#ende
+
+KINETICS 67
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 67
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 68 #New Version 
+#GRID 68
+units mol/kgw 
+temp 25.000000 
+C(4)       1.222357910357e-04     # comp 
+Ca       1.238922730544e-04     # comp 
+Mg       2.682264669277e-06     # comp 
+Cl       8.677455206091e-06     # comp 
+pH       9.907779560069e+00 charge        # comp 
+pe       8.334339611656e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   68
+Calcite 0.000000000000e+00  1.220011031017e-04       # comp 
+#ende
+
+KINETICS 68
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 68
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 69 #New Version 
+#GRID 69
+units mol/kgw 
+temp 25.000000 
+C(4)       1.223636997850e-04     # comp 
+Ca       1.235868235928e-04     # comp 
+Mg       2.004721557623e-06     # comp 
+Cl       6.455661096072e-06     # comp 
+pH       9.908284295216e+00 charge        # comp 
+pe       -5.176511777888e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   69
+Calcite 0.000000000000e+00  1.220008310111e-04       # comp 
+#ende
+
+KINETICS 69
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 69
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 70 #New Version 
+#GRID 70
+units mol/kgw 
+temp 25.000000 
+C(4)       1.224603889924e-04     # comp 
+Ca       1.233553936542e-04     # comp 
+Mg       1.484519116777e-06     # comp 
+Cl       4.759024717275e-06     # comp 
+pH       9.908666234975e+00 charge        # comp 
+pe       8.362464230574e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   70
+Calcite 0.000000000000e+00  1.220006782779e-04       # comp 
+#ende
+
+KINETICS 70
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 70
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 71 #New Version 
+#GRID 71
+units mol/kgw 
+temp 25.000000 
+C(4)       1.225327338843e-04     # comp 
+Ca       1.231817097669e-04     # comp 
+Mg       1.089118850718e-06     # comp 
+Cl       3.476171975504e-06     # comp 
+pH       9.908952356201e+00 charge        # comp 
+pe       -5.162566145177e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   71
+Calcite 0.000000000000e+00  1.220005942169e-04       # comp 
+#ende
+
+KINETICS 71
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 71
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 72 #New Version 
+#GRID 72
+units mol/kgw 
+temp 25.000000 
+C(4)       1.225863175034e-04     # comp 
+Ca       1.230526093096e-04     # comp 
+Mg       7.915920587846e-07     # comp 
+Cl       2.515754402287e-06     # comp 
+pH       9.909164556163e+00 charge        # comp 
+pe       8.410666333458e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   72
+Calcite 0.000000000000e+00  1.220005488563e-04       # comp 
+#ende
+
+KINETICS 72
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 72
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 73 #New Version 
+#GRID 73
+units mol/kgw 
+temp 25.000000 
+C(4)       1.226256075037e-04     # comp 
+Ca       1.229575714299e-04     # comp 
+Mg       5.699589781352e-07     # comp 
+Cl       1.803835685730e-06     # comp 
+pH       9.909320364718e+00 charge        # comp 
+pe       -5.207650009594e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   73
+Calcite 0.000000000000e+00  1.220005248574e-04       # comp 
+#ende
+
+KINETICS 73
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 73
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 74 #New Version 
+#GRID 74
+units mol/kgw 
+temp 25.000000 
+C(4)       1.226541295287e-04     # comp 
+Ca       1.228882859565e-04     # comp 
+Mg       4.065195964820e-07     # comp 
+Cl       1.281344365045e-06     # comp 
+pH       9.909433629327e+00 charge        # comp 
+pe       8.301669193685e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   74
+Calcite 0.000000000000e+00  1.220005124077e-04       # comp 
+#ende
+
+KINETICS 74
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 74
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 75 #New Version 
+#GRID 75
+units mol/kgw 
+temp 25.000000 
+C(4)       1.226746289694e-04     # comp 
+Ca       1.228382660789e-04     # comp 
+Mg       2.872070466295e-07     # comp 
+Cl       9.016824652046e-07     # comp 
+pH       9.909515147857e+00 charge        # comp 
+pe       -5.264784943871e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   75
+Calcite 0.000000000000e+00  1.220005060762e-04       # comp 
+#ende
+
+KINETICS 75
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 75
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 76 #New Version 
+#GRID 76
+units mol/kgw 
+temp 25.000000 
+C(4)       1.226892162993e-04     # comp 
+Ca       1.228025076299e-04     # comp 
+Mg       2.009854758779e-07     # comp 
+Cl       6.285491330786e-07     # comp 
+pH       9.909573234541e+00 charge        # comp 
+pe       8.427597907225e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   76
+Calcite 0.000000000000e+00  1.220005029187e-04       # comp 
+#ende
+
+KINETICS 76
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 76
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 77 #New Version 
+#GRID 77
+units mol/kgw 
+temp 25.000000 
+C(4)       1.226994937518e-04     # comp 
+Ca       1.227771952718e-04     # comp 
+Mg       1.393062864315e-07     # comp 
+Cl       4.340121400428e-07     # comp 
+pH       9.909614212579e+00 charge        # comp 
+pe       8.316364029262e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   77
+Calcite 0.000000000000e+00  1.220005013747e-04       # comp 
+#ende
+
+KINETICS 77
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 77
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 78 #New Version 
+#GRID 78
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227066629514e-04     # comp 
+Ca       1.227594538715e-04     # comp 
+Mg       9.562994072116e-08     # comp 
+Cl       2.968389818765e-07     # comp 
+pH       9.909642832871e+00 charge        # comp 
+pe       8.464731450895e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   78
+Calcite 0.000000000000e+00  1.220005006355e-04       # comp 
+#ende
+
+KINETICS 78
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 78
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 79 #New Version 
+#GRID 79
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227116143486e-04     # comp 
+Ca       1.227471418636e-04     # comp 
+Mg       6.501522145500e-08     # comp 
+Cl       2.010832615134e-07     # comp 
+pH       9.909662622486e+00 charge        # comp 
+pe       -5.131625113133e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   79
+Calcite 0.000000000000e+00  1.220005002874e-04       # comp 
+#ende
+
+KINETICS 79
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 79
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 80 #New Version 
+#GRID 80
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227150000641e-04     # comp 
+Ca       1.227386824458e-04     # comp 
+Mg       4.377390069916e-08     # comp 
+Cl       1.349107298299e-07     # comp 
+pH       9.909676169123e+00 charge        # comp 
+pe       8.268608055865e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   80
+Calcite 0.000000000000e+00  1.220005001276e-04       # comp 
+#ende
+
+KINETICS 80
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 80
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 81 #New Version 
+#GRID 81
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227172921476e-04     # comp 
+Ca       1.227329279419e-04     # comp 
+Mg       2.918608166566e-08     # comp 
+Cl       8.964218239855e-08     # comp 
+pH       9.909685349191e+00 charge        # comp 
+pe       -5.062602599047e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   81
+Calcite 0.000000000000e+00  1.220005000555e-04       # comp 
+#ende
+
+KINETICS 81
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 81
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 82 #New Version 
+#GRID 82
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227188283824e-04     # comp 
+Ca       1.227290525421e-04     # comp 
+Mg       1.926984996023e-08     # comp 
+Cl       5.898663488882e-08     # comp 
+pH       9.909691507602e+00 charge        # comp 
+pe       -5.099168073797e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   82
+Calcite 0.000000000000e+00  1.220005000230e-04       # comp 
+#ende
+
+KINETICS 82
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 82
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 83 #New Version 
+#GRID 83
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227198477257e-04     # comp 
+Ca       1.227264687847e-04     # comp 
+Mg       1.259810061430e-08     # comp 
+Cl       3.843706218167e-08     # comp 
+pH       9.909695597261e+00 charge        # comp 
+pe       8.373215629286e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   83
+Calcite 0.000000000000e+00  1.220005000097e-04       # comp 
+#ende
+
+KINETICS 83
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 83
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 84 #New Version 
+#GRID 84
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227205173122e-04     # comp 
+Ca       1.227247634924e-04     # comp 
+Mg       8.155284706997e-09     # comp 
+Cl       2.480175980983e-08     # comp 
+pH       9.909698285625e+00 charge        # comp 
+pe       -4.828910747816e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   84
+Calcite 0.000000000000e+00  1.220005000046e-04       # comp 
+#ende
+
+KINETICS 84
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 84
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 85 #New Version 
+#GRID 85
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227209527267e-04     # comp 
+Ca       1.227236493446e-04     # comp 
+Mg       5.227152252939e-09     # comp 
+Cl       1.584642908216e-08     # comp 
+pH       9.909700034894e+00 charge        # comp 
+pe       -4.901100471407e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   85
+Calcite 0.000000000000e+00  1.220005000015e-04       # comp 
+#ende
+
+KINETICS 85
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 85
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 86 #New Version 
+#GRID 86
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227212330083e-04     # comp 
+Ca       1.227229287872e-04     # comp 
+Mg       3.317190525102e-09     # comp 
+Cl       1.002486684197e-08     # comp 
+pH       9.909701161517e+00 charge        # comp 
+pe       8.378966139273e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   86
+Calcite 0.000000000000e+00  1.220004999996e-04       # comp 
+#ende
+
+KINETICS 86
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 86
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 87 #New Version 
+#GRID 87
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227214116024e-04     # comp 
+Ca       1.227224675115e-04     # comp 
+Mg       2.084235078896e-09     # comp 
+Cl       6.279242166676e-09     # comp 
+pH       9.909701879706e+00 charge        # comp 
+pe       8.400521868981e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   87
+Calcite 0.000000000000e+00  1.220004999993e-04       # comp 
+#ende
+
+KINETICS 87
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 87
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 88 #New Version 
+#GRID 88
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227215242456e-04     # comp 
+Ca       1.227221752288e-04     # comp 
+Mg       1.296562764465e-09     # comp 
+Cl       3.894062728925e-09     # comp 
+pH       9.909702332835e+00 charge        # comp 
+pe       -4.996581518636e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   88
+Calcite 0.000000000000e+00  1.220004999999e-04       # comp 
+#ende
+
+KINETICS 88
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 88
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 89 #New Version 
+#GRID 89
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227215945678e-04     # comp 
+Ca       1.227219919215e-04     # comp 
+Mg       7.985901639839e-10     # comp 
+Cl       2.390869599326e-09     # comp 
+pH       9.909702615784e+00 charge        # comp 
+pe       8.310576543745e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   89
+Calcite 0.000000000000e+00  1.220004999993e-04       # comp 
+#ende
+
+KINETICS 89
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 89
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 90 #New Version 
+#GRID 90
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227216380200e-04     # comp 
+Ca       1.227218781394e-04     # comp 
+Mg       4.870509960874e-10     # comp 
+Cl       1.453329574193e-09     # comp 
+pH       9.909702790643e+00 charge        # comp 
+pe       8.395762984437e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   90
+Calcite 0.000000000000e+00  1.220004999994e-04       # comp 
+#ende
+
+KINETICS 90
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 90
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 91 #New Version 
+#GRID 91
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227216645935e-04     # comp 
+Ca       1.227218082408e-04     # comp 
+Mg       2.941864683053e-10     # comp 
+Cl       8.746607480710e-10     # comp 
+pH       9.909702897582e+00 charge        # comp 
+pe       8.404888115584e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   91
+Calcite 0.000000000000e+00  1.220004999992e-04       # comp 
+#ende
+
+KINETICS 91
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 91
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 92 #New Version 
+#GRID 92
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227216806771e-04     # comp 
+Ca       1.227217657449e-04     # comp 
+Mg       1.760431435693e-10     # comp 
+Cl       5.212180217220e-10     # comp 
+pH       9.909702962302e+00 charge        # comp 
+pe       -5.136503162818e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   92
+Calcite 0.000000000000e+00  1.220004999996e-04       # comp 
+#ende
+
+KINETICS 92
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 92
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 93 #New Version 
+#GRID 93
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227216903108e-04     # comp 
+Ca       1.227217401773e-04     # comp 
+Mg       1.044342022573e-10     # comp 
+Cl       3.075991151606e-10     # comp 
+pH       9.909703001061e+00 charge        # comp 
+pe       -5.052393984822e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   93
+Calcite 0.000000000000e+00  1.220004999997e-04       # comp 
+#ende
+
+KINETICS 93
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 93
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 94 #New Version 
+#GRID 94
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227216960213e-04     # comp 
+Ca       1.227217249550e-04     # comp 
+Mg       6.148945008881e-11     # comp 
+Cl       1.798451227037e-10     # comp 
+pH       9.909703024031e+00 charge        # comp 
+pe       8.391449898212e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   94
+Calcite 0.000000000000e+00  1.220004999994e-04       # comp 
+#ende
+
+KINETICS 94
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 94
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 95 #New Version 
+#GRID 95
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227216993708e-04     # comp 
+Ca       1.227217159870e-04     # comp 
+Mg       3.600821625290e-11     # comp 
+Cl       1.042480229137e-10     # comp 
+pH       9.909703037498e+00 charge        # comp 
+pe       -4.937663434265e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   95
+Calcite 0.000000000000e+00  1.220004999995e-04       # comp 
+#ende
+
+KINETICS 95
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 95
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 96 #New Version 
+#GRID 96
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227217013149e-04     # comp 
+Ca       1.227217107591e-04     # comp 
+Mg       2.105006644219e-11     # comp 
+Cl       5.998813480051e-11     # comp 
+pH       9.909703045311e+00 charge        # comp 
+pe       -5.146899390368e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   96
+Calcite 0.000000000000e+00  1.220004999999e-04       # comp 
+#ende
+
+KINETICS 96
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 96
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 97 #New Version 
+#GRID 97
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227217024314e-04     # comp 
+Ca       1.227217077440e-04     # comp 
+Mg       1.236368796722e-11     # comp 
+Cl       3.435238625859e-11     # comp 
+pH       9.909703049796e+00 charge        # comp 
+pe       8.463622535310e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   97
+Calcite 0.000000000000e+00  1.220004999997e-04       # comp 
+#ende
+
+KINETICS 97
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 97
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 98 #New Version 
+#GRID 98
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227217030655e-04     # comp 
+Ca       1.227217060244e-04     # comp 
+Mg       7.376388994121e-12     # comp 
+Cl       1.967065646875e-11     # comp 
+pH       9.909703052340e+00 charge        # comp 
+pe       -4.825566469492e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   98
+Calcite 0.000000000000e+00  1.220004999995e-04       # comp 
+#ende
+
+KINETICS 98
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 98
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 99 #New Version 
+#GRID 99
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227217034201e-04     # comp 
+Ca       1.227217050587e-04     # comp 
+Mg       4.557484686340e-12     # comp 
+Cl       1.139226620776e-11     # comp 
+pH       9.909703053762e+00 charge        # comp 
+pe       -5.045808870953e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   99
+Calcite 0.000000000000e+00  1.220004999993e-04       # comp 
+#ende
+
+KINETICS 99
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 99
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 100 #New Version 
+#GRID 100
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227217036085e-04     # comp 
+Ca       1.227217045438e-04     # comp 
+Mg       3.045966807218e-12     # comp 
+Cl       6.962586574755e-12     # comp 
+pH       9.909703054518e+00 charge        # comp 
+pe       -5.106351238605e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   100
+Calcite 0.000000000000e+00  1.220004999997e-04       # comp 
+#ende
+
+KINETICS 100
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 100
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+
+SOLUTION 101 #New Version 
+#GRID 101
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227217036708e-04     # comp 
+Ca       1.227217043730e-04     # comp 
+Mg       2.543217542723e-12     # comp 
+Cl       5.490993092434e-12     # comp 
+pH       9.909703054767e+00 charge        # comp 
+pe       -5.074403958709e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   101
+Calcite 0.000000000000e+00  1.220005000000e-04       # comp 
+#ende
+
+KINETICS 101
+Dolomite(dis)  # comp
+-m 0.000000000000e+00
+-steps 1.000000000000e+02 in 1 steps
+#ende
+
+RATES 101
+Dolomite(dis)
+  -start
+rem kmech = k25*exp(-Eact/R*(1/T-1/298.15))*Product([Ci]^nyi);
+10  R = 8.314472
+11  deltaT = 1/TK - 1/298.15
+12  e = 2.7183
+13  Ea = 36100
+14  logK25 = -3.19
+15  ny = 0.5
+rem 16  mech_a = (10^logK25) * (e^(-Ea/R*deltaT)) * ACT("H+")^ny
+16  mech_a = (10^logK25) * ACT("H+")^ny
+23  Ea = 52200
+24  logK25 = -7.53
+rem 26  mech_b = (10^logK25) * (e^(-Ea/R*deltaT)) 
+26  mech_b = (10^logK25) 
+30  rate = mech_a + mech_b
+40  teta = 1 
+41  eta = 1
+42  Area = 18.75 ; 100
+70  rate = Area * rate * (1 - SR("Dolomite(dis)")^teta)^eta
+80  moles = rate * time
+ rem  140  if (moles > m) then moles = m
+ rem  160  temp = tot("Ca")
+ rem  161  mm = tot("Mg")
+ rem  170  mc  = tot("C(4)")
+ rem  180  if (mc/2 < temp) then temp = mc/2
+ rem  180  if (mm   < temp) then temp = mm
+ rem  190  if -moles > temp then moles = -temp
+200 save moles
+      -end
+#ende
+END
+

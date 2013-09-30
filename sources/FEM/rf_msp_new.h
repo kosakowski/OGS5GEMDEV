@@ -172,6 +172,8 @@ namespace SolidProp
 
 		 double specific_heat_source;
 
+		 FiniteElement::SolidReactiveSystem _reactive_system;
+
          //-------------------------------------------------------------
          // Numeric
          double CalulateValue(const Matrix *data, const double x) const;
@@ -392,7 +394,13 @@ namespace SolidProp
 	std::vector<std::string>  conductivity_pcs_name_vector;
 	bool GetBoolExcavated() {return excavated;}//WX:01.2013
 		 //Solid Chemical Reactive System
-		 void SetSolidReactiveSystemProperties();
+    void SetSolidReactiveSystemProperties();
+
+	//Get solid reactive system - TN
+	FiniteElement::SolidReactiveSystem getSolidReactiveSystem () const;
+
+	//Set value for solid reactive system - TN
+	void setSolidReactiveSystem (FiniteElement::SolidReactiveSystem reactive_system);
    };
 
 }                                                 // end namespace

@@ -66,6 +66,7 @@
 #include "eos.h"
 #include "rf_msp_new.h"
 #include "rf_node.h"
+#include "rf_kinreact.h"
 #include "fem_ele_vec.h"//WX:08.2011
 #include "StepperBulischStoer.h"
 
@@ -105,10 +106,13 @@ REACT_BRNS* m_vec_BRNS;
 #include "solver.h"                               // ConfigRenumberProperties
 #include "matrix_routines.h"
 #endif
-#include "geochemcalc.h"
 #include "problem.h"
 #include "msh_faces.h"
 #include "rfmat_cp.h"
+
+#include "rf_react_int.h"
+#include "VLE.h"
+#include "Density.h"
 
 // MathLib
 #include "InterpolationAlgorithms/InverseDistanceInterpolation.h"
@@ -312,16 +316,16 @@ CRFProcess::CRFProcess(void) :
 	//
 	additioanl2ndvar_print = -1;          //WW
 	flow_pcs_type = 0;                    //CB default: liquid flow, Sat = 1
-	this->simulator = "GEOSYS";           // BG, 09/2009
-	this->simulator_model_path = "";      // BG, 09/2009, folder with the Eclipse or DuMux files
-	this->simulator_path = "";            // BG, 09/2009, Eclipse or Dumux
-	this->simulator_well_path = "";       //KB 02/2011, Eclipse
-	this->PrecalculatedFiles = false;     // BG, 01/2011, flag for using already calculated files from Eclipse or DuMux
-	this->SaveEclipseDataFiles = false; // Standard case: do not save files
-	this->Phase_Transition_Model = 0;     // BG, 11/2010, flag for using CO2 Phase transition (0...not used, 1...used)
+	simulator = "GEOSYS";           // BG, 09/2009
+	simulator_model_path = "";      // BG, 09/2009, folder with the Eclipse or DuMux files
+	simulator_path = "";            // BG, 09/2009, Eclipse or Dumux
+	simulator_well_path = "";       //KB 02/2011, Eclipse
+	PrecalculatedFiles = false;     // BG, 01/2011, flag for using already calculated files from Eclipse or DuMux
+	SaveEclipseDataFiles = false; // Standard case: do not save files
+	Phase_Transition_Model = 0;     // BG, 11/2010, flag for using CO2 Phase transition (0...not used, 1...used)
 	// SB redo wtp
-	this->dissolved_co2_pcs_name = ""; // SB, CB 10/2011 Name of MASS_TRANSPORT process used to store dissolved total CO2 in water
-	this->dissolved_co2_ingas_pcs_name = "";
+	dissolved_co2_pcs_name = ""; // SB, CB 10/2011 Name of MASS_TRANSPORT process used to store dissolved total CO2 in water
+	dissolved_co2_ingas_pcs_name = "";
 
 	//----------------------------------------------------------------------
 	m_bCheck = false;                     //OK
@@ -698,10 +702,32 @@ void CRFProcess::Create()
 	for(k = 0; k < fem_msh_vector.size(); k++)
 		if(m_msh == fem_msh_vector[k])
 			break;
-	if(type == 4 || (type / 10 == 4))     // 03.08.2010. WW
-		eqs_new = EQS_Vector[2 * k + 1];
-	else
-		eqs_new = EQS_Vector[2 * k];
+//WW 02.2013. Pardiso
+   int eqs_num = 3;
+#ifdef USE_MPI
+   eqs_num = 2;
+#endif
+
+   //if(type==4||type==41)
+   //   eqs_new = EQS_Vector[2*k+1];
+   if(type == 4 || (type / 10 == 4))     // 03.08.2010. WW
+     eqs_new = EQS_Vector[eqs_num * k + 1];
+   else
+   {
+     //eqs_new = EQS_Vector[2*k];
+#ifdef USE_MPI
+     eqs_new = EQS_Vector[eqs_num * k];
+#else
+     if(getProcessType() == FiniteElement::MULTI_PHASE_FLOW || getProcessType() == FiniteElement::PS_GLOBAL)
+	 {
+	   eqs_new = EQS_Vector[eqs_num * k + 2 ];
+     }
+	 else
+	 {
+	   eqs_new = EQS_Vector[eqs_num * k];
+	 }
+#endif
+   } //WW 02.2013. Pardiso
 #else
 	//WW  phase=1;
 	//CRFProcess *m_pcs = NULL;                      //
@@ -1764,6 +1790,8 @@ std::ios::pos_type CRFProcess::Read(std::ifstream* pcs_file)
 	ios::pos_type position;
 	ios::pos_type position_subkeyword;
 	std::stringstream line_stream;
+	std::string pcs_type_name;
+
 	saturation_switch = false;            // JOD for Richards
 	//----------------------------------------------------------------------
 	while (!new_keyword)
@@ -1797,7 +1825,6 @@ std::ios::pos_type CRFProcess::Read(std::ifstream* pcs_file)
 					break;
 				}
 				line_stream.str(line_string);
-				std::string pcs_type_name;
 				line_stream >> pcs_type_name;
 				pcs_type_name_vector.push_back(pcs_type_name);
 				this->setProcessType (FiniteElement::convertProcessType(pcs_type_name));
@@ -1810,7 +1837,7 @@ std::ios::pos_type CRFProcess::Read(std::ifstream* pcs_file)
 					pcs_number_flow = pcs_vector.size(); //JT2012
 					if(this->getProcessType() == FiniteElement::PS_GLOBAL ||
 					   this->getProcessType() == FiniteElement::MULTI_PHASE_FLOW ||
-					   this->getProcessType() == FiniteElement::TNEQ ||
+					   //this->getProcessType() == FiniteElement::TNEQ || no multiphase flow
 					   pcs_type_name.find("H2") != string::npos){
 						   this->isPCSMultiFlow = true;
 					}
@@ -2451,7 +2478,7 @@ void CRFProcess::ConfigGroundwaterFlow()
 	pcs_primary_function_name[0] = "HEAD";
 	pcs_primary_function_unit[0] = "m";
 	// ELE values
-	pcs_number_of_evals = 6;
+	pcs_number_of_evals = 8;
 	pcs_eval_name[0] = "VOLUME";
 	pcs_eval_unit[0] = "m3";
 	pcs_eval_name[1] = "VELOCITY1_X";
@@ -2464,6 +2491,10 @@ void CRFProcess::ConfigGroundwaterFlow()
 	pcs_eval_unit[4] = "m^2";
 	pcs_eval_name[5] = "POROSITY";
 	pcs_eval_unit[5] = "-";
+   pcs_eval_name[6] = "PERMEABILITY_YY";
+   pcs_eval_unit[6] = "m^2";
+   pcs_eval_name[7] = "PERMEABILITY_ZZ";
+   pcs_eval_unit[7] = "m^2";
 	//----------------------------------------------------------------------
 	// Secondary variables
 	pcs_number_of_secondary_nvals = 5;
@@ -3627,6 +3658,19 @@ void CRFProcess:: Def_Variable_MultiPhaseFlow()
 	pcs_eval_name[pcs_number_of_evals] = "VELOCITY2_Z";
 	pcs_eval_unit[pcs_number_of_evals] = "m/s";
 	pcs_number_of_evals++;
+    // CB_merge_0513 added some additional ELE values 
+    pcs_eval_name[pcs_number_of_evals] = "PERMEABILITY";
+    pcs_eval_unit[pcs_number_of_evals] = "m^2";
+	pcs_number_of_evals++;
+    pcs_eval_name[pcs_number_of_evals] = "POROSITY";
+    pcs_eval_unit[pcs_number_of_evals] = "-";
+  	pcs_number_of_evals++;
+    pcs_eval_name[pcs_number_of_evals] = "PERMEABILITY_YY";
+    pcs_eval_unit[pcs_number_of_evals] = "m^2";
+  	pcs_number_of_evals++;
+    pcs_eval_name[pcs_number_of_evals] = "PERMEABILITY_ZZ";
+    pcs_eval_unit[pcs_number_of_evals] = "m^2";	
+	pcs_number_of_evals++;
 
        if(simulator.compare("ECLIPSE") == 0) //02.2013. WW
         {
@@ -3718,8 +3762,9 @@ void CRFProcess:: Def_Variable_LiquidFlow()
 	pcs_number_of_evals++;
 
 	// WTP: needed?
-        if(simulator.compare("ECLIPSE") == 0) //02.2013. WW
-        {
+	// CB_merge_0513 ?? why only for eclipse??
+    // if(simulator.compare("ECLIPSE") == 0) //02.2013. WW
+    //    {
 	// BG 01/2011, variables necessary for ECLIPSE
 	pcs_secondary_function_name[pcs_number_of_secondary_nvals]      = "DENSITY1";
 	pcs_secondary_function_unit[pcs_number_of_secondary_nvals]      = "kg/m3";
@@ -3730,7 +3775,7 @@ void CRFProcess:: Def_Variable_LiquidFlow()
 	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
 	pcs_number_of_secondary_nvals++;
 
-        }
+    //    }
 
 
 }
@@ -3793,6 +3838,11 @@ void CRFProcess::ConfigPS_Global()
 	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "m3/m3";
 	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
 	pcs_number_of_secondary_nvals++;
+    // CB_merge_0513 additional secondary variable
+    pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "DENSITY2";
+    pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "kg/m3";
+    pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+    pcs_number_of_secondary_nvals++;
 	// Nodal velocity.
 	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "VELOCITY_X1";
 	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "m/s";
@@ -3818,6 +3868,16 @@ void CRFProcess::ConfigPS_Global()
 	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "m/s";
 	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
 	pcs_number_of_secondary_nvals++;
+
+    // CB_merge_0513 added some ELE values 
+    //pcs_number_of_evals = 2;
+    pcs_eval_name[pcs_number_of_evals] = "PERMEABILITY";
+    pcs_eval_unit[pcs_number_of_evals] = "m^2";
+	pcs_number_of_evals++; 
+    pcs_eval_name[pcs_number_of_evals] = "POROSITY";
+    pcs_eval_unit[pcs_number_of_evals] = "-";
+	pcs_number_of_evals++; 
+
 
 	//
 	for(size_t i = 0; i < GetPrimaryVNumber(); i++) // 03.03.2008. WW
@@ -3965,6 +4025,7 @@ void CRFProcess::ConfigTNEQ()
 	long group_count = 0;
 	m_rho_s_0 = msp_vector[group_count]->Density();      // get initial solid density
 	double poro = mmp_vector[group_count]->porosity;
+	FiniteElement::SolidReactiveSystem react_syst = msp_vector[group_count]->getSolidReactiveSystem();
 	//if (group_count != 0) break;
    // if (this->m_num->reaction_scaling!=.0) {
 	double start_t = 0.0;
@@ -3973,10 +4034,10 @@ void CRFProcess::ConfigTNEQ()
 			                          573.0,     // T_gas, Kelvin
 			                          0.0,       // p_gas
 			                          0.0,       // w_water, mass fraction unitless
-			                          m_rho_s_0, //TN 1656.0 // kg/m3, // rho_s_initial, 
+			                          m_rho_s_0, //kg/m3, // rho_s_initial, 
 									  1.0-poro, //solid volume fraction
-			                          0.001,
-									  "CaOH2");      // delta_t //TN: decreased from 1.0
+			                          1.0,   // delta_t
+									  react_syst);      
 
 	yy_rho_s    = Eigen::VectorXd::Zero(1);
 	dydxx_rho_s = Eigen::VectorXd::Zero(1);
@@ -3984,7 +4045,8 @@ void CRFProcess::ConfigTNEQ()
 	yy_rho_s(0) = m_rho_s_0;
 
 	// evaluate inital value of dydt
-	m_ca_hydration->eval(start_t, yy_rho_s, dydxx_rho_s);
+	//m_ca_hydration->eval(start_t, yy_rho_s, dydxx_rho_s);
+	dydxx_rho_s(0) = 0.0;
 	// initialize the solver
 	m_solver = new StepperBulischStoer<ca_hydration>(yy_rho_s, dydxx_rho_s, start_t, 1e-6, 1e-6, true);
 	// }
@@ -5629,12 +5691,13 @@ void CRFProcess::AllocateLocalMatrixMemory()
 	for (i = 0; i < (long)m_msh->ele_vector.size(); i++)
 	{
 		elem = m_msh->ele_vector[i];
-		if (elem->GetMark())      // Marked for use
-		{
+// CB THMBM     
+        // CB removed if condition due to conflict with deactivated subdomains
+//		if (elem->GetMark()) {     // Marked for use
 			eleMatrix = new ElementMatrix();
 			eleMatrix->AllocateMemory(elem,up_type);
 			Ele_Matrices.push_back(eleMatrix);
-		}
+//		}
 	}
 }
 
@@ -6259,6 +6322,32 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 						"Warning in CRFProcess::IncorporateBoundaryConditions - no FCT data"
 						     << "\n";
 				}
+         //................................................................
+				// copy values SB 09.2012
+				if(m_bc_node->bc_node_copy_geom.length() > 0)
+				{
+					size_t geo_node_id;
+					//std::string geo_file_name = (std::string)this->m_msh->_geo_name;
+					GEOLIB::GEOObjects * geo_obj;
+					geo_obj = this->m_msh->getGEOObjects();
+					// Get geometry node
+					const std::vector<GEOLIB::Point*>* pnt_vec(geo_obj->getPointVec(* this->m_msh->getProjectName()));
+					//const GEOLIB::PointVec* pnt_vec(geo_obj->getPointVecObj(m_bc_node->bc_node_copy_geom));
+					//const GEOLIB::Point* pnt(pnt_vec->getElementIDByName(m_bc_node->bc_node_copy_geom, msh_node_id));
+					if (!((geo_obj->getPointVecObj(* this->m_msh->getProjectName()))->getElementIDByName(m_bc_node->bc_node_copy_geom_name, geo_node_id)))
+						{ cout << " Error !" << "\n";}
+					// get node Index of geometry node - only POINT so far
+					long msh_node_id = m_msh->GetNODOnPNT((*pnt_vec)[geo_node_id]);
+					// get value from last time step
+					std::string help;
+					help = m_bc_node->pcs_pv_name;
+					if(this->pcs_type_name_vector[0] == "MASS_TRANSPORT") 
+						help = this->pcs_primary_function_name[0];
+					int ind = this->GetNodeValueIndex(help) + 1; // new time level
+					time_fac = this->GetNodeValue(msh_node_id, ind);
+					std::cout << " Copy value " << time_fac << " from " << m_bc_node->bc_node_copy_geom << " " << m_bc_node->bc_node_copy_geom_name << " to POLYLINE " <<  "\n";
+
+				} 
 				//................................................................
 				// Conditions
 				if(m_bc_node->conditional)
@@ -7910,6 +7999,8 @@ void CRFProcess::DDCAssembleGlobalMatrix()
          CalcSecondaryVariablesTNEQ();        //HS
          break;
 		case FiniteElement::LIQUID_FLOW:
+            if(aktueller_zeitschritt>0)
+              CalcSecondaryVariablesLiquidFlow();
 			break;
 		case FiniteElement::GROUNDWATER_FLOW:
 			break;
@@ -9960,6 +10051,47 @@ void CRFProcess::CalcSecondaryVariablesTNEQ()
 		}
 	}
 
+
+/*************************************************************************
+GeoSys-FEM Function:
+Task: Updating secondary variables for Multiphase flow in PS_GLOBAL
+
+Programming:
+03/2009 PCH Implementation
+**************************************************************************/
+void CRFProcess::CalcSecondaryVariablesLiquidFlow()
+{
+   long i;
+   int ndx_dens;
+   double  var[3]={0,0,0};
+   bool heattransport = false;
+
+   ndx_dens = GetNodeValueIndex("DENSITY1");
+
+   CRFProcess *m_pcs = NULL;
+   if((m_pcs = PCSGet("HEAT_TRANSPORT"))) 
+     heattransport=true;
+
+   CFluidProperties* m_mfp = NULL;
+   m_mfp = mfp_vector[0];
+
+   double dens;
+   for(i=0;i<(long)m_msh->GetNodesNumber(false);i++)
+   {
+	   // get pressure
+	   var[0] = this->GetNodeValue(i,this->GetNodeValueIndex("PRESSURE1"));
+	   // get temperature
+		  if(heattransport) 
+      var[1] = m_pcs->GetNodeValue(i,m_pcs->GetNodeValueIndex("TEMPERATURE1"));
+	   // Set salinity
+		  var[2] = 0.0;
+    dens = m_mfp->Density(var);
+    // Assigning the secondary variable
+    SetNodeValue(i,ndx_dens,dens);
+   }
+ 
+}
+
 /**************************************************************************
    FEMLib-Method:
    Task: Calculate saturation on node by averaging the patches of the
@@ -10158,6 +10290,13 @@ void CRFProcess::CalcSecondaryVariablesTNEQ()
 				idx = cplpcs->GetNodeValueIndex(var_name) + timelevel;
 			}
 			break;
+		case 1313: // Two_phase_Flow
+		     m_pcs = PCSGet("PS_GLOBAL");
+		     if(m_pcs){
+		       idx = m_pcs->GetNodeValueIndex(var_name);  // +timelevel; CB SATURATION1 in PS_GLOBAL is only for old time level
+		       cplpcs = m_pcs;
+		     }
+		     break;    
 		case 22:                  // Richards flow
 			m_pcs = PCSGet(FiniteElement::RICHARDS_FLOW);
 			if(m_pcs)
@@ -11728,230 +11867,7 @@ CRFProcess* PCSGetMass(size_t component_number)
 		}
 	}
 
-/**************************************************************************
-   Task: Postprocessing function calculates the NAPL saturation after
-      Flow, Transport and kkinetic NAPL dissolution
 
-   Programing:
-   01/2008   CB   Implementation                                          */
-/**************************************************************************/
-	void CalcNewNAPLSat(CRFProcess* m_pcs)
-	{
-		long i, j, k, l;
-		int idx0, idx1, idx2, idxC;
-		long nnodes, nNAPLcomps;
-		double conc, rho_N_new, rho_N_old, rho_N_fluid;
-		double mass, volume;
-		double satu_N_new, satu_N_old;
-
-		vector<int>pcs_napl_comps_vector;
-		vector<double>molar_weights_vector;
-		vector<double>molar_densities_vector;
-
-		string var_name;
-		int no_processes;
-
-		CRFProcess* n_pcs = NULL;
-		CFluidProperties* m_mfp = NULL;
-
-		nnodes = (long) fem_msh_vector[0]->nod_vector.size();
-
-		// make sure m_pcs is NAPL-phase
-		if(m_pcs->pcs_type_number == 0)
-			m_pcs = pcs_vector[m_pcs->pcs_number + 1];  // this is the NAPL phase
-
-		m_mfp = mfp_vector[m_pcs->pcs_type_number];
-		//m_mfp->mode = 1; // CB ??
-
-		// Get indices of node value variables for phase 2
-		idx0 = m_pcs->GetNodeValueIndex("SATURATION2"); // old timelevel
-		idx1 = m_pcs->GetNodeValueIndex("DENSITY2");
-		idx2 = m_pcs->GetNodeValueIndex("SATURATION1"); // old timelevel
-
-		i = j = k = l = 0;
-		no_processes = (int)pcs_vector.size();
-
-		for(i = 0; i < no_processes; i++)
-		{
-			n_pcs = pcs_vector[i];
-			//     if(n_pcs->_pcs_type_name.compare("MASS_TRANSPORT")==0){ // TF
-			if(n_pcs->getProcessType () == FiniteElement::MASS_TRANSPORT)
-			{
-				j = n_pcs->GetProcessComponentNumber();
-				if(cp_vec[j]->transport_phase == 3) // is in napl
-				{
-					pcs_napl_comps_vector.push_back(i); // store processes that are NAPL dissolution components
-					                                    // get the corresponding molar weight
-					molar_weights_vector.push_back(cp_vec[j]->molar_weight);
-					// get the corresponding densities
-					molar_densities_vector.push_back(cp_vec[j]->molar_density);
-					l++;
-				}
-			}
-		}
-		nNAPLcomps = l;
-
-		for(i = 0; i < nnodes; i++)
-		{
-			conc = rho_N_new = rho_N_old = rho_N_fluid = satu_N_new = satu_N_old =
-			                                                                  mass =
-			                                                                          volume
-			                                                                                  =
-			                                                                                          0;
-
-			// deteremine the old NAPL DENSITY after flow / transport step
-			for(j = 0; j < nNAPLcomps; j++)
-			{
-				l = pcs_napl_comps_vector[j];
-				idxC = pcs_vector[l]->GetNodeValueIndex(
-				        pcs_vector[l]->pcs_primary_function_name[0]);
-				// old timelevel
-				conc = pcs_vector[l]->GetNodeValue(i, idxC);
-				mass += conc * molar_weights_vector[j];
-			}
-			if(mass > 0)
-				rho_N_old = mass;  // [kg/m�³REV]
-			else
-				rho_N_old = 0;
-			// determine the new NAPL density rho_N_neu at current node
-			mass = 0;
-			for(j = 0; j < nNAPLcomps; j++)
-			{
-				l = pcs_napl_comps_vector[j];
-				idxC = pcs_vector[l]->GetNodeValueIndex(
-				        pcs_vector[l]->pcs_primary_function_name[0]);
-				// +1 new timelevel
-				conc = pcs_vector[l]->GetNodeValue(i, idxC + 1);
-				if(fabs(conc) < 1e-19)
-					conc = 0.0;
-				mass += conc * molar_weights_vector[j];
-				// this is required calculating the napl fluid density
-				volume += conc / molar_densities_vector[j];
-			}
-			if (mass > 0)
-				rho_N_new = mass;  // [kg/m�³REV]
-			else
-				rho_N_new = 0;
-
-			// get the old SATURATION2 of NAPL after flow / transport step
-			satu_N_old = m_pcs->GetNodeValue(i, idx0);
-			// calculate new NAPL Saturation: dSatu = Satu(t+dt)-Satu(t) = Satu(t)*(1-rho(t)/rho(t+dt))
-			if(satu_N_old * rho_N_new * rho_N_old > 0)
-				//fast
-				satu_N_new = satu_N_old + satu_N_old * (1 - rho_N_old / rho_N_new);
-			//satu_N_new = satu_N_old + satu_N_old * (rho_N_new / rho_N_old - 1);   //slow
-			else
-				satu_N_new = satu_N_old;
-			if (satu_N_new < 0)
-			{
-				cout << " Warning in fct CalcNewNAPLSat: NAPL-Sat: " <<
-				satu_N_new << "\n";
-				satu_N_new = MRange(0.0, satu_N_new, 1.0);
-			}
-			// set new SATURATION2
-			//if(satu_N_new > 0.00001)  satu_N_new = 1-0.95; // 0.985 CB 14.01.09 Hansen+Kueper BM
-
-			//m_pcs->SetNodeValue(i, idx0, satu_N_new);  // idx0 for timelevel 0 ??
-			m_pcs->SetNodeValue(i, idx0 + 1, satu_N_new); // idx0+1 for timelevel 1 ??
-			// set new SATURATION1
-			//m_pcs->SetNodeValue(i, idx2, 1-satu_N_new);     // idx2 for timelevel 0 ??
-			// idx2+1 for timelevel 1 ??
-			m_pcs->SetNodeValue(i, idx2 + 1, 1 - satu_N_new);
-
-			// finally determine the new napl fluid density
-			if(mass * volume > 0)
-				rho_N_fluid = mass / volume;  // [kg/m�³N] = [kg/m�³REV] / [m�³N/m�³REV]
-			else
-				rho_N_fluid = m_mfp->Density();  // use NAPL phase fluid density as defined in .mfp
-			// set new DENSITY2
-			m_pcs->SetNodeValue(i, idx1, rho_N_fluid);
-		}
-
-		pcs_napl_comps_vector.clear();
-		molar_weights_vector.clear();
-		molar_densities_vector.clear();
-
-		//m_pcs->WriteAllVariables();
-	}
-
-/**************************************************************************
-   Task: Calculates the NAPL and Water phase saturations
-      in case of NAPL dissolution
-   Programing:
-   01/2008   CB   Implementation                                          */
-/**************************************************************************/
-	double CalcNAPLDens(CRFProcess* m_pcs, int node)
-	{
-		long i, j, k, l;
-		int idxC; //WWidx1, idxC;
-		int nNAPLcomps;
-		double conc, rho_N_new, mass, volume;
-		string var_name;
-
-		vector<int>pcs_napl_comps_vector;
-		vector<double>molar_weights_vector;
-		vector<double>molar_densities_vector;
-
-		int no_processes;
-		CRFProcess* n_pcs = NULL;
-		CFluidProperties* m_mfp = NULL;
-
-		// Get indices of node value variable DENSITY2 for NAPL phase
-		if(m_pcs->pcs_type_number == 0)
-			m_pcs = pcs_vector[m_pcs->pcs_number + 1];
-		//WW idx1 = m_pcs->GetNodeValueIndex("DENSITY2");
-
-		m_mfp = mfp_vector[m_pcs->pcs_type_number];
-		//m_mfp->mode = 1; // CB ??
-
-		i = j = k = l = 0;
-		no_processes = (int)pcs_vector.size();
-
-		//collect parameters and concentrations for NAPL-components
-		for (i = 0; i < no_processes; i++)
-		{
-			n_pcs = pcs_vector[i];
-			//	  if(n_pcs->_pcs_type_name.compare("MASS_TRANSPORT")==0){
-			if (n_pcs->getProcessType () == FiniteElement::MASS_TRANSPORT)
-			{
-				j = n_pcs->GetProcessComponentNumber();
-				if (cp_vec[j]->transport_phase == 3) // is in NAPL component
-				{
-					pcs_napl_comps_vector.push_back(i); // store processes that are NAPL dissolution components
-					                                    // get the corresponding molar weight
-					molar_weights_vector.push_back(cp_vec[j]->molar_weight);
-					molar_densities_vector.push_back(
-					        cp_vec[j]->molar_density); // get the corresponding densities
-					l++;
-				}
-			}
-		}
-		nNAPLcomps = l;
-
-		// determine the NAPL density rho_N_neu at current node
-		conc = rho_N_new = mass = volume = 0;
-		for(j = 0; j < nNAPLcomps; j++)
-		{
-			l = pcs_napl_comps_vector[j];
-			idxC = pcs_vector[l]->GetNodeValueIndex(
-			        pcs_vector[l]->pcs_primary_function_name[0]);
-			conc = pcs_vector[l]->GetNodeValue(node, idxC);
-			if(fabs(conc) < 1e-19)
-				conc = 0.0;
-			mass += conc * molar_weights_vector[j]; // [kg/m³REV] = [molN/m³REV] * [kg/molN]
-			volume += conc / molar_densities_vector[j]; // [m³N/m³REV] = [molN/m³REV] / [molN/m³REV]
-		}
-		if(mass * volume > 0)
-			rho_N_new = mass / volume;  // [kg/m³N] = [kg/m³REV] / [m³N/m³REV]
-		else
-			rho_N_new = m_mfp->Density();  // use NAPL phase fluid density as defined in .mfp
-
-		pcs_napl_comps_vector.clear();
-		molar_weights_vector.clear();
-		molar_densities_vector.clear();
-
-		return rho_N_new;
-	}
 
 /**************************************************************************
    Task: Preprocessing function set flag pcs->flow_pcs_type for
@@ -12018,6 +11934,7 @@ CRFProcess* PCSGetMass(size_t component_number)
 			//m_pcs->WriteAllVariables();
 		}
 	}
+
 
 /**************************************************************************
    PCSLib-Method:
@@ -12269,7 +12186,7 @@ CRFProcess* PCSGetMass(size_t component_number)
 			// CB NAPL dissolution reqiuires update of Density based on new composition of NAPL phase
 			//CB phase 2
 			if(NAPLdiss == true && m_pcs->pcs_type_number == 1)
-				density = CalcNAPLDens(m_pcs, i);
+              density = CalcNAPLDens(i);
 			else
 				density = m_mfp->Density();
 			m_pcs->SetNodeValue(i,ndx_density_phase,density);
@@ -12441,7 +12358,7 @@ CRFProcess* PCSGetMass(size_t component_number)
 		for (long j = 0; j < number_of_nvals ; j++)
 		{
 			nod_values = new double[nn];
-			for (int i = 0; i < nn; i++)
+			for (size_t i = 0; i < nn; i++)
 				nod_values[i] = 0.0;
 			nod_val_vector.push_back(nod_values);
 		}
@@ -12946,17 +12863,24 @@ CRFProcess* PCSGetMass(size_t component_number)
 	void CreateEQS_LinearSolver()
 	{
 		size_t i;
-		int dof_DM = 1;
+        // CB_merge_0513
+		//int dof_DM = 1;
+		int dof_DM = 0;  //WW 02.2023. Pardiso
 		int DM_type = -1;         //03.08.2010. WW
 		CRFProcess* m_pcs = NULL;
 		CFEMesh* a_msh = NULL;
 		SparseTable* sp = NULL;
 		SparseTable* spH = NULL;
 		Linear_EQS* eqs = NULL;
+        Linear_EQS* eqs_dof = NULL; //WW 02.2023. Pardiso
 		Linear_EQS* eqsH = NULL;
+
+        bool need_eqs = false;      //WW 02.2023. Pardiso
+        bool need_eqs_dof = false;  //WW 02.2023. Pardiso
 		int dof = 1;
 		//
-		size_t dof_nonDM (1);
+        //size_t dof_nonDM (1);     //WW 02.2023. Pardiso
+        size_t dof_nonDM (0);    
 
 		for(i = 0; i < pcs_vector.size(); i++)
 		{
@@ -12975,16 +12899,33 @@ CRFProcess* PCSGetMass(size_t component_number)
 					dof = m_pcs->m_msh->GetMaxElementDim();
 			}
 			else          // Monolithic scheme for the process with linear elements
-			if(dof_nonDM < m_pcs->GetPrimaryVNumber())
-			{
-				dof_nonDM = m_pcs->GetPrimaryVNumber();
+            {
+              // CB_merge_0513
+              //if(dof_nonDM < m_pcs->GetPrimaryVNumber()) //WW 02.2023. Pardiso
+              //{
+              //   dof_nonDM = m_pcs->GetPrimaryVNumber();
+              //   // PCH: DOF Handling for FLUID_MOMENTUM in case that the LIS and PARDISO solvers
+              //   // are chosen.
+              //   //				if(m_pcs->_pcs_type_name.compare("FLUID_MOMENTUM")==0)
+              //   if(m_pcs->getProcessType() == FLUID_MOMENTUM)
+              //      dof_nonDM = 1;
+              //} //WW 02.2023. Pardiso
 
-				// PCH: DOF Handling for FLUID_MOMENTUM in case that the LIS and PARDISO solvers
-				// are chosen.
-				//				if(m_pcs->_pcs_type_name.compare("FLUID_MOMENTUM")==0)
-				if(m_pcs->getProcessType() == FiniteElement::FLUID_MOMENTUM)
-					dof_nonDM = 1;
-			}
+              // 02.2013. WW //WW 02.2023. Pardiso
+              // Assume that the system with linear element only have one equation with DOF >1;
+              if( m_pcs->GetPrimaryVNumber() > 1)
+              {
+                dof_nonDM =  m_pcs->GetPrimaryVNumber();
+                dof = dof_nonDM;
+                need_eqs_dof = true;
+              }
+              else
+              {
+                dof = 1;
+                need_eqs = true;
+              } //WW 02.2023. Pardiso
+            }
+
 		}
 		//Check whether the JFNK method is employed for deformation problem 04.08.2010 WW
 		CNumerics* num = NULL;
@@ -13018,27 +12959,25 @@ CRFProcess* PCSGetMass(size_t component_number)
 			//
 			eqs = NULL;
 			eqsH = NULL;
-			if(sp)
-				eqs = new Linear_EQS(*sp, dof_nonDM);
-			if(spH)
-			{
-				/// If JFNK method.  //03.08.2010. WW
-				if(dof_DM < 0)
-				{
-					long nn_H = static_cast<long>(a_msh->GetNodesNumber(true));
-					long nn = static_cast<long>(a_msh->GetNodesNumber(false));
-					if(DM_type == 4)
-						dof_DM = -nn_H * dof;
-					else if(DM_type == 41)
-						dof_DM = -nn_H * dof - nn;
-					else if(DM_type == 42)
-						dof_DM = -nn_H * dof - nn * 2;
-				}
-
-				eqsH = new Linear_EQS(*spH, dof_DM);
-			}
-			EQS_Vector.push_back(eqs);
-			EQS_Vector.push_back(eqsH);
+			// CB_merge_0513
+            eqs_dof = NULL; //WW 02.2023. Pardiso
+            if(sp)//WW 02.2023. Pardiso
+            {
+              if(need_eqs) // 02.2013. WW
+	          {
+                //eqs = new Linear_EQS(*sp, dof_nonDM);//WW 02.2023. Pardiso
+                eqs = new Linear_EQS(*sp, 1);
+	          }
+              if(need_eqs_dof)
+	          {
+                eqs_dof = new Linear_EQS(*sp, dof_nonDM);
+	          }
+            }//WW 02.2023. Pardiso
+            if(spH)
+              eqsH = new Linear_EQS(*spH, dof_DM);
+            EQS_Vector.push_back(eqs);
+            EQS_Vector.push_back(eqsH);
+            EQS_Vector.push_back(eqs_dof); //WW 02.2023. Pardiso
 #endif
 		}
 	}
@@ -14097,8 +14036,8 @@ void CRFProcess::CalGPVelocitiesfromECLIPSE(string path,
 		//f ---  1 V-L-S, 2 V-L, 3 CO2-L-S, 4 CO2-L
 
 		double tCO2,tH2O,tNaCl;
-		double wH2O,mNaCl,soluCO2,xCO2,yH2O,AW = 1.0; // ,mCO2; unused
-		double a,b,tvCO2,tvH2O,tH2Or,er = 1.0e-6,err = 1.0e-6;
+		double wH2O,mNaCl=0,soluCO2=0,xCO2,yH2O,AW = 1.0; // ,mCO2; unused
+		double a,b,tvCO2=0,tvH2O=0,tH2Or=0,er = 1.0e-6,err = 1.0e-6;
 		int i,iter_max = 100;
 		double Molweight_CO2, Molweight_H2O,Molweight_NaCl;
 
@@ -14109,7 +14048,7 @@ void CRFProcess::CalGPVelocitiesfromECLIPSE(string path,
 		tCO2 = vapor.CO2 + liquid.CO2 + solid.CO2;
 		tH2O = vapor.H2O + liquid.H2O + solid.H2O;
 		tNaCl = vapor.NaCl + liquid.NaCl + solid.NaCl;
-		yH2O = VLE_fraction_H2O(T,P,AW); //water fraction in vapor
+		yH2O = VLE::fraction_H2O(T,P,AW); //water fraction in vapor
 		//	//cout << " yH2O " << yH2O << " xCO2 " << xCO2 << "\n";
 
 		//cout << " flag " << f << "\n";
@@ -14131,7 +14070,7 @@ void CRFProcess::CalGPVelocitiesfromECLIPSE(string path,
 						mNaCl = 4.5;
 				//NaCl solubility calc
 
-				soluCO2 = VLE_solubility_CO2(T,P,mNaCl);
+				soluCO2 = VLE::solubility_CO2(T,P,mNaCl);
 				//???????????????????????????? (soluCO2 <= tCO2?)
 				xCO2 = soluCO2 / (soluCO2 + 1000 / Molweight_H2O);
 				tH2Or = tvH2O + (tCO2 - tvCO2) * (1 - xCO2) / xCO2;
@@ -14183,7 +14122,7 @@ void CRFProcess::CalGPVelocitiesfromECLIPSE(string path,
 
 				liquid.temperature = T;
 				liquid.pressure = P;
-				liquid.density = Density_CO2brine(T,P,mNaCl,liquid.CO2 / wH2O);
+				liquid.density = density::CO2brine(T,P,mNaCl,liquid.CO2 / wH2O);
 				liquid.viscosity = -1.0;
 				liquid.mass = liquid.H2O * Molweight_H2O + liquid.CO2 *
 				              Molweight_CO2 + liquid.NaCl * Molweight_NaCl;
@@ -14210,7 +14149,7 @@ void CRFProcess::CalGPVelocitiesfromECLIPSE(string path,
 				vapor.temperature = T;
 				vapor.pressure = P;
 
-				vapor.density = VLE_density_CO2(T,P); //to use mixture fluid EoS
+				vapor.density = VLE::density_CO2(T,P); //to use mixture fluid EoS
 				vapor.viscosity = -1.0;
 				vapor.mass = vapor.CO2 * Molweight_CO2 + vapor.H2O * Molweight_H2O;
 				vapor.volume = vapor.mass / vapor.density;
@@ -14229,15 +14168,15 @@ void CRFProcess::CalGPVelocitiesfromECLIPSE(string path,
 				liquid.NaCl = mNaCl * wH2O;
 
 				vapor.temperature = T;
-				vapor.density = VLE_density_CO2(T,P); //to use mixture fluid EoS
+				vapor.density = VLE::density_CO2(T,P); //to use mixture fluid EoS
 				vapor.viscosity = -1;
 				vapor.mass = vapor.CO2 * Molweight_CO2 + vapor.H2O * Molweight_H2O;
-				vapor.pressure = VLE_pressure_CO2(T,vapor.density);
+				vapor.pressure = VLE::pressure_CO2(T,vapor.density);
 				vapor.volume = vapor.mass / vapor.density;
 
 				liquid.temperature = T;
 				liquid.pressure = P;
-				liquid.density = Density_CO2brine(T,P,mNaCl,soluCO2);
+				liquid.density = density::CO2brine(T,P,mNaCl,soluCO2);
 				liquid.viscosity = -1.0;
 				liquid.mass = liquid.CO2 * Molweight_CO2 + liquid.H2O *
 				              Molweight_H2O + liquid.NaCl * Molweight_NaCl;
@@ -14253,7 +14192,7 @@ void CRFProcess::CalGPVelocitiesfromECLIPSE(string path,
 				if(mNaCl > 4.5)
 					mNaCl = 4.5;
 			//NaCl solubility calc
-			soluCO2 = VLE_solubility_CO2(T,P,mNaCl);
+			soluCO2 = VLE::solubility_CO2(T,P,mNaCl);
 
 			// single liquid phase
 			if(tCO2 < soluCO2 * wH2O)
@@ -14276,7 +14215,7 @@ void CRFProcess::CalGPVelocitiesfromECLIPSE(string path,
 
 				liquid.temperature = T;
 				liquid.pressure = P;
-				liquid.density = Density_CO2brine(T,P,mNaCl,liquid.CO2 / wH2O);
+				liquid.density = density::CO2brine(T,P,mNaCl,liquid.CO2 / wH2O);
 				liquid.viscosity = -1.0;
 				liquid.mass = liquid.H2O * Molweight_H2O + liquid.CO2 *
 				              Molweight_CO2 + liquid.NaCl * Molweight_NaCl;
@@ -14296,15 +14235,15 @@ void CRFProcess::CalGPVelocitiesfromECLIPSE(string path,
 				liquid.NaCl = mNaCl * wH2O;
 
 				vapor.temperature = T;
-				vapor.density = VLE_density_CO2(T,P); //to use mixture fluid EoS
+				vapor.density = VLE::density_CO2(T,P); //to use mixture fluid EoS
 				vapor.viscosity = -1;
 				vapor.mass = vapor.CO2 * Molweight_CO2 + vapor.H2O * Molweight_H2O;
-				vapor.pressure = VLE_pressure_CO2(T,vapor.density);
+				vapor.pressure = VLE::pressure_CO2(T,vapor.density);
 				vapor.volume = vapor.mass / vapor.density;
 
 				liquid.temperature = T;
 				liquid.pressure = P;
-				liquid.density = Density_CO2brine(T,P,mNaCl,soluCO2);
+				liquid.density = density::CO2brine(T,P,mNaCl,soluCO2);
 				liquid.viscosity = -1.0;
 				liquid.mass = liquid.CO2 * Molweight_CO2 + liquid.H2O *
 				              Molweight_H2O + liquid.NaCl * Molweight_NaCl;
@@ -14383,7 +14322,7 @@ void CRFProcess::CalGPVelocitiesfromECLIPSE(string path,
 		MeshLib::CNode* m_node = NULL;
 		double saturation_gas, saturation_liquid;
 		double Molweight_CO2, Molweight_H2O, Molweight_NaCl;
-		double Density_gas, Density_liquid, Density_pureCO2, Viscosity_liquid,
+		double Density_gas=0, Density_liquid=0, Density_pureCO2, Viscosity_liquid,
 		       Viscosity_gas;
 		// ,c_H2OinLiquid; unused
 		double c_CO2inLiquid, c_NaClinLiquid, c_H2OinGas;
@@ -14481,7 +14420,7 @@ void CRFProcess::CalGPVelocitiesfromECLIPSE(string path,
 				if (pcs_MassTransport->nod_val_name_vector[0] == "H2O")
 					MassTransportID[0] = j;
 				if ((pcs_MassTransport->nod_val_name_vector[0] == "C(4)") ||
-				    (pcs_MassTransport->nod_val_name_vector[0] == "CO2_w"))
+				    (pcs_MassTransport->nod_val_name_vector[0] == "CO2"))  // "CO2_w" CB
 					MassTransportID[1] = j;
 				if (pcs_MassTransport->nod_val_name_vector[0] == "NaCl")
 					MassTransportID[2] = j;
@@ -14535,7 +14474,7 @@ void CRFProcess::CalGPVelocitiesfromECLIPSE(string path,
 					                    wH2O;
 					// new estimate of density of brine with estimated concentration of CO2 and NaCl in mol per kg pure water
 					//function provides g/cm³ -> Density_liquid [kg/m³]
-					Density_liquid = 1000 * Density_CO2brine(temperature,
+					Density_liquid = 1000 * density::CO2brine(temperature,
 					                                         pressure,
 					                                         b_NaClinPureWater,
 					                                         b_CO2inPureWater);
@@ -14604,7 +14543,7 @@ void CRFProcess::CalGPVelocitiesfromECLIPSE(string path,
 					                 // Molality of H2O in pure CO2 (mol/m³ * m³/kg) = mol/kg)
 					//WW b_H2OinPureCO2 = c_H2OinGas / temp_density * 1 / wCO2;
 					// new estimate of density of brine with estimated concentration of CO2 and NaCl in mol per kg pure water
-					Density_pureCO2 = 1000 * VLE_density_CO2(temperature,
+					Density_pureCO2 = 1000 * VLE::density_CO2(temperature,
 					                                         pressure);
 					Density_gas = Density_pureCO2;
 
@@ -14804,7 +14743,7 @@ void CRFProcess::CalGPVelocitiesfromECLIPSE(string path,
 				if (pcs_MassTransport->nod_val_name_vector[0] == "H2O")
 					MassTransportID[0] = j;
 				if ((pcs_MassTransport->nod_val_name_vector[0] == "C(4)") ||
-				    (pcs_MassTransport->nod_val_name_vector[0] == "CO2_w"))
+				    (pcs_MassTransport->nod_val_name_vector[0] == "CO2"))  // "CO2_w" CB
 					MassTransportID[1] = j;
 				if (pcs_MassTransport->nod_val_name_vector[0] == "NaCl")
 					MassTransportID[2] = j;
@@ -15141,3 +15080,149 @@ void CRFProcess::CalGPVelocitiesfromECLIPSE(string path,
 			pcs_vector[indexProcess]->SetNodeValue(i, variable_index, c_CO2inLiquid);
 		}
 	}
+//-------------------END------------------
+
+
+
+
+// CB _ctx_
+
+/***************************************************************************
+	Calculate electric field from charges of ions present
+	No external field included jet
+	04/2010     CB    Implementation
+****************************************************************************/
+
+// CB _ctx_ CB_merge_0513 ??
+
+/*
+void Calc_ctx_Contribution(void){
+
+cout << "      Calc_ctx_Contribution()" << "\n";
+
+CRFProcess *m_pcs = NULL, *m_pcs2=NULL;
+long nnodes, nelements, i, gp, k, n_gauss=0;
+Mesh_Group::CElem *elem = NULL;
+CFiniteElementStd* m_fem = NULL, *m_fem2=NULL;
+
+
+double sum_C, sum_gradC[3], sum_vC[3];
+double vel[3];
+int gp_r=0, gp_s=0, gp_t=0;
+double coef = 0.0, fkt=0.0;
+int i_idx;
+double Conc, valence, diff_coeff, gradConc[3], S_gradConc[3];
+double *node_concs, conc, conc_help;
+node_concs = new double [20]; 
+int ele_dim, i_dim;
+
+string _ctx_SpeciesName = "Substrate";
+string BacteriaName = "Bacteria";
+double X_s;
+
+ElementValue* gp_ele = NULL; // Get gauss point values
+
+//nnodes = (long) fem_msh_vector[0]->nod_vector.size();
+nelements = (long) fem_msh_vector[0]->ele_vector.size();
+// get number of gauss points
+
+
+// get the bacterium process X
+for(k=0;k<cp_vec.size();k++){
+  if(cp_vec[k]->compname.compare(BacteriaName)==0)
+    break;
+}
+m_pcs = PCSGet("MASS_TRANSPORT", cp_vec[k]->compname);
+m_fem = m_pcs->GetAssember();
+n_gauss = m_fem->GetNumGaussPoints();
+
+
+
+X_s = cp_vec[k]->_ctx_Coefficient;
+
+// get the substrate process x_s*grad(C)
+for(k=0;k<cp_vec.size();k++){
+  if(cp_vec[k]->compname.compare(_ctx_SpeciesName)==0)
+    break;
+}
+m_pcs2 = PCSGet("MASS_TRANSPORT", _ctx_SpeciesName);
+
+// element loop
+for(i = 0; i < nelements; i++) { 
+  // get each element
+  //if(i<5) cout << "\n" << " ele: " << i << "\n";
+  elem = m_pcs->m_msh->ele_vector[i];
+  ele_dim = elem->GetDimension();
+  nnodes = elem->nodes_index.Size();
+
+  if (elem->GetMark()){
+	// for each element calculate grad(Substrate) 
+	// get number of gauss points for this element
+	m_fem = m_pcs->GetAssember();
+	m_fem->ConfigElement(elem);
+	n_gauss = m_fem->GetNumGaussPoints();
+	gp_ele = ele_gp_value[i];
+
+	// gauss point loop
+    for(gp=0;gp<n_gauss;gp++){
+	  // if(i<5) cout << "\n"<< "gauss point " <<  gp << "\n";
+	  sum_C = 0.0;
+	  for(i_dim=0;i_dim < ele_dim;i_dim++){ 
+		  sum_gradC[i_dim] = 0.0;
+	  }
+
+	  //gp_ele->getIPvalue_vec(gp,vel);
+	  //for(i_dim=0;i_dim < ele_dim;i_dim++) cout << " i_dim " << i_dim << ", vel:   " << vel[i_dim] << "\n";
+  	
+	  i_idx = 1; // as this is in the end of transport loop,  take c_new
+
+	  fkt = m_fem->GetGaussData(gp, gp_r, gp_s, gp_t);
+	  m_fem->ComputeShapefct(1);
+	  m_fem->ComputeGradShapefct(1);
+
+        // Get C of substrate at Meshnodes of this ele
+        for(int l=0; l<nnodes; l++){
+		  conc_help = m_pcs2->GetNodeValue(elem->GetNodeIndex(l), i_idx); 
+		  node_concs[l] = fabs(conc_help);
+		  //if(i<5) cout << " l, node_conc[l]:  " << l << "   " << node_concs[l] << "\n";
+	  }
+
+      // interpolate conc to GP
+      //Conc = m_fem->interpolate(node_concs);
+	  //if(i< 5) cout << " Conc[gp]: " << Conc << "     " << "\n";
+
+      // calc grad_C
+      for(i_dim=0; i_dim < ele_dim; i_dim++) 
+        gradConc[i_dim] = 0.0;
+	  for(i_dim=0; i_dim < ele_dim; i_dim++){
+        for(int l=0; l<nnodes; l++){         
+	    	gradConc[i_dim] += node_concs[l]* m_fem->Getdshapefct(i_dim*nnodes+l);
+			//if(i< 5) cout << "i_dim, l, gradConc, node_concs, shapefunction : " << i_dim << ",  " << l ;
+			//if(i< 5) cout << " ,  " << gradConc[i_dim] << ", " << node_concs[l] << " ,  " << m_fem->Getdshapefct(i_dim*m_fem->Getnnodes()+l) << "\n";
+		}
+	  }
+        
+
+      // save result for element in gauss point
+      for(i_dim=0; i_dim < ele_dim; i_dim++){
+	    S_gradConc[i_dim] = 0.0;
+	    //if(fabs(sum_C) > 1.0e-15)
+		S_gradConc[i_dim] = -1.0 * X_s *  gradConc[i_dim] ;
+	    //if(i<5) cout << el_field[i_dim] << "  " << sum_gradC[i_dim] << "  " << sum_vC[i_dim] << "  "  << sum_C << "\n";
+	   
+        m_fem->Set_ctx_(i,S_gradConc[i_dim], gp, i_dim);
+       
+        //gp_ele->_ctx_Gauss(i_dim,gp) = el_field[i_dim];
+	    //if(i<500) cout  << "   (" << gp << ", " << el_field[i_dim] << ") " << "\n";
+	    //cout << " Test: GetElectricField2: " << m_fem->GetElField(i,gp,i_dim) << "\n";
+      }
+
+    } // end gauss point loop
+  }
+} // end element loop
+//cout << "\n" << "\n";
+delete node_concs;
+
+}
+
+*/

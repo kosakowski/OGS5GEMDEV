@@ -1183,20 +1183,29 @@ void COutput::WriteELEValuesTECHeader(fstream &tec_file)
 void COutput::WriteELEValuesTECData(fstream &tec_file)
 {
 	CRFProcess* m_pcs = NULL;
+   CRFProcess* m_pcs_2 = NULL;
 	if (!_ele_value_vector.empty())
 		m_pcs = GetPCS_ELE(_ele_value_vector[0]);
 	else
 		return;
 
+   vector <bool> skip; // CB
 	size_t no_ele_values = _ele_value_vector.size();
 	bool out_element_vel = false;
 	for (size_t j = 0; j < no_ele_values; j++) //WW
-
-		if (_ele_value_vector[j].find("VELOCITY") != string::npos)
-		{
-			out_element_vel = true;
-			break;
-		}
+   {
+      if (_ele_value_vector[j].find("VELOCITY") != string::npos)
+      {
+         out_element_vel = true;
+         //break;  // CB: allow output of velocity AND other ele values
+         skip.push_back(false);
+      }
+      else
+      {
+        m_pcs_2 = GetPCS_ELE(_ele_value_vector[j]);
+        skip.push_back(true);
+      }
+   }
 	vector<int> ele_value_index_vector(no_ele_values);
 	GetELEValuesIndexVector(ele_value_index_vector);
 
@@ -1234,11 +1243,15 @@ void COutput::WriteELEValuesTECData(fstream &tec_file)
 				tec_file << gp_ele->Velocity(2, 0) << " ";
 			}
 		}
-		else
-			for (size_t j = 0; j < ele_value_index_vector.size(); j++)
-				tec_file
-				<< m_pcs->GetElementValue(i, ele_value_index_vector[j])
-				<< " ";
+      for (size_t j = 0; j < ele_value_index_vector.size(); j++)
+      {
+        if(skip[j]) // CB: allow output of velocity AND other ele values
+        {
+          tec_file
+           << m_pcs_2->GetElementValue(i, ele_value_index_vector[j])
+           << " ";
+        }           
+      }
 		/*
 		   int j;
 		   int eidx;
@@ -1254,6 +1267,7 @@ void COutput::WriteELEValuesTECData(fstream &tec_file)
 	}
 
 	ele_value_index_vector.clear();
+    skip.clear();
 }
 
 /**************************************************************************
@@ -1971,9 +1985,13 @@ void COutput::NODWriteSFCDataTEC(int number)
 	string number_string = number_char;
 	//	string tec_file_name = pcs_type_name + "_sfc_" + geo_name + "_t"
 	//				+ number_string + TEC_FILE_EXTENSION;
-	std::string tec_file_name = convertProcessTypeToString (getProcessType()) + "_sfc_" +
-	                            geo_name + "_t"
-	                            + number_string + TEC_FILE_EXTENSION;
+   //std::string tec_file_name = convertProcessTypeToString (getProcessType()) + "_sfc_" + geo_name + "_t"
+   //   + number_string + TEC_FILE_EXTENSION;
+   // AB SB Use Model name for output file name
+   // std::string tec_file_name = convertProcessTypeToString (getProcessType()) 
+   std::string tec_file_name = file_base_name 
+		                        + "_sfc_" + geo_name + "_t"
+	                            + number_string + TEC_FILE_EXTENSION;   
 	if (!_new_file_opened)
 		remove(tec_file_name.c_str());  //WW
 	fstream tec_file(tec_file_name.data(), ios::app | ios::out);
@@ -2008,14 +2026,16 @@ void COutput::NODWriteSFCDataTEC(int number)
 	if (m_sfc)
 	{
 		m_msh->GetNODOnSFC(m_sfc, nodes_vector);
-		for (size_t i = 0; i < m_msh->nod_vector.size(); i++)
+      //for (size_t i = 0; i < m_msh->nod_vector.size(); i++)
+	  	for (size_t i = 0; i < nodes_vector.size(); i++) // AB SB
 		{
-			double const* const pnt_i (m_msh->nod_vector[i]->getData());
+			double const* const pnt_i (m_msh->nod_vector[nodes_vector[i]]->getData());
 			tec_file << pnt_i[0] << " ";
 			tec_file << pnt_i[1] << " ";
 			tec_file << pnt_i[2] << " ";
 			for (size_t k = 0; k < _nod_value_vector.size(); k++)
 			{
+                m_pcs = PCSGet(_nod_value_vector[k], true); // AB SB
 				int nidx = m_pcs->GetNodeValueIndex(_nod_value_vector[k]) + 1;
 				tec_file << m_pcs->GetNodeValue(nodes_vector[i], nidx) << " ";
 			}
@@ -2293,9 +2313,15 @@ void COutput::GetELEValuesIndexVector(vector<int>&ele_value_index_vector)
 {
 	if (_ele_value_vector[0].size() == 0)
 		return;
-	CRFProcess* m_pcs(GetPCS_ELE(_ele_value_vector[0]));
-	for (size_t i = 0; i < _ele_value_vector.size(); i++)
-		ele_value_index_vector[i] = m_pcs->GetElementValueIndex(_ele_value_vector[i]);
+   CRFProcess * m_pcs = NULL;
+
+   // CB THMBM
+   //m_pcs = GetPCS_ELE(_ele_value_vector[0]);   // CB this is buggy: not all ele vals are defined with the same (or any) process
+   for (size_t i = 0; i < _ele_value_vector.size(); i++)
+   {
+     m_pcs = GetPCS_ELE(_ele_value_vector[i]);   // CB 
+     ele_value_index_vector[i] = m_pcs->GetElementValueIndex(_ele_value_vector[i]);
+   }
 }
 
 /**************************************************************************

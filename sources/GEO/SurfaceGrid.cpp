@@ -18,7 +18,7 @@ SurfaceGrid::SurfaceGrid(Surface const*const sfc) :
 	for (size_t k(0); k<3; k++) {
 		// make the bounding box a little bit bigger,
 		// such that the node with maximal coordinates fits into the grid
-		_max_pnt[k] *= (1.0 + 1e-6);
+		_max_pnt[k] += std::abs(_max_pnt[k]) * 1e-6;
 		if (fabs(_max_pnt[k]) < std::numeric_limits<double>::epsilon()) {
 			_max_pnt[k] = (_max_pnt[k] - _min_pnt[k]) * (1.0 + 1e-6);
 		}

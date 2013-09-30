@@ -1,0 +1,1735 @@
+SOLUTION 1 #New Version 
+#GRID 1
+units mol/kgw 
+temp 25.000000 
+C(4)       1.000000000000e-10     # comp 
+Ca       1.000000000000e-10     # comp 
+Mg       1.000000000000e-03     # comp 
+Cl       2.000000000000e-03     # comp 
+pH       6.935779076244e+00 charge        # comp 
+pe       -6.545938224762e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   1
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+
+PRINT
+ -reset true
+ -selected_output true
+#ende
+
+SELECTED_OUTPUT
+-file phout_sel.dat
+-high_precision
+-reset false
+#ende
+
+USER_PUNCH
+-head  C(4) Ca Mg Cl pH  H+  pe  Calcite CO3-2
+ 10 PUNCH  TOT("C(4)"), TOT("Ca"), TOT("Mg"), TOT("Cl"),
+ 20 PUNCH  -LA("H+"),  MOL("H+"),   -LA("e-")
+ 40 PUNCH  EQUI("Calcite"),
+ 90 PUNCH MOL("CO3-2")
+END
+
+SOLUTION 2 #New Version 
+#GRID 2
+units mol/kgw 
+temp 25.000000 
+C(4)       7.154617264512e-09     # comp 
+Ca       4.466986043221e-09     # comp 
+Mg       9.999987419393e-04     # comp 
+Cl       1.999991911190e-03     # comp 
+pH       6.944676000866e+00 charge        # comp 
+pe       -3.324698392249e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   2
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 3 #New Version 
+#GRID 3
+units mol/kgw 
+temp 25.000000 
+C(4)       2.091201909608e-08     # comp 
+Ca       1.283824382072e-08     # comp 
+Mg       9.999965018856e-04     # comp 
+Cl       1.999976657416e-03     # comp 
+pH       6.972915293251e+00 charge        # comp 
+pe       1.107888710775e+01       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   3
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 4 #New Version 
+#GRID 4
+units mol/kgw 
+temp 25.000000 
+C(4)       4.578084749097e-08     # comp 
+Ca       2.789237018919e-08     # comp 
+Mg       9.999929580211e-04     # comp 
+Cl       1.999949937595e-03     # comp 
+pH       7.021529744692e+00 charge        # comp 
+pe       1.114442675803e+01       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   4
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 5 #New Version 
+#GRID 5
+units mol/kgw 
+temp 25.000000 
+C(4)       8.897084312060e-08     # comp 
+Ca       5.386293609544e-08     # comp 
+Mg       9.999879236605e-04     # comp 
+Cl       1.999905425486e-03     # comp 
+pH       7.098563756956e+00 charge        # comp 
+pe       -3.500510974054e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   5
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 6 #New Version 
+#GRID 6
+units mol/kgw 
+temp 25.000000 
+C(4)       1.619086246923e-07     # comp 
+Ca       9.737418747443e-08     # comp 
+Mg       9.999816467907e-04     # comp 
+Cl       1.999834012476e-03     # comp 
+pH       7.210235615751e+00 charge        # comp 
+pe       -3.628773718095e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   6
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 7 #New Version 
+#GRID 7
+units mol/kgw 
+temp 25.000000 
+C(4)       2.825708489123e-07     # comp 
+Ca       1.687100338890e-07     # comp 
+Mg       9.999753901444e-04     # comp 
+Cl       1.999722839326e-03     # comp 
+pH       7.357271072927e+00 charge        # comp 
+pe       -3.793108217973e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   7
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 8 #New Version 
+#GRID 8
+units mol/kgw 
+temp 25.000000 
+C(4)       4.790580547223e-07     # comp 
+Ca       2.837318366646e-07     # comp 
+Mg       9.999724813847e-04     # comp 
+Cl       1.999554083734e-03     # comp 
+pH       7.532969232341e+00 charge        # comp 
+pe       -3.980889256146e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   8
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 9 #New Version 
+#GRID 9
+units mol/kgw 
+temp 25.000000 
+C(4)       7.950335885199e-07     # comp 
+Ca       4.667616036965e-07     # comp 
+Mg       9.999801257730e-04     # comp 
+Cl       1.999303474447e-03     # comp 
+pH       7.725847462158e+00 charge        # comp 
+pe       -4.179074133672e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   9
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 10 #New Version 
+#GRID 10
+units mol/kgw 
+temp 25.000000 
+C(4)       1.298080621002e-06     # comp 
+Ca       7.549619899917e-07     # comp 
+Mg       1.000012492829e-03     # comp 
+Cl       1.998938510705e-03     # comp 
+pH       7.925526966696e+00 charge        # comp 
+pe       -4.379742055234e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   10
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 11 #New Version 
+#GRID 11
+units mol/kgw 
+temp 25.000000 
+C(4)       2.092971600772e-06     # comp 
+Ca       1.205214809622e-06     # comp 
+Mg       1.000096066400e-03     # comp 
+Cl       1.998416378816e-03     # comp 
+pH       8.125810547133e+00 charge        # comp 
+pe       -3.250541973591e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   11
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 12 #New Version 
+#GRID 12
+units mol/kgw 
+temp 25.000000 
+C(4)       3.342873605011e-06     # comp 
+Ca       1.905011648623e-06     # comp 
+Mg       1.000278770843e-03     # comp 
+Cl       1.997681576353e-03     # comp 
+pH       8.323885741778e+00 charge        # comp 
+pe       -4.769993909666e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   12
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 13 #New Version 
+#GRID 13
+units mol/kgw 
+temp 25.000000 
+C(4)       5.300180005636e-06     # comp 
+Ca       2.988204453193e-06     # comp 
+Mg       1.000643735771e-03     # comp 
+Cl       1.996663279297e-03     # comp 
+pH       8.518552176302e+00 charge        # comp 
+pe       -4.755281794842e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   13
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 14 #New Version 
+#GRID 14
+units mol/kgw 
+temp 25.000000 
+C(4)       8.343282558574e-06     # comp 
+Ca       4.653771924092e-06     # comp 
+Mg       1.001325889409e-03     # comp 
+Cl       1.995272518144e-03     # comp 
+pH       8.708767256836e+00 charge        # comp 
+pe       -4.761676863657e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   14
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 15 #New Version 
+#GRID 15
+units mol/kgw 
+temp 25.000000 
+C(4)       1.301880234095e-05     # comp 
+Ca       7.187358587395e-06     # comp 
+Mg       1.002531194906e-03     # comp 
+Cl       1.993399264904e-03     # comp 
+pH       8.892888611055e+00 charge        # comp 
+pe       -5.270219893595e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   15
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 16 #New Version 
+#GRID 16
+units mol/kgw 
+temp 25.000000 
+C(4)       2.014732258622e-05     # comp 
+Ca       1.101459981775e-05     # comp 
+Mg       1.004587626447e-03     # comp 
+Cl       1.990909572392e-03     # comp 
+pH       9.069318477882e+00 charge        # comp 
+pe       -5.260759255719e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   16
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 17 #New Version 
+#GRID 17
+units mol/kgw 
+temp 25.000000 
+C(4)       3.124650127467e-05     # comp 
+Ca       1.691316396172e-05     # comp 
+Mg       1.008154927238e-03     # comp 
+Cl       1.987642947770e-03     # comp 
+pH       9.238992544360e+00 charge        # comp 
+pe       -4.931487856313e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   17
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 18 #New Version 
+#GRID 18
+units mol/kgw 
+temp 25.000000 
+C(4)       4.994447545904e-05     # comp 
+Ca       2.671995256407e-05     # comp 
+Mg       1.014929727862e-03     # comp 
+Cl       1.983410180769e-03     # comp 
+pH       9.406210736581e+00 charge        # comp 
+pe       -5.320811729595e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   18
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 19 #New Version 
+#GRID 19
+units mol/kgw 
+temp 25.000000 
+C(4)       8.087548493762e-05     # comp 
+Ca       4.277940527980e-05     # comp 
+Mg       1.027092132307e-03     # comp 
+Cl       1.977991879105e-03     # comp 
+pH       9.554674461187e+00 charge        # comp 
+pe       -5.459599135442e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   19
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 20 #New Version 
+#GRID 20
+units mol/kgw 
+temp 25.000000 
+C(4)       9.353601919035e-05     # comp 
+Ca       4.987204173265e-05     # comp 
+Mg       1.029233081497e-03     # comp 
+Cl       1.971137984944e-03     # comp 
+pH       9.647286364530e+00 charge        # comp 
+pe       -5.235249124903e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   20
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 21 #New Version 
+#GRID 21
+units mol/kgw 
+temp 25.000000 
+C(4)       9.861711427290e-05     # comp 
+Ca       5.338103061646e-05     # comp 
+Mg       1.026520469597e-03     # comp 
+Cl       1.962568551907e-03     # comp 
+pH       9.674760066516e+00 charge        # comp 
+pe       -4.921457288896e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   21
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 22 #New Version 
+#GRID 22
+units mol/kgw 
+temp 25.000000 
+C(4)       1.004270717403e-04     # comp 
+Ca       5.550389850047e-05     # comp 
+Mg       1.020911305445e-03     # comp 
+Cl       1.951976047706e-03     # comp 
+pH       9.684495414364e+00 charge        # comp 
+pe       -5.047463543821e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   22
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 23 #New Version 
+#GRID 23
+units mol/kgw 
+temp 25.000000 
+C(4)       1.007819788735e-04     # comp 
+Ca       5.719804479945e-05     # comp 
+Mg       1.013098745404e-03     # comp 
+Cl       1.939029409347e-03     # comp 
+pH       9.687663115196e+00 charge        # comp 
+pe       -4.795082525315e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   23
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 24 #New Version 
+#GRID 24
+units mol/kgw 
+temp 25.000000 
+C(4)       1.004456351648e-04     # comp 
+Ca       5.890084453760e-05     # comp 
+Mg       1.003234902473e-03     # comp 
+Cl       1.923380013899e-03     # comp 
+pH       9.688067124217e+00 charge        # comp 
+pe       -5.011867928374e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   24
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 25 #New Version 
+#GRID 25
+units mol/kgw 
+temp 25.000000 
+C(4)       9.973684697440e-05     # comp 
+Ca       6.083330334744e-05     # comp 
+Mg       9.912384656319e-04     # comp 
+Cl       1.904669637876e-03     # comp 
+pH       9.687184012587e+00 charge        # comp 
+pe       -5.213295025841e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   25
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 26 #New Version 
+#GRID 26
+units mol/kgw 
+temp 25.000000 
+C(4)       9.878724341574e-05     # comp 
+Ca       6.312883109226e-05     # comp 
+Mg       9.769286958169e-04     # comp 
+Cl       1.882540364669e-03     # comp 
+pH       9.685615021803e+00 charge        # comp 
+pe       -5.243558007247e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   26
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 27 #New Version 
+#GRID 27
+units mol/kgw 
+temp 25.000000 
+C(4)       9.765196874258e-05     # comp 
+Ca       6.588830996132e-05     # comp 
+Mg       9.600868915333e-04     # comp 
+Cl       1.856646267178e-03     # comp 
+pH       9.683614047848e+00 charge        # comp 
+pe       8.550690499774e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   27
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 28 #New Version 
+#GRID 28
+units mol/kgw 
+temp 25.000000 
+C(4)       9.635710506678e-05     # comp 
+Ca       6.920339126072e-05     # comp 
+Mg       9.404870856850e-04     # comp 
+Cl       1.826666549622e-03     # comp 
+pH       9.681299687226e+00 charge        # comp 
+pe       -5.119192496209e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   28
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 29 #New Version 
+#GRID 29
+units mol/kgw 
+temp 25.000000 
+C(4)       9.492067528573e-05     # comp 
+Ca       7.316646250784e-05     # comp 
+Mg       9.179141518448e-04     # comp 
+Cl       1.792319688413e-03     # comp 
+pH       9.678746053178e+00 charge        # comp 
+pe       -4.927568247651e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   29
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 30 #New Version 
+#GRID 30
+units mol/kgw 
+temp 25.000000 
+C(4)       9.336159203387e-05     # comp 
+Ca       7.787450218246e-05     # comp 
+Mg       8.921761718428e-04     # comp 
+Cl       1.753377978929e-03     # comp 
+pH       9.676022589134e+00 charge        # comp 
+pe       -5.463612813102e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   30
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 31 #New Version 
+#GRID 31
+units mol/kgw 
+temp 25.000000 
+C(4)       9.170353604857e-05     # comp 
+Ca       8.343035831654e-05     # comp 
+Mg       8.631141605665e-04     # comp 
+Cl       1.709681785562e-03     # comp 
+pH       9.673212259473e+00 charge        # comp 
+pe       -5.345741328639e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   31
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 32 #New Version 
+#GRID 32
+units mol/kgw 
+temp 25.000000 
+C(4)       8.997597637298e-05     # comp 
+Ca       8.994254396008e-05     # comp 
+Mg       8.306098792493e-04     # comp 
+Cl       1.661152718815e-03     # comp 
+pH       9.670419228153e+00 charge        # comp 
+pe       -5.367149226389e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   32
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 33 #New Version 
+#GRID 33
+units mol/kgw 
+temp 25.000000 
+C(4)       8.821428744500e-05     # comp 
+Ca       9.752455418093e-05     # comp 
+Mg       7.945922859654e-04     # comp 
+Cl       1.607804936118e-03     # comp 
+pH       9.667772707785e+00 charge        # comp 
+pe       -5.513423681908e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   33
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 34 #New Version 
+#GRID 34
+units mol/kgw 
+temp 25.000000 
+C(4)       8.645912702466e-05     # comp 
+Ca       1.062943946995e-04     # comp 
+Mg       7.550417090056e-04     # comp 
+Cl       1.549753789984e-03     # comp 
+pH       9.665429144316e+00 charge        # comp 
+pe       -5.472835781637e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   34
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 35 #New Version 
+#GRID 35
+units mol/kgw 
+temp 25.000000 
+C(4)       8.475647227459e-05     # comp 
+Ca       1.163750688795e-04     # comp 
+Mg       7.119920478871e-04     # comp 
+Cl       1.487221131855e-03     # comp 
+pH       9.663575733793e+00 charge        # comp 
+pe       -5.477344390167e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   35
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 36 #New Version 
+#GRID 36
+units mol/kgw 
+temp 25.000000 
+C(4)       8.316138218561e-05     # comp 
+Ca       1.278943993371e-04     # comp 
+Mg       6.655354186368e-04     # comp 
+Cl       1.420536721030e-03     # comp 
+pH       9.662451942607e+00 charge        # comp 
+pe       -5.418947610960e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   36
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 37 #New Version 
+#GRID 37
+units mol/kgw 
+temp 25.000000 
+C(4)       8.172816032646e-05     # comp 
+Ca       1.409567218300e-04     # comp 
+Mg       6.158391998414e-04     # comp 
+Cl       1.350135379044e-03     # comp 
+pH       9.662316049617e+00 charge        # comp 
+pe       -5.416057250895e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   37
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 38 #New Version 
+#GRID 38
+units mol/kgw 
+temp 25.000000 
+C(4)       8.071880088920e-05     # comp 
+Ca       1.558526955473e-04     # comp 
+Mg       5.631410550659e-04     # comp 
+Cl       1.276549762994e-03     # comp 
+pH       9.664372923072e+00 charge        # comp 
+pe       -4.736027240072e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   38
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 39 #New Version 
+#GRID 39
+units mol/kgw 
+temp 25.000000 
+C(4)       8.011893127907e-05     # comp 
+Ca       1.727778488650e-04     # comp 
+Mg       5.075405851569e-04     # comp 
+Cl       1.200398876476e-03     # comp 
+pH       9.669488485564e+00 charge        # comp 
+pe       -5.327171282690e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   39
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 40 #New Version 
+#GRID 40
+units mol/kgw 
+temp 25.000000 
+C(4)       8.063798095177e-05     # comp 
+Ca       1.917399320734e-04     # comp 
+Mg       4.500844555260e-04     # comp 
+Cl       1.122372691936e-03     # comp 
+pH       9.679732799406e+00 charge        # comp 
+pe       -5.541222461844e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   40
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 41 #New Version 
+#GRID 41
+units mol/kgw 
+temp 25.000000 
+C(4)       8.382775264054e-05     # comp 
+Ca       2.129403441058e-04     # comp 
+Mg       3.924942327388e-04     # comp 
+Cl       1.043213534849e-03     # comp 
+pH       9.702347939089e+00 charge        # comp 
+pe       -5.197646620330e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   41
+Calcite 0.000000000000e+00  0.000000000000e+00       # comp 
+#ende
+END
+
+SOLUTION 42 #New Version 
+#GRID 42
+units mol/kgw 
+temp 25.000000 
+C(4)       8.624141648769e-05     # comp 
+Ca       2.300600958060e-04     # comp 
+Mg       3.380288595684e-04     # comp 
+Cl       9.636949721009e-04     # comp 
+pH       9.730239150270e+00 charge        # comp 
+pe       -5.029618193076e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   42
+Calcite 0.000000000000e+00  4.121564232246e-05       # comp 
+#ende
+END
+
+SOLUTION 43 #New Version 
+#GRID 43
+units mol/kgw 
+temp 25.000000 
+C(4)       9.045494157193e-05     # comp 
+Ca       2.400177777626e-04     # comp 
+Mg       2.927369189379e-04     # comp 
+Cl       8.845994124902e-04     # comp 
+pH       9.749144293068e+00 charge        # comp 
+pe       -5.204256219256e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   43
+Calcite 0.000000000000e+00  6.964823854181e-05       # comp 
+#ende
+END
+
+SOLUTION 44 #New Version 
+#GRID 44
+units mol/kgw 
+temp 25.000000 
+C(4)       9.049612024787e-05     # comp 
+Ca       2.386361209783e-04     # comp 
+Mg       2.552077066950e-04     # comp 
+Cl       8.066953249390e-04     # comp 
+pH       9.752386978182e+00 charge        # comp 
+pe       -5.299598079330e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   44
+Calcite 0.000000000000e+00  8.763402439622e-05       # comp 
+#ende
+END
+
+SOLUTION 45 #New Version 
+#GRID 45
+units mol/kgw 
+temp 25.000000 
+C(4)       9.145650401865e-05     # comp 
+Ca       2.330692834408e-04     # comp 
+Mg       2.237448563833e-04     # comp 
+Cl       7.307151894327e-04     # comp 
+pH       9.759061884626e+00 charge        # comp 
+pe       -5.076932872805e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   45
+Calcite 0.000000000000e+00  1.012309714513e-04       # comp 
+#ende
+END
+
+SOLUTION 46 #New Version 
+#GRID 46
+units mol/kgw 
+temp 25.000000 
+C(4)       9.317377300685e-05     # comp 
+Ca       2.245656865757e-04     # comp 
+Mg       1.972756362445e-04     # comp 
+Cl       6.573350249933e-04     # comp 
+pH       9.768467464094e+00 charge        # comp 
+pe       -4.786036613930e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   46
+Calcite 0.000000000000e+00  1.111456990876e-04       # comp 
+#ende
+END
+
+SOLUTION 47 #New Version 
+#GRID 47
+units mol/kgw 
+temp 25.000000 
+C(4)       9.549230420189e-05     # comp 
+Ca       2.142649005000e-04     # comp 
+Mg       1.748058650636e-04     # comp 
+Cl       5.871568553818e-04     # comp 
+pH       9.779847582911e+00 charge        # comp 
+pe       -5.067138488313e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   47
+Calcite 0.000000000000e+00  1.179123569925e-04       # comp 
+#ende
+END
+
+SOLUTION 48 #New Version 
+#GRID 48
+units mol/kgw 
+temp 25.000000 
+C(4)       9.826971441522e-05     # comp 
+Ca       2.032138270745e-04     # comp 
+Mg       1.554032039660e-04     # comp 
+Cl       5.206945728906e-04     # comp 
+pH       9.792446700947e+00 charge        # comp 
+pe       -4.887402959902e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   48
+Calcite 0.000000000000e+00  1.218572597603e-04       # comp 
+#ende
+END
+
+SOLUTION 49 #New Version 
+#GRID 49
+units mol/kgw 
+temp 25.000000 
+C(4)       1.013552157405e-04     # comp 
+Ca       1.923850592497e-04     # comp 
+Mg       1.381520719259e-04     # comp 
+Cl       4.583637771319e-04     # comp 
+pH       9.805435716839e+00 charge        # comp 
+pe       -4.934228580481e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   49
+Calcite 0.000000000000e+00  1.230181934044e-04       # comp 
+#ende
+END
+
+SOLUTION 50 #New Version 
+#GRID 50
+units mol/kgw 
+temp 25.000000 
+C(4)       1.038930629005e-04     # comp 
+Ca       1.821287668163e-04     # comp 
+Mg       1.220022503965e-04     # comp 
+Cl       4.004758611071e-04     # comp 
+pH       9.818082389736e+00 charge        # comp 
+pe       -4.994348366603e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   50
+Calcite 0.000000000000e+00  1.228028811860e-04       # comp 
+#ende
+END
+
+SOLUTION 51 #New Version 
+#GRID 51
+units mol/kgw 
+temp 25.000000 
+C(4)       1.062809101000e-04     # comp 
+Ca       1.729946373423e-04     # comp 
+Mg       1.069044776080e-04     # comp 
+Cl       3.472363679720e-04     # comp 
+pH       9.829950177507e+00 charge        # comp 
+pe       -4.596526291587e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   51
+Calcite 0.000000000000e+00  1.226188330951e-04       # comp 
+#ende
+END
+
+SOLUTION 52 #New Version 
+#GRID 52
+units mol/kgw 
+temp 25.000000 
+C(4)       1.085248278432e-04     # comp 
+Ca       1.649653614456e-04     # comp 
+Mg       9.293318576434e-05     # comp 
+Cl       2.987474023403e-04     # comp 
+pH       9.840927364939e+00 charge        # comp 
+pe       -4.812512770462e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   52
+Calcite 0.000000000000e+00  1.224661235737e-04       # comp 
+#ende
+END
+
+SOLUTION 53 #New Version 
+#GRID 53
+units mol/kgw 
+temp 25.000000 
+C(4)       1.105993710611e-04     # comp 
+Ca       1.579698160711e-04     # comp 
+Mg       8.013640619280e-05     # comp 
+Cl       2.550136708835e-04     # comp 
+pH       9.850949838993e+00 charge        # comp 
+pe       -4.904447036026e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   53
+Calcite 0.000000000000e+00  1.223430201341e-04       # comp 
+#ende
+END
+
+SOLUTION 54 #New Version 
+#GRID 54
+units mol/kgw 
+temp 25.000000 
+C(4)       1.124871026367e-04     # comp 
+Ca       1.519254195741e-04     # comp 
+Mg       6.853747550678e-05     # comp 
+Cl       2.159515577707e-04     # comp 
+pH       9.859985648234e+00 charge        # comp 
+pe       -4.902944830608e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   54
+Calcite 0.000000000000e+00  1.222466064579e-04       # comp 
+#ende
+END
+
+SOLUTION 55 #New Version 
+#GRID 55
+units mol/kgw 
+temp 25.000000 
+C(4)       1.141779026033e-04     # comp 
+Ca       1.467453197372e-04     # comp 
+Mg       5.813286212048e-05     # comp 
+Cl       1.814005353358e-04     # comp 
+pH       9.868030256737e+00 charge        # comp 
+pe       -4.903505624143e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   55
+Calcite 0.000000000000e+00  1.221732259152e-04       # comp 
+#ende
+END
+
+SOLUTION 56 #New Version 
+#GRID 56
+units mol/kgw 
+temp 25.000000 
+C(4)       1.156689271081e-04     # comp 
+Ca       1.423415466529e-04     # comp 
+Mg       4.889546532224e-05     # comp 
+Cl       1.511361500598e-04     # comp 
+pH       9.875104109196e+00 charge        # comp 
+pe       -4.982776833426e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   56
+Calcite 0.000000000000e+00  1.221189257601e-04       # comp 
+#ende
+END
+
+SOLUTION 57 #New Version 
+#GRID 57
+units mol/kgw 
+temp 25.000000 
+C(4)       1.169639780062e-04     # comp 
+Ca       1.386275564640e-04     # comp 
+Mg       4.077833999034e-05     # comp 
+Cl       1.248838202957e-04     # comp 
+pH       9.881248959542e+00 charge        # comp 
+pe       -5.008840969274e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   57
+Calcite 0.000000000000e+00  1.220798378082e-04       # comp 
+#ende
+END
+
+SOLUTION 58 #New Version 
+#GRID 58
+units mol/kgw 
+temp 25.000000 
+C(4)       1.180723715385e-04     # comp 
+Ca       1.355202793551e-04     # comp 
+Mg       3.371846259657e-05     # comp 
+Cl       1.023327269001e-04     # comp 
+pH       9.886523276820e+00 charge        # comp 
+pe       -5.109609935843e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   58
+Calcite 0.000000000000e+00  1.220524486638e-04       # comp 
+#ende
+END
+
+SOLUTION 59 #New Version 
+#GRID 59
+units mol/kgw 
+temp 25.000000 
+C(4)       1.190076019592e-04     # comp 
+Ca       1.329415213176e-04     # comp 
+Mg       2.764066759561e-05     # comp 
+Cl       8.314916228597e-05     # comp 
+pH       9.890997501084e+00 charge        # comp 
+pe       -4.853348832283e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   59
+Calcite 0.000000000000e+00  1.220337548875e-04       # comp 
+#ende
+END
+
+SOLUTION 60 #New Version 
+#GRID 60
+units mol/kgw 
+temp 25.000000 
+C(4)       1.197859615719e-04     # comp 
+Ca       1.308188579473e-04     # comp 
+Mg       2.246151666965e-05     # comp 
+Cl       6.698881643469e-05     # comp 
+pH       9.894749492743e+00 charge        # comp 
+pe       -4.974249551849e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   60
+Calcite 0.000000000000e+00  1.220213185787e-04       # comp 
+#ende
+END
+
+SOLUTION 61 #New Version 
+#GRID 61
+units mol/kgw 
+temp 25.000000 
+C(4)       1.204252476904e-04     # comp 
+Ca       1.290861448230e-04     # comp 
+Mg       1.809291102645e-05     # comp 
+Cl       5.350760832459e-05     # comp 
+pH       9.897860428640e+00 charge        # comp 
+pe       -4.354974075614e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   61
+Calcite 0.000000000000e+00  1.220132490844e-04       # comp 
+#ende
+END
+
+SOLUTION 62 #New Version 
+#GRID 62
+units mol/kgw 
+temp 25.000000 
+C(4)       1.209436523939e-04     # comp 
+Ca       1.276837351824e-04     # comp 
+Mg       1.444532377228e-05     # comp 
+Cl       4.237080651897e-05     # comp 
+pH       9.900411323844e+00 charge        # comp 
+pe       -5.091493388407e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   62
+Calcite 0.000000000000e+00  1.220081390154e-04       # comp 
+#ende
+END
+
+SOLUTION 63 #New Version 
+#GRID 63
+units mol/kgw 
+temp 25.000000 
+C(4)       1.213588839215e-04     # comp 
+Ca       1.265584791407e-04     # comp 
+Mg       1.143056402747e-05     # comp 
+Cl       3.326031304345e-05     # comp 
+pH       9.902480262674e+00 charge        # comp 
+pe       -4.962745719157e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   63
+Calcite 0.000000000000e+00  1.220049791582e-04       # comp 
+#ende
+END
+
+SOLUTION 64 #New Version 
+#GRID 64
+units mol/kgw 
+temp 25.000000 
+C(4)       1.216875301765e-04     # comp 
+Ca       1.256635604464e-04     # comp 
+Mg       8.964022896605e-06     # comp 
+Cl       2.588010182940e-05     # comp 
+pH       9.904140348222e+00 charge        # comp 
+pe       -5.186836517421e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   64
+Calcite 0.000000000000e+00  1.220030703433e-04       # comp 
+#ende
+END
+
+SOLUTION 65 #New Version 
+#GRID 65
+units mol/kgw 
+temp 25.000000 
+C(4)       1.219446477203e-04     # comp 
+Ca       1.249582117252e-04     # comp 
+Mg       6.966388335610e-06     # comp 
+Cl       1.995990094657e-05     # comp 
+pH       9.905458326118e+00 charge        # comp 
+pe       -5.062891315196e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   65
+Calcite 0.000000000000e+00  1.220019435010e-04       # comp 
+#ende
+END
+
+SOLUTION 66 #New Version 
+#GRID 66
+units mol/kgw 
+temp 25.000000 
+C(4)       1.221435433003e-04     # comp 
+Ca       1.244073392822e-04     # comp 
+Mg       5.364847135755e-06     # comp 
+Cl       1.525728311996e-05     # comp 
+pH       9.906493802414e+00 charge        # comp 
+pe       -5.030166162753e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   66
+Calcite 0.000000000000e+00  1.220012932732e-04       # comp 
+#ende
+END
+
+SOLUTION 67 #New Version 
+#GRID 67
+units mol/kgw 
+temp 25.000000 
+C(4)       1.222957078391e-04     # comp 
+Ca       1.239810827452e-04     # comp 
+Mg       4.093816663272e-06     # comp 
+Cl       1.155838051691e-05     # comp 
+pH       9.907298955558e+00 charge        # comp 
+pe       8.289531632542e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   67
+Calcite 0.000000000000e+00  1.220009264957e-04       # comp 
+#ende
+END
+
+SOLUTION 68 #New Version 
+#GRID 68
+units mol/kgw 
+temp 25.000000 
+C(4)       1.224108624589e-04     # comp 
+Ca       1.236543316268e-04     # comp 
+Mg       3.095266162256e-06     # comp 
+Cl       8.677468427800e-06     # comp 
+pH       9.907918635571e+00 charge        # comp 
+pe       -5.100786358243e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   68
+Calcite 0.000000000000e+00  1.220007242580e-04       # comp 
+#ende
+END
+
+SOLUTION 69 #New Version 
+#GRID 69
+units mol/kgw 
+temp 25.000000 
+C(4)       1.224970799992e-04     # comp 
+Ca       1.234062188859e-04     # comp 
+Mg       2.318697453736e-06     # comp 
+Cl       6.455670752641e-06     # comp 
+pH       9.908390746641e+00 charge        # comp 
+pe       -4.955315830368e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   69
+Calcite 0.000000000000e+00  1.220006152734e-04       # comp 
+#ende
+END
+
+SOLUTION 70 #New Version 
+#GRID 70
+units mol/kgw 
+temp 25.000000 
+C(4)       1.225609515072e-04     # comp 
+Ca       1.232196097365e-04     # comp 
+Mg       1.720858471121e-06     # comp 
+Cl       4.759031708194e-06     # comp 
+pH       9.908746819336e+00 charge        # comp 
+pe       -4.930506836907e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   70
+Calcite 0.000000000000e+00  1.220005578885e-04       # comp 
+#ende
+END
+
+SOLUTION 71 #New Version 
+#GRID 71
+units mol/kgw 
+temp 25.000000 
+C(4)       1.226077738589e-04     # comp 
+Ca       1.230806017512e-04     # comp 
+Mg       1.265261359717e-06     # comp 
+Cl       3.476176991938e-06     # comp 
+pH       9.909012692557e+00 charge        # comp 
+pe       -4.970839724108e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   71
+Calcite 0.000000000000e+00  1.220005283794e-04       # comp 
+#ende
+END
+
+SOLUTION 72 #New Version 
+#GRID 72
+units mol/kgw 
+temp 25.000000 
+C(4)       1.226417410298e-04     # comp 
+Ca       1.229780495870e-04     # comp 
+Mg       9.215711153777e-07     # comp 
+Cl       2.515757969908e-06     # comp 
+pH       9.909209241061e+00 charge        # comp 
+pe       -4.811806010996e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   72
+Calcite 0.000000000000e+00  1.220005135700e-04       # comp 
+#ende
+END
+
+SOLUTION 73 #New Version 
+#GRID 73
+units mol/kgw 
+temp 25.000000 
+C(4)       1.226661270803e-04     # comp 
+Ca       1.229031245609e-04     # comp 
+Mg       6.649222558624e-07     # comp 
+Cl       1.803838200275e-06     # comp 
+pH       9.909353099938e+00 charge        # comp 
+pe       8.392601304896e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   73
+Calcite 0.000000000000e+00  1.220005063198e-04       # comp 
+#ende
+END
+
+SOLUTION 74 #New Version 
+#GRID 74
+units mol/kgw 
+temp 25.000000 
+C(4)       1.226834534370e-04     # comp 
+Ca       1.228489160649e-04     # comp 
+Mg       4.752110308386e-07     # comp 
+Cl       1.281346121399e-06     # comp 
+pH       9.909457351687e+00 charge        # comp 
+pe       -4.941018866698e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   74
+Calcite 0.000000000000e+00  1.220005028632e-04       # comp 
+#ende
+END
+
+SOLUTION 75 #New Version 
+#GRID 75
+units mol/kgw 
+temp 25.000000 
+C(4)       1.226956365379e-04     # comp 
+Ca       1.228100787150e-04     # comp 
+Mg       3.364002332450e-07     # comp 
+Cl       9.016836808632e-07     # comp 
+pH       9.909532153791e+00 charge        # comp 
+pe       -5.079787758170e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   75
+Calcite 0.000000000000e+00  1.220005012586e-04       # comp 
+#ende
+END
+
+SOLUTION 76 #New Version 
+#GRID 76
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227041144506e-04     # comp 
+Ca       1.227825263772e-04     # comp 
+Mg       2.358636061278e-07     # comp 
+Cl       6.285499668244e-07     # comp 
+pH       9.909585294668e+00 charge        # comp 
+pe       -5.092640434651e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   76
+Calcite 0.000000000000e+00  1.220005005358e-04       # comp 
+#ende
+END
+
+SOLUTION 77 #New Version 
+#GRID 77
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227099528236e-04     # comp 
+Ca       1.227631719720e-04     # comp 
+Mg       1.637877392959e-07     # comp 
+Cl       4.340127066138e-07     # comp 
+pH       9.909622673516e+00 charge        # comp 
+pe       -5.133161519385e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   77
+Calcite 0.000000000000e+00  1.220005002197e-04       # comp 
+#ende
+END
+
+SOLUTION 78 #New Version 
+#GRID 78
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227139316427e-04     # comp 
+Ca       1.227497102616e-04     # comp 
+Mg       1.126415866444e-07     # comp 
+Cl       2.968393633371e-07     # comp 
+pH       9.909648705113e+00 charge        # comp 
+pe       -5.008211491071e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   78
+Calcite 0.000000000000e+00  1.220005000864e-04       # comp 
+#ende
+END
+
+SOLUTION 79 #New Version 
+#GRID 79
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227166148902e-04     # comp 
+Ca       1.227404396878e-04     # comp 
+Mg       7.671747672489e-08     # comp 
+Cl       2.010835159598e-07     # comp 
+pH       9.909666654391e+00 charge        # comp 
+pe       -4.924958702987e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   79
+Calcite 0.000000000000e+00  1.220005000321e-04       # comp 
+#ende
+END
+
+SOLUTION 80 #New Version 
+#GRID 80
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227184054697e-04     # comp 
+Ca       1.227341186846e-04     # comp 
+Mg       5.174274526264e-08     # comp 
+Cl       1.349108979699e-07     # comp 
+pH       9.909678907780e+00 charge        # comp 
+pe       -5.088369740585e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   80
+Calcite 0.000000000000e+00  1.220005000115e-04       # comp 
+#ende
+END
+
+SOLUTION 81 #New Version 
+#GRID 81
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227195877840e-04     # comp 
+Ca       1.227298516565e-04     # comp 
+Mg       3.455778125012e-08     # comp 
+Cl       8.964229246394e-08     # comp 
+pH       9.909687189472e+00 charge        # comp 
+pe       -4.942731894864e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   81
+Calcite 0.000000000000e+00  1.220005000034e-04       # comp 
+#ende
+END
+
+SOLUTION 82 #New Version 
+#GRID 82
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227203602099e-04     # comp 
+Ca       1.227269999027e-04     # comp 
+Mg       2.285416535850e-08     # comp 
+Cl       5.898670625830e-08     # comp 
+pH       9.909692730942e+00 charge        # comp 
+pe       -4.973239121071e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   82
+Calcite 0.000000000000e+00  1.220005000012e-04       # comp 
+#ende
+END
+
+SOLUTION 83 #New Version 
+#GRID 83
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227208594870e-04     # comp 
+Ca       1.227251130746e-04     # comp 
+Mg       1.496546976083e-08     # comp 
+Cl       3.843710802051e-08     # comp 
+pH       9.909696401754e+00 charge        # comp 
+pe       -4.934163484330e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   83
+Calcite 0.000000000000e+00  1.220004999998e-04       # comp 
+#ende
+END
+
+SOLUTION 84 #New Version 
+#GRID 84
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227211787600e-04     # comp 
+Ca       1.227238772044e-04     # comp 
+Mg       9.702952309258e-09     # comp 
+Cl       2.480178897007e-08     # comp 
+pH       9.909698808989e+00 charge        # comp 
+pe       -4.777313726279e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   84
+Calcite 0.000000000000e+00  1.220005000000e-04       # comp 
+#ende
+END
+
+SOLUTION 85 #New Version 
+#GRID 85
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227213807322e-04     # comp 
+Ca       1.227230758592e-04     # comp 
+Mg       6.228598350227e-09     # comp 
+Cl       1.584644745440e-08     # comp 
+pH       9.909700371708e+00 charge        # comp 
+pe       8.411832704775e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   85
+Calcite 0.000000000000e+00  1.220004999992e-04       # comp 
+#ende
+END
+
+SOLUTION 86 #New Version 
+#GRID 86
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227215071190e-04     # comp 
+Ca       1.227225615093e-04     # comp 
+Mg       3.958549882131e-09     # comp 
+Cl       1.002487830565e-08     # comp 
+pH       9.909701375942e+00 charge        # comp 
+pe       -1.251898238637e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   86
+Calcite 0.000000000000e+00  1.220004999999e-04       # comp 
+#ende
+END
+
+SOLUTION 87 #New Version 
+#GRID 87
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227215853469e-04     # comp 
+Ca       1.227222347146e-04     # comp 
+Mg       2.490757596629e-09     # comp 
+Cl       6.279249250272e-09     # comp 
+pH       9.909702014746e+00 charge        # comp 
+pe       -3.949300121720e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   87
+Calcite 0.000000000000e+00  1.220004999997e-04       # comp 
+#ende
+END
+
+SOLUTION 88 #New Version 
+#GRID 88
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227216332364e-04     # comp 
+Ca       1.227220291949e-04     # comp 
+Mg       1.551575569508e-09     # comp 
+Cl       3.894067063319e-09     # comp 
+pH       9.909702416965e+00 charge        # comp 
+pe       -4.939026630685e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   88
+Calcite 0.000000000000e+00  1.220005000001e-04       # comp 
+#ende
+END
+
+SOLUTION 89 #New Version 
+#GRID 89
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227216622301e-04     # comp 
+Ca       1.227219012628e-04     # comp 
+Mg       9.569036905285e-10     # comp 
+Cl       2.390872225508e-09     # comp 
+pH       9.909702667637e+00 charge        # comp 
+pe       -4.747742584926e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   89
+Calcite 0.000000000000e+00  1.220004999998e-04       # comp 
+#ende
+END
+
+SOLUTION 90 #New Version 
+#GRID 90
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227216795887e-04     # comp 
+Ca       1.227218224429e-04     # comp 
+Mg       5.843115407316e-10     # comp 
+Cl       1.453331149699e-09     # comp 
+pH       9.909702822262e+00 charge        # comp 
+pe       -4.735218612031e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   90
+Calcite 0.000000000000e+00  1.220004999998e-04       # comp 
+#ende
+END
+
+SOLUTION 91 #New Version 
+#GRID 91
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227216898650e-04     # comp 
+Ca       1.227217743803e-04     # comp 
+Mg       3.533156045199e-10     # comp 
+Cl       8.746616838867e-10     # comp 
+pH       9.909702916661e+00 charge        # comp 
+pe       -4.355699523574e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   91
+Calcite 0.000000000000e+00  1.220005000001e-04       # comp 
+#ende
+END
+
+SOLUTION 92 #New Version 
+#GRID 92
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227216958798e-04     # comp 
+Ca       1.227217453751e-04     # comp 
+Mg       2.116141041412e-10     # comp 
+Cl       5.212185720380e-10     # comp 
+pH       9.909702973698e+00 charge        # comp 
+pe       -4.942307112331e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   92
+Calcite 0.000000000000e+00  1.220004999998e-04       # comp 
+#ende
+END
+
+SOLUTION 93 #New Version 
+#GRID 93
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227216993604e-04     # comp 
+Ca       1.227217280520e-04     # comp 
+Mg       1.256081316762e-10     # comp 
+Cl       3.075994355359e-10     # comp 
+pH       9.909703007804e+00 charge        # comp 
+pe       -4.461787592850e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   93
+Calcite 0.000000000000e+00  1.220004999994e-04       # comp 
+#ende
+END
+
+SOLUTION 94 #New Version 
+#GRID 94
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227217013513e-04     # comp 
+Ca       1.227217178135e-04     # comp 
+Mg       7.396045010357e-11     # comp 
+Cl       1.798453073269e-10     # comp 
+pH       9.909703027985e+00 charge        # comp 
+pe       -4.923549441283e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   94
+Calcite 0.000000000000e+00  1.220005000001e-04       # comp 
+#ende
+END
+
+SOLUTION 95 #New Version 
+#GRID 95
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227217024768e-04     # comp 
+Ca       1.227217118253e-04     # comp 
+Mg       4.327558165326e-11     # comp 
+Cl       1.042481282431e-10     # comp 
+pH       9.909703039803e+00 charge        # comp 
+pe       -4.718313375639e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   95
+Calcite 0.000000000000e+00  1.220004999997e-04       # comp 
+#ende
+END
+
+SOLUTION 96 #New Version 
+#GRID 96
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227217031057e-04     # comp 
+Ca       1.227217083597e-04     # comp 
+Mg       2.524005337562e-11     # comp 
+Cl       5.998819444442e-11     # comp 
+pH       9.909703046651e+00 charge        # comp 
+pe       -4.928268609749e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   96
+Calcite 0.000000000000e+00  1.220005000001e-04       # comp 
+#ende
+END
+
+SOLUTION 97 #New Version 
+#GRID 97
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227217034528e-04     # comp 
+Ca       1.227217063753e-04     # comp 
+Mg       1.475378045235e-11     # comp 
+Cl       3.435241905729e-11     # comp 
+pH       9.909703050577e+00 charge        # comp 
+pe       -5.025367013506e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   97
+Calcite 0.000000000000e+00  1.220005000000e-04       # comp 
+#ende
+END
+
+SOLUTION 98 #New Version 
+#GRID 98
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227217036422e-04     # comp 
+Ca       1.227217052516e-04     # comp 
+Mg       8.725933554105e-12     # comp 
+Cl       1.967067533541e-11     # comp 
+pH       9.909703052803e+00 charge        # comp 
+pe       -4.888459810405e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   98
+Calcite 0.000000000000e+00  1.220005000000e-04       # comp 
+#ende
+END
+
+SOLUTION 99 #New Version 
+#GRID 99
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227217037438e-04     # comp 
+Ca       1.227217046249e-04     # comp 
+Mg       5.315060384176e-12     # comp 
+Cl       1.139227612849e-11     # comp 
+pH       9.909703054045e+00 charge        # comp 
+pe       -4.397500931252e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   99
+Calcite 0.000000000000e+00  1.220005000001e-04       # comp 
+#ende
+END
+
+SOLUTION 100 #New Version 
+#GRID 100
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227217037958e-04     # comp 
+Ca       1.227217042927e-04     # comp 
+Mg       3.484350867287e-12     # comp 
+Cl       6.962592313111e-12     # comp 
+pH       9.909703054705e+00 charge        # comp 
+pe       -4.734712371213e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   100
+Calcite 0.000000000000e+00  1.220004999996e-04       # comp 
+#ende
+END
+
+SOLUTION 101 #New Version 
+#GRID 101
+units mol/kgw 
+temp 25.000000 
+C(4)       1.227217038126e-04     # comp 
+Ca       1.227217041830e-04     # comp 
+Mg       2.875095552109e-12     # comp 
+Cl       5.490997401178e-12     # comp 
+pH       9.909703054923e+00 charge        # comp 
+pe       -4.894943937779e+00       # comp 
+#ende
+
+EQUILIBRIUM_PHASES   101
+Calcite 0.000000000000e+00  1.220005000004e-04       # comp 
+#ende
+END
+

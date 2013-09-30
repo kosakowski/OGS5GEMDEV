@@ -405,6 +405,7 @@ std::ios::pos_type CFluidProperties::Read(std::ifstream* mfp_file)
 				viscosity_pcs_name_vector.push_back("TEMPERATURE1");
 			if(viscosity_model == 4) // my(T), ???
 			{
+              viscosity_pcs_name_vector.push_back("TEMPERATURE1"); // added by CB 
 			}
 			if(viscosity_model == 5) // my(p,T), Reichenberg (1971)
 			{
@@ -563,8 +564,12 @@ std::ios::pos_type CFluidProperties::Read(std::ifstream* mfp_file)
 //			if(diffusion_model == 0) // D = fct(x)
 //				in >> dif_fct_name;
 			if(diffusion_model == 1) // D = const //MX
-
 				in >> diffusion;
+            if(diffusion_model==2)                   // D = const //MX
+            {
+              in >> A_Daq >> B_Daq;                 // SP: Daq calculated after Yaws; fct(T)
+              phase_diffusion_pcs_name_vector.push_back("TEMPERATURE1");
+            }				
 			in.clear();
 			continue;
 		}
@@ -714,6 +719,10 @@ void CFluidProperties::Write(std::ofstream* mfp_file) const
 //		*mfp_file << "  " << viscosity_model << " " << _my_fct_name << "\n";
 	if(viscosity_model == 1)
 		*mfp_file << "  " << viscosity_model << " " << my_0 << "\n";
+   *mfp_file  << " $PHASE_DIFFUSION" << "\n";
+   //if(diffusion_model == 0) *mfp_file << "  " << diffusion_model << " " << dif_fct_name << "\n";
+   if(diffusion_model == 1) *mfp_file << "  " << diffusion_model << " " << diffusion << "\n";
+   if(diffusion_model == 2) *mfp_file << "  " << diffusion_model << " " << "\n";
 	//todo
 	*mfp_file << " $SPECIFIC_HEAT_CAPACITY" << "\n";
 	// TF 11/2011 - used only in read- and write-method
@@ -896,7 +905,9 @@ double CFluidProperties::Density(double* variables)
 		case 7:                   // Pefect gas. WW
 			density = variables[0] * molar_mass / (GAS_CONSTANT * variables[1]);
 			break;
-
+         case 8:                                  // M14 von JdJ // 25.1.12 Added by CB for density output AB-model
+			density = MATCalcFluidDensityMethod8(variables[0],variables[1],variables[2]);
+            break;
 		case 10:                  // Get density from temperature-pressure values from fct-file	NB 4.8.01
 			if(!T_Process)
 				variables[1] = T_0;
@@ -1042,6 +1053,11 @@ double CFluidProperties::Density(double* variables)
 			 for (int CIndex = 2; CIndex < cmpN + 2; CIndex++) Rho += variables[CIndex]/ComponentDensity(CIndex, variables);
 			     density =  1/Rho;
 		    break;
+         case 18:	//using calculated densities at nodes from the phase transition model, BG, NB 11/2010
+		    // Just dummy function, so density is not 0 ;
+			std::cout << " Error - Density Model 18 not implemented, usind dummy density of 1000." << "\n";
+	  	    density = 1000; // Achtung - dummy
+			
 
 		case 19:                // KG44 get the density from GEMS calculations
 		                       // seems complicated, as we probably have to call GEMS.....or take values from last GEMS calculation ---> update during iterations is not possible
@@ -1400,10 +1416,12 @@ double CFluidProperties::Viscosity(double* variables)
 			                                    "TEMPERATURE1") + 1);
 		}
 		//ToDo pcs_name
-		viscosity = LiquidViscosity_Yaws_1976(primary_variable[1]);
+         viscosity = LiquidViscosity_Yaws_1976(primary_variable[1]); // CB: Why PV[1]?? T is in PV[0]
+         //viscosity = LiquidViscosity_Yaws_1976(primary_variable[0]);
 		break;
 	case 4:                               // my^g(T), Marsily (1986)
-		viscosity = LiquidViscosity_Marsily_1986(primary_variable[0]);
+         viscosity = LiquidViscosity_Marsily_1986(primary_variable[1]);
+         //viscosity = LiquidViscosity_Marsily_1986(primary_variable[0]);
 		break;
 	case 5:                               // my^g(p,T), Reichenberg (1971)
 		viscosity = GasViscosity_Reichenberg_1971(primary_variable[0],primary_variable[1]);
@@ -1544,8 +1562,14 @@ double CFluidProperties::LiquidViscosity_Yaws_1976(double T)
 	C =  4.527e-02;
 	D = -3.376e-5;
 
+   //A = -11.6225;     // CB values for water viscosity after YAWS et al. (1976)
+   //B =  1.9490e+03;
+   //C =  2.1641e-02;
+   //D = -1.5990e-05;
+   
 	ln_my = A + B / T + C * T + D * T * T;
-	my = exp(ln_my);                      /* in cP */
+    my = exp(ln_my);                      /* in cP */
+    //my = pow(10, ln_my); 
 	my = my * 1.e-3;                      /* in Pa s */
 	return my;
 }
@@ -1596,6 +1620,88 @@ double CFluidProperties::LiquidViscosity_NN(double c,double T)
 	     (1 + 0.7063 * sigma0 - 0.04832 * sigma0 * sigma * sigma0);
 	mu = mu0 / (f1 + f2);
 	return mu;
+}
+
+////////////////////////////////////////////////////////////////////////////
+// Fluid diffusion: required for Phase transition rate coefficients (NAPL)
+/**************************************************************************
+FEMLib-Method:
+Task: Master calc function
+Programming:
+06/2013 SP Implementation
+**************************************************************************/                                              
+double CFluidProperties::PhaseDiffusion(double* variables)
+{
+   static double diff;
+   //int fct_number = 0;
+   //int gueltig;
+   //double mfp_arguments[2];
+   //double density;
+
+   // double TTT=0, PPP=0;
+   // long Element_Index;
+   // int nod_index;
+
+   // string val_name;
+   //CRFProcess* m_pcs = NULL;
+
+   //----------------------------------------------------------------------
+   //bool New = false;                              // To be
+   //if(fem_msh_vector.size()>0) New = true;
+
+   //----------------------------------------------------------------------
+   if(variables)                                  //OK4709: faster data access
+   {
+      primary_variable[0] = variables[0];         //p (single phase)// SP: has to be T
+      primary_variable[1] = variables[1];         //T (temperature) // SP: has to be p
+      primary_variable[2] = variables[2];         //C (salinity)//index in case of AIR_FLOW
+
+   }
+   else
+   {
+      CalPrimaryVariable(phase_diffusion_pcs_name_vector);
+   }
+   //----------------------------------------------------------------------
+   switch(diffusion_model)
+   {
+      //case 0:                                     // rho = f(x)
+      //   diff = GetCurveValue(fct_number,0,primary_variable[0],&gueltig);
+      //   break;
+      case 1:                                     // my = const
+         diff = diffusion;
+         break;
+      case 2:                                     // my(p) = my_0*(1+gamma_p*(p-p_0))
+         diff = PhaseDiffusion_Yaws_1976(primary_variable[1]);
+         break;
+      default:
+         cout << "Error in CFluidProperties::PhaseDiffusion: no valid model" << endl;
+         break;
+   }
+   //----------------------------------------------------------------------
+
+   return diff;
+
+}
+
+/**************************************************************************
+FEMLib-Method:
+Task:
+   Aquatic diffusion coefficient after Yaws et al. (1976)
+   (as function of temperature)
+   in YAWS et al. (1976), p. 505
+   Eqn.: log10 Daq = A + B/T [cm2/sec]
+Programming:
+06/2013 SP Implementation
+**************************************************************************/
+double CFluidProperties::PhaseDiffusion_Yaws_1976(double T)
+{
+   double A,B;
+
+   A = A_Daq;
+   B = B_Daq;
+
+   diff = pow(10, (A+(B/T)))  / 10000; //cm²/s -> m²/s
+   return diff;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -1668,6 +1774,7 @@ double CFluidProperties::SpecificHeatCapacity(double* variables)
 		  Cp_c[1] = 1056.8+(1146.4-1056.8)/(900.0-500.0)*(variables[1]-500.0); //Nitrogen
 
 		  specific_heat_capacity = x[0]*Cp_c[0] + x[1]*Cp_c[1];
+		  break;
 	case 15: // mixture cp= sum_i y_i*cp:: P, T, x dependent
 		for (int CIndex = 2; CIndex < cmpN + 2; CIndex++)
 	{

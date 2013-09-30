@@ -68,7 +68,14 @@ public:
 	 */
 	FiniteElement::PrimaryVariable getProcessPrimaryVariable () const;
 
-	/**
+      /** CB
+       * Get the comp vec index of the process.
+       * @Return the comp vec index of the process
+       */
+      int getProcessCompVecIndex () const;
+
+
+      /**
 	 * Get a pointer to an object of type CRFProcess.
 	 * @return a pointer to an object of type CRFProcess
 	 */

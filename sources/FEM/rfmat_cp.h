@@ -38,6 +38,7 @@ public:
 
 	size_t idx;                             /* the unique index of this component. not effective, saved for future*/
 	std::string compname;                     /* component name */
+      std::string iupac_formula;        // chemical formula
 	int mobil;                           /* flag mobil */
 	int transport_phase;                 /* number of phase, in which component is transported */
 	int fluid_phase;
@@ -82,6 +83,15 @@ public:
 	double molar_density;
 	double molar_weight;
 	double max_solubility;
+    /* parameters for mineral kinetics */
+    double a_zero;
+
+    double mineral_density;
+
+//// CB _ctx_
+//    bool _ctx_;
+//    std::string ct_substratename;
+//    double _ctx_Coefficient;
 
 #ifdef GEM_REACT
 	//kg44 25.11.2008 kinetics...for coupling with GEMS
