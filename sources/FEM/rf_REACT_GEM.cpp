@@ -2105,6 +2105,7 @@ double REACT_GEM::FluidDensity(long elem, int gaussnode)
 
 	distance =  weight = sum_weights = 0.0;
 
+        CFiniteElementStd* fem = m_flow_pcs->GetAssembler();
 	//  cout << "GEMS DEBUG: FluidDensity " << density << "elem " << elem << " gaussnode " << gaussnode<< "\n";
 
 	m_Elem =  m_flow_pcs->m_msh->ele_vector[elem];
@@ -2112,10 +2113,10 @@ double REACT_GEM::FluidDensity(long elem, int gaussnode)
 
 	if (gaussnode > -1) // gauss point like in InterpolatPorpertytoGausPoints
 	{
-		if (!Fem_Ele_Std)
+		if (!fem)
 		{
 			cout <<
-			        "DEBUG REACTGEM: fluiddensity from gauss node failed: could not get Fem_Ele_Std"
+			        "DEBUG REACTGEM: fluiddensity from gauss node failed: could not get fem"
 			     << "\n";
 			return density; //make sure call to interpolate does not fail
 		}
@@ -2132,7 +2133,7 @@ double REACT_GEM::FluidDensity(long elem, int gaussnode)
 			NodalVal_BG[i] = m_fluid_density[idx_Node];
 		}
 		// Interpolate density from nodes to gauss point
-		density = Fem_Ele_Std->interpolate(NodalVal_BG);
+		density = fem->interpolate(NodalVal_BG);
 	}
 	else //arithmetric average on element
 	{
