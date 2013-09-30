@@ -212,7 +212,7 @@ public:
     int SetSourceSink_MT(long in, double time_step_size /*in sec*/);
 
     // pass fluid density back
-    double FluidDensity(long elem, int gaussnode);
+    double FluidDensity(long elem, int gaussnode, CFiniteElementStd* fem);
 
     // find which one in xDC vector is water
     int FindWater_xDC(TNode* m_Node);

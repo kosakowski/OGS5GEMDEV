@@ -114,8 +114,6 @@ REACT_GEM::REACT_GEM ( void )
 	m_max_failed_nodes = 5; //default number of max allowed nodes to fail
 	m_diff_gems = 0.0;
 
-	Fem_Ele_Std = NULL;
-
 	gem_nThread = 1; // default number of threads
 	string tinit_path = " ";
 
@@ -2090,7 +2088,7 @@ void REACT_GEM::ConvPorosityNodeValue2Elem ( int i_timestep )
 		cout << "min, max porosity: " << pormin << " " << pormax << "\n";       //only output for current time step....old time step will give wrong values
 }
 
-double REACT_GEM::FluidDensity(long elem, int gaussnode)
+double REACT_GEM::FluidDensity(long elem, int gaussnode,  CFiniteElementStd* fem)
 {
 	long idx_Node;
 	int number_of_nodes, j,i;
@@ -2105,7 +2103,6 @@ double REACT_GEM::FluidDensity(long elem, int gaussnode)
 
 	distance =  weight = sum_weights = 0.0;
 
-        CFiniteElementStd* fem = m_flow_pcs->GetAssembler();
 	//  cout << "GEMS DEBUG: FluidDensity " << density << "elem " << elem << " gaussnode " << gaussnode<< "\n";
 
 	m_Elem =  m_flow_pcs->m_msh->ele_vector[elem];

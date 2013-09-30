@@ -946,17 +946,14 @@ double CFluidProperties::Density(double* variables)
 			break;
 		case 19:                // KG44 get the density from GEMS calculations
 		                       // seems complicated, as we probably have to call GEMS.....or take values from last GEMS calculation ---> update during iterations is not possible
-		     //  long elem = Fem_Ele_Std->GetMeshElement()->GetIndex();
- 		       density=1000.0;
-#ifdef GEM_REACT
-			if (!Fem_Ele_Std) //for Richards flow (when saturation is needed initially in GEMS setup) we have to make 
+#ifdef GEM_REACTif (!Fem_Ele_Std) //for Richards flow (when saturation is needed initially in GEMS setup) we have to make 
 			{
 			     density=1000.0;
 			}
 			else
-			{
+			{  
  			    // elem = Fem_Ele_Std->GetMeshElement()->GetIndex(); //kg44 need element index or node index for GEMS ...currently we stick to arithmetric average of node data (even for gauss points!)
-                             density=m_vec_GEM->REACT_GEM::FluidDensity( long(variables[0]), int(variables[1])); //hand over element index and gauss point index 
+                             density=m_vec_GEM->REACT_GEM::FluidDensity( long(variables[0]), int(variables[1]),Fem_Ele_Std); //hand over element index and gauss point index 
 			     // here we can interpolate values from nodes to elemnt or to gauss points
 			}
 #endif
@@ -1071,7 +1068,7 @@ double CFluidProperties::Density(double* variables)
 			else
 			{
   			    long elem = Fem_Ele_Std->GetMeshElement()->GetIndex(); //kg44 need element index or node index for GEMS ...currently we stick to arithmetric average of node data (even for gauss points!)
-                             density=m_vec_GEM->REACT_GEM::FluidDensity( elem, -1); //hand over element index and set gauss point to -1... 
+                             density=m_vec_GEM->REACT_GEM::FluidDensity( elem, -1, Fem_Ele_Std); //hand over element index and set gauss point to -1... 
 			     // Remark: Interpolation from Gauss points to element is not possible here: Fluid densities are only calculated at nodes, therefore interpolation from gauss points onto element will not work
 			}
 #endif
