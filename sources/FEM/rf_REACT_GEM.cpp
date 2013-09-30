@@ -3357,7 +3357,7 @@ int REACT_GEM::CalcLimitsInitial ( long in, TNode* m_Node)
 		for ( ii = 0; ii < ( int ) m_constraints.size(); ii++ )
 		{
                         // get componet number for constraint!
-		        k = m_constraints[ii].n_comp;
+		    k = m_constraints[ii].n_comp;
 		    if (m_constraints[ii].condition_type == 1) // condition 1 ...given lower and upper limit for a specific initial component and gems should be NOT calculated
 		      {
 //			cout << " DEBUG: found condition! " ;
@@ -3367,9 +3367,11 @@ int REACT_GEM::CalcLimitsInitial ( long in, TNode* m_Node)
 			{
 				m_dll[in * nDC + k] = m_constraints[ii].ll_constraint; 
 				m_dul[in * nDC + k] = m_constraints[ii].ul_constraint; 
+//	rwmutex.lock(); // first lock for reading gem init files
+//			  cout << "add constraint to node " << in <<". Criteria given for species " << m_constraints[ii].nB << " " <<" value, lower- and upper limit: "<<m_bIC[in * nIC + m_constraints[ii].nB] << " " 
+//			       <<  m_constraints[ii].l_amount << " " << m_constraints[ii].u_amount << " " << m_constraints[ii].ll_constraint << "\n";
+//			       	rwmutex.unlock(); // first lock for reading gem init files
 
-//			  cout << "Exclude node " << i <<" from GEMS calculations. Criteria given for species " << m_calc[ii].nB << " " <<" value, lower- and upper limit: "<<m_bIC[i * nIC + m_calc[ii].nB] << " " 
-//			       <<  m_calc[ii].l_amount << " " << m_calc[ii].l_amount << " " << m_calculate_gems[i] << "\n";
 			}
 		       }
 				    
@@ -4392,7 +4394,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 		if ( !( m_NodeStatusCH[in] == OK_GEM_AIA || m_NodeStatusCH[in] == OK_GEM_SIA ) )
 		{
 			rwmutex.lock();
-			cout << "Initial GEMs run first pass failed at node " << in ;
+			cout << "Initial GEMs run first pass failed at node " << in <<"with response: " << m_NodeStatusCH[in];
 			cout  << " repeat calculations and change kinetic constraints minimaly" << "\n";
 			rwmutex.unlock();
 			// change a bit the kinetic constraints -> make the system less stiff
@@ -4412,8 +4414,8 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 			if ( ( m_NodeStatusCH[in] == ERR_GEM_AIA || m_NodeStatusCH[in] ==
 			       ERR_GEM_SIA ) )
 			{
-/*
-          rwmutex.lock();
+
+                rwmutex.lock();
                 cout << " Error: Init Loop failed when running GEM on Node #" << in << "." << "\n";
                 cout << "Returned Error Code: " << m_NodeStatusCH[in] << "\n";
                 t_Node->GEM_write_dbr ( "dbr_for_crash_node_init_thread.txt" );
@@ -4424,7 +4426,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
    #endif
 
                 exit ( 1 );
- */
+ 
 				rwmutex.lock();
 				cout <<
 				        "error: Initial GEMs run after Read GEMS gives bad result..proceed in any case. node: "
