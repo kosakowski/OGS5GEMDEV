@@ -1790,25 +1790,25 @@ int REACT_GEM::SetSourceSink_MT ( long in, double time_step_size /*in sec*/ )
 
 	switch ( flowflag )
 	{
-	case 1:                           // groundwater flow
+	case 1:                           // groundwater flow ...here the volume in m3 has to be injected
 		m_st.index_node = in;
 		m_st.water_st_value  = m_excess_water[in]  / time_step_size;
+		// normalize with node volume
+		m_st.water_st_value *= m_Node_Volume[in];  //normalize with "real" volume of the node...
+		m_flow_pcs->Water_ST_vec.push_back ( m_st );
+		return 1;
+		break;
+	case 2:                           // liquid flow is formulated in terms of masses...masses in kg have to be injected
+		m_st.index_node = in;
+		m_st.water_st_value  = m_excess_water[in] * m_fluid_density[in] / time_step_size;
 		// normalize with node volume
 		m_st.water_st_value *= m_Node_Volume[in];
 		m_flow_pcs->Water_ST_vec.push_back ( m_st );
 		return 1;
 		break;
-	case 2:                           // liquid flow
+	case 3:                           // Richards flow  is formulated in terms of masses...masses in kg have to be injected
 		m_st.index_node = in;
-		m_st.water_st_value  = m_excess_water[in]  / time_step_size;
-		// normalize with node volume
-		m_st.water_st_value *= m_Node_Volume[in];
-		m_flow_pcs->Water_ST_vec.push_back ( m_st );
-		return 1;
-		break;
-	case 3:                           // Richards flow
-		m_st.index_node = in;
-		m_st.water_st_value  = m_excess_water[in]  / time_step_size;
+		m_st.water_st_value  = m_excess_water[in] * m_fluid_density[in] / time_step_size;
 		// normalize with node volume
 		m_st.water_st_value *= m_Node_Volume[in];
 		m_flow_pcs->Water_ST_vec.push_back ( m_st );
@@ -1816,7 +1816,7 @@ int REACT_GEM::SetSourceSink_MT ( long in, double time_step_size /*in sec*/ )
 		break;
 	case 4:                           // multiphase flow...works with case 1 ...pressure saturation scheme
 		m_st.index_node = in;
-		m_st.water_st_value  = m_excess_water[in]  / time_step_size;
+		m_st.water_st_value  = m_excess_water[in] * m_fluid_density[in] / time_step_size;
 		// normalize with node volume
 		m_st.water_st_value *= m_Node_Volume[in];
 		m_flow_pcs->Water_ST_vec.push_back ( m_st );
