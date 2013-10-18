@@ -2625,7 +2625,7 @@ void Problem::OutputMassOfComponentInModel(std::vector<CRFProcess*> flow_pcs, CR
 		}
 
 		TotalVolume += node_volume;
-		if (flow_pcs[0]->getProcessType() == FiniteElement::GROUNDWATER_FLOW)
+		if ((flow_pcs[0]->getProcessType() == FiniteElement::GROUNDWATER_FLOW)||(flow_pcs[0]->getProcessType() == FiniteElement::LIQUID_FLOW)) // KG44: quick fix...better to do a real case loop!
 			saturation_water = 1;					// saturation does not exist for example in groundwater flow
 		else
 		{
