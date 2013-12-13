@@ -2973,7 +2973,7 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
             // next line is surface area
             in.str ( GetLineFromFile1 ( gem_file ) );
             in >> d_kin.surface_model;
-            cout << d_kin.surface_model << "\n";
+            cout << " reading surface data for model 1:" << d_kin.surface_model << "\n";
             if ( d_kin.surface_model >= 1 || d_kin.surface_model < 4 ) // surface model 1, 2 and 3....only one parameter...
             {
                 in >> d_kin.surface_area[0]; // surface: m*m / mol
@@ -2991,11 +2991,14 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
                 cout << "const specific surface area for spherical particles" << d_kin.surface_area[0] <<
                      "\n";
             }
-            else if ( d_kin.kinetic_model == 5 ) // model 5 is for solid solutions, needed parameters are the number of endmembers and the surface area for each endmember
+            in.clear();
+            
+            if ( d_kin.kinetic_model == 5 ) // model 5 is for solid solutions, needed parameters are the number of endmembers and the surface area for each endmember
             {
                 // next line are SS parameters
                 in.str ( GetLineFromFile1 ( gem_file ) );
-                in >> d_kin.ss_endmembers;
+                in >> d_kin.ss_endmembers; 
+	        cout << "Read endmember data for SS, number of endmembers: "<< d_kin.ss_endmembers;
                 try
                 {
                     d_kin.ss_scaling = new double[d_kin.ss_endmembers];
@@ -3013,6 +3016,7 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
 
                 for ( j = 0; j < d_kin.ss_endmembers; j++ )
                     in >> d_kin.ss_scaling[j];
+		 for ( j = 0; j < d_kin.ss_endmembers; j++ ) cout << " endmembers " << d_kin.ss_scaling[j] << "\n";
             }
             in.clear();
             // push back vector
@@ -3094,8 +3098,7 @@ int REACT_GEM::CalcReactionRate ( long in, double temp,  TNode* m_Node )
 
 			if ( m_kin[ii].kinetic_model == 5 ) // special treatment of solid solution phases with e.g. vanselow convention
 			{
-				for ( j = m_kin[ii].dc_counter;
-				      j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )
+				for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )
 					// do not include surface complexation species!
 					if ( !( dCH->ccDC[j]  == '0' ) &&
 					     !( dCH->ccDC[j]  == 'X' ) &&
@@ -3107,13 +3110,8 @@ int REACT_GEM::CalcReactionRate ( long in, double temp,  TNode* m_Node )
 						// loop over all components of the phase
 						omega_phase[in * nPH + k] += m_Node->DC_a ( j );
 
-						mol_phase[in * nPH +
-						          k] +=
-						        ( m_xDC[in * nDC +
-						                j] *
-						          m_kin[ii].ss_scaling[j -
-						                               m_kin[ii].dc_counter] );
-						// cout << "Debug kin omega phase "<< omega_phase[in*nPH+k] << " fraction component " << omega_components[in*nDC+j] << "  mol phase " <<  mol_phase[in*nPH+k] << "\n"; // debug
+						mol_phase[in * nPH + k] +=( m_xDC[in * nDC + j] * m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter] );
+						// if (in == 282) cout << "Debug kin omega phase "<< omega_phase[in*nPH+k] <<"m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter] "<< m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter] << "j - m_kin[ii].dc_counter"<< j - m_kin[ii].dc_counter << " fraction component " << omega_components[in*nDC+j] << "  mol component " <<  m_xDC[in * nDC + j] << "  mol phase " << mol_phase[in*nPH+k] << "\n"; // debug
 					}
 			}
 			else // normal behabviour for single component phases and SS which do have all the same endmember characteristics
@@ -3185,8 +3183,7 @@ int REACT_GEM::CalcReactionRate ( long in, double temp,  TNode* m_Node )
 					if ( m_porosity_initial[in] < min_possible_porosity )
 						m_porosity_initial[in] = min_possible_porosity;
 
-					cout << "failed CalcReactionRate: no DC-name " <<
-					        m_kin[ii].active_species[i] << " found" << "\n";
+					cout << "failed CalcReactionRate: no DC-name " <<    m_kin[ii].active_species[i] << " found" << "\n";
 #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
 					MPI_Finalize(); //make sure MPI exits
 #endif
@@ -3243,12 +3240,9 @@ int REACT_GEM::CalcReactionRate ( long in, double temp,  TNode* m_Node )
 			              m_kin[ii].kinetic_parameters[11] );
 
 			// rate is scaled to the total amount available via the surface area
-			dmdt[in * nPH +
-			     k] = -1.0 * sa *
-			          ( pow ( 10.0,
-			                  m_kin[ii].kinetic_parameters[3] ) * rra +
-			            pow ( 10.0,
-			                  m_kin[ii].kinetic_parameters[4] ) * rrn +
+			dmdt[in * nPH + k] = -1.0 * sa *
+			          ( pow ( 10.0,m_kin[ii].kinetic_parameters[3] ) * rra +
+			            pow ( 10.0,m_kin[ii].kinetic_parameters[4] ) * rrn +
 			            pow ( 10.0,m_kin[ii].kinetic_parameters[5] ) * rrb );
 
 			// test for NaN!! ---seems necessary as sometimes rra, rrn, rrb get Inf! ---seems enough to test the upper limit---this test does not resolve the real problem ;-)...probably pow(0.0,0.0) for rra,rrn,rrb ?
@@ -3270,9 +3264,7 @@ int REACT_GEM::CalcReactionRate ( long in, double temp,  TNode* m_Node )
 			if ( fabs(dmdt[in * nPH + k] > 0.0) && fabs(m_xDC[in * nDC + j]) > 0.0)
 			{
 				rwmutex.lock(); //
-				max_kinetic_timestep =
-				        min(max_kinetic_timestep,
-				            fabs(m_xDC[in * nDC + j] / dmdt[in * nPH + k]));
+				max_kinetic_timestep = min(max_kinetic_timestep,fabs(m_xDC[in * nDC + j] / dmdt[in * nPH + k]));
 				rwmutex.unlock(); // avoid mutual exclusion in the MPI version
 			}
 		}                                   //end if for kinetic model >1
@@ -3426,23 +3418,13 @@ int REACT_GEM::CalcLimits ( long in, TNode* m_Node)
 				}
 				else
 				{
-					// cout << "Kin debug SS mol phase " << mol_phase[in*nPH+k] << " dmdt " << dmdt[in*nPH+k]*dt << " omega comp " <<omega_components[in*nDC+j] <<" omega phase " << omega_phase[in*nPH+k]<< "\n";
-					dummy =
-					        ( mol_phase[in * nPH +
-					                    k] +
-					          dmdt[in * nPH +
-					               k] *
-					          dt ) *
-					        omega_components[in * nDC +
-					                         j] / omega_phase[in * nPH + k];
+					// if (in == 281)  cout << "Kin debug SS mol phase " << mol_phase[in*nPH+k] << " dmdt " << dmdt[in*nPH+k]*dt << " omega comp " <<omega_components[in*nDC+j] <<" omega phase " << omega_phase[in*nPH+k]<< "\n";
+					dummy =( mol_phase[in * nPH + k] + dmdt[in * nPH + k] * dt ) * omega_components[in * nDC + j] / omega_phase[in * nPH + k];
 
 					if ( m_kin[ii].kinetic_model == 5 ) // only for Solid solution models: rescale to change of endmember in case of Vanselow convenction or similar
-
-						dummy /=
-						        m_kin[ii].ss_scaling[j -
-						                             m_kin[ii].dc_counter];
-					if (dummy > 1.0e10)
-						dummy = 1.0e10;
+					  dummy /= m_kin[ii].ss_scaling[j -m_kin[ii].dc_counter];
+					if (dummy > 1.0e10) 
+					  dummy = 1.0e10;
 
 					if ( !( dummy <= 1.0 ) && !( dummy > 1.0 ) )
 					{
