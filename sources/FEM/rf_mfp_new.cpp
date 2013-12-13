@@ -403,7 +403,7 @@ std::ios::pos_type CFluidProperties::Read(std::ifstream* mfp_file)
 
 				//OK4704
 				viscosity_pcs_name_vector.push_back("TEMPERATURE1");
-			if(viscosity_model == 4) // my(T), ???
+			if(viscosity_model == 4) // my(T), after de Marsily ..see viscosity function
 			{
               viscosity_pcs_name_vector.push_back("TEMPERATURE1"); // added by CB 
 			}
@@ -1584,7 +1584,10 @@ double CFluidProperties::LiquidViscosity_Yaws_1976(double T)
 double CFluidProperties::LiquidViscosity_Marsily_1986(double T)
 {
 	double my;
-	my = 2.285e-5 + 1.01e-3 * log(T);
+//	my = 2.285e-5 + 1.01e-3 * log(T);     kg44: I guess this is dynamic viscosity of water...which should decrease with temperature ...but the formula actually results in increase with temperature!
+	// we limit the value for temperatures up to 100 degrees C
+	if (T> 373.15) T=373.15;
+        my = 2.414e-5 * pow(10.0, 247.8 / (T-140.0));  // kg44: from wikipedia: my=A x pow(10,B/(T-C)) C in K B in K A in Pa s ..T in K
 	return my;
 }
 

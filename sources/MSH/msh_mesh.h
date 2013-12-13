@@ -219,13 +219,23 @@ public:
         {
 	   return loc_NodesNumber_Quadratic; 
         }
-        
+        /// Get number of nodes of the subdomain mesh including shadow nodes      
+        int getNumNodesLocal_s() const
+        {
+	   return NodesNumber_Linear; 
+        }
+        /// Get number of nodes of the subdomain mesh of quadratic elements including shadow nodes     
+        int getNumNodesLocal_Q_s() const
+        {
+	   return NodesNumber_Quadratic; 
+        }        
+        /// return number of nodes for subdomain including shadow nodes
         size_t NodesInUsagePETSC() const
 	{
 		if (useQuadratic)
-			return loc_NodesNumber_Quadratic;
+			return NodesNumber_Quadratic; //kg44 ... test if this solves problem with initial values
 		else
-			return loc_NodesNumber_Linear;
+			return NodesNumber_Linear;   // kg44 ... test if this solves problem with initial values
 	}
 
 #endif
