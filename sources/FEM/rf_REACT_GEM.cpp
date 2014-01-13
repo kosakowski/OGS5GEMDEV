@@ -798,14 +798,14 @@ short REACT_GEM::Init_RUN(string Project_path)
 	if ( flowflag == 3 )                    //this is only for Richards flow
 	{
 // TODO for petsc probably need to synchronize the pressure field here (as shadow nodes are not initializee via surfaces/volumes/plylines etc)
-	        rwmutex.lock();
+
 		cout << "GEM-INIT: ";
-		rwmutex.unlock();
+
 		if ( m_flow_pcs->saturation_switch == true )
 		{
-		        rwmutex.lock();
+
 			cout << "CalcSaturationRichards " << "\n";
-			rwmutex.unlock();
+
 			//is true here correct?
 			m_flow_pcs->CalcSaturationRichards ( 1, true );
 		}                                // JOD
@@ -813,9 +813,9 @@ short REACT_GEM::Init_RUN(string Project_path)
 		{
 			//WW
 			m_flow_pcs->CalcSecondaryVariablesUnsaturatedFlow ( true );
-			rwmutex.lock();
+
 			cout << " CalcSecondaryVariablesUnsaturatedFlow" << "\n";
-			rwmutex.unlock();
+
 		}
 
 		//TODO for petsc we may need to synchronize saturations ...have to check!
@@ -839,7 +839,7 @@ short REACT_GEM::Init_RUN(string Project_path)
 
 //    else  test: we do this always! ...should be safe ;-)
 	{
-		GetInitialReactInfoFromMassTransport ( 0 ); //get the initial values from MD ...IC are total B vectors - last time step! this is not necessary for restart
+		GetInitialReactInfoFromMassTransport ( 1 ); //get the initial values from MD ...IC are total B vectors - last time step! this is not necessary for restart
 	}
 
 	        // now we can check if gems should be calculated at this node!
@@ -1379,10 +1379,8 @@ double REACT_GEM::GetPressureValue_MT ( long node_Index, int timelevel )
 			     )
 			{
 				// then set it to 1.0 bar = 1.0e5 Pa;
-			        rwmutex.lock();
 				cout << " high pressure " << pressure << "\n";
 				pressure = 1.0e+05;
-				rwmutex.unlock();
 			}
 			break;
 
@@ -1432,9 +1430,7 @@ double REACT_GEM::GetPressureValue_MT ( long node_Index, int timelevel )
 #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
 			if ( myrank == 0 /*should be set to root*/ )
 #endif
-			rwmutex.lock(); 
 			cout << "Error: Not implemented for the flow in GEM case!!!" << "\n";
-			rwmutex.unlock();
 			pressure = 1.0e+05;
 			break;
 		}                          // end of switch case;
@@ -1442,9 +1438,7 @@ double REACT_GEM::GetPressureValue_MT ( long node_Index, int timelevel )
 	else
 	{
 		// if no valid flow pcs existing;
-	        rwmutex.lock();
 		cout << "Warning: No valid flow process!!" << flowflag << " setting pressure to default value 1e5Pa\n";
-	        rwmutex.unlock();
 		pressure = 1.0e+05;
 	}
 	return pressure;
@@ -1492,9 +1486,7 @@ short REACT_GEM::SetPressureValue_MT ( long node_Index, int timelevel, double pr
 #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
 			if ( myrank == 0 /*should be set to root*/ )
 #endif
-			rwmutex.lock();
 			cout << "Error: Not implemented for the flow in GEM case!!!" << "\n";
-			rwmutex.unlock();
 			break;
 		}
 	}
@@ -1503,9 +1495,7 @@ short REACT_GEM::SetPressureValue_MT ( long node_Index, int timelevel, double pr
 #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
 		if ( myrank == 0 /*should be set to root*/ )
 #endif
-		rwmutex.lock();
 		cout << "Warning: No valid flow process!! " << flowflag << "\n";
-		rwmutex.unlock();
 		return 0;
 	}
 	return 1;
@@ -1608,17 +1598,13 @@ double REACT_GEM::GetDCValueSpecies_MT ( long node_Index, int timelevel, int iDc
 				}
 				else
 				{
-				  rwmutex.lock();
 					cout << "Error in GetDCValueSpecies_MT ... return zero value\n";
-				  rwmutex.unlock();
 					DC_MT_cur = 0.0;
 				}
 			}
 			else
 			{
-			        rwmutex.lock();
 				cout << "Error in GetDCValueSpecies_MT ... return zero value\n" ;
-				rwmutex.unlock();
 				DC_MT_cur = 0.0;
 			}
 
@@ -1799,9 +1785,7 @@ int REACT_GEM::SetPorosityValue_MT ( long ele_Index,  double m_porosity_Elem, in
 #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
 			if ( myrank == 0 /*should be set to root*/ )
 #endif
-			rwmutex.lock();
 			cout << "Error: Not implemented for the flow in GEM case!!!" << "\n";
-			rwmutex.unlock();
 			break;
 		}
 	}
@@ -1850,9 +1834,7 @@ int REACT_GEM::SetSourceSink_MT ( long in, double time_step_size /*in sec*/ )
 #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
 		if ( myrank == 0 /*should be set to root*/ )
 #endif
-		rwmutex.lock();
 		cout << "Error: Not implemented for the flow in GEM case!!!" << "\n";
-		rwmutex.unlock();
 		break;
 	}
 	return 0;
@@ -2112,9 +2094,7 @@ void REACT_GEM::ConvPorosityNodeValue2Elem ( int i_timestep )
 	}
 	if ( i_timestep == 1 )
 	{
-	   rwmutex.lock();
            cout << "min, max porosity: " << pormin << " " << pormax << "\n";       //only output for current time step....old time step will give wrong values
-	   rwmutex.unlock();
 	}
 }
 
@@ -2142,11 +2122,9 @@ double REACT_GEM::FluidDensity(long elem, int gaussnode,  CFiniteElementStd* fem
 	{
 		if (!fem)
 		{
-		       rwmutex.lock();
 			cout <<
 			        "DEBUG REACTGEM: fluiddensity from gauss node failed: could not get fem"
 			     << "\n";
-			 rwmutex.unlock();
 			return density; //make sure call to interpolate does not fail
 		}
 		NodalVal_BG = new double [size_m]; //BG
@@ -2382,9 +2360,7 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
 #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
 		if ( myrank == 0 /*should be set to root*/ )
 #endif
-		rwmutex.lock();
 		cout << "Error: Not implemented for the flow in GEM case!!!" << "\n";
-		rwmutex.unlock();
 		break;
 	}
 #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
@@ -2532,18 +2508,14 @@ int REACT_GEM::ConcentrationToMass ( long l /*idx of node*/, int i_timestep )
 	default:
 #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
 		if ( myrank == 0 /*should be set to root*/ )
-#endif
-		rwmutex.lock();  
+#endif 
 		cout << "Error: Not implemented for the flow in GEM case!!!" << "\n";
-		rwmutex.unlock();
 		break;
 	}
 
 	if ( ( water_volume < min_possible_porosity ) || ( water_volume > 1.0 ) )
 	{
-	        rwmutex.lock();
 		cout << "conctomass water volume " << water_volume << " at node: " << l << "\n";
-		rwmutex.unlock();
 #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
 		MPI_Finalize();                     //make sure MPI exits
 #endif
@@ -3286,7 +3258,6 @@ int REACT_GEM::CalcReactionRate ( long in, double temp,  TNode* m_Node )
 			// test for NaN!! ---seems necessary as sometimes rra, rrn, rrb get Inf! ---seems enough to test the upper limit---this test does not resolve the real problem ;-)...probably pow(0.0,0.0) for rra,rrn,rrb ?
 			if ( !( dmdt[in * nPH + k] <= 1.0 ) && !( dmdt[in * nPH + k] > 1.0 ) )
 			{
-			       rwmutex.lock();
 				cout << "failed " << m_kin[ii].phase_name << "at node " << in <<
 				        " dmdt " << dmdt << " is NaN " << " sa " << sa << " rra " <<
 				rra <<
@@ -3297,7 +3268,7 @@ int REACT_GEM::CalcReactionRate ( long in, double temp,  TNode* m_Node )
 				        dmdt[in * nPH +
 				             k] << " omegaPhase " <<
 				omega_phase[in * nPH + k] << "\n";
-				rwmutex.unlock();
+
 				dmdt[in * nPH + k] = 0.0; // no change!
 			}
 			// calculate max kinetic time step
