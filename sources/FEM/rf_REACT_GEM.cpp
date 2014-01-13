@@ -839,7 +839,7 @@ short REACT_GEM::Init_RUN(string Project_path)
 
 //    else  test: we do this always! ...should be safe ;-)
 	{
-		GetInitialReactInfoFromMassTransport ( 1 ); //get the initial values from MD ...IC are total B vectors - last time step! this is not necessary for restart
+		GetInitialReactInfoFromMassTransport ( 0 ); //get the initial values from MD ...IC are total B vectors - last time step! this is not necessary for restart
 	}
 
 	        // now we can check if gems should be calculated at this node!
@@ -1440,10 +1440,13 @@ double REACT_GEM::GetPressureValue_MT ( long node_Index, int timelevel )
 		}                          // end of switch case;
 	}                                 // end of if (flow_flag);
 	else
+	{
 		// if no valid flow pcs existing;
 	        rwmutex.lock();
-		cout << "Warning: No valid flow process!!" << "\n";
+		cout << "Warning: No valid flow process!!" << flowflag << " setting pressure to default value 1e5Pa\n";
 	        rwmutex.unlock();
+		pressure = 1.0e+05;
+	}
 	return pressure;
 }
 
@@ -1501,7 +1504,7 @@ short REACT_GEM::SetPressureValue_MT ( long node_Index, int timelevel, double pr
 		if ( myrank == 0 /*should be set to root*/ )
 #endif
 		rwmutex.lock();
-		cout << "Warning: No valid flow process!!" << "\n";
+		cout << "Warning: No valid flow process!! " << flowflag << "\n";
 		rwmutex.unlock();
 		return 0;
 	}
@@ -4434,21 +4437,15 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 
                 rwmutex.lock();
                 cout << " Error: Init Loop failed when running GEM on Node #" << in << "." << "\n";
-                cout << "Returned Error Code: " << m_NodeStatusCH[in] << "\n";
-                t_Node->GEM_write_dbr ( "dbr_for_crash_node_init_thread.txt" );
-                t_Node->GEM_print_ipm ( "ipm_for_crash_node_init_thread.txt" );
+                cout << "Returned Error Code: " << m_NodeStatusCH[in] << "  we proceed!\n";
+               // t_Node->GEM_write_dbr ( "dbr_for_crash_node_init_thread.txt" );
+               // t_Node->GEM_print_ipm ( "ipm_for_crash_node_init_thread.txt" );
                 rwmutex.unlock();
-   #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
-                MPI_Finalize();                 //make sure MPI exits
-   #endif
-
-                exit ( 1 );
+//   #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
+//                MPI_Finalize();                 //make sure MPI exits
+//   #endif
+//                exit ( 1 );
  
-				rwmutex.lock();
-				cout <<
-				        "error: Initial GEMs run after Read GEMS gives bad result..proceed in any case. node: "
-				     << in << "\n";
-				rwmutex.unlock();
 			}
 			else if (( m_NodeStatusCH[in] == BAD_GEM_AIA || m_NodeStatusCH[in] ==
 			           BAD_GEM_SIA ))
@@ -4528,13 +4525,13 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 				        " Error: Init Loop second pass failed when running GEM on Node #"
 				     <<
 				        in << "." << "\n";
-				cout << "Returned Error Code: " << m_NodeStatusCH[in] << "\n";
-				t_Node->GEM_write_dbr ( "dbr_for_crash_node_init2.txt" );
+				cout << "Returned Error Code: " << m_NodeStatusCH[in] << " we proceed\n";
+				// t_Node->GEM_write_dbr ( "dbr_for_crash_node_init2.txt" );
 				rwmutex.unlock();
-#if defined(USE_MPI_GEMS) || defined(USE_PETSC)
-				MPI_Finalize();     //make sure MPI exits
-#endif
-				exit ( 1 );
+//#if defined(USE_MPI_GEMS) || defined(USE_PETSC)
+//				MPI_Finalize();     //make sure MPI exits
+//#endif
+//				exit ( 1 );
 			}
 			else if ( m_NodeStatusCH[in] == BAD_GEM_AIA || m_NodeStatusCH[in] ==
 			          BAD_GEM_SIA )
