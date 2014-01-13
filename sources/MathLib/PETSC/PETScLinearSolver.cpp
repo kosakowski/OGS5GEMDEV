@@ -227,14 +227,14 @@ void PETScLinearSolver::Solver()
    PetscLogDouble v1,v2;
    KSPConvergedReason reason;
 
-   // #define PETSC34
    //kg44 quick fix to compile PETSC with version PETSCV3.4
 #ifdef USEPETSC34
    PetscTime(&v1);
 #else
    PetscGetTime(&v1);
 #endif
-
+   
+   KSPSetOperators(lsolver, A, A, DIFFERENT_NONZERO_PATTERN); 
    KSPSolve(lsolver, b, x);
   
    KSPGetConvergedReason(lsolver,&reason); //CHKERRQ(ierr);
