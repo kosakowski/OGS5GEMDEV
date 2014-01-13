@@ -4496,13 +4496,13 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 				        " Error: Init Loop second pass failed when running GEM on Node #"
 				     <<
 				        in << "." << "\n";
-				cout << "Returned Error Code: " << m_NodeStatusCH[in] << " we proceed\n";
+				cout << "Returned Error Code: " << m_NodeStatusCH[in] << " we ABORT\n";
 				// t_Node->GEM_write_dbr ( "dbr_for_crash_node_init2.txt" );
 				rwmutex.unlock();
-//#if defined(USE_MPI_GEMS) || defined(USE_PETSC)
-//				MPI_Finalize();     //make sure MPI exits
-//#endif
-//				exit ( 1 );
+#if defined(USE_MPI_GEMS) || defined(USE_PETSC)
+				MPI_Finalize();     //make sure MPI exits
+#endif
+				exit ( 1 );
 			}
 			else if ( m_NodeStatusCH[in] == BAD_GEM_AIA || m_NodeStatusCH[in] ==
 			          BAD_GEM_SIA )
