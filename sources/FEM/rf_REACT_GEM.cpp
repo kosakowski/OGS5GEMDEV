@@ -596,10 +596,10 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
 			if ( myrank == 0 /*should be set to root*/ )
 #endif
-			rwmutex.lock();
+
 			cout <<
 			        "Richards flow used and only the water pahse is defined in GEMS...please add a gas phase.\n";
-			rwmutex.unlock();
+
 			exit ( 1 );
 		}
 
@@ -725,10 +725,8 @@ short REACT_GEM::Init_RUN(string Project_path)
             exit ( 1 );
         }
         else
-	    rwmutex.lock();
             cout << "GEM Kinetics phase number:  " << m_kin[ii].phase_name <<
-                 " in phase number " << m_kin[ii].phase_number << "\n";
-	    rwmutex.unlock();	 
+                 " in phase number " << m_kin[ii].phase_number << "\n"; 
     }
     // and now identify the componets that are kinetically controlled
     for ( ii = 0; ii < ( int ) m_constraints.size(); ii++ ) // this loop is for identifying kinetically controlled phases
@@ -758,6 +756,7 @@ short REACT_GEM::Init_RUN(string Project_path)
 
 
     }
+     
    	// Marking species with fixed concentrations (in boundary nodes)
 	// first we check the boundary nodes with fixed concentrations
 	// this is adopted from rf_REACT_BRNS...we only look for the first species, as with GEMS we should define boundary conditions for ALL species
