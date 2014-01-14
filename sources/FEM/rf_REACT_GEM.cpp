@@ -4376,8 +4376,8 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 		REACT_GEM::SetReactInfoBackGEM ( in,t_Node ); // thcc1p.pcs.initialis is necessary, otherwise the correct data is not available
 
 		// Order GEM to run
-		tdBR->NodeStatusCH = NEED_GEM_AIA;
-		m_NodeStatusCH[in] = t_Node->GEM_run ( false );
+		tdBR->NodeStatusCH = NEED_GEM_SIA;
+		m_NodeStatusCH[in] = t_Node->GEM_run ( true );
 		//                t_Node->GEM_write_dbr ( "dbr_for_crash_node_init_thread_1.txt" );
 
 		REACT_GEM::GetReactInfoFromGEM ( in, t_Node); // test case..get the data even if GEMS failed
@@ -4462,9 +4462,9 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 		REACT_GEM::SetReactInfoBackGEM ( in,t_Node ); // this is necessary, otherwise the correct data is not available
 
 		// Order GEM to run
-		tdBR->NodeStatusCH = NEED_GEM_AIA;
+		tdBR->NodeStatusCH = NEED_GEM_SIA;
 
-		m_NodeStatusCH[in] = t_Node->GEM_run ( false );
+		m_NodeStatusCH[in] = t_Node->GEM_run ( true );
 
 		if ( ( m_NodeStatusCH[in] == ERR_GEM_AIA || m_NodeStatusCH[in] == ERR_GEM_SIA ) )
 		{
@@ -4575,8 +4575,8 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 				oldvolume = m_Vs[in];
 
 				// Order GEM to run
-				tdBR->NodeStatusCH = NEED_GEM_AIA; // first try without simplex using old solution
-				m_NodeStatusCH[in] = t_Node->GEM_run ( false );
+				tdBR->NodeStatusCH = NEED_GEM_SIA; // first try without simplex using old solution
+				m_NodeStatusCH[in] = t_Node->GEM_run ( true );
 
 				if ( !( m_NodeStatusCH[in] == OK_GEM_AIA || m_NodeStatusCH[in] ==
 				        OK_GEM_SIA || m_NodeStatusCH[in] == BAD_GEM_AIA ||
