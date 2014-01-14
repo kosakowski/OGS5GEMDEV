@@ -4488,21 +4488,35 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 			tdBR->NodeStatusCH = NEED_GEM_AIA;
 			m_NodeStatusCH[in] = t_Node->GEM_run ( false );
 			//            m_Node->GEM_write_dbr ( "dbr_for_crash_node_fail2.txt" );
-			if ( ( m_NodeStatusCH[in] == ERR_GEM_AIA || m_NodeStatusCH[in] ==
-			       ERR_GEM_SIA ) )
+			if ( ( m_NodeStatusCH[in] == ERR_GEM_AIA || m_NodeStatusCH[in] == ERR_GEM_SIA ) )
 			{
-				rwmutex.lock();
-				cout <<
-				        " Error: Init Loop second pass failed when running GEM on Node #"
-				     <<
-				        in << "." << "\n";
-				cout << "Returned Error Code: " << m_NodeStatusCH[in] << " we ABORT\n";
-				// t_Node->GEM_write_dbr ( "dbr_for_crash_node_init2.txt" );
-				rwmutex.unlock();
+			    rwmutex.lock();
+			    cout <<
+			    " Error: Init Loop second pass failed when running GEM on Node #" << in << "." << "\n";
+			    cout << "Returned Error Code: " << m_NodeStatusCH[in] << " we ABORT\n";
+			    
+			    string rank_str;
+			    rank_str = "0";
+
+			    int rank=0;
+#if defined(USE_MPI_GEMS) || defined(USE_PETSC)			    
+			    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif			    
+			    stringstream ss (stringstream::in | stringstream::out);
+			    ss.clear();
+			    ss.str("");
+			    ss << rank << "_node-"<<in;
+			    rank_str = ss.str();
+			    ss.clear();
+			    // write out a separate time stamp into file
+			    string m_file_namet = "init2_fail_dbr_domain-" + rank_str + ".dat";
+	
+			    t_Node->GEM_write_dbr ( m_file_namet.c_str() );
+			    rwmutex.unlock();
 #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
-				MPI_Finalize();     //make sure MPI exits
+			    MPI_Finalize();     //make sure MPI exits
 #endif
-				exit ( 1 );
+			    exit ( 1 );
 			}
 			else if ( m_NodeStatusCH[in] == BAD_GEM_AIA || m_NodeStatusCH[in] ==
 			          BAD_GEM_SIA )
