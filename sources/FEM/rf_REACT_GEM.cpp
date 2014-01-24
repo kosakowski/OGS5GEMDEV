@@ -2791,7 +2791,13 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
 		{
 			// subkeyword found
 			in.str ( GetLineFromFile1 ( gem_file ) );
-			in >> flag_coupling_hydrology;
+			in >> flag_coupling_hydrology; 
+			flowflag = GetFlowType_MT(); // flowflag not yet initialized..it is save to do it here, as it is only overwritten later with the same value
+			if ((flag_coupling_hydrology != 1)&& (flowflag == 3)) // current implementation requires that this is set to one for Richards flow!
+			{
+			 cout << "set flag_coupling_hydrology = 1 for Richards flow\n";
+			 flag_coupling_hydrology = 1;
+			}
 			in.clear();
 			continue;
 		}
