@@ -5,7 +5,7 @@ set( SOURCES
     StepperBulischStoer.h
 	BoundaryCondition.h
 	break.h
-	ca_hydration.h
+	conversion_rate.h
 	display.h
 	eos.h
 	fem_ele.h
@@ -61,7 +61,7 @@ set( SOURCES
 	Stiff_Bulirsch-Stoer.cpp
 	BoundaryCondition.cpp
 	break.cpp
-	ca_hydration.cpp
+	conversion_rate.cpp
 	display.cpp
 	eos.cpp
 	fem_ele.cpp

@@ -17,6 +17,8 @@ public:
 	static void box(const QString &e);
 	static void box(const QString &e, const QString &t);
 
+	static bool question(const QString &e, const QString &t);
+
 protected:
 	OGSError();
 	~OGSError();

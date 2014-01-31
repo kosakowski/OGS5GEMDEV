@@ -612,8 +612,7 @@ void CInitialCondition::SetEle(int nidx)
 **************************************************************************/
 void CInitialCondition::SetPolyline(int nidx)
 {
-  	CGLPolyline* m_ply = GEOGetPLYByName(geo_name);
-	if (this->getProcessDistributionType() == FiniteElement::CONSTANT)
+ 	if (this->getProcessDistributionType() == FiniteElement::CONSTANT)
 	{
 		//		CGLPolyline* m_polyline = polyline_vector[getGeoObjIdx()];
 		//		if (m_polyline) {
@@ -1080,3 +1079,4 @@ CInitialCondition* ICGet(string ic_name)
 	}
 	return NULL;
 }
+

@@ -271,6 +271,24 @@ double CFluidProperties::phi_0_t (double T) const
  ***********************************************************************/
 double CFluidProperties::phi_0_tt (double T) const
 {
+		if (fluid_id == 3) // N2
+	{
+		double a[6];
+		const double tau (Tc / T);
+
+		a[0] = 2.5;
+		a[1] = -1.934819e-4;
+		a[2] = -1.247742e-5;
+		a[3] = 6.678326e-8;
+		a[4] = 1.012941;
+		a[5] = 26.65788;
+
+		const double exp_a8 (exp(a[5]*tau));
+		const double phi_zero_tt = (-a[0] + 2.0*a[1]/tau + 6.0*a[2]/tau/tau + 12*a[3]/tau/tau/tau - a[4]*a[5]*a[5]*tau*tau*exp_a8/((exp_a8-1.0)*(exp_a8-1.0)))/(tau * tau);
+		return phi_zero_tt;
+	}
+	else
+	{
 	double phi_d = 0,phi_e = 0;
 	double tau;
 	int i;
@@ -283,6 +301,7 @@ double CFluidProperties::phi_0_tt (double T) const
 		         (k[1][i] * k[1][i]) * exp(-k[1][i] * tau) * pow(1 - exp(-k[1][i] * tau),-2));
 
 	return 0 - phi_d - phi_e;
+		}
 }
 
 /**********************************************************************
@@ -568,6 +587,44 @@ double enthalpy (double rho, double T, int c)
 }
 
 /**********************************************************************
+   Function for calculating isobaric heat capacity depending on Temperature.
+
+   linearised in a specified temperature interval for typical technological applications
+ ***********************************************************************/
+
+double linear_heat_capacity(double T, int c)
+{
+
+	double Tl[2] ,cpl[2]; //temperature limits in K, capacity limits in J/kg/K
+
+	switch (c) {
+		case 1: //H2O
+			Tl[0] = 275.0;
+			Tl[1] = 1000.0;
+			cpl[0] = 1859.0;
+			cpl[1] = 2288.0;
+			break;
+		case 3: //N2  1056.8+(1146.4-1056.8)/(900.0-500.0)*(variables[1]-500.0);
+			Tl[0] = 275.0;
+			Tl[1] = 1200.0;
+			cpl[0] = 1039.0;
+			cpl[1] = 1204.0;
+			break;
+		case 5: //O2
+			Tl[0] = 275.0;
+			Tl[1] = 1200.0;
+			cpl[0] = 915.0;
+			cpl[1] = 1115.0;
+			break;
+		default:
+			std::cout << "WARNING: Fluid not specified in linear_heat_capacity. Setting cp to 1000.\n";
+			return 1000.0;
+	}
+
+	return (cpl[0] + (cpl[1]-cpl[0])/(Tl[1]-Tl[0])*(T-Tl[0]));
+}
+
+/**********************************************************************
    Function for calculating isochoric heat capacity depending on density and
    Temperature.
 
@@ -833,6 +890,90 @@ double h2o_viscosity_IAPWS (double rho, double T)
 }
 
 /**********************************************************************
+   Function for calculating viscosity of oxygen at a density rho and
+   a temperature T.
+   Programming: NB/TN
+   see Lemmon & Jacobson, Int J of Thermophys, 25(1), 2004
+ ***********************************************************************/
+double o2_viscosity (double rho, double T)
+{
+	const double MM (32.0); //
+	const double sigma_squared (0.11751184); // nm^2
+	const double ek (118.5); //K
+	const double T_c (154.581); //K
+	const double rho_c (13.63);
+
+	rho /= MM; // convert density in mol/dm^3
+
+
+	double b[5];
+
+	b[0] = 0.431;
+	b[1] = -0.4623;
+	b[2] = 0.08406;
+	b[3] = 0.005341;
+	b[4] = -0.00331;
+
+	double exponent (0);
+
+	for (unsigned i=0; i<5; i++)
+		exponent += b[i] * MathLib::fastpow(log(T/ek),i);
+
+	const double Omega = exp(exponent);
+	const double eta_0 = 0.0266958*pow(MM*T,0.5)/sigma_squared/Omega;
+	double rho_min (0.2); // densities lower than that do not influence eta_r (less than 1%)
+	 if (rho < rho_min) return eta_0*1e-6;	// for better efficiency near dilute gas (eta in Pa*s)
+
+	double N[5];
+	double t[5];
+	int d[5];
+	int l[5];
+	int gamma[5];
+
+
+	N[0] = 17.67;
+	N[1] = 0.4042;
+	N[2] = 0.0001077;
+	N[3] = 0.3510;
+	N[4] = -13.67;
+
+	t[0] = 0.05;
+	t[1] = 0.0;
+	t[2] = 2.1;
+	t[3] = 0.0;
+	t[4] = 0.5;
+
+	d[0] = 1;
+	d[1] = 5;
+	d[2] = 12;
+	d[3] = 8;
+	d[4] = 1;
+
+	l[0] = 0;
+	l[1] = 0;
+	l[2] = 0;
+	l[3] = 1;
+	l[4] = 2;
+
+	gamma[0] = 0;
+	gamma[1] = 0;
+	gamma[2] = 0;
+	gamma[3] = 1;
+	gamma[4] = 1;
+
+	const double tau = T_c/T;
+	const double delta = rho/rho_c;
+	double eta_r (0);
+
+	for (unsigned i=0; i<5; i++)
+	{
+		eta_r += N[i]*pow(tau,t[i])*MathLib::fastpow(delta,d[i])*exp(-gamma[i]*MathLib::fastpow(delta,l[i]));
+	}
+
+	return (eta_0+eta_r)*1e-6; // returns viscosity in Pa*s
+}
+
+/**********************************************************************
    Viscosity for different Fluids
 
    Programming: NB 4.8.01
@@ -861,6 +1002,9 @@ double Fluid_Viscosity (double rho, double T, double p, int fluid)
 
 	case 3:                               // Nitrogen
 		h = n2_viscosity (rho,T);
+		break;
+	case 5:
+		h = o2_viscosity(rho,T);		  // Oxygen
 		break;
 	default:   h = 1E-3;
 	}
@@ -895,6 +1039,9 @@ double Fluid_Heat_Conductivity (double rho, double T, int fluid)
 		break;
 	case 4:                               // NITROGEN
 		h = n2_heat_conductivity (rho,T);
+		break;
+	case 5:
+		h = o2_heat_conductivity (rho,T); //OXYGEN
 		break;
 
 	default:   h = 0.5;
@@ -1496,11 +1643,107 @@ double n2_viscosity (double rho, double T)
 }
 
 /**********************************************************************
-   Function for calculating thermal conductivity of nitrogen (N2) depending
+   Function for calculating thermal conductivity of oxygen (O2) depending
    on density and Temperature.
 
    see
    Stephan, Krauss and Laeseke: Viscosity and themal conductivity of fluid
+   Nitrogen, J. Chem. Phys. Ref. Data,Vol. 16, No. 4, 1987.
+
+   Programming: TN
+   see Lemmon & Jacobson, Int J of Thermophys, 25(1), 2004
+ ***********************************************************************/
+double o2_heat_conductivity (double rho, double T)
+{
+	const double MM (32.0); //
+	const double sigma_squared (0.11751184); // nm^2
+	const double ek (118.5); //K
+	const double T_c (154.581); //K
+	const double rho_c (13.63);
+
+	rho /= MM; // convert density in mol/dm^3
+
+	const double tau = T_c/T;
+	const double delta = rho/rho_c;
+
+	double b[5];
+
+	b[0] = 0.431;
+	b[1] = -0.4623;
+	b[2] = 0.08406;
+	b[3] = 0.005341;
+	b[4] = -0.00331;
+
+	double exponent (0);
+
+	for (unsigned i=0; i<5; i++)
+		exponent += b[i] * MathLib::fastpow(log(T/ek),i);
+
+	const double Omega = exp(exponent);
+	const double eta_0 = 0.0266958*pow(MM*T,0.5)/sigma_squared/Omega;
+
+	double N[9], t[8];
+	N[0] = 1.036;
+	N[1] = 6.283;
+	N[2] = -4.262;
+	N[3] = 15.31;
+	N[4] = 8.898;
+	N[5] = -0.7336;
+	N[6] = 6.728;
+	N[7] = -4.374;
+	N[8] = -0.4747;
+
+	t[0] = -0.9;
+	t[1] = -0.6;
+	t[2] = 0.0;
+	t[3] = 0.0;
+	t[4] = 0.3;
+	t[5] = 4.3;
+	t[6] = 0.5;
+	t[7] = 1.8;
+
+	const double lam_0 = N[0] * eta_0 + N[1]*pow(tau,t[0]) + N[2]*pow(tau,t[1]); //note counting is different due to different array sizes
+
+	int d[6], l[6], gamma[6];
+
+	d[0] = 1;
+	d[1] = 3;
+	d[2] = 4;
+	d[3] = 5;
+	d[4] = 7;
+	d[5] = 10;
+
+	l[0] = 0;
+	l[1] = 0;
+	l[2] = 0;
+	l[3] = 2;
+	l[4] = 2;
+	l[5] = 2;
+
+	gamma[0] = 0;
+	gamma[1] = 0;
+	gamma[2] = 0;
+	gamma[3] = 1;
+	gamma[4] = 1;
+	gamma[5] = 1;
+
+	double lam_r (0);
+
+	for (unsigned i=0; i<6; i++)
+	{
+		lam_r += N[i+3]*pow(tau,t[i+2])*MathLib::fastpow(delta,d[i])*exp(-gamma[i]*MathLib::fastpow(delta,l[i]));
+	}
+
+	return (lam_0 + lam_r)*1e-3; //convert mW/m/K into W/m/K
+
+}
+
+/**********************************************************************
+   Function for calculating thermal conductivity of nitrogen (N2) depending
+   on density and Temperature.
+
+   see
+   Stephan, Krauss and Laeseke: Viscosity and thermal conductivity of fluid
    Nitrogen, J. Chem. Phys. Ref. Data,Vol. 16, No. 4, 1987.
 
    Programming: NB
@@ -3040,6 +3283,8 @@ void CFluidProperties::therm_prop (string caption)
 		k[1][5] = 20.44072;
 		k[1][6] = 29.93949;
 		k[1][7] = 79.13892;
+
+
 		//real gas part
 		K[0][0] =  0.924803575275;
 		K[0][1] = -0.492448489428;
@@ -3217,6 +3462,17 @@ void CFluidProperties::therm_prop (string caption)
 		pc = 1297000;             // [Pa]
 		omega = -0.215;           // azentric factor, see PREOS
 		molar_mass = 2.015894;
+		// Limits sums in FHE-derivations
+		break;
+	}
+	case 'O':                             // Oxygen
+	{
+		fluid_id = 5;
+		//rhoc = 313.6;             // [kg/m3]
+		//Tc = 33.30;               // [K]
+		//pc = 1297000;             // [Pa]
+		//omega = -0.215;           // azentric factor, see PREOS
+		//molar_mass = 2.015894;
 		// Limits sums in FHE-derivations
 		break;
 	}

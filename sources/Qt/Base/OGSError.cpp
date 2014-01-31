@@ -35,3 +35,17 @@ void OGSError::box(const QString &e, const QString &t)
 	msgBox.setText(e);
 	msgBox.exec();
 }
+
+bool OGSError::question(const QString &e, const QString &t)
+{
+	QMessageBox msgBox;
+	msgBox.setWindowTitle(t);
+	msgBox.setText(e);
+	msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+	msgBox.setDefaultButton(QMessageBox::Cancel);
+
+	if (msgBox.exec() == QMessageBox::Ok)
+		return true;
+	return false;
+}
+

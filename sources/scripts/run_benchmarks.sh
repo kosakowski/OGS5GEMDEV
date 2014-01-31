@@ -33,7 +33,7 @@ rm -rf $SOURCE_LOCATION/../benchmarks/results/*.html
 # Goto sources directory
 cd $SOURCE_LOCATION >/dev/null
 
-if [ -d ".svn" ]; then
+if [ -d ".svn" ] || [ -d "../.svn" ]; then
 	# Get svn information
 	svn info > $BUILD_LOCATION/svnInfo.txt
 elif [ -d ".git" ]; then

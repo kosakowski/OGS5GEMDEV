@@ -1,4 +1,4 @@
-﻿#ifndef _STEPPERBULISCHSTOER_H
+#ifndef _STEPPERBULISCHSTOER_H
 #define _STEPPERBULISCHSTOER_H
 
 #include <limits>
@@ -76,7 +76,7 @@ public:
 
 		k_targ= MAX((size_t)1, MIN( KMAXX-1,(size_t)logfact) ); // Initial estimate of optimal k.
 
-		for ( k=0; k<IMAXX;  k++) // Coeﬃcients in equation (17.3.8).
+		for ( k=0; k<IMAXX;  k++) // Coecients in equation (17.3.8).
 		{
 			for  ( l=0; l<k;  l++)
 			{
@@ -233,9 +233,9 @@ public:
 			// 	throw( "step size underflow  in  StepperBS");
 		
 
-			int ipt=-1; // Initialize counter for saving stuﬀ.
+			int ipt=-1; // Initialize counter for saving stu.
 
-			for (k=0; k<=k_targ+1; k++) // Evaluate the sequence of modiﬁed midpoint integrations.
+			for (k=0; k<=k_targ+1; k++) // Evaluate the sequence of modied midpoint integrations.
 			{
 				dy(ysav,h,k,yseq,ipt, derivs_class);
 				if (k == 0)
@@ -474,7 +474,7 @@ public:
 
 			for ( kk=kmi/2;  kk<=k;  kk++)
 			{   
-				//Compute diﬀerences.
+				//Compute dierences.
 				lbeg=ipoint[kk+1]-1;
 				lend=ipoint[kk]+kmi;
 				if (kmi  ==  1)
@@ -502,7 +502,7 @@ public:
 
 		}
 
-		dense_interp(n,dens,mu); // Compute the interpolation coeﬃcients in dens.
+		dense_interp(n,dens,mu); // Compute the interpolation coecients in dens.
 		error=0.0; // Estimate the interpolation error.
 	
 		if ( mu >= 1)

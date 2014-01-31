@@ -21,21 +21,23 @@ public:
 
 private:
 	FileFinder createFileFinder();
+	bool fileExists(const std::string &file_name) const;
 
 private slots:
 	void convertGML2GLI(const QStringList &input, const QString &output);
 	void convertGLI2GML(const QStringList &input, const QString &output);
-	void convertCND2BC(const QStringList &input, const QString &output);
-	void convertBC2CND(const QStringList &input, const QString &output);
+	void convertVTU2MSH(const QStringList &input, const QString &output);
+	void convertMSH2VTU(const QStringList &input, const QString &output);
+	void convertCND2BC (const QStringList &input, const QString &output);
+	void convertBC2CND (const QStringList &input, const QString &output);
 
 	void on_gml2gliButton_pressed();
 	void on_gli2gmlButton_pressed();
+	void on_vtu2mshButton_pressed();
+	void on_msh2vtuButton_pressed();
 	void on_bc2cndButton_pressed();
 	void on_cnd2bcButton_pressed();
 	void on_closeDialogButton_pressed();
-
-signals:
-
 };
 
 #endif //OGSFILECONVERTER_H

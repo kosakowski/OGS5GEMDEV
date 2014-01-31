@@ -5031,6 +5031,11 @@ double CKinReact::GetDensity(int comp, long index)
 	//WW CRFProcess *m_pcs = NULL;
 
 	group = index;                        // avoid warning
+
+
+	cout << comp << " " << cp_vec.size() << " ";
+	cout << cp_vec[comp]->transport_phase << endl;
+
 	phase = cp_vec[comp]->transport_phase;
 
 	// Get material properties of element

@@ -1805,6 +1805,7 @@ double CFiniteElementStd::CalCoefMassTNEQ(int dof_index)
 		{
 		case 0:
 		{
+
 		eos_arg[0] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal0) + pcs->m_num->ls_theta*interpolate(NodalVal1); //NW include theta
 		val=poro/eos_arg[0];
 
@@ -1842,10 +1843,10 @@ double CFiniteElementStd::CalCoefMassTNEQ(int dof_index)
 		eos_arg[1] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_t0) + pcs->m_num->ls_theta*interpolate(NodalVal_t1); //NW include theta
 		eos_arg[2] =  (1-pcs->m_num->ls_theta)*interpolate(NodalVal_X0) + pcs->m_num->ls_theta*interpolate(NodalVal_X1); //NW include theta
 
-		double dxn_dxm = (COMP_MOL_MASS_N2 * (COMP_MOL_MASS_N2 * eos_arg[2] + COMP_MOL_MASS_WATER * (1.0 - eos_arg[2]))-COMP_MOL_MASS_N2*eos_arg[2]*(COMP_MOL_MASS_N2-COMP_MOL_MASS_WATER));
-		dxn_dxm /= ((COMP_MOL_MASS_N2 * eos_arg[2] + COMP_MOL_MASS_WATER * (1.0 - eos_arg[2]))*(COMP_MOL_MASS_N2 * eos_arg[2] + COMP_MOL_MASS_WATER * (1.0 - eos_arg[2])));
-		//alternative
-		val = (COMP_MOL_MASS_WATER-COMP_MOL_MASS_N2) * eos_arg[0] / (GAS_CONSTANT * eos_arg[1]) * dxn_dxm;
+		double dxn_dxm = cp_vec[0]->molar_mass * cp_vec[1]->molar_mass; //0 is inert, 1 is reactive
+		dxn_dxm /= ((cp_vec[0]->molar_mass * eos_arg[2] + cp_vec[1]->molar_mass * (1.0 - eos_arg[2]))*(cp_vec[0]->molar_mass * eos_arg[2] + cp_vec[1]->molar_mass * (1.0 - eos_arg[2])));
+
+		val = (cp_vec[1]->molar_mass-cp_vec[0]->molar_mass) * eos_arg[0] / (GAS_CONSTANT/1000.0 * eos_arg[1]) * dxn_dxm;
 		val *= poro;
 		#ifndef GAS_MASS_FORM
 		val /=  FluidProp->Density(eos_arg);
@@ -1859,7 +1860,6 @@ double CFiniteElementStd::CalCoefMassTNEQ(int dof_index)
 			val = -poro;
 		else
 			val = -poro*FluidProp->beta_T*eos_arg[1];
-			//val = -poro*FluidProp->beta_T*T_gas_gp[gp];
 		break;
 
 		case 5:
@@ -1911,9 +1911,7 @@ double CFiniteElementStd::CalCoefMassTNEQ(int dof_index)
 		eos_arg[0] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal0) + pcs->m_num->ls_theta*interpolate(NodalVal1); //NW include theta
 		eos_arg[1] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_t0) + pcs->m_num->ls_theta*interpolate(NodalVal_t1); //NW include theta
 		eos_arg[2] =  (1-pcs->m_num->ls_theta)*interpolate(NodalVal_X0) + pcs->m_num->ls_theta*interpolate(NodalVal_X1); //NW include theta
-		//poro = MediaProp->Porosity(Index,pcs->m_num->ls_theta);
 		val= poro* FluidProp->Density(eos_arg);
-		//val = poro*rho_gas_gp[gp];
 		break;
 		}
 		return val;
@@ -1932,7 +1930,12 @@ void CFiniteElementStd::CalCoefMassMCF()
     double arg_PV[6], retardation_factore[4], rho, beta_T, beta_p; 
     for(in = 0; in<nDF*nDF; in++) MassMatrixElements[in] = 0.0;
 	//ComputeShapefct(1);
-	for(in = 0; in<nDF; in++) arg_PV[in] = interpolate(NodalValue[in]);
+	for(in = 0; in<nDF; in++)
+	{
+		arg_PV[in] = interpolate(NodalValue[in]);
+		std::cout << "NB-debug: " << arg_PV[in] << "\n";
+	}
+
 	rho = FluidProp->Density(arg_PV);
 	poro = MediaProp->Porosity(Index,pcs->m_num->ls_theta);
 	beta_T = FluidProp->drhodT(arg_PV);
@@ -3701,7 +3704,7 @@ double CFiniteElementStd::CalCoefAdvection()
        case 9:
 		   eos_arg[0] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal0) + pcs->m_num->ls_theta*interpolate(NodalVal1);  //TN
 		   eos_arg[1] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_t0) + pcs->m_num->ls_theta*interpolate(NodalVal_t1); //TN
-		   eos_arg[2] =  1.0; //TN - only vapor component for specific heat capacity here!
+		   eos_arg[2] =  1.0; //TN - only reactive component for specific heat capacity here!
            val = - MediaProp->HeatTransferCoefficient(Index, pcs->m_num->ls_theta, this);
 		   val -= (1.0-MediaProp->Porosity(Index,pcs->m_num->ls_theta))*gp_ele->q_R[gp]*FluidProp->SpecificHeatCapacity(eos_arg); //TN
            break;
@@ -3709,7 +3712,7 @@ double CFiniteElementStd::CalCoefAdvection()
            val = MediaProp->HeatTransferCoefficient(Index, pcs->m_num->ls_theta, this);
 		   eos_arg[0] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal0) + pcs->m_num->ls_theta*interpolate(NodalVal1);  //TN
 		   eos_arg[1] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_t0) + pcs->m_num->ls_theta*interpolate(NodalVal_t1); //TN
-		   eos_arg[2] =  1.0; //TN - only vapor component for specific heat capacity here!
+		   eos_arg[2] =  1.0; //TN - only reactive component for specific heat capacity here!
 
 		   val += (1.0-MediaProp->Porosity(Index,pcs->m_num->ls_theta))*gp_ele->q_R[gp]*FluidProp->SpecificHeatCapacity(eos_arg); //TN
            break;
@@ -3778,7 +3781,7 @@ double CFiniteElementStd::CalCoefAdvection()
 		k_rel = MediaProp->NonlinearFlowFunction(Index, gp, pcs->m_num->ls_theta, this);
 		val = 1.0;
 #ifdef GAS_MASS_FORM
-		val = FluidProp->Density(eos_arg); //Moved here from CalcLaplace(); 
+		val = FluidProp->Density(eos_arg); //Moved here from CalcLaplace();
 #endif
 		val /= FluidProp->Viscosity(eos_arg);//Moved here from inside dim*dim loop
 
@@ -3852,14 +3855,10 @@ double CFiniteElementStd::CalCoefAdvection()
 		eos_arg[2] =  (1-pcs->m_num->ls_theta)*interpolate(NodalVal_X0) + pcs->m_num->ls_theta*interpolate(NodalVal_X1); //NW include theta
 		poro = MediaProp->Porosity(Index,pcs->m_num->ls_theta);
 		tort = MediaProp->TortuosityFunction(Index,unit,pcs->m_num->ls_theta);
-		double diffusion_coefficient_component = cp_vec[0]->CalcDiffusionCoefficientCP(Index,pcs->m_num->ls_theta,pcs);
-		//may be faster with cp_vec[0]->diffusion_model_values[0]
-		//long group = MeshElement->GetPatchIndex(); //Diffusion in Wall very low (akin to permeability) TN - WALL
-		//if (group != 0)
-			//diffusion_coefficient_component *= 0.1;
+		double diffusion_coefficient_component = cp_vec[1]->CalcDiffusionCoefficientCP(Index,pcs->m_num->ls_theta,pcs);//coefficient of reactive (2nd) component
 
 		for (i = 0; i < dim; i++)
-			diffusion_tensor[i*dim+i] = tort*poro*FluidProp->Density(eos_arg)*diffusion_coefficient_component; //9.5e-5
+			diffusion_tensor[i*dim+i] = tort*poro*FluidProp->Density(eos_arg)*diffusion_coefficient_component; 
 		
 		for(i=0;i<dim*dim;i++)
 		    mat[i] = diffusion_tensor[i]; //TN
@@ -4732,7 +4731,6 @@ void CFiniteElementStd::CalcMass2()
                {
                   for (j = 0; j < nnodes; j++)
                      (*Mass2)(i+in*nnodes,j+jn*nnodes) += mat_fac *shapefct[i]*shapefct[j];
-				   //std::cout << "MASS "  << (*Mass2)(i+in*nnodes,j+jn*nnodes) << " " << mat_fac << "\n";
                }
             }
          }
@@ -6530,13 +6528,15 @@ void CFiniteElementStd::Assemble_Gravity_Multiphase()
  */
 
 //HS, TN 07/2013 Calculates Reaction rate
-void CFiniteElementStd::Cal_rho_s_TS()
+void CFiniteElementStd::CalcSolidDensityRate()
 {
-	  // ---- Gauss integral
-      int gp_r=0, gp_s=0, gp_t;
-	  double rho_react;
-	  //double dens, poro;
-	  //const double tol = 1.0e-2;
+	// ---- Gauss integral
+    int gp_r=0, gp_s=0, gp_t;
+	double rho_react;
+	double T_s, T_g, p_g, w_mf; 
+	double delta_t;
+	Eigen::VectorXd yy_rho_s;     // rho_s
+	Eigen::VectorXd dydxx_rho_s;  // d{rho_s}/dt
 	
 	//Find out material group - TN
 	long group = MeshElement->GetPatchIndex();
@@ -6565,54 +6565,41 @@ void CFiniteElementStd::Cal_rho_s_TS()
          ComputeShapefct(1);                      // Moved from CalCoefLaplace(). 12.3.2007 WW
 
 		 // get interpolated primary variable values
-		 // m_rho_s_0 = this->SolidProp->Density();      // get initial solid density //HS, not needed
-		 // get T_solid
-		 // T_s = interpolate( NodalVal_t2_0 ); 
-		 T_s = interpolate( NodalVal_t2_1 ); 
-		 // get T_gas
-		 // T_g = interpolate( NodalVal_t0 );
-		 T_g = interpolate( NodalVal_t1 );
-		 // get p_gas in Pa
-		 // p_g = interpolate( NodalVal0 );
-		 p_g = interpolate( NodalVal1 );
-		 // get mass fraction of water in gas phase
-		 // w_mf= interpolate( NodalVal_X0 );
-		 w_mf= interpolate( NodalVal_X1 );
-		 // get delta_t
+		 p_g = (1-pcs->m_num->ls_theta)*interpolate(NodalVal0) + pcs->m_num->ls_theta*interpolate(NodalVal1);
+		 T_g = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_t0) + pcs->m_num->ls_theta*interpolate(NodalVal_t1);
+		 T_s = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_t2_0) + pcs->m_num->ls_theta*interpolate(NodalVal_t2_1);
+		 w_mf = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_X0) + pcs->m_num->ls_theta*interpolate(NodalVal_X1);
+
+		 //get time step size
 		 delta_t = this->pcs->Tim->time_step_length; 
-		 start_t = 0.0;
+
 		 yy_rho_s    = Eigen::VectorXd::Zero(1);
 		 dydxx_rho_s = Eigen::VectorXd::Zero(1);
 		 double poro = mmp_vector[group]->porosity;
 		 // set parameters in the ca_hydaration class
-		 this->pcs->m_ca_hydration->update_param( T_s,                  // solid temperature, Kelvin
-			                                      T_g,                  // gas   temperature, Kelvin
-						                          p_g / 1.0e5,          // gas pressure, in bar
-									              w_mf,                 // vapor mass fraction in gas phase, unitless
-									              gp_ele->rho_s_prev[gp],   // solid density, previous time step value
-												  1-poro,
-									              delta_t,
-												  this->SolidProp->getSolidReactiveSystem());            // time step size, same as PDE step size
+		 
 		 
 		 if (this->SolidProp->getSolidReactiveSystem() != FiniteElement::INERT){
 			 if (this->SolidProp->getSolidReactiveSystem() == FiniteElement::SINUSOIDAL) {//For Benchmarks
 				 gp_ele->rho_s_curr[gp] = 1.0 + 0.1*sin(2.0*3.1416*aktuelle_zeit)/(1.0-poro);//TN Test mass transfer
 				 gp_ele->q_R[gp] = 0.1*2.0*3.1416*cos(2.0*3.1416*aktuelle_zeit)/(1.0-poro); //TN Test mass transfer
 			 }
-			 else {//Für CaOH2 im Moment
+		 else {//Fuer CaOH2 im Moment
+
+				 this->pcs->m_conversion_rate->update_param(T_s, T_g, p_g / 1.0e5, w_mf, gp_ele->rho_s_prev[gp], 1.0-poro, delta_t, this->SolidProp->getSolidReactiveSystem());
 				 yy_rho_s(0)    = gp_ele->rho_s_prev[gp];
 
 				 //TN - reactive fraction
 				 yy_rho_s(0) = (yy_rho_s(0) - this->SolidProp->non_reactive_solid_volume_fraction * this->SolidProp->non_reactive_solid_density)/(1.0-this->SolidProp->non_reactive_solid_volume_fraction);
 
 				 // make evaluation
-				 this->pcs->m_ca_hydration->eval(0.0, yy_rho_s, dydxx_rho_s);
+				 this->pcs->m_conversion_rate->eval(0.0, yy_rho_s, dydxx_rho_s);
 				 // supply clean value
 				 this->pcs->m_solver->set_y(yy_rho_s); 
 				 this->pcs->m_solver->set_dydx(dydxx_rho_s);
 				 // solve ODE
 				 // run the ODE solver
-				 this->pcs->m_solver->step(delta_t, this->pcs->m_ca_hydration); 
+				 this->pcs->m_solver->step(delta_t, this->pcs->m_conversion_rate); 
 				 yy_rho_s = this->pcs->m_solver->get_y();
 				 dydxx_rho_s = this->pcs->m_solver->get_dydx();
 
@@ -6852,7 +6839,8 @@ void CFiniteElementStd::Cal_Velocity()
 					                          time_unit_factor;
 			//WX:modified.08.2010
 		}
-		else if (PcsType == N)          {
+		else if (PcsType == N)
+		{
 			eos_arg[0] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal0) + pcs->m_num->ls_theta*interpolate(NodalVal1);
 			eos_arg[1] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_t0) + pcs->m_num->ls_theta*interpolate(NodalVal_t1);
 			eos_arg[2] = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_X0) + pcs->m_num->ls_theta*interpolate(NodalVal_X1);
@@ -7832,7 +7820,7 @@ void CFiniteElementStd::AssembleParabolicEquation()
          CalcAdvectionMCF();
          CalcContentMCF();
       }
-      if (PcsType==N) {                              //AKS/NB
+      if (PcsType==N) {
          CalcAdvectionTNEQ();
          CalcContentTNEQ();
       }
@@ -7885,10 +7873,6 @@ void CFiniteElementStd::AssembleParabolicEquation()
 	(*AuxMatrix)   *= fac2;
 	*StiffMatrix   += *AuxMatrix;
 
-	//if(index >= 199){
-		//Mass->Write();
-		//Laplace->Write();
-		//StiffMatrix->Write();
 	//}
 	//----------------------------------------------------------------------
 	// Add local matrix to global matrix
@@ -8112,6 +8096,7 @@ void CFiniteElementStd::AssembleParabolicEquation()
 		}
 	}
 	//
+	//RHS->Write();
 }
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
 /*!
@@ -9470,8 +9455,8 @@ void CFiniteElementStd::Assembly()
 		{
 			ComputeAdditionalJacobi_H2();
 
-			if(dm_pcs)
-			{
+           if(dm_pcs&& dm_pcs->type == 42)
+           {
 				(*StrainCoupling) = 0.0;
 				CalcStrainCoupling(0);
 				Assemble_strainCPL_Matrix(1.0, 0); //Phase 0
@@ -9544,6 +9529,10 @@ void CFiniteElementStd::Assembly()
 			//CMCD
 			(*pcs->matrix_file) << "---Advective matrix: " << "\n";
 			Advection->Write(*pcs->matrix_file);
+		}
+		if(Content){
+			(*pcs->matrix_file) << "---Content: " << "\n";
+			Content->Write(*pcs->matrix_file);
 		}
 		(*pcs->matrix_file) << "---RHS: " << "\n";
 		RHS->Write(*pcs->matrix_file);
@@ -9639,7 +9628,7 @@ void CFiniteElementStd::Assembly(int option, int dimension)
    11/2011 HS Implementation
    last modification:
    **************************************************************************/
-   void CFiniteElementStd::Copy_rho_s_curr_2_prev(size_t elem_idx)
+   void CFiniteElementStd::UpdateSolidDensity(size_t elem_idx)
    {
 	   ElementValue* gp_ele = ele_gp_value[Index];
 	   int idx_rho, idx_qR;
@@ -10508,7 +10497,6 @@ double CFiniteElementStd::CalCoef_RHS_T_MPhase(int dof_index)
 		//val = 0.0;
 		val = (1.0-poro)*q_r*H_vap;
 		val += gp_ele->rho_s_curr[gp]*(1.0-poro)*SolidProp->specific_heat_source;
-
 		if (MediaProp->getFrictionPhase() == FiniteElement::SOLID) {
 			// HS, implementing the friction term here. 
 			double * grad_pg; // gradient of gas pressure. 

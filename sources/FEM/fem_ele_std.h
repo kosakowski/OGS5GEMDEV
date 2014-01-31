@@ -120,7 +120,7 @@ public:
 	void Assembly(int option, int dimension); // PCH for Fluid Momentum
 	void Cal_Velocity();
 
-		 void Cal_rho_s_TS();                     //HS thermal storage application, calculate rho_s
+    void CalcSolidDensityRate();                     //HS thermal storage application, calculate rho_s
 	void Cal_VelocityMCF();//AKS
 	void Cal_Velocity_2();                //CB this is to provide velocity only at the element center of gravity
 	void Cal_GP_Velocity_FM(int* i_ind); //SB 4900 interpolate node velocities to Gauss point velocities
@@ -192,7 +192,7 @@ public:
 	void ExtropolateGauss(CRFProcess* m_pcs, const int idof);
          // Extrapolate reaction rates on TNEQ flow
     void ExtrapolateGauss_ReactRate_TNEQ(CRFProcess *m_pcs); 
-	void Copy_rho_s_curr_2_prev(size_t elem_idx);       // HS
+	void UpdateSolidDensity(size_t elem_idx);       // HS
 	// CB _ctx_ CB_merge_0513
 	//void Set_ctx_(long ele_index, double val, int gaussp, int i_dim);
     //double Get_ctx_(long ele_index, int gaussp, int i_dim);
@@ -251,12 +251,6 @@ private:
 	double Sw, rhow, poro, dSdp;
          double rho_gw, rho_ga, rho_g, p_gw, M_g, tort, Xw, eos_arg[5], heat_capacity, heat_conductivity, viscosity;
 
-		 // for thermal storage problem
-		 double rho_s_prev, rho_s_curr, q_R_curr; 
-		 double T_s, T_g, p_g, w_mf; 
-		 double start_t, delta_t;
-		 Eigen::VectorXd yy_rho_s;     // rho_s
-	     Eigen::VectorXd dydxx_rho_s;  // d{rho_s}/dt
 
 	//
 	double* edlluse;                      // WW edlluse[16]

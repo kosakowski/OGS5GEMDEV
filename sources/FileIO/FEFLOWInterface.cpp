@@ -234,7 +234,7 @@ CFEMesh* FEFLOWInterface::readFEFLOWModelFile(const std::string &filename)
 				nod->SetZ(nod->getData()[1]);
 				nod->SetY(0.0);
 			}
-		if (_geoObjects)
+		if (_geoObjects && points)
 		{
 			//const std::vector<GEOLIB::Point*> *points = _geoObjects->getPointVec("Feflow");
 			for (size_t i = 0; i < points->size(); i++)
@@ -252,6 +252,27 @@ CFEMesh* FEFLOWInterface::readFEFLOWModelFile(const std::string &filename)
 	std::cout << "done" << "\n";
 
 	return m_msh;
+}
+
+void FEFLOWInterface::readPoints(QDomElement &nodesEle,  const std::string &tag, int dim, std::vector<GEOLIB::Point*> &points)
+{
+	QDomElement xmlEle = nodesEle.firstChildElement(QString::fromStdString(tag));
+	if (xmlEle.isNull())
+		return;
+	QString str_pt_list1 = xmlEle.text().simplified();
+	istringstream ss(str_pt_list1.toStdString());
+	while (!ss.eof())
+	{
+		int pt_id = 0;
+		double pt_xyz[3] = {};
+		ss >> pt_id;
+		for (int i = 0; i < dim; i++)
+			ss >> pt_xyz[i];
+		GEOLIB::Point* pnt = new GEOLIB::Point( pt_xyz[0],
+		                                        pt_xyz[1],
+		                                        pt_xyz[2]); //id?
+		points[pt_id - 1] = pnt;
+	}
 }
 
 //
@@ -331,45 +352,9 @@ void FEFLOWInterface::readSuperMesh(std::ifstream &feflow_file,
 		const long n_points = str.toLong();
 		points->resize(n_points);
 		//fixed
-		QDomElement xmlEle = nodesEle.firstChildElement("fixed");
-		if (xmlEle.isNull())
-			return;
-		QString str_pt_list1 = xmlEle.text().simplified();
-		{
-			istringstream ss(str_pt_list1.toStdString());
-			while (!ss.eof())
-			{
-				int pt_id = 0;
-				double pt_xyz[3] = {};
-				ss >> pt_id;
-				for (int i = 0; i < fem_class.dimension; i++)
-					ss >> pt_xyz[i];
-				GEOLIB::Point* pnt = new GEOLIB::Point( pt_xyz[0],
-				                                        pt_xyz[1],
-				                                        pt_xyz[2]); //id?
-				(*points)[pt_id - 1] = pnt;
-			}
-		}
-		//linear
-		xmlEle = nodesEle.firstChildElement("linear");
-		if (xmlEle.isNull())
-			return;
-		QString str_pt_list2 = xmlEle.text().simplified();
-		{
-			istringstream ss(str_pt_list2.toStdString());
-			while (!ss.eof())
-			{
-				int pt_id = 0;
-				double pt_xyz[3] = {};
-				ss >> pt_id;
-				for (int i = 0; i < fem_class.dimension; i++)
-					ss >> pt_xyz[i];
-				GEOLIB::Point* pnt = new GEOLIB::Point( pt_xyz[0],
-				                                        pt_xyz[1],
-				                                        pt_xyz[2]); //id?
-				(*points)[pt_id - 1] = pnt;
-			}
-		}
+		readPoints(nodesEle, "fixed", fem_class.dimension, *points);
+		readPoints(nodesEle, "linear", fem_class.dimension, *points);
+		readPoints(nodesEle, "parabolic", fem_class.dimension, *points);
 	}
 	//_geoObjects->addPointVec(points, string("Feflow"));
 

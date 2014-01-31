@@ -129,8 +129,13 @@ bool CPRead(std::string file_base_name)
 	// File handling
 	std::string cp_file_name = file_base_name + CP_FILE_EXTENSION;
 	ifstream cp_file (cp_file_name.data(),ios::in);
-	if (!cp_file.good())
+	if (!cp_file.good()) {
+		if (pcs_vector[0]->getProcessType() == FiniteElement::TNEQ){
+			DisplayMsgLn("ERROR. TNEQ requires specification of inert and reactive components in mcp file.");
+			exit(1);
+		}
 		return false;
+	}
 	cp_file.seekg(0L,ios::beg);
 
 	//========================================================================
@@ -178,17 +183,41 @@ bool CPRead(std::string file_base_name)
 			        "Mass transport components and Mass transport processes do not fit!");
 			exit(1);
 		}
+		else if (cp_vec.size() < 2 && pcs_vector[0]->getProcessType() == FiniteElement::TNEQ)
+		{
+			DisplayMsgLn("ERROR. TNEQ requires specification of inert and reactive components in mcp file.");
+			exit(1);
+		}
 		else
 		{
 			// and then link MCP with the PCS.
 			std::map <int, CompProperties*>::iterator cp_iter = cp_vec.begin();
-			for ( i = 0; i < pcs_vector.size(); i++ )
+			for ( i = 0; i < pcs_vector.size(); i++ ){
 				if ( pcs_vector[i]->getProcessType() == FiniteElement::MASS_TRANSPORT )
 				{
 					cp_iter->second->setProcess( pcs_vector[i] );
 					++cp_iter;
 				}
+				if (pcs_vector[i]->getProcessType() == FiniteElement::TNEQ)
+					std::cout << "Warning! For TNEQ, the component order in the mcp file needs to be INERT, REACTIVE!\n";
+			}
 		} // end of else
+
+		//Assign fluid id's for use in fluid property calculation
+		if (pcs_vector[0]->getProcessType() == FiniteElement::TNEQ)
+			for (i=0;i<cp_vec.size();i++)
+			{
+				if (cp_vec[i]->compname == "N2")
+					cp_vec[i]->fluid_id = 3;
+				else if (cp_vec[i]->compname == "H2O")
+					cp_vec[i]->fluid_id = 1;
+				else if (cp_vec[i]->compname == "O2"){
+					cp_vec[i]->fluid_id = 5;
+					std::cout << "Warning: The thermal conductivity critical enhancement model for oxygen has not been implemented. Dilute and residual parts only.\n";
+				}
+				else
+					std::cout << "Warning: Component name unknown to TNEQ.\n";
+			}
 	}
 	return true;
 }

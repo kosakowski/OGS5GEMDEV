@@ -18,7 +18,7 @@
 #include "rf_bc_new.h"
 #include "rf_num_new.h"
 #include "rf_tim_new.h"
-#include "ca_hydration.h"          // HS, 10.2011
+#include "conversion_rate.h"          // HS, 10.2011
 #include "SparseMatrixDOK.h"
 //#include "Stiff_Bulirsch-Stoer.h"   // HS, 10.2011
 #include "StepperBulischStoer.h"   // HS, 10.2011
@@ -882,8 +882,8 @@ public:
 #endif
 	// HS 10.2011
 	double m_rho_s_0; 
-	ca_hydration *m_ca_hydration;
-	StepperBulischStoer<ca_hydration> *m_solver;
+	conversion_rate *m_conversion_rate;
+	StepperBulischStoer<conversion_rate> *m_solver;
 	Eigen::VectorXd yy_rho_s;     // rho_s
 	Eigen::VectorXd dydxx_rho_s;  // d{rho_s}/dt
 	// end of thermal storage problem 

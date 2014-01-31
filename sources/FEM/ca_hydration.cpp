@@ -3,7 +3,7 @@
 #include <math.h>
 #include <cmath>
 
-//#define SIMPLE_KINETICS //wenn definiert, dann einfache Kinetik, sonst Schaube
+#define SIMPLE_KINETICS //wenn definiert, dann einfache Kinetik, sonst Schaube
 
 #ifndef max
   #define max(a,b) (((a) > (b)) ? (a) : (b))

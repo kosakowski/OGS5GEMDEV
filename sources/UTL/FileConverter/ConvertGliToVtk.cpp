@@ -5,8 +5,7 @@
  * Implementation of ConvertGliToVtk utility
  */
 
-// for backward compatibility, see http://www.boost.org/doc/libs/1_48_0/libs/filesystem/v2/doc/index.htm
-#define BOOST_FILESYSTEM_VERSION 2
+#define BOOST_FILESYSTEM_VERSION 3
 
 // ** INCLUDES **
 #include "GEOObjects.h"
@@ -49,7 +48,7 @@ int main (int argc, char const* argv[])
 		directory_iterator end;
 		for (directory_iterator it("./"); it != end; ++it)
 		{
-			string curFile = it->path().filename(); // .string();
+			string curFile = it->path().filename().string();
 
 			if (regex_match(curFile, e))
 				filenames.push_back(curFile);

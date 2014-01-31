@@ -174,6 +174,8 @@ PrimaryVariable convertPrimaryVariable ( const std::string& pcs_pv_string )
 		return DISPLACEMENT_Y;
 	if (pcs_pv_string.compare ("DISPLACEMENT_Z1") == 0)
 		return DISPLACEMENT_Z;
+	if (pcs_pv_string.compare ("DISPLACEMENT_N") == 0)
+		return DISPLACEMENT_N;
 	if (pcs_pv_string.compare ("CONCENTRATION1") == 0)
 		return CONCENTRATION;
 	if (pcs_pv_string.compare ("HEAD") == 0)
@@ -272,6 +274,8 @@ std::string convertPrimaryVariableToString ( PrimaryVariable pcs_pv )
 		return "DISPLACEMENT_Y1";
 	if (pcs_pv == DISPLACEMENT_Z)
 		return "DISPLACEMENT_Z1";
+	if (pcs_pv == DISPLACEMENT_N)
+		return "DISPLACEMENT_N";
 	if (pcs_pv == CONCENTRATION)
 		return "CONCENTRATION1";
 	if (pcs_pv == HEAD)
@@ -487,6 +491,8 @@ SolidReactiveSystem convertSolidReactiveSystem( const std::string& reactive_stri
 		return SINUSOIDAL;
 	if (reactive_string.compare("CaOH2") == 0)
 		return CaOH2;
+	if (reactive_string.compare("Mn3O4") == 0)
+		return Mn3O4;
 
 	std::cout << "Convert error: " << reactive_string << " not found. \n";
 
@@ -500,6 +506,8 @@ std::string convertSolidReactiveSystemToString(SolidReactiveSystem reactive_syst
 		return "SINUSOIDAL";
 	if (reactive_system == CaOH2)
 		return "CaOH2";
+	if (reactive_system == Mn3O4)
+		return "Mn3O4";
 
 	std::cout << "Invalid reactive system type. \n";
 }

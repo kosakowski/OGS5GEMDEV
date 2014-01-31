@@ -1040,7 +1040,6 @@ void LegacyVtkInterface::WriteVTKDataArrays(fstream &vtk_file) const
 
 		if (!toNext)
 			printScalarArray(_pointArrayNames[k], vtk_file);
-
 	}
 	//======================================================================
 	// Saturation 2 for 1212 pp - scheme. 01.04.2009. WW

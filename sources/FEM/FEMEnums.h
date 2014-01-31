@@ -110,6 +110,8 @@ enum PrimaryVariable
 	DISPLACEMENT_Y,                       //!< DISPLACEMENT_Y
 	/// Deformation
 	DISPLACEMENT_Z,                       //!< DISPLACEMENT_Z
+	/// Deformation
+	DISPLACEMENT_N,                       //!< Normal traction (pressure type load). Only in ST
 	EXCAVATION,                           // ST
 	HEAD,                                 //!< HEAD
 	/// Flow (phase)
@@ -256,7 +258,8 @@ enum SolidReactiveSystem
 {
 	INERT,
 	SINUSOIDAL,
-	CaOH2
+	CaOH2,
+	Mn3O4
 };
 
 SolidReactiveSystem convertSolidReactiveSystem( const std::string& reactive_string);

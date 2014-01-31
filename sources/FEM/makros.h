@@ -242,7 +242,7 @@
 #define DOF_NUMBER_MAX 6 // JT: max # dof's per process
 #define MAX_FLUID_PHASES 2 // JT: max # fluid phases
 #define noPCS_NOD
-#define GLI
+//#define GLI // KR
 #define noWINDOWS
 
 /**********************************************************************/

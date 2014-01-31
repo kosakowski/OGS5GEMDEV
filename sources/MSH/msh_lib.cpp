@@ -1576,7 +1576,7 @@ void GEOGetNodesInMaterialDomain(CFEMesh const*const msh,
 	for (size_t e = 0; e < n_ele; e++)
 	{
 		MeshLib::CElem const*const elem (msh->ele_vector[e]);
-		if (elem->GetMark())              // Marked for use
+		//if (elem->GetMark())              // Marked for use
 		{
 			const int nn (elem->GetNodesNumber(Order));
 			if(elem->GetPatchIndex() == static_cast<size_t>(MatIndex))
@@ -1589,7 +1589,6 @@ void GEOGetNodesInMaterialDomain(CFEMesh const*const msh,
 		}                                 // if
 	}                                         //For
 	Nodes.assign(set_nodes.begin(), set_nodes.end());
-
 }
 
 /**************************************************************************

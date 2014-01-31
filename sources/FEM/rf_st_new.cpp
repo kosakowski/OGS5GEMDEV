@@ -100,6 +100,7 @@ CSourceTerm::CSourceTerm() :
    geo_node_value = 0.0;
    nodes = NULL;                                  //OK
    analytical = false;                            //CMCD
+   pressureBoundaryCondition = false;
    //  display_mode = false; //OK
    this->TimeInterpolation = 0;                   //BG
 }
@@ -322,7 +323,7 @@ std::ios::pos_type CSourceTerm::Read(std::ifstream *st_file,
             in.clear();
 //            in.str(GetLineFromFile1(st_file));
             in.str(readNonBlankLineFromInputStream(*st_file));
-            in >> _coup_leakance >> st_rill_height >> coup_pressure_head >> coup_residualPerm;
+            in >> _coup_leakance >> st_rill_height >> coup_given_value >> coup_residualPerm;
             in.clear();
          }                                        //05.09.2008 WW
          else
@@ -413,7 +414,7 @@ std::ios::pos_type CSourceTerm::Read(std::ifstream *st_file,
          in >> fct_name;                          //sub_line
                                                   //WW
          if (fct_name.find("METHOD") != std::string::npos)
-            in >> fct_method;
+         in >> fct_method;
          in.clear();
       }
 
@@ -675,6 +676,7 @@ const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name)
                                                   //Code included to make dynamic memory for analytical solution
       if (line_string.find("#STOP") != std::string::npos)
       {
+
          size_t no_source_terms(st_vector.size());
          size_t no_an_sol = 0, number_of_terms = 0;
                                                   //Need to find the memory size limits for the anal. solution.
@@ -696,6 +698,7 @@ const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name)
          }
 
          std::cout << "done, read " << st_vector.size() << " source terms" << "\n";
+
          return true;
       }
       //----------------------------------------------------------------------
@@ -707,7 +710,16 @@ const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name)
          position = st->Read(&st_file, geo_obj, unique_name);
          if (pos != position)
          {
+        	if (st->getProcessPrimaryVariable()==FiniteElement::DISPLACEMENT_N)
+        	{
+        		st->SetPressureBoundaryConditionFlag(true);
+        		CSourceTerm *st2(new CSourceTerm (*st)); // copies st's properties onto st2
+        		st2->setProcessPrimaryVariable(FiniteElement::DISPLACEMENT_X);
+        		st_vector.push_back(st2);
+        		st->setProcessPrimaryVariable(FiniteElement::DISPLACEMENT_Y);
+        	}
             st_vector.push_back(st);
+
          }
          else
          {
@@ -1262,6 +1274,32 @@ void CSourceTermGroup::Set(CRFProcess* m_pcs, const int ShiftInNodeVector,
 //	e_edges.resize(0);
 //}
 
+double AreaProjection(CEdge *edge, FiniteElement::PrimaryVariable primaryVariable)
+{
+	double area_projection (0);
+//	const double epsilon (1.0e-8); //tolerance to decide whether projection is used
+	//compute edge normal vector
+	double edge_normal[3];//edge integration is 2 dimensional
+	double elemNormalVector[3];
+
+	elemNormalVector[0] = 0;
+	elemNormalVector[1] = 0;
+	elemNormalVector[2] = 1;
+
+	edge->SetNormalVector(elemNormalVector, edge_normal); // Attenzione! This only works if nodes are numbered counter-clockwise.
+	//TODO: distinguish coordinate systems!
+	//if coordinate axes are at an angle with edges
+//	if (fabs(edge_normal[0]) > epsilon && fabs(edge_normal[1]) > epsilon) {
+		if (primaryVariable == FiniteElement::DISPLACEMENT_X)
+			area_projection = edge_normal[0];
+		else if (primaryVariable == FiniteElement::DISPLACEMENT_Y)
+			area_projection = edge_normal[1];
+//	}
+
+	return area_projection;
+}
+
+
 void CSourceTerm::EdgeIntegration(CFEMesh* msh, const std::vector<long>&nodes_on_ply,
 std::vector<double>&node_value_vector) const
 {
@@ -1278,6 +1316,7 @@ std::vector<double>&node_value_vector) const
    double v1, v2, radius = 0.0;
    double Shfct[3];
 
+   double area_projection (1.0); //for projection of element areas for edges not parallel to the coordinate axes
    bool Const = false;
    if (this->getProcessDistributionType() == FiniteElement::CONSTANT || this->getProcessDistributionType() == FiniteElement::CONSTANT_NEUMANN)
       Const = true;
@@ -1360,16 +1399,23 @@ std::vector<double>&node_value_vector) const
 
    for (i = 0; i < (long) msh->edge_vector.size(); i++)
    {
-      edge = msh->edge_vector[i];
-      if (!edge->GetMark())
-         continue;
-      edge->GetNodes(e_nodes);
-      if (msh->getOrder())                        // Quad
+	   edge = msh->edge_vector[i];
+	   if (!edge->GetMark())
+		   continue;
+	   edge->GetNodes(e_nodes);
+
+	   if (this->isPressureBoundaryCondition())
+	   {
+		   area_projection=AreaProjection(edge, this->getProcessPrimaryVariable());
+
+	   }
+
+      if (msh->getOrder())                        // Quadradic shape functions
       {
          if (e_nodes[0]->GetMark() && e_nodes[1]->GetMark()
             && e_nodes[2]->GetMark())
          {
-            Jac = 0.5 * edge->getLength();
+            Jac = 0.5 * edge->getLength()*area_projection;
             v1 = node_value_vector[G2L[e_nodes[0]->GetIndex()]];
             v2 = node_value_vector[G2L[e_nodes[1]->GetIndex()]];
             if (Const && (!msh->isAxisymmetry()))
@@ -1399,15 +1445,17 @@ std::vector<double>&node_value_vector) const
                      }
                      NVal[G2L[e_nodes[k]->GetIndex()]] += 0.5 * (v1 + v2
                         + eta * (v2 - v1)) * Shfct[k] * Weight;
+
                   }
+
                }
             }
          }
-      } else                                      // Linear
+      } else                                      // Linear shape functions
       {
          if (e_nodes[0]->GetMark() && e_nodes[1]->GetMark())
          {
-            Jac = 0.5 * edge->getLength();
+            Jac = 0.5 * edge->getLength()*area_projection;
             v1 = node_value_vector[G2L[e_nodes[0]->GetIndex()]];
             v2 = node_value_vector[G2L[e_nodes[1]->GetIndex()]];
             if (!msh->isAxisymmetry())
@@ -1452,7 +1500,10 @@ std::vector<double>&node_value_vector) const
       }
    }
    for (i = 0; i < this_number_of_nodes; i++)
+   {
       node_value_vector[i] = NVal[i];
+      node = msh->nod_vector[nodes_on_ply[i]];
+   }
    for (i = 0; i < (long) msh->edge_vector.size(); i++)
       msh->edge_vector[i]->SetMark(true);
    for (i = 0; i < nSize; i++)
@@ -2202,7 +2253,7 @@ CNodeValue* cnodev)
 		 && m_st->pcs_type_name_cond == "OVERLAND_FLOW" ) // ??? 
    {   // gas pressure term 
 	   MXInc(cnodev->msh_node_number , cnodev->msh_node_number+ m_pcs_this->m_msh->nod_vector.size(), -condArea); 
-	   value  -= condArea * m_st->coup_pressure_head;
+	   value  -= condArea * m_st->coup_given_value;
    }
   
    if (m_st->getProcessType() == FiniteElement::GROUNDWATER_FLOW)                   
@@ -4491,9 +4542,15 @@ CSourceTerm* m_st, CNodeValue* cnodev, long msh_node_number, long msh_node_numbe
 
    *h_this = m_pcs_this->GetNodeValue(msh_node_number, nidx);
 
-   if(m_st->pcs_pv_name_cond == "HEIGHT" || m_st->pcs_pv_name_cond == "PRESSURE2")
+   if(m_st->pcs_pv_name_cond == "GIVEN_HEIGHT" || m_st->pcs_pv_name_cond == "PRESSURE2")
    {
-	 *h_cond = *h_shifted = m_st->coup_pressure_head; // coupled to fixed pressure head / or atmospheric pressure
+	 *h_cond = *h_shifted = m_st->coup_given_value; // coupled to fixed pressure head / or atmospheric pressure
+	 *z_this = *z_cond = 0;
+	 return;
+   }
+   else if(m_st->pcs_pv_name_cond == "GIVEN_PRESSURE")
+  {
+	 *h_cond = *h_shifted = m_st->coup_given_value / gamma; // coupled to fixed pressure head / or atmospheric pressure
 	 *z_this = *z_cond = 0;
 	 return;
    }
@@ -4505,7 +4562,7 @@ CSourceTerm* m_st, CNodeValue* cnodev, long msh_node_number, long msh_node_numbe
 	   if(m_st->pcs_type_name_cond == "MULTI_PHASE_FLOW")
 	   { // capillary pressure as a primary variable in the coupled process 
 	     double gasPressure =  m_pcs_cond->GetNodeValue(msh_node_number_cond, 3);
-	     *h_cond -= (gasPressure - m_st->coup_pressure_head);
+	     *h_cond -= (gasPressure - m_st->coup_given_value);
       }
    }
 

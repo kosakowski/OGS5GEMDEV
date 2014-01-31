@@ -369,6 +369,8 @@ std::ios::pos_type CFluidProperties::Read(std::ifstream* mfp_file)
 			if(density_model == 19) // KG44 get node densities from GEMS calculations
 			{
 			}
+			if (density_model == 26 && pcs_vector[0]->getProcessType() != FiniteElement::TNEQ)
+				std::cout << "Warning: This density model requires two components and their molar masses defined in the mcp file!\n";
 			//      mfp_file->ignore(MAX_ZEILE,'\n');
 			in.clear();
 			continue;
@@ -451,6 +453,8 @@ std::ios::pos_type CFluidProperties::Read(std::ifstream* mfp_file)
 			if(viscosity_model == 19) // KG44 extract viscosity from GEMS
 			{
 			}
+			if (viscosity_model == 26 && pcs_vector[0]->getProcessType() != FiniteElement::TNEQ)
+				std::cout << "Warning: This viscosity model requires two components and their molar masses defined in the mcp file!\n";
 			
 
 			//    mfp_file->ignore(MAX_ZEILE,'\n');
@@ -507,6 +511,9 @@ std::ios::pos_type CFluidProperties::Read(std::ifstream* mfp_file)
 			in >> cp[0] >> cp[1] >> cp[2] >> cp[3];
 			}
 
+			if ((heat_capacity_model == 11 || heat_capacity_model == 12) && pcs_vector[0]->getProcessType() != FiniteElement::TNEQ)
+				std::cout << "Warning: This heat capacity model requires two components and their molar masses defined in the mcp file!\n";
+
 			in.clear();
 			continue;
 		}
@@ -551,6 +558,9 @@ std::ios::pos_type CFluidProperties::Read(std::ifstream* mfp_file)
 			if(eos_name == "CONSTANT") 
 			in >> kappa[0] >> kappa[1] >> kappa[2] >> kappa[3];
 			}
+
+			if (heat_conductivity_model == 11 && pcs_vector[0]->getProcessType() != FiniteElement::TNEQ)
+				std::cout << "Warning: This heat conductivity model requires two components and their molar masses defined in the mcp file!\n";
 
 			in.clear();   //OK
 			continue;
@@ -959,10 +969,9 @@ double CFluidProperties::Density(double* variables)
 #endif
 		       //insert call for GEMS densities..
 		       break;
-	  case 26: //AKS
-			m_frac_w = variables[2];
-			m_frac_w = COMP_MOL_MASS_N2*variables[2]/(COMP_MOL_MASS_N2*variables[2] + COMP_MOL_MASS_WATER*(1.0-variables[2])); //TN - mass in mole fraction
-			density = variables[0]/(GAS_CONSTANT*variables[1]) * (COMP_MOL_MASS_WATER*m_frac_w + COMP_MOL_MASS_N2*(1.0-m_frac_w)); //TN - Dalton's law
+	  case 26: //Dalton's law + ideal gas for use with TNEQ
+			m_frac_w = cp_vec[0]->molar_mass*variables[2]/(cp_vec[0]->molar_mass*variables[2] + cp_vec[1]->molar_mass*(1.0-variables[2])); //mass in mole fraction
+			density = variables[0]/(GAS_CONSTANT/1000.0*variables[1]) * (cp_vec[1]->molar_mass*m_frac_w + cp_vec[0]->molar_mass*(1.0-m_frac_w)); //R_uni in mNs
 
           break;
 
@@ -1367,7 +1376,7 @@ double CFluidProperties::MATCalcFluidDensityMethod8(double Press, double TempK, 
 double CFluidProperties::Viscosity(double* variables)
 {
     CRFProcess* m_pcs;
-    m_pcs = PCSGet("MULTI_COMPONENTIAL_FLOW");
+    m_pcs = PCSGet("MULTI_COMPONENTIAL_FLOW"); //NB: this should not be here! Most PCS are not "MULTI_COMPONENTIAL_FLOW"!
 	static double viscosity;
 	int fct_number = 0;
 	int gueltig;
@@ -1445,7 +1454,7 @@ double CFluidProperties::Viscosity(double* variables)
 		                                  //NB
 		viscosity = Fluid_Viscosity(density,mfp_arguments[1],mfp_arguments[0],fluid_id);
 		break;
-	case 15: //mixture 1/µ= sum_i y_i/µ_i:: VTPR-EoS
+	case 15: //mixture 1/ï¿½= sum_i y_i/ï¿½_i:: VTPR-EoS
 		for (int CIndex = 2; CIndex < cmpN + 2; CIndex++)
 	{
 		if(eos_name == "CONSTANT") 
@@ -1470,17 +1479,26 @@ double CFluidProperties::Viscosity(double* variables)
 		break;
 	case 19: // reserved for GEMS coupling
 	        break;
-		case 26: //AKS
-
-		x[0] = variables[2];
-		therm_prop("W");
-		Vs[0] = Fluid_Viscosity(molar_mass*variables[0]/(GAS_CONSTANT*variables[1]), variables[1], variables[0], 1);
+	case 26: //Wilke (see Poling, B. E.; Prausnitz, J. M.; John Paul, O. & Reid, R. C. The properties of gases and liquids McGraw-Hill New York, 2001, 5: page 9.21) 
+		{
+		//reactive component
+		x[0] = cp_vec[0]->molar_mass*variables[2]/(cp_vec[0]->molar_mass*variables[2] + cp_vec[1]->molar_mass*(1.0-variables[2])); //mass in mole fraction
+		Vs[0] = Fluid_Viscosity(cp_vec[1]->molar_mass*variables[0]/(GAS_CONSTANT/1000.0*variables[1]), variables[1], variables[0], cp_vec[1]->fluid_id);
+		//inert component
 		x[1] = 1.0 - x[0];
-		therm_prop("N");
-		Vs[1] = Fluid_Viscosity(molar_mass*variables[0]/(GAS_CONSTANT*variables[1]), variables[1], variables[0], 3);
-		viscosity = Vs[0]*x[0] + Vs[1]*x[1];
-		break;
+		Vs[1] = Fluid_Viscosity(cp_vec[0]->molar_mass*variables[0]/(GAS_CONSTANT/1000.0*variables[1]), variables[1], variables[0], cp_vec[0]->fluid_id);//R_uni in mNs
 
+		const double M1_over_M2 (cp_vec[1]->molar_mass/cp_vec[0]->molar_mass); //reactive over inert
+		const double V1_over_V2 (Vs[0]/Vs[1]);
+
+		const double phi_12 ((1.0 + pow(V1_over_V2,0.5) * pow(1.0/M1_over_M2,0.25))*(1.0 + pow(V1_over_V2,0.5) * pow(1.0/M1_over_M2,0.25))/(pow(8.0*(1.0+M1_over_M2),0.5)));
+		const double phi_21 (phi_12 * M1_over_M2/V1_over_V2);
+
+		viscosity = Vs[0]*x[0]/(x[0]+x[1]*phi_12);
+		viscosity += Vs[1]*x[1]/(x[1]+x[0]*phi_21);
+
+		break;
+		}
 	default:
 		cout << "Error in CFluidProperties::Viscosity: no valid model" << "\n";
 		break;
@@ -1700,7 +1718,7 @@ double CFluidProperties::PhaseDiffusion_Yaws_1976(double T)
    A = A_Daq;
    B = B_Daq;
 
-   diff = pow(10, (A+(B/T)))  / 10000; //cm²/s -> m²/s
+   diff = pow(10, (A+(B/T)))  / 10000; //cmï¿½/s -> mï¿½/s
    return diff;
 }
 
@@ -1757,23 +1775,29 @@ double CFluidProperties::SpecificHeatCapacity(double* variables)
 	case 9:
 		specific_heat_capacity = isobaric_heat_capacity(Density(primary_variable), primary_variable[1], fluid_id);
 		break;
-    case 11: 
-		 	x[0] = variables[2];
+    case 11: //mole fraction weighted average of molar isochoric specific heat capacities converted into isobaric mixture specific heat capacity (ideal conversion)
+		{
+		    //reactive component	
+			x[0] = cp_vec[0]->molar_mass*variables[2]/(cp_vec[0]->molar_mass*variables[2] + cp_vec[1]->molar_mass*(1.0-variables[2])); //mass in mole fraction
 			therm_prop("W");
-			Cp_c[0] = isobaric_heat_capacity(molar_mass*variables[0]/(GAS_CONSTANT*variables[1]), variables[1],1);
+			Cp_c[0] = isochoric_heat_capacity(cp_vec[1]->molar_mass*variables[0]/(GAS_CONSTANT/1000.0*variables[1]), variables[1],cp_vec[1]->fluid_id);
+			//inert component
 			x[1] = 1.0 - x[0];
 			therm_prop("N");
-			Cp_c[1] = isobaric_heat_capacity(molar_mass*variables[0]/(GAS_CONSTANT*variables[1]), variables[1],3);
-			specific_heat_capacity = Cp_c[0]*x[0] + Cp_c[1]*x[1];
-			//specific_heat_capacity = 1012.0; //TN for testing purposes
+			Cp_c[1] = isochoric_heat_capacity(cp_vec[0]->molar_mass*variables[0]/(GAS_CONSTANT/1000.0*variables[1]), variables[1],cp_vec[0]->fluid_id);
+			specific_heat_capacity = Cp_c[0]*cp_vec[1]->molar_mass*x[0] + Cp_c[1]*cp_vec[0]->molar_mass*x[1]; //mixture isochoric molar heat capacities
+			specific_heat_capacity += (GAS_CONSTANT/1000.0); //isochoric in isobaric
+			specific_heat_capacity /= (cp_vec[0]->molar_mass*x[1] + cp_vec[1]->molar_mass*x[0]); //molar in specific of mixture value
          break;
-	  case 12: //TN - Special case for thermochemical heat storage under typical reaction conditions to gain speed;
-	      x[0] = variables[2];
-		  Cp_c[0] = 2011.0+(2256.8-2011.0)/(950.0-570.0)*(variables[1]-570.0); //Variation im betrachteten Druckbereich vernachlaessigt, Temperaturvariation linear mit Werten von 1 bar.
+		}
+	  case 12: //mass fraction weighted average of isobaric specific heat capacities using a linearised model
+			//reactive component	
+			x[0] = variables[2]; //mass fraction
+			Cp_c[0] = linear_heat_capacity(variables[1],cp_vec[1]->fluid_id);
+			//inert component
 		  x[1] = 1.0-x[0];
-		  Cp_c[1] = 1056.8+(1146.4-1056.8)/(900.0-500.0)*(variables[1]-500.0); //Nitrogen
-
-		  specific_heat_capacity = x[0]*Cp_c[0] + x[1]*Cp_c[1];
+			Cp_c[1] = linear_heat_capacity(variables[1],cp_vec[0]->fluid_id);
+			specific_heat_capacity = Cp_c[0]*x[0] + Cp_c[1]*x[1]; //mixture isobaric specific heat capacities
 		  break;
 	case 15: // mixture cp= sum_i y_i*cp:: P, T, x dependent
 		for (int CIndex = 2; CIndex < cmpN + 2; CIndex++)
@@ -2047,19 +2071,32 @@ double CFluidProperties::HeatConductivity(double* variables)
 		break;
 	case 3:                               // NB
 		heat_conductivity = Fluid_Heat_Conductivity (Density(),primary_variable[1],fluid_id);
+		// if (heat_conductivity<0.03) // not sure about this 
 		break;
 	case 9:
 		heat_conductivity = Fluid_Heat_Conductivity(Density(primary_variable), primary_variable[1], fluid_id);
 		break;
-      case 11:  
-		 x[0] = variables[2];
-		 therm_prop("W");
-		 k[0] = Fluid_Heat_Conductivity(molar_mass*variables[0]/(GAS_CONSTANT*variables[1]), variables[1], 1); 
+
+    case 11: //Wassilijewa, Maso&Saxena (see Poling, B. E.; Prausnitz, J. M.; John Paul, O. & Reid, R. C. The properties of gases and liquids McGraw-Hill New York, 2001, 5: page 10.30f.)
+		{
+		 //reactive component
+		 x[0] = cp_vec[0]->molar_mass*variables[2]/(cp_vec[0]->molar_mass*variables[2] + cp_vec[1]->molar_mass*(1.0-variables[2])); //mass in mole fraction
+		 k[0] = Fluid_Heat_Conductivity(cp_vec[1]->molar_mass*variables[0]/(GAS_CONSTANT/1000.0*variables[1]), variables[1], cp_vec[1]->fluid_id); 
+		 //inert component
 		 x[1] = 1.0 - x[0];
-		 therm_prop("N");
-		 k[1] = Fluid_Heat_Conductivity(molar_mass*variables[0]/(GAS_CONSTANT*variables[1]), variables[1], 3);
-		 heat_conductivity = x[0]*k[0] + x[1]*k[1];
+		 k[1] = Fluid_Heat_Conductivity(cp_vec[0]->molar_mass*variables[0]/(GAS_CONSTANT/1000.0*variables[1]), variables[1], cp_vec[0]->fluid_id);
+
+		 const double M1_over_M2 (cp_vec[1]->molar_mass/cp_vec[0]->molar_mass); //reactive over inert
+		 const double V1_over_V2 (Fluid_Viscosity(cp_vec[1]->molar_mass*variables[0]/(GAS_CONSTANT/1000.0*variables[1]), variables[1], variables[0], cp_vec[1]->fluid_id)/Fluid_Viscosity(cp_vec[0]->molar_mass*variables[0]/(GAS_CONSTANT/1000.0*variables[1]), variables[1], variables[0], cp_vec[0]->fluid_id));
+		 const double L1_over_L2 (V1_over_V2/M1_over_M2);
+
+		 const double phi_12 ((1.0 + pow(L1_over_L2,0.5) * pow(1.0/M1_over_M2,0.25))*(1.0 + pow(V1_over_V2,0.5) * pow(1.0/M1_over_M2,0.25))/(pow(8.0*(1.0+M1_over_M2),0.5)));
+		 const double phi_21 (phi_12 * M1_over_M2/V1_over_V2);
+
+		 heat_conductivity = k[0]*x[0]/(x[0]+x[1]*phi_12);
+		 heat_conductivity += k[1]*x[1]/(x[1]+x[0]*phi_21);
          break;
+		}
 	case 15: // mixture k_m= sum_i y_i*k_i:: p, T, x
 		for (int CIndex = 2; CIndex < cmpN + 2; CIndex++)
 	{
@@ -3289,6 +3326,10 @@ double MFPGetNodeValue(long node,const string &mfp_name, int phase_number)
 			pcs_name2 = "TEMPERATURE1";
 		else
 			pcs_name2 = m_mfp->viscosity_pcs_name_vector[1];
+		if(m_mfp->viscosity_pcs_name_vector.size()<3)
+			pcs_name3 = "CONCENTRATION1";
+		else
+			pcs_name3 = m_mfp->viscosity_pcs_name_vector[3];
 		break;
 	case 'D': mfp_id = 1;                 //DENSITY
 		if(m_mfp->density_pcs_name_vector.size() < 1)
@@ -3299,6 +3340,10 @@ double MFPGetNodeValue(long node,const string &mfp_name, int phase_number)
 			pcs_name2 = "TEMPERATURE1";
 		else
 			pcs_name2 = m_mfp->density_pcs_name_vector[1];
+		if(m_mfp->density_pcs_name_vector.size()<3)
+			pcs_name3 = "CONCENTRATION1";
+		else
+			pcs_name3 = m_mfp->density_pcs_name_vector[3];
 		break;
 	case 'H': mfp_id = 2;                 //HEAT_CONDUCTIVITY
 		if(m_mfp->heat_conductivity_pcs_name_vector.size() < 1)
@@ -3309,6 +3354,10 @@ double MFPGetNodeValue(long node,const string &mfp_name, int phase_number)
 			pcs_name2 = "TEMPERATURE1";
 		else
 			pcs_name2 = m_mfp->heat_conductivity_pcs_name_vector[1];
+		if(m_mfp->heat_conductivity_pcs_name_vector.size()<3)
+			pcs_name3 = "CONCENTRATION1";
+		else
+			pcs_name3 = m_mfp->heat_conductivity_pcs_name_vector[3];
 		break;
 	case 'S': mfp_id = 3;                 //SPECIFIC HEAT CAPACITY
 		if(m_mfp->specific_heat_capacity_pcs_name_vector.size() < 1)
@@ -3319,28 +3368,10 @@ double MFPGetNodeValue(long node,const string &mfp_name, int phase_number)
 			pcs_name2 = "TEMPERATURE1";
 		else
 			pcs_name2 = m_mfp->specific_heat_capacity_pcs_name_vector[1];
-	  	        if(m_mfp->viscosity_pcs_name_vector.size()<3)
-				{	pcs_name3 = "CONCENTRATION1";}
+	  	if(m_mfp->specific_heat_capacity_pcs_name_vector.size()<3)
+			pcs_name3 = "CONCENTRATION1";
 				else
-				{
-					pcs_name2 = m_mfp->viscosity_pcs_name_vector[3];
-				}
-		break;
-		case 'N': mfp_id = 3;                 //SPECIFIC HEAT CAPACITY
-		if(m_mfp->specific_heat_capacity_pcs_name_vector.size() < 1)
-			pcs_name1 = "PRESSURE1";
-		else
-			pcs_name1 = m_mfp->specific_heat_capacity_pcs_name_vector[0];
-		if(m_mfp->specific_heat_capacity_pcs_name_vector.size() < 2)
-			pcs_name2 = "TEMPERATURE1";
-		else
-			pcs_name2 = m_mfp->specific_heat_capacity_pcs_name_vector[1];
-	  	        if(m_mfp->viscosity_pcs_name_vector.size()<3)
-				{	pcs_name3 = "CONCENTRATION1";}
-				else
-				{
-					pcs_name2 = m_mfp->viscosity_pcs_name_vector[3];
-				}
+			pcs_name3 = m_mfp->specific_heat_capacity_pcs_name_vector[3];
 		break;
 	default:  mfp_id = -1;
 		pcs_name1 = "PRESSURE1";
@@ -3353,21 +3384,7 @@ double MFPGetNodeValue(long node,const string &mfp_name, int phase_number)
 	m_mfp->mode = 0;
 	m_mfp->node = node;
 
-	/*  if (phase_number==0)
-	   {
-	     tp = PCSGet("PRESSURE1",true);           //NB 4.8.01
-	     val_idx=tp->GetNodeValueIndex("PRESSURE1"); // NB
-	     arguments[0] = tp->GetNodeValue(node,val_idx);
-	   } else if (phase_number==1)
-	   {
-	     tp = PCSGet("PRESSURE2",true);           //NB 4.8.01
-	     val_idx=tp->GetNodeValueIndex("PRESSURE2"); // NB
-	     arguments[0] = tp->GetNodeValue(node,val_idx);
-	   }
 
-	   tp = PCSGet("TEMPERATURE1",true);
-	   arguments[1] = tp->GetNodeValue(node,0);
-	 */
 	tp = PCSGet(pcs_name1,true);          //NB 4.8.01
 	val_idx = tp->GetNodeValueIndex(pcs_name1,true); // NB // JT latest
 	arguments[0] = tp->GetNodeValue(node,val_idx);
@@ -3375,6 +3392,14 @@ double MFPGetNodeValue(long node,const string &mfp_name, int phase_number)
 	tp = PCSGet(pcs_name2,true);          //NB 4.8.01
 	val_idx = tp->GetNodeValueIndex(pcs_name2,true); // NB // JT latest
 	arguments[1] = tp->GetNodeValue(node,val_idx);
+//Include concentration as primary variable
+	tp = PCSGet(pcs_name3,true);          //NB 4.8.01
+	if (tp){
+		val_idx = tp->GetNodeValueIndex(pcs_name3,true); // NB // JT latest
+		arguments[2] = tp->GetNodeValue(node,val_idx);
+	}
+	else
+		arguments[2] = 0.0;
 
 	if (m_mfp->cmpN > 0)
 	{

@@ -30,3 +30,13 @@ ADD_BENCHMARK ("NB" T/Lauwerier/Lauwerier "OGS_FEM" 1
 
 ADD_BENCHMARK ("NB" FLUID_PROPERTIES/H2T_McWhorter_PwSnw/h2t_line "OGS_FEM_MKL" 1
 	FLUID_PROPERTIES/H2T_McWhorter_PwSnw/h2t_line_domain_line.tec)
+
+ADD_BENCHMARK ("NB" M/pressure/Tube/m_tube_elastic "OGS_FEM" 1
+	M/pressure/Tube/m_tube_elastic_1.vtu)
+
+ADD_BENCHMARK ("NB" M/pressure/Sphere_elastic/m_sphere_elastic "OGS_FEM" 1
+	M/pressure/Sphere_elastic/m_sphere_elastic_1.vtu)
+
+ADD_BENCHMARK ("NB" M/pressure/Sphere_plastic/m_sphere_plastic "OGS_FEM" 1
+	M/pressure/Sphere_plastic/m_sphere_plastic_39.vtu)
+

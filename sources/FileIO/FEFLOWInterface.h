@@ -5,6 +5,9 @@
 #include "GEOObjects.h"
 #include "msh_mesh.h"
 
+class QDomElement;
+class QString;
+
 class FEFLOWInterface
 {
 public:
@@ -53,7 +56,9 @@ private:
 	                   FEFLOW_FEM_CLASS &fem_class,
 	                   std::vector<GEOLIB::Point*>** points,
 	                   std::vector<GEOLIB::Polyline*>** lines);
+	void readPoints(QDomElement &nodesEle, const std::string &tag, int dim, std::vector<GEOLIB::Point*> &points);
 	void setMaterialID(MeshLib::CFEMesh* m_msh, std::vector<GEOLIB::Polyline*>* lines);
+
 
 	GEOLIB::GEOObjects* _geoObjects;
 };

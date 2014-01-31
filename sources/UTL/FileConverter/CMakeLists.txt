@@ -66,7 +66,7 @@ IF(VTK_FOUND AND Boost_FOUND)
 
 	INCLUDE_DIRECTORIES ( ${Boost_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/Qt/VtkVis )
 	TARGET_LINK_LIBRARIES ( ConvertGliToVtk FileIO VtkVis vtkRendering vtkIO
-boost_filesystem-mt boost_system-mt boost_regex-mt)
+ ${Boost_LIBRARIES} )
 
 	IF (OGS_PACKAGING)
 		INSTALL ( TARGETS ConvertGliToVtk RUNTIME DESTINATION bin COMPONENT ConvertGliToVtk )

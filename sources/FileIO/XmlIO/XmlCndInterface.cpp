@@ -171,9 +171,9 @@ int XmlCndInterface::write(std::ostream& stream)
 
 	QDomDocument doc("OGS-CND-DOM");
 	QDomElement root = doc.createElement("OpenGeoSysCond");
-	root.setAttribute( "xmlns:ogs", "http://www.opengeosys.net" );
+	root.setAttribute( "xmlns:ogs", "http://www.opengeosys.org" );
 	root.setAttribute( "xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance" );
-	root.setAttribute( "xsi:noNamespaceSchemaLocation", "http://141.65.34.25/OpenGeoSysCND.xsd" );
+	root.setAttribute( "xsi:noNamespaceSchemaLocation", "http://www.opengeosys.org/images/xsd/OpenGeoSysCND.xsd" );
 
 	const std::vector<FEMCondition*> conditions (_project->getConditions(FiniteElement::INVALID_PROCESS, _exportName, _type) );
 

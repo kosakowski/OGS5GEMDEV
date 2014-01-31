@@ -58,33 +58,36 @@ void Triangle::setTriangle (size_t pnt_a, size_t pnt_b, size_t pnt_c)
 
 bool Triangle::containsPoint (const double* pnt, double eps) const
 {
-	GEOLIB::Point const& a_tmp (*(_pnts[_pnt_ids[0]]));
-	if (sqrt(MathLib::sqrDist(a_tmp.getData(), pnt)) < eps)
+	GEOLIB::Point const& a (*(_pnts[_pnt_ids[0]]));
+	if (sqrt(MathLib::sqrDist(a.getData(), pnt)) < eps)
 		return true;
-	GEOLIB::Point const& b_tmp (*(_pnts[_pnt_ids[1]]));
-	if (sqrt(MathLib::sqrDist(b_tmp.getData(), pnt)) < eps)
+	GEOLIB::Point const& b (*(_pnts[_pnt_ids[1]]));
+	if (sqrt(MathLib::sqrDist(b.getData(), pnt)) < eps)
 		return true;
-	GEOLIB::Point const& c_tmp (*(_pnts[_pnt_ids[2]]));
-	if (sqrt(MathLib::sqrDist(c_tmp.getData(), pnt)) < eps)
+	GEOLIB::Point const& c (*(_pnts[_pnt_ids[2]]));
+	if (sqrt(MathLib::sqrDist(c.getData(), pnt)) < eps)
 		return true;
 
-	GEOLIB::Point s(a_tmp);
-	for (size_t k(0); k < 3; k++)
-	{
-		s[k] += b_tmp[k] + c_tmp[k];
-		s[k] /= 3.0;
-	}
+	// check if pnt is near the edge (a,b) of the triangle
+	double lambda(0.0);
+	double tmp_dist(0.0);
+	double proj_dist(MathLib::calcProjPntToLineAndDists(pnt, a.getData(), b.getData(), lambda, tmp_dist));
+	if (proj_dist / sqrt(MathLib::sqrDist(a.getData(), b.getData())) < 5e-3)
+		return true;
 
-	double scaling (1e-2);
-	GEOLIB::Point const a (a_tmp[0] + scaling * (a_tmp[0] - s[0]),
-	                       a_tmp[1] + scaling * (a_tmp[1] - s[1]),
-	                       a_tmp[2] + scaling * (a_tmp[2] - s[2]));
-	GEOLIB::Point const b (b_tmp[0] + scaling * (b_tmp[0] - s[0]),
-	                       b_tmp[1] + scaling * (b_tmp[1] - s[1]),
-	                       b_tmp[2] + scaling * (b_tmp[2] - s[2]));
-	GEOLIB::Point const c (c_tmp[0] + scaling * (c_tmp[0] - s[0]),
-	                       c_tmp[1] + scaling * (c_tmp[1] - s[1]),
-	                       c_tmp[2] + scaling * (c_tmp[2] - s[2]));
+	// check if pnt is near the edge (b,c) of the triangle
+	lambda = 0.0;
+	tmp_dist = 0.0;
+	proj_dist = MathLib::calcProjPntToLineAndDists(pnt, b.getData(), c.getData(), lambda, tmp_dist);
+	if (proj_dist / sqrt(MathLib::sqrDist(b.getData(), c.getData())) < 5e-3)
+		return true;
+
+	// check if pnt is near the edge (c,a) of the triangle
+	lambda = 0.0;
+	tmp_dist = 0.0;
+	proj_dist = MathLib::calcProjPntToLineAndDists(pnt, c.getData(), a.getData(), lambda, tmp_dist);
+	if (proj_dist / sqrt(MathLib::sqrDist(c.getData(), a.getData())) < 5e-3)
+		return true;
 
 	const double delta (std::numeric_limits<double>::epsilon());
 	const double upper (1 + delta);
@@ -141,6 +144,50 @@ bool Triangle::containsPoint (const double* pnt, double eps) const
 			else
 				return false;
 		}
+		else
+			return false;
+	}
+
+	// check special case where points a and b of triangle have the same x- and y-coordinate
+	if (fabs(b[0] - a[0]) <= std::numeric_limits<double>::epsilon() &&
+		fabs(b[1] - a[1]) <= std::numeric_limits<double>::epsilon())
+	{
+		// criterion: p-c = u0 * (a-c) + u1 * (b-c); 0 <= u0, u1 <= 1, u0+u1 <= 1
+		MathLib::Matrix<double> mat (2,2);
+		mat(0,0) = a[0] - c[0];
+		mat(0,1) = b[0] - c[0];
+		mat(1,0) = a[2] - c[2];
+		mat(1,1) = b[2] - c[2];
+		double y[2] = {pnt[0] - c[0], pnt[2] - c[2]};
+
+		MathLib::GaussAlgorithm<double> gauss (mat);
+		gauss.execute (y);
+
+		if (-delta <= y[0] && y[0] <= upper && -delta <= y[1] && y[1] <= upper &&
+			y[0] + y[1] <= upper)
+			return true;
+		else
+			return false;
+	}
+
+	// check special case where points b and c of triangle have the same x- and y-coordinate
+	if (fabs(c[0] - b[0]) <= std::numeric_limits<double>::epsilon() &&
+		fabs(c[1] - b[1]) <= std::numeric_limits<double>::epsilon())
+	{
+		// criterion: p-c = u0 * (b-a) + u1 * (c-a); 0 <= u0, u1 <= 1, u0+u1 <= 1
+		MathLib::Matrix<double> mat (2,2);
+		mat(0,0) = b[0] - a[0];
+		mat(0,1) = c[0] - a[0];
+		mat(1,0) = b[2] - a[2];
+		mat(1,1) = c[2] - a[2];
+		double y[2] = {pnt[0] - a[0], pnt[2] - a[2]};
+
+		MathLib::GaussAlgorithm<double> gauss (mat);
+		gauss.execute (y);
+
+		if (-delta <= y[0] && y[0] <= upper && -delta <= y[1] && y[1] <= upper &&
+			y[0] + y[1] <= upper)
+			return true;
 		else
 			return false;
 	}

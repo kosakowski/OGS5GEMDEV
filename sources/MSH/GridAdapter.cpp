@@ -253,19 +253,28 @@ int GridAdapter::readMeshFromFile(const std::string &filename)
 						_elems->push_back(newElem);
 					}
 					else
+					{
 						std::cout <<
 						"GridAdapter::readMeshFromFile() - Error recognising element type..."
 						          << "\n";
+						return 0;
+					}
 				}
 				else
+				{
 					std::cout <<
 					"GridAdapter::readMeshFromFile() - Index error while reading element " << *it << "... "
 					          << "\n";
+					return 0;
+				}
 			}
 			else
+			{
 				std::cout <<
 				"GridAdapter::readMeshFromFile() - Error reading element format..."
 				          << "\n";
+				return 0;
+			}
 		}
 	}
 	else
@@ -289,6 +298,8 @@ MshElemType::type GridAdapter::getElementType(const std::string &t) const
 		return MshElemType::TETRAHEDRON;
 	if (t.compare("hex") == 0)
 		return MshElemType::HEXAHEDRON;
+	if (t.compare("pyra") == 0)
+		return MshElemType::PYRAMID;
 	if ((t.compare("pri") == 0) || (t.compare("pris") == 0))
 		return MshElemType::PRISM;
 	else

@@ -137,6 +137,7 @@ void ProjectData::removeConditions(FiniteElement::ProcessType pcs_type, std::str
 	if (pcs_type == FiniteElement::INVALID_PROCESS && geo_name.empty() && cond_type == FEMCondition::UNSPECIFIED)
 	{
 		for (size_t i=0; i<_cond_vec.size(); i++) delete _cond_vec[i];
+		_cond_vec.clear();
 		return;
 	}
 

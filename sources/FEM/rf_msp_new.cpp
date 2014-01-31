@@ -838,13 +838,19 @@ std::ios::pos_type CSolidProperties::Read(std::ifstream* msp_file)
    FEMLib-Method:
    Task: Set values for solid reactive system
    **************************************************************************/
-   void CSolidProperties::SetSolidReactiveSystemProperties() //Definition auch in ca_hydration::ca_hydration
+   void CSolidProperties::SetSolidReactiveSystemProperties() //Definition auch in conversion_rate::conversion_rate
    {
 	   if (reaction_system.compare("CaOH2") == 0) {
 		lower_solid_density_limit = 1656.0; //Dichte Calciumoxid
 		upper_solid_density_limit = 2200.0; //Dichte Calciumhydroxid
 		reaction_enthalpy = -1.12e+05/0.018; //in J/kg (Molar heat of reaction divided by molar mass of water) negative for exothermic composition reaction
 		reaction_entropy = -143.5/0.018; //in J/kgK
+	   }
+	   else if (reaction_system.compare("Mn3O4") == 0){
+		lower_solid_density_limit = 4500.0; //Dichte Mn2O3 (Mangan(III)-oxid)
+		upper_solid_density_limit = 4860.0; //Dichte Mn3O4 (Mangan(II,III)-oxid)
+		reaction_enthalpy = -1.376e+05/0.032; //in J/kg (Molar heat of reaction divided by molar mass of oxygen) negative for exothermic composition reaction
+		reaction_entropy = -114.1/0.032; //in J/kgK
 	   }
 	   return;
    }

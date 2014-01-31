@@ -33,7 +33,7 @@ Kiel, 11/2008
 #include "files0.h"
 //#include "files.h"
 //#include "nodes.h"
-//#include "elements.h"           /* für ElGetElementGroupNumber */
+//#include "elements.h"           /* fuer ElGetElementGroupNumber */
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -183,8 +183,9 @@ REACT_CAP::~REACT_CAP(void){
 			}
 			this->phase_list.push_back(atoi(idphase.c_str()));
 			ncomp_x="";
+
 			in >> ncomp_x;
-			ncomp = new char [(int)ncomp_x.size()];
+			ncomp = new char [(int)ncomp_x.size()+1];
 			strcpy(ncomp, ncomp_x.c_str());
 			this->phase_post.push_back(ncomp);
 			in.clear();
@@ -1621,7 +1622,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 	//CAP_tqremc(-2, &noerr); // remove all condition and targets set previously
 	//CAP_tqstrm("inputs", &noerr); // remove stream input
 
-	// get species conc. after transport mol/m² Liquid
+	// get species conc. after transport mol/m2 Liquid
 	species_value.clear();		
 	for(i=0;i<(size_t)ns;i++){
 		m_pcs = pcs_vector[this->pcs_mass_idx[i]];
@@ -1631,7 +1632,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 
 	//CB 19.1.2011
 	// based on porosity, calculate TOTALS Ti,w Tj,s before coputing equilirium chemistry
-	// mol (/m³aquifer)
+	// mol (/m3aquifer)
     if(m_rei) {
       if(m_rei->unitconversion){
         m_rei->CalcUnitConversionFactors(ii, &unitfactor_l, &unitfactor_s, false);
@@ -2128,10 +2129,16 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
         if(m_rei->VLE_pressure.size()>0){
  		  for(i=0;i<m_rei->VLE_pressure.size();i++){
 			  m_rei->VLE_pressure[i].aq_value= exp(VLE::LnPHI_CO2(TT,PP))*m_rei->VLE_pressure[i].vp_value/exp(VLE::Henry_const_CO2(TT));
+
+			  std::cout << m_rei->VLE_pressure[i].aq_value << "\n";
+			  std::cout << (VLE::LnPHI_CO2(TT,PP)) << "\n";
+				std::cout << m_rei->VLE_pressure[i].vp_value << "\n";
+				std::cout << VLE::Henry_const_CO2(TT) << "\n";
+
 			//calc the real solubility of gas from geochemcalc, and store the value
 			m_rei->VLE_pressure[i].delta=0.0;
 			if(m_rei->VLE_pressure[i].vp_value>0){
-			  delta=m_rei->VLE_pressure[i].aq_value - species_value[m_rei->VLE_pressure[i].idx_aq_species]/(species_value[widx]/55.51); 
+				delta=m_rei->VLE_pressure[i].aq_value - species_value[m_rei->VLE_pressure[i].idx_aq_species]/(species_value[widx]/55.51);
 			  //compare with the new value after reaction
 			  if(iter_eq==0){
 				a[i]=0.0; //delta;
@@ -2182,6 +2189,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 		
 		if(m_rei)
 		{
+
           if(m_rei->VLE_pressure.size()==0 && m_rei->VLE_conditions.size()==0)
 			is_equilibrium=true;
         }
@@ -2259,7 +2267,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 	
 		//if(ii==1) cout << " value " << species_value.back() << "\n";
         // unit factors are only different from 1 if(m_rei && m_rei->unitconversion)
-        for( i=0;i<(size_t)ns;i++){ //mol/m³
+        for( i=0;i<(size_t)ns;i++){ //mol/m3
           if( species_dormant[ns-i-1]==0){ // return only values of non-dormant species
 			m_pcs = pcs_vector[pcs_mass_idx[ns-i-1]];
             if(this->species_phase[ns-i-1]==0){

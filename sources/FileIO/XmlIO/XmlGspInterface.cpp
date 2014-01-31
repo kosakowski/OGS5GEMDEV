@@ -115,10 +115,9 @@ int XmlGspInterface::write(std::ostream& stream)
 
 	QDomDocument doc("OGS-PROJECT-DOM");
 	QDomElement root = doc.createElement("OpenGeoSysProject");
-	root.setAttribute( "xmlns:ogs", "http://www.opengeosys.net" );
+	root.setAttribute( "xmlns:ogs", "http://www.opengeosys.org" );
 	root.setAttribute( "xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance" );
-	root.setAttribute( "xsi:noNamespaceSchemaLocation",
-	                   "http://141.65.34.25/OpenGeoSysProject.xsd" );
+	root.setAttribute( "xsi:noNamespaceSchemaLocation", "http://www.opengeosys.org/images/xsd/OpenGeoSysProject.xsd" );
 
 	doc.appendChild(root);
 

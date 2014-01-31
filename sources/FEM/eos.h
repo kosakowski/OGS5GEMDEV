@@ -18,11 +18,14 @@ double isochoric_heat_capacity (double rho, double T, int c);
 // calculates the isochoric heat capacity depending on density and temperature
 double isobaric_heat_capacity(double rho, double T, int c);
 // calculates the isobaric heat capacity depending on density and temperature
+double linear_heat_capacity(double T, int c); //temperature dependent heat capacity for narrow range of application (fast)
 double co2_viscosity (double rho, double T);
 // calculates the viscosity depending on density and temperature !ONLY for CO2!!!
 double co2_heat_conductivity (double, double);
 // calculates the heat conductivity of co2 depending on density and temperature
 double ch4_viscosity_295K (double);
+//calculates the viscosity of O2
+double o2_viscosity(double rho, double T);
 // calculates the viscosity of CH4 at 25 �C depending on pressure
 double Fluid_Viscosity (double rho, double T, double p, int fluid);
 //Viscosity for several fluids
@@ -45,6 +48,7 @@ double ch4_viscosity (double rho, double T);
 double ch4_heat_conductivity (double rho, double T);
 double n2_viscosity (double rho, double T);
 double n2_heat_conductivity (double rho, double T);
+double o2_heat_conductivity (double rho, double T);
 double mixing_ternary (double* x,
                        double* a,
                        double* b,

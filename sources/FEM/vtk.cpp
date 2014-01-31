@@ -581,6 +581,7 @@ bool CVTK::WriteNodalValue(std::fstream &fin,
     bool is3D = (msh->GetCoordinateFlag() / 10 == 3);
 	bool outNodeVelocity = false;
     bool outNodeDisplacement = false;
+    bool outNodePrincipleStressDirections = false;
 
 	//Nodal values
 	for (int i = 0; i < (int) out->_nod_value_vector.size(); i++)
@@ -598,6 +599,14 @@ bool CVTK::WriteNodalValue(std::fstream &fin,
             outNodeDisplacement = true;
             continue;
         }
+
+        if (internal_val_name.find("NORM_STRESS") != string::npos)
+        {
+                            outNodePrincipleStressDirections = true;
+                            continue;
+        }
+
+
 		//    if (out->m_pcs == NULL || out->pcs_type_name.compare("NO_PCS")==0)
 		if (out->m_pcs == NULL || out->getProcessType() == FiniteElement::NO_PCS)
 			m_pcs = PCSGet(internal_val_name, true);
@@ -821,6 +830,191 @@ bool CVTK::WriteNodalValue(std::fstream &fin,
         }
     }
 
+
+    if (outNodePrincipleStressDirections)
+        {
+            for (size_t i = 0; i < out->_nod_value_vector.size(); i++)
+            {
+                const string &internal_val_name = out->_nod_value_vector[i];
+    //            const string &external_val_name = out->_alias_nod_value_vector[i];
+                if (internal_val_name.find("NORM_STRESS_1_X") != string::npos)
+                {
+                    if (out->m_pcs == NULL)
+                        m_pcs = PCSGet(internal_val_name,true);
+    //                disp_id = 0;
+                }
+                else
+                    continue;
+                if(!m_pcs)
+                    continue;
+
+                if (!useBinary || !output_data)
+                    WriteDataArrayHeader(fin, this->type_Double, "NORMSTRESS_1", 3, str_format, offset);
+                if (output_data)
+                {
+                    int var_id[3] = {};
+                    var_id[0] = m_pcs->GetNodeValueIndex("NORM_STRESS_1_X");
+                    var_id[1] = m_pcs->GetNodeValueIndex("NORM_STRESS_1_Y");
+                    var_id[2] = m_pcs->GetNodeValueIndex("NORM_STRESS_1_Z");
+                    //
+                    if (!useBinary) {
+                        fin << "          ";
+                    } else {
+                        write_value_binary<unsigned int>(fin, sizeof(double)*msh->GetNodesNumber(false)*3);
+                    }
+                    double u[3] = {};
+                    for(size_t j = 0l; j < msh->GetNodesNumber(false); j++)
+                    {
+                        for (size_t k=0; k<3; k++) {
+                            if (var_id[k]<0)
+                                u[k] = .0;
+                            else
+                                u[k] =  m_pcs->GetNodeValue(msh->nod_vector[j]->GetIndex(), var_id[k]);
+                        }
+
+                        if (!useBinary) {
+                            for (size_t k=0; k<3; k++)
+                                fin << u[k] << " ";
+                        } else {
+                            for (size_t k=0; k<3; k++)
+                                write_value_binary(fin, u[k]);
+                        }
+                    }
+                    if (!useBinary) {
+                        fin << "\n";
+                    } else {
+                        write_value_binary<unsigned int>(fin, sizeof(double)*msh->GetNodesNumber(false)*3);
+                    }
+                }
+                else
+                    offset += msh->GetNodesNumber(false) * 3 * sizeof(double) +
+                    SIZE_OF_BLOCK_LENGTH_TAG;
+                if (!useBinary || !output_data)
+                    WriteDataArrayFooter(fin);
+            }
+            for (size_t i = 0; i < out->_nod_value_vector.size(); i++)
+            {
+                const string &internal_val_name = out->_nod_value_vector[i];
+    //            const string &external_val_name = out->_alias_nod_value_vector[i];
+                if (internal_val_name.find("NORM_STRESS_2_X") != string::npos)
+                {
+                    if (out->m_pcs == NULL)
+                        m_pcs = PCSGet(internal_val_name,true);
+    //                disp_id = 0;
+                }
+                else
+                    continue;
+                if(!m_pcs)
+                    continue;
+
+                if (!useBinary || !output_data)
+                    WriteDataArrayHeader(fin, this->type_Double, "NORMSTRESS_2", 3, str_format, offset);
+                if (output_data)
+                {
+                    int var_id[3] = {};
+                    var_id[0] = m_pcs->GetNodeValueIndex("NORM_STRESS_2_X");
+                    var_id[1] = m_pcs->GetNodeValueIndex("NORM_STRESS_2_Y");
+                    var_id[2] = m_pcs->GetNodeValueIndex("NORM_STRESS_2_Z");
+                    //
+                    if (!useBinary) {
+                        fin << "          ";
+                    } else {
+                        write_value_binary<unsigned int>(fin, sizeof(double)*msh->GetNodesNumber(false)*3);
+                    }
+                    double u[3] = {};
+                    for(size_t j = 0l; j < msh->GetNodesNumber(false); j++)
+                    {
+                        for (size_t k=0; k<3; k++) {
+                            if (var_id[k]<0)
+                                u[k] = .0;
+                            else
+                                u[k] =  m_pcs->GetNodeValue(msh->nod_vector[j]->GetIndex(), var_id[k]);
+                        }
+
+                        if (!useBinary) {
+                            for (size_t k=0; k<3; k++)
+                                fin << u[k] << " ";
+                        } else {
+                            for (size_t k=0; k<3; k++)
+                                write_value_binary(fin, u[k]);
+                        }
+                    }
+                    if (!useBinary) {
+                        fin << "\n";
+                    } else {
+                        write_value_binary<unsigned int>(fin, sizeof(double)*msh->GetNodesNumber(false)*3);
+                    }
+                }
+                else
+                    offset += msh->GetNodesNumber(false) * 3 * sizeof(double) +
+                    SIZE_OF_BLOCK_LENGTH_TAG;
+                if (!useBinary || !output_data)
+                    WriteDataArrayFooter(fin);
+            }
+            for (size_t i = 0; i < out->_nod_value_vector.size(); i++)
+            {
+                const string &internal_val_name = out->_nod_value_vector[i];
+    //            const string &external_val_name = out->_alias_nod_value_vector[i];
+                if (internal_val_name.find("NORM_STRESS_3_X") != string::npos)
+                {
+                    if (out->m_pcs == NULL)
+                        m_pcs = PCSGet(internal_val_name,true);
+    //                disp_id = 0;
+                }
+                else
+                    continue;
+                if(!m_pcs)
+                    continue;
+
+                if (!useBinary || !output_data)
+                    WriteDataArrayHeader(fin, this->type_Double, "NORMSTRESS_3", 3, str_format, offset);
+                if (output_data)
+                {
+                    int var_id[3] = {};
+                    var_id[0] = m_pcs->GetNodeValueIndex("NORM_STRESS_3_X");
+                    var_id[1] = m_pcs->GetNodeValueIndex("NORM_STRESS_3_Y");
+                    var_id[2] = m_pcs->GetNodeValueIndex("NORM_STRESS_3_Z");
+                    //
+                    if (!useBinary) {
+                        fin << "          ";
+                    } else {
+                        write_value_binary<unsigned int>(fin, sizeof(double)*msh->GetNodesNumber(false)*3);
+                    }
+                    double u[3] = {};
+                    for(size_t j = 0l; j < msh->GetNodesNumber(false); j++)
+                    {
+                        for (size_t k=0; k<3; k++) {
+                            if (var_id[k]<0)
+                                u[k] = .0;
+                            else
+                                u[k] =  m_pcs->GetNodeValue(msh->nod_vector[j]->GetIndex(), var_id[k]);
+                        }
+
+                        if (!useBinary) {
+                            for (size_t k=0; k<3; k++)
+                                fin << u[k] << " ";
+                        } else {
+                            for (size_t k=0; k<3; k++)
+                                write_value_binary(fin, u[k]);
+                        }
+                    }
+                    if (!useBinary) {
+                        fin << "\n";
+                    } else {
+                        write_value_binary<unsigned int>(fin, sizeof(double)*msh->GetNodesNumber(false)*3);
+                    }
+                }
+                else
+                    offset += msh->GetNodesNumber(false) * 3 * sizeof(double) +
+                    SIZE_OF_BLOCK_LENGTH_TAG;
+                if (!useBinary || !output_data)
+                    WriteDataArrayFooter(fin);
+            }
+
+
+
+
+        }
 	//MFP
       for ( size_t i=0; i<out->mfp_value_vector.size(); i++) {
 

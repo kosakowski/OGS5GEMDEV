@@ -231,6 +231,8 @@ void BoundaryConditionIO::write(std::ostream& out,
 			out << "\t\t" << bc._PointsHaveDistribedBC[i] << "  "
 			    << bc._DistribedBC[i] << "\n";
 	}
+	else
+		out << "\n";
 
 	// function name
 	if (!bc.fct_name.empty())

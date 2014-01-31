@@ -364,7 +364,7 @@ CRFProcess::CRFProcess(void) :
 	ExcavMaterialGroup = -1;              //01.2010 WX
 	PCS_ExcavState = -1;                  //WX
 	Neglect_H_ini = -1;                   //WX
-   m_ca_hydration = NULL;                         //WW
+   m_conversion_rate = NULL;                         //WW
    m_solver  = NULL;                              //WW
 	isRSM = false; //WW
 	eqs_x = NULL;
@@ -508,8 +508,8 @@ CRFProcess::~CRFProcess(void)
 	}
 
     // HS, 11.2011
-	if (m_ca_hydration) 
-		delete m_ca_hydration; 
+	if (m_conversion_rate) 
+		delete m_conversion_rate; 
 	if (m_solver)
 		delete m_solver;
 
@@ -598,6 +598,9 @@ void CRFProcess::SetOBJNames()
 **************************************************************************/
 void CRFProcess::Create()
 {
+         if (hasAnyProcessDeactivatedSubdomains)
+            CheckMarkedElement();                 //01.2014 WW
+
 	// we need the string representation of process type at some points
 	std::string pcs_type_name(
 	        convertProcessTypeToString(this->getProcessType()));
@@ -2328,7 +2331,9 @@ void CRFProcess::Config(void)
 		cout << "Error in CRFProcess::Config - no MSH data" << "\n";
 		return;
 	}
-	CheckMarkedElement();                 //WW
+
+        if (hasAnyProcessDeactivatedSubdomains)
+             CheckMarkedElement();                 //WW
 
 	if (continuum_vector.size() == 0)     // YD
 		continuum_vector.push_back(1.0);
@@ -3142,6 +3147,19 @@ void CRFProcess::VariableStaticProblem()
 	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "-";
 	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
 	pcs_number_of_secondary_nvals++;
+	// NB new secondary variables for principle stresses; Principle stress directions might follow later
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "STRESS_1"; // i.e. Sigma_1
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "Pa";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "STRESS_2"; // i.e. Sigma_2
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "Pa";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "STRESS_3"; // i.e. Sigma_3
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "Pa";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
 	//  pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "POROPRESSURE0";
 	//  pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "Pa";
 	//  pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
@@ -3166,6 +3184,54 @@ void CRFProcess::VariableStaticProblem()
 		pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
 		pcs_number_of_secondary_nvals++;
 	}
+	if (max_dim > 0)  // >1D
+	{
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "NORM_STRESS_1_X"; // i.e. Sigma_1
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "-";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "NORM_STRESS_1_Y"; // i.e. Sigma_1
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "-";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "NORM_STRESS_1_Z"; // i.e. Sigma_1
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "-";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "NORM_STRESS_2_X"; // i.e. Sigma_1
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "-";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "NORM_STRESS_2_Y"; // i.e. Sigma_1
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "-";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "NORM_STRESS_2_Z"; // i.e. Sigma_1
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "-";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "NORM_STRESS_3_X"; // i.e. Sigma_1
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "-";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "NORM_STRESS_3_Y"; // i.e. Sigma_1
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "-";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "NORM_STRESS_3_Z"; // i.e. Sigma_1
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "-";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+}
+
 
 	if(type == 41)
 	{                                     //Monolithic scheme
@@ -3254,6 +3320,21 @@ void CRFProcess::VariableDynamics()
 	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "STRAIN_PLS";
 	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "-";
 	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+
+	// NB new secondary variables for principle stresses; Principle stress directions might follow later
+	pcs_number_of_secondary_nvals++;
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "STRESS_1"; // i.e. Sigma_1
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "Pa";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "STRESS_2"; // i.e. Sigma_2
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "Pa";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "STRESS_3"; // i.e. Sigma_3
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "Pa";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+
 	pcs_number_of_secondary_nvals++;
 	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "DISPLACEMENT_X1";
 	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "m";
@@ -3303,6 +3384,54 @@ void CRFProcess::VariableDynamics()
 		pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
 		pcs_number_of_secondary_nvals++;
 	}
+	if (max_dim > 0)  // >1D
+	{
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "NORM_STRESS_1_X"; // i.e. Sigma_1
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "-";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "NORM_STRESS_1_Y"; // i.e. Sigma_1
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "-";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "NORM_STRESS_1_Z"; // i.e. Sigma_1
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "-";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "NORM_STRESS_2_X"; // i.e. Sigma_1
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "-";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "NORM_STRESS_2_Y"; // i.e. Sigma_1
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "-";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "NORM_STRESS_2_Z"; // i.e. Sigma_1
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "-";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "NORM_STRESS_3_X"; // i.e. Sigma_1
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "-";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "NORM_STRESS_3_Y"; // i.e. Sigma_1
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "-";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "NORM_STRESS_3_Z"; // i.e. Sigma_1
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "-";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+}
+
 }
 
 
@@ -4004,13 +4133,13 @@ void CRFProcess::ConfigTNEQ()
    //// initialize the pointers for rho_s ODE calculation
    //rho_s = Eigen::VectorXd::Zero(1); // HS, temp storage for density of the solid phase
    //qR = Eigen::VectorXd::Zero(1);    // HS, temp storage for solid density change rate
-   //this->m_hydration  = new ca_hydration(400/*solid temperature*/, 
+   //this->m_hydration  = new conversion_rate(400/*solid temperature*/, 
 	  //                                   600/*gass temperature*/,
 			//							 2.0/*pressure of gas phase*/, 
 			//							 0.2/*mass fraction of H2O in gas*/,
 			//							 1700/*initial solid density*/,
 			//							 0.0/*delta_time*/);
-   //this->m_ode_solver = new StepperBulischStoer<ca_hydration>(rho_s/*y value vector*/,
+   //this->m_ode_solver = new StepperBulischStoer<conversion_rate>(rho_s/*y value vector*/,
 	  //                                                        qR/*dydx value vector*/, 
 			//												  this->GetTimeStepping()->time_current/*t0 value*/,
 			//												  1e-12 /*relative tolerance*/, 
@@ -4029,8 +4158,8 @@ void CRFProcess::ConfigTNEQ()
 	//if (group_count != 0) break;
    // if (this->m_num->reaction_scaling!=.0) {
 	double start_t = 0.0;
-	// now initialize the ca_hydration class
-	m_ca_hydration = new ca_hydration(573.0,     // T_solid, Kelvin
+	// now initialize the conversion_rate class
+	m_conversion_rate = new conversion_rate(573.0,     // T_solid, Kelvin
 			                          573.0,     // T_gas, Kelvin
 			                          0.0,       // p_gas
 			                          0.0,       // w_water, mass fraction unitless
@@ -4045,10 +4174,10 @@ void CRFProcess::ConfigTNEQ()
 	yy_rho_s(0) = m_rho_s_0;
 
 	// evaluate inital value of dydt
-	//m_ca_hydration->eval(start_t, yy_rho_s, dydxx_rho_s);
+	//m_conversion_rate->eval(start_t, yy_rho_s, dydxx_rho_s);
 	dydxx_rho_s(0) = 0.0;
 	// initialize the solver
-	m_solver = new StepperBulischStoer<ca_hydration>(yy_rho_s, dydxx_rho_s, start_t, 1e-6, 1e-6, true);
+	m_solver = new StepperBulischStoer<conversion_rate>(yy_rho_s, dydxx_rho_s, start_t, 1e-6, 1e-6, true);
 	// }
 	// HS, end of thermal storage case-------------------------------------------------------------   
    //}
@@ -5590,7 +5719,7 @@ void CRFProcess::CalIntegrationPointValue()
             {
                 fem->ConfigElement(elem);
                 fem->Config();                
-		        fem->Cal_rho_s_TS(); // HS, thermal storage reactions
+		        fem->CalcSolidDensityRate(); // HS, thermal storage reactions
             }
         }
     }
@@ -7202,8 +7331,8 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 				file.close();
 #endif
 			}
-		}
 
+		}
 
 		m_st=NULL;
 
@@ -7252,6 +7381,7 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 #endif
 
 			cnodev = st_node_value[gindex];
+
 
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
 			msh_node = cnodev->geo_node_number;
@@ -7510,6 +7640,9 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 				rank_stgem_node_value_in_dom.clear();
 			}
 		}
+
+
+
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
 		if(st_eqs_id.size()>0)
 		  {
@@ -9959,7 +10092,7 @@ void CRFProcess::CalcSecondaryVariablesTNEQ()
         if (elem->GetMark())                        // Marked for use
         {
             fem->ConfigElement(elem);
-			fem->Copy_rho_s_curr_2_prev(i);          // HS, thermal storage reactions
+			fem->UpdateSolidDensity(i);          // HS, thermal storage reactions
             fem->ExtrapolateGauss_ReactRate_TNEQ( this ); // HS added 19.02.2013
         }
     }

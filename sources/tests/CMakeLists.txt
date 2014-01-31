@@ -1,3 +1,7 @@
+IF( MSVC ) # VS2012 doesn't support correctly the tuples yet
+	ADD_DEFINITIONS( /D _VARIADIC_MAX=10 )
+ENDIF()
+
 ADD_SUBDIRECTORY( gtest )
 
 # Add tests which do not need testdata here:
@@ -32,7 +36,7 @@ INCLUDE_DIRECTORIES(
 )
 
 ADD_EXECUTABLE (testrunner ${SOURCES})
-TARGET_LINK_LIBRARIES(testrunner 
+TARGET_LINK_LIBRARIES(testrunner
   GTest
   Base
   FileIO
@@ -69,7 +73,7 @@ IF(OGS_COVERAGE)
 			SETUP_TARGET_FOR_COVERAGE(benchmark_coverage ctest "benchmark_coverage_results" "-E;'Tests|FILE|EXCEED';-j;${PROCESSOR_COUNT}")
 		ENDIF() # BENCHMARK_DIR_FOUND
 	ENDIF() # JENKINS_URL
-	
+
 ELSE() # without coverage reports
 	ADD_CUSTOM_TARGET(gtests testrunner	DEPENDS testrunner)
 	SET_TARGET_PROPERTIES(testrunner gtests PROPERTIES FOLDER Testing)
@@ -82,7 +86,7 @@ IF (OGS_ONE_BIG_GTEST)
 ELSE (OGS_ONE_BIG_GTEST)
 	ADD_GOOGLE_TESTS ( ${testrunnerExe} ${SOURCES})
 ENDIF (OGS_ONE_BIG_GTEST)
-  
+
 # add new test models here not all of these models will be needed, depending
 # on compile flags but it is safe to copy them all across
 IF (NOT MSVC)

@@ -13,6 +13,7 @@
 #include "GeoInfo.h"                              // TF
 #include "LinearFunctionData.h" // TF
 #include "ProcessInfo.h"                          // TF
+#include "fem_ele.h"
 
 class CNodeValue;
 class CGLPolyline;
@@ -61,6 +62,7 @@ public:
 	void EdgeIntegration(MeshLib::CFEMesh* m_msh,
 	                     const std::vector<long> & nodes_on_ply,
 	                     std::vector<double> & node_value_vector) const;
+
 	void FaceIntegration(MeshLib::CFEMesh* m_msh,
 	                     std::vector<long> const & nodes_on_sfc,
 	                     std::vector<double> & node_value_vector);
@@ -130,7 +132,7 @@ public:
 	int CurveIndex;
 	std::vector<int> element_st_vector;
 
-	double st_rill_height, coup_pressure_head, coup_residualPerm; // JOD 
+	double st_rill_height, coup_given_value, coup_residualPerm; // JOD 
 	double sorptivity, constant, rainfall, rainfall_duration, moistureDeficit /*1x*/;
 	bool node_averaging, distribute_volume_flux; // JOD 
 	bool no_surface_water_pressure, explicit_surface_water_pressure; // JOD 
@@ -144,6 +146,8 @@ public:
 	const std::vector<int>& getPointsWithDistribedST () const { return PointsHaveDistribedBC; }
 	const std::vector<double>& getDistribedST() const { return DistribedBC; }
 	bool isAnalytical () const { return analytical; }
+	bool isPressureBoundaryCondition () const { return pressureBoundaryCondition; }
+	void SetPressureBoundaryConditionFlag (bool pBC) { pressureBoundaryCondition = pBC;}
 	double GetAnalyticalSolution(long location);
 	size_t getNumberOfTerms () const { return number_of_terms; }
 	void setMaxNumberOfTerms (size_t max_no_terms) { _max_no_terms = max_no_terms; }
@@ -205,6 +209,8 @@ private:                                          // TF, KR
 	LinearFunctionData* dis_linear_f;     //24.8.2011. WW
 
 	bool analytical;                      //2x?
+	bool pressureBoundaryCondition; // pressure load boundary condition
+
 	size_t number_of_terms;
 	size_t _max_no_terms;                 // used only once in a global in rf_st_new
 	size_t _no_an_sol;
