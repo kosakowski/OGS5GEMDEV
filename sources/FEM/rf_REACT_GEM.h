@@ -86,16 +86,22 @@ public:
     double *m_xDC, *m_gam, *m_xPH, *m_aPH, *m_vPS, *m_mPS, *m_bPS,
     *m_xPA, *m_dul, *m_dll, *m_bIC, *m_bIC_dummy, *m_rMB, *m_uIC, *m_bSP;
 
-    double  *m_porosity_Elem, *m_porosity_Elem_buff;
+    double  *m_porosity_Elem;
 
     /// data for transport of IC
-    double *m_soluteB, *m_soluteB_buff, *m_soluteB_pts, *m_bIC_pts;
+    double *m_soluteB;
 
     // previous time step DC values
     double *m_xDC_pts;                          // previous time step Concentration;
     double *m_xDC_MT_delta;                     // delta C from Mass Transport;
     double *m_xDC_Chem_delta;                   // delta C from Chemistry;
-
+    // previous time step IC values
+    double *m_soluteB_pts, *m_bIC_pts;
+    // previous time step kinetic values
+    double *dmdt_pts;                               // old kinetically controlled rates
+    double *mol_phase_pts, *omega_phase_pts, *omega_components_pts; // old saturation indices and mole amounts in phase
+    
+    
     double *m_excess_water;                     // excess water in m3/s for each node;
     double *m_excess_gas;                       // excess gas in m3/s for each node;
     double *m_saturation;
@@ -200,6 +206,9 @@ public:
     double CalcSoluteBDelta ( long in );
     double m_diff_gems;
     void RestoreOldSolution ( long in );
+    void CopyCurKineticsPre ( void );
+    
+    
     /// this is only for porosity interpolation to elemens
     void ConvPorosityNodeValue2Elem(int i_timestep);
     int CalcPorosity(long in,  TNode* m_Node );
@@ -243,16 +252,6 @@ public:
     double m_gem_temperature;
     // GEM pressure (needed for Richards flow)
     double m_gem_pressure;
-
-    /// Definition of buffer variables for MPI
-    long *m_NodeHandle_buff, *m_NodeStatusCH_buff, *m_IterDone_buff;
-    // porosity buffer
-    double *m_porosity_buff, *m_fluid_volume_buff, *m_gas_volume_buff, *m_fluid_density_buff;
-    double *m_Vs_buff, *m_Ms_buff, *m_Gs_buff, *m_Hs_buff, *m_IC_buff, *m_pH_buff, *m_pe_buff, *m_Eh_buff;
-    double *m_xDC_buff, *m_xPH_buff,*m_aPH_buff,*m_xPA_buff,*m_excess_water_buff,*m_excess_gas_buff,*m_dul_buff, *m_dll_buff, *m_Node_Volume_buff, *m_saturation_buff,*m_bIC_buff,*m_bIC_dummy_buff, *m_xDC_pts_buff, *m_xDC_MT_delta_buff, *m_xDC_Chem_delta_buff;
-    double *m_bPS_buff; // for Richards flow and gas transport...
-    // this we need for kinetics
-    double *omega_phase_buff, *mol_phase_buff, *dmdt_buff, *omega_components_buff;
 
 // the next two are always defined, such that it also works in serial version    
     int myrank;
