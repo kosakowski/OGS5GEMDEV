@@ -3061,23 +3061,32 @@ inline double Problem::MassTrasport()
 
 		// Check if the Sequential Iterative Scheme needs to be intergrated
 		if (m_pcs->m_num->cpl_max_iterations > 1)
-			m_vec_GEM->flag_iterative_scheme = 1;  // set to standard iterative scheme;
+			m_vec_GEM->flag_iterative_scheme = 1;  // set to standard iterative scheme as SIA is not implemented
+		
+		if (m_vec_GEM->flag_iterative_scheme == 1)  //SNIA standard...
+		{
+		  m_vec_GEM->StoreOldSolutionAll(); // we need this also here in order to switch back to old values in case a node fails during gems calculations
+		  // move data from transport to GEMS data structures
+		  m_vec_GEM->GetReactInfoFromMassTransport(m_time); // get concentrations, pressure and temperature values
+		  m_vec_GEM->Run_MainLoop(); // Run GEM
+		  // Set info in MT
+		  m_vec_GEM->SetReactInfoBackMassTransport(m_time); //this includes, concentrations, source sink terms for fluid and the element porosities, as well as changed boundary conditions
+		}
+		else if (m_vec_GEM->flag_iterative_scheme > 1)
+		{
 		// Move current xDC to previous xDC
 		m_vec_GEM->CopyCurXDCPre();
 		// Get info from MT
-		// m_vec_GEM->ConvPorosityNodeValue2Elem(); //
-		// second arguments should be one if we work with concentrations
-		m_vec_GEM->GetReactInfoFromMassTransport(m_time);
-		// m_vec_GEM->ConcentrationToMass();
+		m_vec_GEM->GetReactInfoFromMassTransport(m_time); // get concentrations, pressure and temperature values
 		m_vec_GEM->Run_MainLoop(); // Run GEM
 		m_vec_GEM->CopyCurBPre();
-
-		// m_vec_GEM->MassToConcentration();
 		// Calculate the different of xDC
 		m_vec_GEM->UpdateXDCChemDelta();
+		
 		// Set info in MT
-		m_vec_GEM->SetReactInfoBackMassTransport(m_time);
-		//m_vec_GEM->ConvPorosityNodeValue2Elem(); // update element porosity and push back values
+		m_vec_GEM->SetReactInfoBackMassTransport(m_time); //this includes, concentrations, source sink terms for fluid and the element porosities, as well as changed boundary conditions
+		
+		}
 	}
 #endif                                         // GEM_REACT
 

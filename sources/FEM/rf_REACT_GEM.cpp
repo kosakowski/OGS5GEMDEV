@@ -2520,7 +2520,7 @@ double REACT_GEM::CalcSoluteBDelta ( long in )
 {
 	long i;
 	double dummy = 0;
-	for ( i = 0; i < nIC - 1; i++ )
+	for ( i = 0; i < nIC - 1; i++ ) // nIC-1 as last IC is charge
 		dummy = max ( dummy,abs (
 		                      m_soluteB[in * nIC +
 		                                i] -
@@ -2528,10 +2528,33 @@ double REACT_GEM::CalcSoluteBDelta ( long in )
 	return dummy;
 }
 
-void REACT_GEM::RestoreOldSolution ( long in )
+void REACT_GEM::StoreOldSolutionAll ( )
 {
 	long i;
-	for ( i = 0; i < nIC - 1; i++ )
+	for ( i = 0; i < nNodes * nIC ; i++ ) 
+	{
+		m_soluteB_pts[i] = m_soluteB[i];
+		m_bIC_pts[i] = m_bIC[i];
+	}
+	for ( i = 0; i < nNodes * nDC; i++ )
+		m_xDC_pts[i] = m_xDC[i];
+// now comes the stuff for kinetics	
+	for ( i = 0; i < nNodes * nDC; i++ )
+		omega_components_pts[i] = omega_components[i];
+	for ( i = 0; i < nNodes * nPH; i++ )
+		omega_phase_pts[i] = omega_phase[i];
+	for ( i = 0; i < nNodes * nPH; i++ )
+		mol_phase_pts[i] = mol_phase[i];
+	for ( i = 0; i < nNodes * nPH; i++ )
+		dmdt_pts[i] = dmdt[i];
+
+}
+
+
+void REACT_GEM::RestoreOldSolutionNode ( long in ) 
+{
+	long i;
+	for ( i = 0; i < nIC - 1; i++ )      // nIC-1 as last IC is charge 
 	{
 		m_soluteB[in * nIC + i] = m_soluteB_pts[in * nIC + i];
 		m_bIC[in * nIC + i] = m_bIC_pts[in * nIC + i];
@@ -2539,16 +2562,37 @@ void REACT_GEM::RestoreOldSolution ( long in )
 	for ( i = 0; i < nDC; i++ )
 		m_xDC[in * nDC + i] = m_xDC_pts[in * nDC + i];
 // now comes the stuff for kinetics	
-	for ( i = 0; i < nNodes * nDC; i++ )
-		omega_components[i] = omega_components_pts[i];
-	for ( i = 0; i < nNodes * nPH; i++ )
-		omega_phase[i] = omega_phase_pts[i];
-	for ( i = 0; i < nNodes * nPH; i++ )
-		mol_phase[i] = mol_phase_pts[i];
-	for ( i = 0; i < nNodes * nPH; i++ )
-		dmdt[i] = dmdt_pts[i];
-
+	for ( i = 0; i < nDC; i++ )
+		omega_components[in * nDC + i] = omega_components_pts[in * nDC + i];
+	for ( i = 0; i < nPH; i++ )
+		omega_phase[in * nPH + i] = omega_phase_pts[in * nPH + i];
+	for ( i = 0; i < nPH; i++ )
+		mol_phase[in * nPH + i] = mol_phase_pts[in * nPH + i];
+	for ( i = 0; i < nPH; i++ )
+		dmdt[in * nPH + i] = dmdt_pts[in * nPH + i];
 }
+
+void REACT_GEM::RestoreOldSolutionAll ( ) 
+{
+	long i;
+	for ( i = 0; i < nNodes * nIC ; i++ )      // nIC-1 as last IC is charge 
+	{
+		m_soluteB[i] = m_soluteB_pts[i];
+		m_bIC[i] = m_bIC_pts[i];
+	}
+	for ( i = 0; i < nNodes * nDC; i++ )
+		m_xDC[i] = m_xDC_pts[i];
+// now comes the stuff for kinetics	
+	for ( i = 0; i < nNodes *nDC; i++ )
+		omega_components[i] = omega_components_pts[i];
+	for ( i = 0; i < nNodes *nPH; i++ )
+		omega_phase[i] = omega_phase_pts[i];
+	for ( i = 0; i < nNodes *nPH; i++ )
+		mol_phase[i] = mol_phase_pts[i];
+	for ( i = 0; i < nNodes *nPH; i++ )
+		dmdt[i] = dmdt_pts[i];
+}
+
 
 // dummy =( mol_phase[in * nPH + k] + dmdt[in * nPH + k] * dt ) * omega_components[in * nDC + j] / omega_phase[in * nPH + k];
 
@@ -4371,9 +4415,9 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 					m_fluid_density[in] =
 					        m_mPS[in * nPS + 0] / m_vPS[in * nPS + 0 ];
 				}
-				else
+				else   // restore old solution and no update on kinetic parameters, porosity and fluid/gas properties
 				{
-					RestoreOldSolution ( in );
+					RestoreOldSolutionNode ( in ); 
 					node_fail = 0;
 				}
 			} //end if check for boundary node12

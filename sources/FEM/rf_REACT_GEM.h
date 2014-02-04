@@ -205,7 +205,9 @@ public:
     void CopyCurBPre ( void );
     double CalcSoluteBDelta ( long in );
     double m_diff_gems;
-    void RestoreOldSolution ( long in );
+    void StoreOldSolutionAll ( );
+    void RestoreOldSolutionAll ( );
+    void RestoreOldSolutionNode ( long in );
     void CopyCurKineticsPre ( void );
     
     
