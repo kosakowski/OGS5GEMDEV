@@ -9164,8 +9164,7 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 		last_error = 1.0;
 		for(iter_nlin = 0; iter_nlin < m_num->nls_max_iterations; iter_nlin++)
 		{
-			cout << "    PCS non-linear iteration: " << iter_nlin << "/"
-         << m_num->nls_max_iterations << '\n';
+			cout << "    PCS non-linear iteration: " << iter_nlin << "/" << m_num->nls_max_iterations << '\n';
 			nonlinear_iteration_error = Execute();
 			//
 			// ---------------------------------------------------
