@@ -3074,17 +3074,17 @@ inline double Problem::MassTrasport()
 		}
 		else if (m_vec_GEM->flag_iterative_scheme > 1)
 		{
-		// Move current xDC to previous xDC
-		m_vec_GEM->CopyCurXDCPre();
+		  m_vec_GEM->StoreOldSolutionAll(); // we need this also here in order to switch back to old values in case a node fails during gems calculations
 		// Get info from MT
-		m_vec_GEM->GetReactInfoFromMassTransport(m_time); // get concentrations, pressure and temperature values
-		m_vec_GEM->Run_MainLoop(); // Run GEM
-		m_vec_GEM->CopyCurBPre();
-		// Calculate the different of xDC
-		m_vec_GEM->UpdateXDCChemDelta();
-		
-		// Set info in MT
-		m_vec_GEM->SetReactInfoBackMassTransport(m_time); //this includes, concentrations, source sink terms for fluid and the element porosities, as well as changed boundary conditions
+ 		 m_vec_GEM->GetReactInfoFromMassTransport(m_time); // get concentrations, pressure and temperature values
+		 m_vec_GEM->Run_MainLoop(); // Run GEM to get initial values for coupled step
+		  // initial run finished...now comes the iteration loop
+
+
+
+		 // iteration loop finished
+		 // Set info in MT
+		 m_vec_GEM->SetReactInfoBackMassTransport(m_time); //this includes, concentrations, source sink terms for fluid and the element porosities, as well as changed boundary conditions
 		
 		}
 	}

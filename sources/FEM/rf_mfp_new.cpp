@@ -956,7 +956,8 @@ double CFluidProperties::Density(double* variables)
 			break;
 		case 19:                // KG44 get the density from GEMS calculations
 		                       // seems complicated, as we probably have to call GEMS.....or take values from last GEMS calculation ---> update during iterations is not possible
-#ifdef GEM_REACTif (!Fem_Ele_Std) //for Richards flow (when saturation is needed initially in GEMS setup) we have to make 
+#ifdef GEM_REACT
+		  if (!Fem_Ele_Std) //for Richards flow (when saturation is needed initially in GEMS setup) we have to make 
 			{
 			     density=1000.0;
 			}
