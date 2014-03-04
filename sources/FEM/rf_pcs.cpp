@@ -10210,13 +10210,19 @@ void CRFProcess::CalcSecondaryVariablesLiquidFlow()
    double dens;
    for(i=0;i<(long)m_msh->GetNodesNumber(false);i++)
    {
-	   // get pressure
+#ifdef GEM_REACT
+      var[0]=-1;
+      var[1]=i;
+#else     
+     // get pressure
 	   var[0] = this->GetNodeValue(i,this->GetNodeValueIndex("PRESSURE1"));
 	   // get temperature
 		  if(heattransport) 
       var[1] = m_pcs->GetNodeValue(i,m_pcs->GetNodeValueIndex("TEMPERATURE1"));
 	   // Set salinity
 		  var[2] = 0.0;
+#endif
+		  
     dens = m_mfp->Density(var);
     // Assigning the secondary variable
     SetNodeValue(i,ndx_dens,dens);

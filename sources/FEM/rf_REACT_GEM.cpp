@@ -1979,6 +1979,13 @@ void REACT_GEM::ConvPorosityNodeValue2Elem ( int i_timestep )
 	}
 }
 
+double REACT_GEM::FluidDensity(long mynode)
+{
+  	double density;
+	density = m_fluid_density[mynode];
+        return  density;
+}
+
 double REACT_GEM::FluidDensity(long elem, int gaussnode,  CFiniteElementStd* fem)
 {
 	long idx_Node;

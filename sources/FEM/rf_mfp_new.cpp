@@ -957,6 +957,12 @@ double CFluidProperties::Density(double* variables)
 		case 19:                // KG44 get the density from GEMS calculations
 		                       // seems complicated, as we probably have to call GEMS.....or take values from last GEMS calculation ---> update during iterations is not possible
 #ifdef GEM_REACT
+		  if (variables[0] ==-1)
+		  {
+		   density= m_vec_GEM->REACT_GEM::FluidDensity(long(variables[1]));
+		  }
+		  else
+		  {
 		  if (!Fem_Ele_Std) //for Richards flow (when saturation is needed initially in GEMS setup) we have to make 
 			{
 			     density=1000.0;
@@ -967,6 +973,7 @@ double CFluidProperties::Density(double* variables)
                              density=m_vec_GEM->REACT_GEM::FluidDensity( long(variables[0]), int(variables[1]),Fem_Ele_Std); //hand over element index and gauss point index 
 			     // here we can interpolate values from nodes to elemnt or to gauss points
 			}
+		  }
 #endif
 		       //insert call for GEMS densities..
 		       break;
