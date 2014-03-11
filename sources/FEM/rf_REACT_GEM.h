@@ -224,7 +224,6 @@ public:
 
     // pass fluid density back
     double FluidDensity(long elem, int gaussnode, CFiniteElementStd* fem); // if calling routine asks for density at element
-    double FluidDensity(long mynode); //if calling routine asks for density at node
     
     // find which one in xDC vector is water
     int FindWater_xDC(TNode* m_Node);

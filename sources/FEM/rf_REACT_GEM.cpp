@@ -1979,13 +1979,6 @@ void REACT_GEM::ConvPorosityNodeValue2Elem ( int i_timestep )
 	}
 }
 
-double REACT_GEM::FluidDensity(long mynode)
-{
-  	double density;
-	density = m_fluid_density[mynode];
-        return  density;
-}
-
 double REACT_GEM::FluidDensity(long elem, int gaussnode,  CFiniteElementStd* fem)
 {
 	long idx_Node;
@@ -4286,7 +4279,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 	gem_barrier_finish->wait(); // init run finished ...now the init routine takes over
 	time_gem_total += (GetTimeOfDayDouble() - tdummy);
 	time_fraction = time_gem_total / GetTimeOfDayDouble();
-
+	
 	// main loop which is synchronized via run_main
 	for (;; )
 	{
@@ -4294,9 +4287,9 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 		tdummy = GetTimeOfDayDouble();
 
 		repeated_fail = 0; // set this to zero for each new run_main
-
 		for ( in = mystart; in < nNodes; in += mycount ) 
 		{
+		        node_fail=0;   // set this in any case 
 			if ( ( !flag_calculate_boundary_nodes &&
 			       m_boundary[in] ) || ( CalcSoluteBDelta ( in ) < m_diff_gems ) || (m_calculate_gems[in] != 1))                       // do this only without calculation if  on a boundary or differences very small!!!
 			{
@@ -4402,11 +4395,18 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 					}        // we do not tolerate more than three failed nodes -> something wrong with chemistry/time step?
 				}               // end loop if initial gems run fails
 				else
+				{
 
 					// this is if gem run is ok
 					REACT_GEM::GetReactInfoFromGEM ( in, t_Node); //from here on we have buffer values if GEMS_MPI is defined
+				}
 
-				if ( node_fail < 1 ) // this needs to be done with buffer variables for MPI
+				if ( node_fail == 1 ) // do not take the new solution from gems
+				{
+					RestoreOldSolutionNode ( in ); 
+					node_fail = 0;
+				}
+				else   // restore old solution and no update on kinetic parameters, porosity and fluid/gas properties
 				{
 					// CALC kintetic constrains
 					REACT_GEM::CalcReactionRate ( in, m_T[in],t_Node); // check for kinetics is done in the subroutine for each species separately
@@ -4419,14 +4419,9 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 					REACT_GEM::MassToConcentration ( in, 0,t_Node);
 
 					// calculate density of fluid phase, which is normally the first phase
-					m_fluid_density[in] =
-					        m_mPS[in * nPS + 0] / m_vPS[in * nPS + 0 ];
+					m_fluid_density[in] = m_mPS[in * nPS + 0] / m_vPS[in * nPS + 0 ];
 				}
-				else   // restore old solution and no update on kinetic parameters, porosity and fluid/gas properties
-				{
-					RestoreOldSolutionNode ( in ); 
-					node_fail = 0;
-				}
+
 			} //end if check for boundary node12
 		} // end for loop for all nodes
 

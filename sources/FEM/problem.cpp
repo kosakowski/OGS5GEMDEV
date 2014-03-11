@@ -3060,7 +3060,7 @@ inline double Problem::MassTrasport()
 		int m_time = 1;           // 0-previous time step results; 1-current time step results
 
 		// Check if the Sequential Iterative Scheme needs to be intergrated
-		if (m_pcs->m_num->cpl_max_iterations > 1)
+		// if (m_pcs->m_num->cpl_max_iterations > 1)
 			m_vec_GEM->flag_iterative_scheme = 1;  // set to standard iterative scheme as SIA is not implemented
 		
 		if (m_vec_GEM->flag_iterative_scheme == 1)  //SNIA standard...

@@ -959,7 +959,7 @@ double CFluidProperties::Density(double* variables)
 #ifdef GEM_REACT
 		  if (variables[0] ==-1)
 		  {
-		   density= m_vec_GEM->REACT_GEM::FluidDensity(long(variables[1]));
+		   density= m_vec_GEM->REACT_GEM::GetNodeFluidDensityValue(long(variables[1]));
 		  }
 		  else
 		  {
