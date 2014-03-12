@@ -421,10 +421,11 @@ std::ios::pos_type CFluidProperties::Read(std::ifstream* mfp_file)
                            viscosity_pcs_name_vector.push_back("PRESSURE1"); //JM dummy wird benoetigt!
 				//OK4704
 				viscosity_pcs_name_vector.push_back("TEMPERATURE1");
+			}
 			if(viscosity_model == 4) // my(T), after de Marsily ..see viscosity function
 			{
 			  viscosity_pcs_name_vector.push_back("PRESSURE1"); //JM dummy wird benoetigt!                          
-              viscosity_pcs_name_vector.push_back("TEMPERATURE1"); // added by CB 
+			  viscosity_pcs_name_vector.push_back("TEMPERATURE1"); // added by CB 
 			}
 			if(viscosity_model == 5) // my(p,T), Reichenberg (1971)
 			{
@@ -3745,7 +3746,7 @@ double CFluidProperties::ComponentDensity(int CIndex, double* variables)
 double  CFluidProperties::EffectiveDiffusionCoef(int CIndex, double* variables)
 	{
 	CRFProcess* m_pcs;
-    m_pcs = PCSGet("MULTI_COMPONENTIAL_FLOW");
+        m_pcs = PCSGet("MULTI_COMPONENTIAL_FLOW");
 	double MI=0.0, VdI =0.0, effective_diffusion_coef=0.0, T, p;
 	T = variables[1];
 	p = variables[0];
