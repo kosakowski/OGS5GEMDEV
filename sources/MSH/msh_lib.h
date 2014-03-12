@@ -35,6 +35,19 @@ void FEMRead(const std::string& mesh_fname,
              std::vector<MeshLib::CFEMesh*>& mesh_vec,
              GEOLIB::GEOObjects* geo_obj = NULL,
              std::string* unique_name = NULL);
+#if defined(USE_PETSC) // || defined(using other parallel scheme)
+void FEMRead_ASCII(const int msize, const int mrank, 
+             const std::string& file_base_name,
+             std::vector<MeshLib::CFEMesh*>& mesh_vec,
+             GEOLIB::GEOObjects* geo_obj = NULL,
+             std::string* unique_name = NULL);
+void FEMRead_BIN(const int msize, const int mrank, 
+             const std::string& file_base_name,
+             std::vector<MeshLib::CFEMesh*>& mesh_vec,
+             GEOLIB::GEOObjects* geo_obj = NULL,
+             std::string* unique_name = NULL);
+#endif
+
 
 extern void MSHWrite(std::string);
 extern void CompleteMesh();                       //WW

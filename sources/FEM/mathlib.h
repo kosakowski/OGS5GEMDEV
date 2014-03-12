@@ -171,7 +171,6 @@ extern double MMax(double, double);
 extern double MRange(double a, double b, double c);
 double MBtrgVec(double* vec, long n);
 
-#ifndef NON_GEO                                   //   01.2011. WW
 #ifndef NEW_EQS                                   //WW. 05.03.2010
 /*##########################################################################
     Funktionen fuer Gleichungsloeser (CG)
@@ -243,7 +242,6 @@ extern double MCalcDistancePointToLine(double* pt,double* l1,double* l2);
 extern double MCalcProjectionOfPointOnLine(double* pt1,double* pt2,double* pt3,double* pt4);
 extern double MCalcDistancePointToPlane(double const* const pt,double* e1,double* e2,double* e3);
 //extern double MCalcProjectionOfPointOnPlane(double *pt, double *e1, double *e2, double *e3, double *proj);
-#endif
 
 /*   MNulleVec             - Setze angegebenen Vektor = 0.0 */
 extern void MNulleVec (double* vec, long g);

@@ -10,7 +10,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.43
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   2.0599E-13
@@ -30,7 +32,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.43
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   1.1385E-13
@@ -50,7 +54,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.45
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   2.1012E-13
@@ -70,7 +76,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.42
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   6.4654E-13
@@ -90,7 +98,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.39
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   1.3722E-13
@@ -110,7 +120,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.40
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   1.6600E-13
@@ -130,7 +142,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.43
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   2.6546E-14
@@ -150,7 +164,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.43
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   1.8169E-14
@@ -170,7 +186,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.42
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   1.3804E-14
@@ -190,7 +208,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.60
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   6.2059E-14
@@ -210,7 +230,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.55
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   1.8240E-13
@@ -230,7 +252,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.42
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   9.4386E-15
@@ -250,7 +274,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.62
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   1.4806E-13
@@ -270,7 +296,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.73
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   1.5857E-13
@@ -290,7 +318,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.72
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   5.2620E-14
@@ -310,7 +340,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.77
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   7.8694E-14
@@ -330,7 +362,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.36
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   1.5585E-13
@@ -350,7 +384,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.38
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   1.8358E-13
@@ -370,7 +406,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.34
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   2.1591E-13
@@ -390,7 +428,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.36
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   6.2648E-13
@@ -410,7 +450,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.32
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   5.1381E-13
@@ -430,7 +472,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.41
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   6.4654E-14
@@ -450,7 +494,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.47
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   1.0713E-13
@@ -470,7 +516,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.46
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   2.6310E-14
@@ -490,7 +538,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.49
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   2.6192E-14
@@ -510,7 +560,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.42
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   1.6270E-13
@@ -530,7 +582,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.56
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   1.3450E-14
@@ -550,7 +604,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.57
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   3.9170E-14
@@ -570,7 +626,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.38
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   4.2474E-15
@@ -590,7 +648,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.41
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   4.3653E-14
@@ -610,7 +670,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.89
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   1.2624E-14
@@ -630,7 +692,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.86
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   3.2445E-14
@@ -650,7 +714,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.73
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   1.8771E-13
@@ -670,7 +736,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.35
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   3.1855E-13
@@ -690,7 +758,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.29
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   1.1798E-12
@@ -710,7 +780,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.29
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   2.3006E-12
@@ -730,7 +802,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.36
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   9.4386E-14
@@ -750,7 +824,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.38
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   7.0789E-13
@@ -770,7 +846,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.38
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   1.2388E-12
@@ -790,7 +868,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.48
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   1.1798E-13
@@ -810,7 +890,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.30
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   9.4386E-12
@@ -830,7 +912,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.38
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   3.5394E-12
@@ -850,7 +934,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.50
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   2.1236E-14
@@ -870,7 +956,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.32
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   1.7697E-12
@@ -890,7 +978,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.30
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   6.4890E-13
@@ -910,7 +1000,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.87
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   2.4777E-13
@@ -930,7 +1022,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.68
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   4.7193E-14
@@ -950,7 +1044,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.34
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   3.3035E-12
@@ -970,7 +1066,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.44
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   1.7697E-12
@@ -990,7 +1088,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.47
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   4.1294E-14
@@ -1010,7 +1110,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.30
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   6.4890E-14
@@ -1030,7 +1132,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.31
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   8.2588E-13
@@ -1050,7 +1154,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.34
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   2.5956E-12
@@ -1070,7 +1176,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.32
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   3.7754E-12
@@ -1090,7 +1198,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.91
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   9.4386E-14
@@ -1110,7 +1220,9 @@ GeoSys-MMP: Material Medium Properties -----------------------------------------
   1.000000000000e+000
  $POROSITY
   1    0.32
- $TORTUOSITY
+ $STORAGE 
+  1 1e-10
+  $TORTUOSITY
   1    1.0000E+00
  $PERMEABILITY_TENSOR
   ISOTROPIC   4.1294E-13

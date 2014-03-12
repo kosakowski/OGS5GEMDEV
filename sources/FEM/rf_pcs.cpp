@@ -7331,8 +7331,8 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 				file.close();
 #endif
 			}
-
 		}
+
 
 		m_st=NULL;
 
@@ -7381,7 +7381,6 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 #endif
 
 			cnodev = st_node_value[gindex];
-
 
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
 			msh_node = cnodev->geo_node_number;
@@ -7640,9 +7639,6 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 				rank_stgem_node_value_in_dom.clear();
 			}
 		}
-
-
-
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
 		if(st_eqs_id.size()>0)
 		  {

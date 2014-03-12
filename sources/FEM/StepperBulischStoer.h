@@ -1,4 +1,4 @@
-#ifndef _STEPPERBULISCHSTOER_H
+#ifndef _STEPPERBULISCHSTOER_H 
 #define _STEPPERBULISCHSTOER_H
 
 #include <limits>

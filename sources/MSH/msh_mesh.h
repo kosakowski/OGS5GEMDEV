@@ -52,7 +52,6 @@ using Math_Group::SparseTable;
 //------------------------------------------------------------------------
 namespace MeshLib
 {
-#ifndef NON_GEO
 /*!
    Class to handle topologic relationship among grids
    Designed by WW
@@ -76,13 +75,12 @@ public:
 	//void Write(std::ostream &os=cout);
 	~GridsTopo();
 };
-#endif                                         //#ifndef NON_GEO
 
 /// For parallel computing. 03.2012. WW
 #if defined(USE_PETSC) // || defined(using other parallel scheme)
 typedef struct
 {
-  int index;
+  long index;
   double x;
   double y;
   double z;
@@ -106,11 +104,9 @@ public:
 	/// Destructor
 	~CFEMesh();
 
-#ifndef NON_GEO
 	GEOLIB::GEOObjects* getGEOObjects () const { return _geo_obj; }
 
 	std::string* getProjectName () const { return _geo_name; }
-#endif                                      //#ifndef NON_GEO
 
 	/**
 	 * sets the value for element type
@@ -174,7 +170,12 @@ public:
 	 */
 	void computeSearchLength(double c = 2);
 
-	bool Read(std::ifstream*);
+    /*!
+	   \brief Read mesh data. 
+       \param fem_file Stream for input, which has to read a line before calling this function 
+	   \return Return true if there are other mesh to be read.
+	*/
+	bool Read(std::ifstream *fem_file);
 
 	friend class FileIO::OGSMeshIO;
 	std::ios::pos_type GMSReadTIN(std::ifstream*);
@@ -190,14 +191,14 @@ public:
            @param header  : mesh header
            @param s_nodes : mesh nodes
 	*/
-	void setSubdomainNodes(int *header, const MeshNodes *s_nodes);
+	void setSubdomainNodes(long *header, const MeshNodes *s_nodes);
 	/*!
 	   Fill data for subdomain mesh
            @param header    : mesh header
            @param elem_info : element information
            @param inside    : indicator for elements that are inside the subdomain
 	*/
-	void setSubdomainElements(int *header, const int *elem_info, const bool inside);
+	void setSubdomainElements(long *header, const long *elem_info, const bool inside);
 	int calMaximumConnectedNodes();
         /// Get number of nodes of the entire mesh       
         int getNumNodesGlobal() const
@@ -289,7 +290,6 @@ public:
 	/// Free the memory occupied by edges
     void FreeEdgeMemory(); // 09.2012. WW
 
-#ifndef NON_GEO                             //WW
 	/**
 	 * @{
 	 * */
@@ -320,11 +320,11 @@ public:
 	/**
 	 * \brief depreciated method
 	 */
-	void GetNODOnSFC(Surface*, std::vector<long>&);
+	void GetNODOnSFC(Surface* m_sfc, std::vector<long>&msh_nod_vector,  const bool for_s_term = false);
 	/**
 	 * \brief depreciated method
 	 */
-	void GetNODOnSFC_PLY(Surface const*, std::vector<long>&) const;
+	void GetNODOnSFC_PLY(Surface const* m_sfc, std::vector<long>&msh_nod_vector,  const bool for_s_term = false) const;
 	/**
 	 * \brief depreciated method
 	 */
@@ -365,7 +365,7 @@ public:
 	 * @param msh_nod_vector the mesh node indices are saved in this vector
 	 * */
 	void GetNODOnPLY(const GEOLIB::Polyline* const ply,
-	                 std::vector<size_t>& msh_nod_vector);
+	                 std::vector<size_t>& msh_nod_vector, const bool for_s_term = false);
 
 	/**
 	 *
@@ -385,7 +385,7 @@ public:
 	/**
 	 * GetNODOnPLY search the nearest nodes to the Polyline
 	 * */
-	void GetNODOnPLY(const GEOLIB::Polyline* const ply, std::vector<long>& msh_nod_vector);
+	void GetNODOnPLY(const GEOLIB::Polyline* const ply, std::vector<long>& msh_nod_vector, const bool for_s_term = false);
 
 	/**
 	 * \brief gives the indices of CElement elements, which have an edge
@@ -396,17 +396,10 @@ public:
 	/**
 	 * \brief gives the indices of nodes, which are contained in the surface
 	 */
-	void GetNODOnSFC(const GEOLIB::Surface* sfc, std::vector<size_t>& msh_nod_vector) const;
+	void GetNODOnSFC(const GEOLIB::Surface* sfc, std::vector<size_t>& msh_nod_vector, const bool for_s_term = false) const;
 
 	/** @} */  // close doxygen group
-#endif                                      //WW #ifndef NON_GEO
-//#ifndef NON_GEO                             //  WW
-//         /**
-//          * Store border nodes among different grids.
-//          */
-//         std::vector<GridsTopo*> grid_neighbors;
-//         friend class ::Problem;
-//#endif
+
 	//....................................................................
 #ifdef ObsoleteGUI //WW 03.2012
 	// QUAD->HEX
@@ -467,7 +460,7 @@ public:
 	void FaceNormal();                        // YD
 	void SetNODPatchAreas();                  //OK4310
 	void SetNetworkIntersectionNodes();       //OK4319->PCH
-#ifndef NON_PROCESS                         // 05.03.2010 WW
+
 #ifdef NEW_EQS                              // 1.11.2007 WW
 	// Compute the graph of the sparse matrix related to this mesh. 1.11.2007 WW
 	void CreateSparseTable();
@@ -475,7 +468,6 @@ public:
 	SparseTable* GetSparseTable(bool quad = false)
 	const {if(!quad) return sparse_graph;
 	       else return sparse_graph_H; }
-#endif
 #endif
 
 	std::string pcs_name;
@@ -590,11 +582,11 @@ private:
 	inline void Precipitation2NeumannBC(std::string const & fname,
 	                                    std::string const & ofname,
 	                                    double ratio = 0.8);
-#ifndef NON_GEO                             //  WW
+
 	/// Store border nodes among different grids.
 	std::vector<GridsTopo*> grid_neighbors;
 	friend class ::Problem;
-#endif                                      // #ifndef NON_GEO
+
 	//
 	// Sparse graph of this mesh. 1.11.2007 WW
 #ifdef NEW_EQS
@@ -602,10 +594,8 @@ private:
 	SparseTable* sparse_graph_H;              // For high order interpolation
 #endif
 
-#ifndef NON_GEO                             //WW
 	void CreateLineElementsFromMarkedEdges(CFEMesh* m_msh_ply,
 	                                       std::vector<long> &ele_vector_at_ply); //NW
-#endif                                      // #ifndef NON_GEO //WW
 public:
 	void constructMeshGrid();
 private:

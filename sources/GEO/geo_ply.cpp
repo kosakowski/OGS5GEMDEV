@@ -96,7 +96,7 @@ CGLPolyline* GEOGetPLYByName(const std::string& name)
 	std::vector<CGLPolyline*>::iterator p = polyline_vector.begin(); //CC
 	while (p != polyline_vector.end())
 	{
-		if ((*p)->getName().compare(name) == 0)
+		if ((*p)->getName().find(name,0) == 0)
 		{
 			return *p;
 			break;

@@ -900,12 +900,16 @@ void CElem::SetNodes(Math_Group::vec<CNode*>&  ele_nodes, bool ReSize)
 	if(ReSize)
 	{
 		nodes.resize(SizeV);
+#if !defined(USE_PETSC) // && !defined (other parallel linear solver lib). //WW. 05.2013
 		nodes_index.resize(SizeV);
+#endif
 	}
 	for (int i = 0; i < SizeV; i++)
 	{
 		nodes[i] = ele_nodes[i];
+#if !defined(USE_PETSC) // && !defined (other parallel linear solver lib). //WW. 05.2013
 		nodes_index[i] = nodes[i]->GetIndex();
+#endif
 	}
 }
 

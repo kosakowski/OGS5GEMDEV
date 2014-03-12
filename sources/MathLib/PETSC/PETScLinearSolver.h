@@ -40,10 +40,10 @@ public:
     void Solver();
     void AssembleRHS_PETSc();
     void AssembleUnkowns_PETSc();
-  void AssembleMatrixPETSc(const MatAssemblyType type = MAT_FINAL_ASSEMBLY); //MAT_FLUSH_ASSEMBLY
+    void AssembleMatrixPETSc(const MatAssemblyType type = MAT_FINAL_ASSEMBLY); //MAT_FLUSH_ASSEMBLY
 
-    void UpdateSolutions(PetscScalar *u0, PetscScalar *u1);
     void MappingSolution();
+
     int GetLocalSolution(PetscScalar *x_l); 
     int GetLocalRHS(PetscScalar *rhs_l);
     double *GetGlobalSolution() const;
@@ -103,9 +103,7 @@ public:
     PetscInt i_start;
     PetscInt i_end;
 
-    PetscScalar *global_x0;
-    PetscScalar *global_x1;
-    PetscScalar *global_buff;
+    PetscScalar *global_x;
 
     // Slover and preconditioner names, only for log
     std::string sol_type;
@@ -130,6 +128,16 @@ public:
 
     void VectorCreate(PetscInt m);
     void MatrixCreate(PetscInt m, PetscInt n);
+
+    /*!
+         \brief  collect local vectors
+         \param  local_array  local array
+         \param  global_array global array
+    */
+    void gatherLocalVectors(PetscScalar local_array[],
+                            PetscScalar global_array[]);
+
+    void UpdateSolutions(PetscScalar *u);
 
 };
 

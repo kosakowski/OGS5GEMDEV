@@ -32,6 +32,10 @@ using Math_Group::CSparseMatrix;
 #define COMP_MOL_MASS_AIR   28.96                 // kg/kmol WW  28.96
 #define GAS_CONSTANT  8314.41                     // J/(kmol*K) WW
 
+#if defined(USE_PETSC) // || defined(other parallel libs)//07.3013. WW
+#include "PETSC/PETScLinearSolver.h"
+#endif
+
 std::vector<FiniteElement::ElementValue_DM*> ele_value_dm;
 
 namespace FiniteElement
@@ -353,6 +357,16 @@ CFiniteElementVec::CFiniteElementVec(process::CRFProcessDeformation* dm_pcs,
 	//
 	// Time unit factor
 	time_unit_factor = pcs->time_unit_factor;
+
+#if defined(USE_PETSC) // || defined(other parallel libs)//05~07.3013. WW
+	idxm = new int[60];  //> global indices of local matrix rows  
+	idxn = new int[60];  //> global indices of local matrix columns 
+	local_idx = new int[60]; //> local index for local assemble
+
+        local_matrix = new double[3600];
+        local_vec = new double[60];
+#endif
+
 }
 
 //  Constructor of class Element_DM
@@ -479,6 +493,14 @@ CFiniteElementVec::~CFiniteElementVec()
 		vec_B_matrix[i] = NULL;
 		vec_B_matrix_T[i] = NULL;
 	}
+
+#if defined(USE_PETSC) // || defined(other parallel libs)//05~07.3013. WW
+        delete [] local_matrix;
+        delete [] local_vec;
+#endif
+
+
+
 }
 
 /***************************************************************************
@@ -840,14 +862,27 @@ void CFiniteElementVec::ComputeMatrix_RHS(const double fkt,
 	Matrix* tmp_AuxMatrix2 = AuxMatrix2;
 	Matrix* tmp_Stiffness = Stiffness;
 
-	for (i = 0; i < nnodesHQ; i++)
+        int act_r = 0;
+#if defined(USE_PETSC) // || defined(other parallel libs)//05.3013. WW
+        act_r = act_nodes_h;
+#else
+	act_r = nnodesHQ;
+#endif
+
+
+        for (i = 0; i < act_r; i++)
 	{
+#if defined(USE_PETSC) // || defined(other parallel libs)//05.3013. WW
+           const int ia = local_idx[i];           
+#else
+           const int ia = i;
+#endif
 		//NW      setTransB_Matrix(i);
-		tmp_B_matrix_T = this->vec_B_matrix_T[i];
+		tmp_B_matrix_T = this->vec_B_matrix_T[ia];
 		// Local assembly of A*u=int(B^t*sigma) for Newton-Raphson method
 		for (j = 0; j < ele_dim; j++)
 			for (k = 0; k < ns; k++)
-				(*RHS)(j * nnodesHQ + i) +=
+				(*RHS)(j * nnodesHQ + ia) +=
 				        (*tmp_B_matrix_T)(j,k) * (dstress[k] - stress0[k]) * fkt;
 		//TEST             (*B_matrix_T)(j,k)*dstress[k]*fkt;
 		if(PreLoad == 11)
@@ -873,9 +908,11 @@ void CFiniteElementVec::ComputeMatrix_RHS(const double fkt,
 
 			// Local assembly of stiffness matrix
 			for (k = 0; k < ele_dim; k++)
+            {
+                const int kia =    ia + k * nnodesHQ;
 				for (l = 0; l < ele_dim; l++)
-					(*tmp_Stiffness)(i + k * nnodesHQ, j + l *
-					                 nnodesHQ) += (*tmp_AuxMatrix)(k,l) * fkt;
+					(*tmp_Stiffness)(kia, j + l * nnodesHQ) += (*tmp_AuxMatrix)(k,l) * fkt;
+           }
 		}                         // loop j
 	}                                     // loop i
 
@@ -906,43 +943,52 @@ void CFiniteElementVec::ComputeMatrix_RHS(const double fkt,
 		}
 
 		if(axisymmetry)
-			for (k = 0; k < nnodesHQ; k++)
-			{
+            {
+               for (k = 0; k < act_r; k++)
+               {
+#if defined(USE_PETSC) // || defined(other parallel libs)//05.3013. WW
+                  const int ka = local_idx[k];           
+#else
+                  const int ka = k;
+#endif
 				for (l = 0; l < nnodes; l++)
 					for(j = 0; j < ele_dim; j++)
 					{
-						dN_dx = dshapefctHQ[nnodesHQ * j + k];
+                         dN_dx = dshapefctHQ[nnodesHQ * j + ka];
 						if(j == 0)
-							dN_dx += shapefctHQ[k] / Radius;
+                             dN_dx += shapefctHQ[ka] / Radius;
 
 						f_buff = fac * dN_dx * shapefct[l];
-						(*PressureC)(nnodesHQ * j + k,l) += f_buff;
+                         (*PressureC)(nnodesHQ * j + ka, l) += f_buff;
 						if(PressureC_S)
-							(*PressureC_S)(nnodesHQ * j + k,
-							               l) += f_buff * fac1;
-						if(PressureC_S_dp)
-							(*PressureC_S_dp)(nnodesHQ * j + k,
-							                  l) += f_buff * fac2;
-					}
+                             (*PressureC_S)(nnodesHQ * j + ka, l) += f_buff * fac1;
+                          if(PressureC_S_dp)
+                             (*PressureC_S_dp)(nnodesHQ * j + ka, l) += f_buff * fac2;
+                    }
+                }
 			}
 		else
-			for (k = 0; k < nnodesHQ; k++)
-			{
+            {
+               for (k = 0; k < act_r; k++)
+               {
+
+#if defined(USE_PETSC) // || defined(other parallel libs)//05.3013. WW
+                  const int ka = local_idx[k];           
+#else
+                  const int ka = k;
+#endif
 				for (l = 0; l < nnodes; l++)
 					for(j = 0; j < ele_dim; j++)
 					{
-						f_buff = fac *
-						         dshapefctHQ[nnodesHQ * j +
-						                     k] * shapefct[l];
-						(*PressureC)(nnodesHQ * j + k,l) += f_buff;
-						if(PressureC_S)
-							(*PressureC_S)(nnodesHQ * j + k,
-							               l) += f_buff * fac1;
-						if(PressureC_S_dp)
-							(*PressureC_S_dp)(nnodesHQ * j + k,
-							                  l) += f_buff * fac2;
-					}
-			}
+                       f_buff = fac *  dshapefctHQ[nnodesHQ * j +  ka] * shapefct[l];
+                       (*PressureC)(nnodesHQ * j + ka,l) += f_buff;
+                       if(PressureC_S)
+                         (*PressureC_S)(nnodesHQ * j + ka, l) += f_buff * fac1;
+                       if(PressureC_S_dp)
+                         (*PressureC_S_dp)(nnodesHQ * j + ka, l) += f_buff * fac2;
+                    }
+               }
+	    }
 	}
 	//---------------------------------------------------------
 	// Assemble gravity force vector
@@ -953,9 +999,17 @@ void CFiniteElementVec::ComputeMatrix_RHS(const double fkt,
 		// 3D, in z-direction
 		i = (ele_dim - 1) * nnodesHQ;
 		const double coeff = LoadFactor * rho * smat->grav_const * fkt;
-		for (k = 0; k < nnodesHQ; k++)
-			(*RHS)(i + k) += coeff * shapefctHQ[k];
-		//        (*RHS)(i+k) += LoadFactor * rho * smat->grav_const * shapefctHQ[k] * fkt;
+		for (k = 0; k < act_r; k++)
+        {
+
+#if defined(USE_PETSC) // || defined(other parallel libs)//05.3013. WW
+                    const int ka = local_idx[k];           
+#else
+                    const int ka = k;
+#endif
+			(*RHS)(i + ka) += coeff * shapefctHQ[ka];
+		//        (*RHS)(i+ka) += LoadFactor * rho * smat->grav_const * shapefctHQ[ka] * fkt;
+        }
 	}
 }
 /***************************************************************************
@@ -1025,11 +1079,12 @@ void CFiniteElementVec::LocalAssembly(const int update)
 	}
 	else
 #endif //#if !defined(USE_PETSC) // && !defined(other parallel libs)//03.3012. WW
+#if !defined(USE_PETSC) // && !defined(other parallel libs)//03.3012. WW
         {
             for(int i = 0; i < nnodesHQ; i++)
 	       eqs_number[i] =  MeshElement->nodes[i]->GetEquationIndex();
          }
-
+#endif
 	// For strain and stress extropolation all element types
 	// Number of elements associated to nodes
 	for(int i = 0; i < nnodes; i++)
@@ -1282,6 +1337,190 @@ bool CFiniteElementVec::GlobalAssembly()
    Programming:
    02/2005   WW
  **************************************************************************/
+#if defined(USE_PETSC) // || defined(other parallel libs)//06.2013. WW
+void CFiniteElementVec::GlobalAssembly_Stiffness()
+{
+   int i,j;
+   double f1,f2;
+   f1 = 1.0;
+   f2 = -1.0;
+
+   double biot = 1.0;
+   biot = smat->biot_const;
+
+   int m_dim, n_dim;
+   int dof = ele_dim;
+
+   double *local_matrix_asy = NULL;
+   double *local_vec_asy = NULL;
+   petsc_group::PETScLinearSolver *eqs = pcs->eqs_new;
+
+#define n_assmb_petsc_test
+#ifdef assmb_petsc_test
+  char rank_char[10];
+  sprintf(rank_char, "%d", eqs->getMPI_Rank());
+  string fname = FileName + rank_char + "_e_matrix.txt";
+  ofstream os_t(fname.c_str(), ios::app);
+  os_t<<"\n=================================================="<<"\n";
+#endif
+
+  if(act_nodes_h != nnodesHQ)
+    {
+      m_dim = act_nodes_h * dof;
+      n_dim = nnodesHQ * dof;
+
+      const int dim_full = nnodesHQ * dof;
+      //     int i_dom, j_dom, in, jn; 
+      int i_dom,  in; 
+      // put the subdomain portion of local stiffness matrix to Mass 
+      double *loc_m = Stiffness->getEntryArray();
+      double *loc_v = RHS->getEntryArray();
+      double *loc_dymass;
+      local_matrix_asy = local_matrix;
+      local_vec_asy =  local_vec;
+
+      if(dynamic)
+      {
+         f1 = 0.5 * beta2 * dt * dt;
+         f2 = -0.5 * bbeta1 * dt;
+         loc_dymass = Mass->getEntryArray();
+      }
+
+      for(i = 0; i < nnodesHQ; i++)
+	{
+	  const int i_buff = MeshElement->nodes[i]->GetEquationIndex() *  dof;		
+	  for(int k=0; k<dof; k++)
+	    {
+	      idxn[k*nnodesHQ + i] = i_buff + k;	
+	    }	    
+	  // local_vec[i] = 0.;
+	}     
+
+      for( i=0; i<m_dim; i++)
+	{
+	  i_dom = i/act_nodes_h;
+	  in = i % act_nodes_h;
+	  int i_full = local_idx[in] + i_dom * nnodesHQ;
+	  local_vec_asy[i] = loc_v[i_full];
+	  i_full *= dim_full; 
+
+	  idxm[i] = MeshElement->nodes[local_idx[in]]->GetEquationIndex() *  dof + i_dom;
+         
+
+	  for(int j=0; j<dim_full; j++)
+	    {
+	      local_matrix_asy[i*dim_full +j] = f1 * loc_m[i_full + j]; 
+              if(dynamic)
+              {
+                 local_matrix_asy[i*dim_full +j] += loc_dymass[i_full + j]; 
+              }
+
+	      //TEST
+#ifdef assmb_petsc_test
+	      os_t<<"("<<local_idx[in]<<") "<<local_matrix_asy[i*dim_full +j]<<" ";
+#endif //#ifdef assmb_petsc_test
+
+	      
+	    }
+	  
+	  //TEST
+#ifdef assmb_petsc_test
+	  os_t<<"\n";
+#endif //#ifdef assmb_petsc_test
+
+	}
+    
+      
+    }
+  else
+    {
+      m_dim = nnodesHQ * dof;
+      n_dim = m_dim;
+      //----------------------------------------------------------------------
+      // For non-overlapping partition DDC
+      local_matrix_asy = Stiffness->getEntryArray();
+      local_vec_asy = RHS->getEntryArray();
+
+      for(i = 0; i < nnodesHQ; i++)
+	{
+	  const int i_buff = MeshElement->nodes[i]->GetEquationIndex() *  dof;		
+	  for(int k=0; k<dof; k++)
+	    {
+	      const int ki = k*nnodesHQ + i;
+	      idxm[ki] = i_buff + k;
+	      idxn[ki] = idxm[ki];
+	    }	    
+	  // local_vec[i] = 0.;
+	}     
+    }
+
+
+
+    //TEST
+#ifdef assmb_petsc_test
+      	{
+      	  os_t<<"\n------------------"<<act_nodesHQ * dof<<"\n";
+       StiffMatrix->Write(os_t);
+       RHS->Write(os_t);
+       
+       os_t<<"Node ID: ";
+       for( i=0; i<nnodesHQ ; i++)
+	 {
+	   os_t<<MeshElement->nodes[i]->GetEquationIndex()<<" ";
+	 }
+       os_t<<"\n";
+       os_t<<"Act. Local ID: ";
+       for( i=0; i<act_nodes_h ; i++)
+	 {
+	   os_t<<local_idx[i]<<" ";
+	 }
+       os_t<<"\n";
+         os_t<<"Act. Global ID:";
+       for(i=0; i<act_nodes_h * dof; i++)
+	 {
+	   os_t<<idxm[i]<<" ";
+	 }
+       os_t<<"\n";
+       	}
+	os_t.close();
+#endif //ifdef assmb_petsc_test
+
+   eqs->addMatrixEntries(m_dim, idxm, n_dim, idxn, local_matrix_asy);
+   eqs->setArrayValues(1, m_dim, idxm, local_vec_asy);
+  //eqs->AssembleRHS_PETSc();
+  //eqs->AssembleMatrixPETSc(MAT_FINAL_ASSEMBLY );
+
+
+   /*
+   //TEST OUT
+   //Stiffness->Write();
+   if(pcs->type / 40 != 1) // Not monolithic scheme
+     return;
+
+   if(PressureC)
+   {
+      i = 0;                    // phase
+      if(Flow_Type == 2)        // Multi-phase-flow
+	i = 1;
+      GlobalAssembly_PressureCoupling(PressureC, f2 * biot, i);
+   }
+   // H2: p_g- S_w*p_c
+   if(PressureC_S)
+      GlobalAssembly_PressureCoupling(PressureC_S, -f2 * biot, 0);
+   if(PressureC_S_dp)
+      GlobalAssembly_PressureCoupling(PressureC_S_dp, -f2 * biot, 0);
+   */
+}
+#else
+/***************************************************************************
+   GeoSys - Funktion:
+           CFiniteElementVec::  GlobalAssembly_Stiffness()
+   Aufgabe:
+           Assemble local matrics and vectors to the global system
+
+   Programming:
+   02/2005   WW
+ **************************************************************************/
 void CFiniteElementVec::GlobalAssembly_Stiffness()
 {
 	int i,j;
@@ -1471,6 +1710,7 @@ void CFiniteElementVec::GlobalAssembly_Stiffness()
 	//TEST OUT
 	//PressureC->Write();
 }
+#endif //#if defined(USE_PETSC) // || defined(other parallel libs)//07.2013. WW
 //--------------------------------------------------------------------------
 /*!
    \brief Assembe the pressure coupling matrix
@@ -1487,6 +1727,10 @@ void CFiniteElementVec::GlobalAssembly_PressureCoupling(Matrix* pCMatrix,
                                                         double fct,
                                                         const int phase)
 {
+#if defined(USE_PETSC) // || defined(other parallel libs)//10.3012. WW
+  ///
+
+#else
 #if defined(NEW_EQS)
 	CSparseMatrix* A = NULL;
 	if(m_dom)
@@ -1503,9 +1747,6 @@ void CFiniteElementVec::GlobalAssembly_PressureCoupling(Matrix* pCMatrix,
 		{
 			for(size_t k = 0; k < ele_dim; k++)
 			  {  
-#if defined(USE_PETSC) // || defined(other parallel libs)//10.3012. WW
-			    //TODO
-#else
 #ifdef NEW_EQS
 				(*A)(NodeShift[k] + eqs_number[i], NodeShift[dim_shift] +
 				     eqs_number[j])
@@ -1515,10 +1756,10 @@ void CFiniteElementVec::GlobalAssembly_PressureCoupling(Matrix* pCMatrix,
 				      NodeShift[dim_shift] + eqs_number[j], \
 				      fct * (*pCMatrix)(nnodesHQ * k + i,j));
 #endif
-#endif
 			  }
 		}
 	}
+#endif
 }
 
 /***************************************************************************
@@ -1740,6 +1981,13 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 							bishop_coef_ini = pow(S_e_ini,smat->bishop_model_value);
 							AuxNodal[i] = LoadFactor*pow(S_e,smat->bishop_model_value)* val_n;
 							break;
+						case 3:  
+							h_pcs->GetNodeValue(nodes[i],idx_p1_ini)<smat->bishop_model_value ?  bishop_coef_ini=0.0 : bishop_coef_ini=1.0;
+							if(val_n<smat->bishop_model_value)
+							   AuxNodal[i] = 0.0;						
+							else
+							   AuxNodal[i] = LoadFactor * val_n;						
+							break;
 						default :
 							break;
 						}
@@ -1750,17 +1998,16 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 
 				if(pcs->Neglect_H_ini==2)//WX:08.2011
 				{
-					if(biot<0.0&&h_pcs->GetNodeValue(nodes[i],idx_p1_ini)<0.0)
-						AuxNodal[i] -= 0;//WX:12.2012
-					else 
-					{
-						if(smat->bishop_model==1||smat->bishop_model==2)
+						if(smat->bishop_model==1||smat->bishop_model==2||smat->bishop_model==3)  
 							AuxNodal[i] -= LoadFactor * bishop_coef_ini * h_pcs->GetNodeValue(nodes[i],idx_p1_ini);
 						else
-							AuxNodal[i] -= LoadFactor*(m_mmp->SaturationCapillaryPressureFunction(-h_pcs->GetNodeValue(nodes[i],idx_p1_ini)))
-							*h_pcs->GetNodeValue(nodes[i],idx_p1_ini);
+						{
+
+							double p0 = h_pcs->GetNodeValue(nodes[i],idx_p1_ini);
+							double Sat0=  LoadFactor*m_mmp->SaturationCapillaryPressureFunction(-p0);
+							AuxNodal[i] -= LoadFactor * Sat0 * p0;
+						}
 					}
-				}
 #endif
 			}
 			break;
@@ -1802,10 +2049,17 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 						}
 						bishop_coef = pow(S_e, smat->bishop_model_value);
 						break;
+					case 3:  
+						S_e = (AuxNodal_S[i]-m_mmp->capillary_pressure_values[1])
+							/(m_mmp->capillary_pressure_values[2]-m_mmp->capillary_pressure_values[1]);
+						if(pcs->Neglect_H_ini==2)
+							h_pcs->GetNodeValue(nodes[i],idx_p1_ini)<smat->bishop_model_value ?  bishop_coef_ini=0.0 : bishop_coef_ini=1.0;
+						h_pcs->GetNodeValue(nodes[i],idx_P1)<smat->bishop_model_value ?  bishop_coef=0.0 : bishop_coef=1.0;
+						break;
 					default:
 						break;
 					}
-					if(smat->bishop_model == 1 || smat->bishop_model == 2) // pg-bishop*pc 05.2011 WX
+					if(smat->bishop_model == 1 || smat->bishop_model == 2 || smat->bishop_model == 3) // pg-bishop*pc 05.2011 WX
 					{
 						val_n = h_pcs->GetNodeValue(nodes[i],idx_P2)
 							-bishop_coef*h_pcs->GetNodeValue(nodes[i],idx_P1);
@@ -1897,10 +2151,12 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 					        + a_n[nodes[k] + NodeShift[i]]);
 
 	//RHS->Write();
-
+#if !defined(USE_PETSC) // && !defined(other parallel libs)//06.2013. WW
 	for (size_t i = 0; i < dim; i++)
 		for (j = 0; j < nnodesHQ; j++)
 			b_rhs[eqs_number[j] + NodeShift[i]] -= (*RHS)(i * nnodesHQ + j);
+#endif
+
 	//WX:07.2011 if not on excav boundary, RHS=0
 	int valid = 0;
 	if (excavation)
@@ -1958,8 +2214,12 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 			}
 
 			if (!onExBoundary)
+            {
+#if !defined(USE_PETSC) // && !defined(other parallel libs)//06.2013. WW
 				for (size_t j = 0; j < dim; j++)
 					b_rhs[eqs_number[i] + NodeShift[j]] = 0.0;
+#endif
+            }
 		}
 	}
 }

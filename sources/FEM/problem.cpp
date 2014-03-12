@@ -102,7 +102,8 @@ std::string FilePath;                             //23.02.2009. WW
    Modification:
  ***************************************************************************/
 Problem::Problem (char* filename) :
-	dt0(0.), print_result(true), _geo_obj (new GEOLIB::GEOObjects), _geo_name (filename)
+	dt0(0.), print_result(true), _geo_obj (new GEOLIB::GEOObjects), _geo_name (filename), 
+    mrank(0), msize(0)
 {
 	if (filename != NULL)
 	{
@@ -554,6 +555,9 @@ Problem::~Problem()
 	delete m_vec_BRNS;
 #endif
 
+#if defined(USE_PETSC) ||defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL) || defined(USE_MPI_GEMS)
+	if(mrank == 0)
+#endif
 	std::cout << "\n^O^: Your simulation is terminated normally ^O^ " << "\n";
 }
 
@@ -827,8 +831,15 @@ void Problem::SetActiveProcesses()
  ***************************************************************************/
 void Problem::PCSCreate()
 {
+#if defined(USE_PETSC) ||defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL) || defined(USE_MPI_GEMS)
+	if(mrank == 0)
+	{	 
+#endif
 	std::cout << "---------------------------------------------" << "\n";
 	std::cout << "Create PCS processes" << "\n";
+#if defined(USE_PETSC) ||defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL) || defined(USE_MPI_GEMS)
+    }
+#endif
 
 	size_t no_processes = pcs_vector.size();
 	//OK_MOD if(pcs_deformation>0) Init_Linear_Elements();
@@ -844,6 +855,10 @@ void Problem::PCSCreate()
 
 	for (size_t i = 0; i < no_processes; i++)
 	{
+#if defined(USE_PETSC) ||defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL) || defined(USE_MPI_GEMS)
+	if(mrank == 0)
+	{	 
+#endif
 		std::cout << "............................................." << "\n";
 		FiniteElement::ProcessType pcs_type (pcs_vector[i]->getProcessType());
 		std::cout << "Create: " << FiniteElement::convertProcessTypeToString (pcs_type) << "\n";
@@ -858,6 +873,10 @@ void Problem::PCSCreate()
 			pcs_vector[i]->pcs_component_number;
 		}
 		std::cout << "\n";
+#if defined(USE_PETSC) ||defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL) || defined(USE_MPI_GEMS)
+	}	 
+#endif
+
 		pcs_vector[i]->Create();
 	}
 
@@ -994,7 +1013,7 @@ void Problem::Euler_TimeDiscretize()
 	//
 	// Output zero time initial values
 #if defined(USE_MPI)  || defined(USE_MPI_KRC) 
-		if(myrank == 0)
+	if(mrank == 0)
 		{
 #endif
 	OUTData(0.0,aktueller_zeitschritt,true);
@@ -1029,8 +1048,8 @@ void Problem::Euler_TimeDiscretize()
 		aktuelle_zeit = current_time;
 		//
 		// Print messsage
-#if defined(USE_MPI) || defined(USE_MPI_KRC) 
-		if(myrank == 0)
+#if defined(USE_PETSC) ||defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL) || defined(USE_MPI_GEMS)
+		if(mrank == 0)
 		{
 #endif
 		std::cout << "\n\n#############################################################\n";
@@ -1039,7 +1058,7 @@ void Problem::Euler_TimeDiscretize()
 		if(dt_rec > dt){
 			std::cout << "This time step size was modified to match a critical time!" << "\n";
 		}
-#if defined(USE_MPI) || defined(USE_MPI_KRC) 
+#if defined(USE_PETSC) ||defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL) || defined(USE_MPI_GEMS)
 		}
 #endif
 		if(CouplingLoop())
@@ -1048,6 +1067,9 @@ void Problem::Euler_TimeDiscretize()
 			// TIME STEP ACCEPTED
 			// ---------------------------------
 			last_dt_accepted = true;
+#if defined(USE_PETSC) ||defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL) || defined(USE_MPI_GEMS)
+			if(mrank == 0)
+#endif
 			ScreenMessage("This step is accepted.\n");
 			PostCouplingLoop();
 			if(print_result)
@@ -1108,8 +1130,8 @@ void Problem::Euler_TimeDiscretize()
 //		// executing only one time step for profiling
 //		current_time = end_time;
 	}
-#if defined(USE_MPI) || defined(USE_MPI_KRC)  // JT2012
-	if(myrank == 0)
+#if defined(USE_PETSC) ||defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL) || defined(USE_MPI_GEMS)  || defined(USE_MPI_KRC) 
+	if(mrank == 0)
 	{
 #endif
 	std::cout << "\n----------------------------------------------------\n";
@@ -1130,7 +1152,7 @@ void Problem::Euler_TimeDiscretize()
 		}
     }
     std::cout<<"\n----------------------------------------------------\n";
-#if defined(USE_MPI) || defined(USE_MPI_KRC) 
+#if defined(USE_PETSC) ||defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL) || defined(USE_MPI_GEMS)  || defined(USE_MPI_KRC) 
 	}
 #endif
 }

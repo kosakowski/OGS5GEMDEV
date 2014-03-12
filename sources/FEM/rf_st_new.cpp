@@ -1396,6 +1396,14 @@ std::vector<double>&node_value_vector) const
          }                                        // e_edges
       }
    }
+#if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
+      long id_limit = 0;
+ 
+      if(msh->getOrder())
+	   id_limit = msh->getNumNodesLocal_Q();
+	else  
+       id_limit = msh->getNumNodesLocal();
+#endif
 
    for (i = 0; i < (long) msh->edge_vector.size(); i++)
    {
@@ -1420,8 +1428,17 @@ std::vector<double>&node_value_vector) const
             v2 = node_value_vector[G2L[e_nodes[1]->GetIndex()]];
             if (Const && (!msh->isAxisymmetry()))
             {
+#if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
+               if(e_nodes[0]->GetIndex()<id_limit)
+#endif
                NVal[G2L[e_nodes[0]->GetIndex()]] += Jac * v1 / 3.0;
+#if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
+               if(e_nodes[1]->GetIndex()<id_limit)
+#endif
                NVal[G2L[e_nodes[1]->GetIndex()]] += Jac * v1 / 3.0;
+#if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
+               if(e_nodes[2]->GetIndex()<id_limit)
+#endif
                NVal[G2L[e_nodes[2]->GetIndex()]] += 4.0 * Jac * v1 / 3.0;
 
             }
@@ -1429,6 +1446,10 @@ std::vector<double>&node_value_vector) const
             {
                for (k = 0; k < 3; k++)            // Three nodes
                {
+#if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
+                 if(e_nodes[k]->GetIndex() >= id_limit)
+                    continue;
+#endif
                   // Numerical integration
                   for (l = 0; l < 3; l++)         // Gauss points
                   {
@@ -1462,13 +1483,25 @@ std::vector<double>&node_value_vector) const
             {
                if (Const)
                {
+#if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
+               if(e_nodes[0]->GetIndex()<id_limit)
+#endif
                   NVal[G2L[e_nodes[0]->GetIndex()]] += Jac * v1;
+#if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
+               if(e_nodes[1]->GetIndex()<id_limit)
+#endif
                   NVal[G2L[e_nodes[1]->GetIndex()]] += Jac * v1;
                }
                else
                {
+#if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
+               if(e_nodes[0]->GetIndex()<id_limit)
+#endif
                   NVal[G2L[e_nodes[0]->GetIndex()]] += Jac * (2.0 * v1
                      + v2) / 3.0;
+#if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
+               if(e_nodes[1]->GetIndex()<id_limit)
+#endif
                   NVal[G2L[e_nodes[1]->GetIndex()]] += Jac * (v1 + 2.0
                      * v2) / 3.0;
                }
@@ -1477,6 +1510,11 @@ std::vector<double>&node_value_vector) const
 
                for (k = 0; k < 2; k++)            // Three nodes
                {
+#if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
+                 if(e_nodes[k]->GetIndex()>=id_limit)
+                    continue; 
+
+#endif
                   // Numerical integration
                   for (l = 0; l < 3; l++)         // Gauss points
                   {
@@ -1672,6 +1710,15 @@ void CSourceTerm::FaceIntegration(CFEMesh* msh, std::vector<long> const &nodes_o
       G2L[k] = i;
    }
 
+#if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
+    long id_limit = 0;
+ 
+    if(msh->getOrder())
+       id_limit = msh->getNumNodesLocal_Q();
+   else  
+       id_limit = msh->getNumNodesLocal();
+#endif
+
    //----------------------------------------------------------------------
    // NW 15.01.2010
    // 1) search element faces on the surface
@@ -1752,6 +1799,10 @@ void CSourceTerm::FaceIntegration(CFEMesh* msh, std::vector<long> const &nodes_o
          for (k = 0; k < nfn; k++)
          {
             e_node = elem->GetNode(nodesFace[k]);
+
+#if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
+            if(e_node->GetIndex() < id_limit)
+#endif
             NVal[G2L[e_node->GetIndex()]] += fac * nodesFVal[k];
          }
       }
@@ -3092,6 +3143,7 @@ const int ShiftInNodeVector)
  **************************************************************************/
 void CSourceTermGroup::SetPLY(CSourceTerm* st, int ShiftInNodeVector)
 {
+	const bool ply_for_source = true; // 17.05.2013
 	CGLPolyline* old_ply (GEOGetPLYByName(st->geo_name));
 	if (old_ply) {
 		std::vector<long> ply_nod_vector;
@@ -3100,7 +3152,7 @@ void CSourceTermGroup::SetPLY(CSourceTerm* st, int ShiftInNodeVector)
 
 		double min_edge_length (m_msh->getMinEdgeLength());
 		m_msh->setMinEdgeLength (old_ply->epsilon);
-		m_msh->GetNODOnPLY(static_cast<const GEOLIB::Polyline*>(st->getGeoObj()), ply_nod_vector);
+		m_msh->GetNODOnPLY(static_cast<const GEOLIB::Polyline*>(st->getGeoObj()), ply_nod_vector, ply_for_source);
 		m_msh->setMinEdgeLength (min_edge_length);
 
 		if (st->isCoupled())
@@ -3277,7 +3329,8 @@ void CSourceTerm::SetNOD()
 void CSourceTermGroup::SetSurfaceNodeVector(Surface* m_sfc,
 		std::vector<long>&sfc_nod_vector)
 {
-   m_msh->GetNODOnSFC(m_sfc, sfc_nod_vector);
+   const bool for_source = true; 
+   m_msh->GetNODOnSFC(m_sfc, sfc_nod_vector, for_source);
 }
 
 

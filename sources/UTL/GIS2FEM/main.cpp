@@ -3,98 +3,135 @@
 #include <cmath>
 
 #include <fstream>
-#include <iostream>
-#include <sstream>
-#include <stdio.h>
-
-#include <float.h>
-#include <iomanip>
-#include <string>
-#include <vector>
-
-//#include <time.h>
 
 #include "misc.h"
 #include "msh_mesh.h"
 
-std::string FileName;
-std::string FilePath; //WW
-
 using namespace std;
+using namespace MeshLib;
+
+void DisplayMessage()
+{
+   string _infor =
+      "\nData pre-process tool for the finite element analysis of subsurface flow problems.\n "
+      "By Wenqing Wang\n\n"
+      "Command: fem_toolkits -opt [Option] [File name with extension]\n"
+      "Option:\n"
+      "  1:  Generation OGS Neumman BC from the recharge data in GIS raster file,\n"
+      "  2:  Top surface integration for 3D mesh,\n"
+      "  3:  Convert GIS raster cells into FE mesh\n";
+   cout<<_infor<<endl;
+}
+
 int main(int argc, char* argv[])
 {
-	const int max_size = 1028;
-	char str1[max_size];
-	char str2[max_size];
+   string s_buff;
+   string opt;
+   stringstream ss;
+   string file_name;
+   if(argc>1)
+   {
+      for(int i=1; i<argc; i++)
+      {
+         s_buff = argv[i];
+         if(s_buff.find("--version")!=string::npos)
+         {
+            DisplayMessage();
+            exit(0);
+         }
 
-	int option = 1;
-	CFEMesh* a_mesh = NULL;
-	fstream ofile;
-	string ofname;
+         if( s_buff.find("-opt") != string::npos)
+         {
+            opt = argv[i+1];
+         }
 
-	cout << "\t|================================================| " << endl;
-	cout << "\t|                                                | " << endl;
-	cout << "\t|        Toolkit for hydraulic modeling          | " << endl;
-	cout << "\t|                                                | " << endl;
-	cout << "\t|                 By    WW                       | " << endl;
-	cout << "\t|                                                | " << endl;
-	cout << "\t|    Argument:                                   | " << endl;
-	cout << "\t|      option and file name (no extension)       | " << endl;
-	cout << "\t|    Option:                                     | " << endl;
-	cout << "\t|     1. Generation OGS Neumman BC from          | " << endl;
-	cout << "\t|        raster files of GIS                     | " << endl;
-	cout << "\t|     2. Top surface integration for 3D mesh     | " << endl;
-	cout << "\t|     3. Convert GIS raster cells into FE mesh   | " << endl;
-	cout << "\t|                                                | " << endl;
-	cout << "\t|================================================| " << endl;
-	cout << "\tInput file name: ";
+         if(   !(s_buff.find("-")!=string::npos || s_buff.find("--")!=string::npos) )
+         {
+            file_name = s_buff;
+         }
 
-	if(argc > 1)
-	{
-		strcpy(str2,argv[1]);
-		strcpy(str1,argv[2]);
-	}
-	else
-		scanf(" %s %s%*[^\n]%*c",str2, str1);
+      }
+   }
+   else //terminal
+   {
+      DisplayMessage();
+      cout<<"\nInput options and file name (non extension):\n ";
 
-	sscanf(str2, "%d", &option);
+      getline(cin, s_buff);
+      ss.str(s_buff);
+      while(!ss.eof())
+      {
+         ss>>s_buff;
+         if(s_buff.find("-opt")!=string::npos)
+         {
+            ss >> opt;
+         }
+         if( s_buff[0] != '-')
+         {
+            file_name = s_buff;
+         }
+      }
+      ss.clear();
 
-	FileName = str1;
+    }
+
+    int option;
+    ss.str(opt);
+    ss >> option;
+    ss.clear();
+
 	basic_string <char>::size_type indexChWin, indexChLinux;
 	indexChWin = indexChLinux = 0;
-	indexChWin = FileName.find_last_of('\\');
-	indexChLinux = FileName.find_last_of('/');
+	indexChWin = file_name.find_last_of('\\');
+	indexChLinux = file_name.find_last_of('/');
 	//
+    string file_path; 
 	if(indexChWin != string::npos)
-		FilePath = FileName.substr(0,indexChWin) + "\\";
+		file_path = file_name.substr(0,indexChWin) + "\\";
 	else if(indexChLinux != string::npos)
-		FilePath = FileName.substr(0,indexChLinux) + "/";
+		file_path = file_name.substr(0,indexChLinux) + "/";
 
-	if(option != 3)
+	CFEMesh* a_mesh = NULL;
+
+    if(option != 3)
 	{
-		FEMRead(FileName);
-		a_mesh = fem_msh_vector[0];
+       	string fname = file_name + ".msh";
+		ifstream is_mesh(fname.c_str(), ios::in);
+
+		std::getline(is_mesh, s_buff);
+
+        if(s_buff.find("#FEM_MSH") != std::string::npos) 
+		{
+           a_mesh = new CFEMesh(NULL, &file_name);
+           a_mesh->Read(&is_mesh);
+		} 
+		else
+		{
+            std::cout<<"Cannot open mesh file "<< fname << endl;
+            return EXIT_FAILURE;			 
+		}
 	}
 
 	switch(option)
 	{
-	case 1:
-		a_mesh->mHM2NeumannBC();
-		break;
-	case 2:
-		a_mesh->TopSurfaceIntegration();
-		break;
-	case 3:
-		a_mesh = new CFEMesh();
-		a_mesh->ConvertShapeCells(FileName + ".asc");
-		ofname = FileName + ".msh";
-		ofile.open(ofname.c_str(), ios::out | ios::trunc);
-		a_mesh->Write(&ofile);
-		break;
-
-	default:
-
-		break;
+       case 1:
+          a_mesh->mHM2NeumannBC();
+          break;
+       case 2:
+          a_mesh->TopSurfaceIntegration();
+          break;
+       case 3:
+          a_mesh = new CFEMesh();
+          a_mesh->ConvertShapeCells(file_name + ".asc");
+          break;
+       default:
+          break;
 	}
-	return 0;
+
+	if(a_mesh)
+	{
+       delete a_mesh;
+	   a_mesh = NULL;
+	}
+	return EXIT_SUCCESS;
 }

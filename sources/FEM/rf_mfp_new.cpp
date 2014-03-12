@@ -66,6 +66,7 @@ CFluidProperties::CFluidProperties() :
 	drho_dC = 0.;
 	// Viscosity
 	viscosity_model = 1;
+	viscosity_T_shift =0.0; 
 	my_0 = 1e-3;
 	dmy_dp = 0.;
 	dmy_dT = 0.;
@@ -85,6 +86,7 @@ CFluidProperties::CFluidProperties() :
 	C_0 = 0.;
 	Z = 1.;
 	cal_gravity = true;
+	drho_dT_unsaturated = false; //considering fluid expansion due to temperature in the unsaturated case? (Richards) 
 	// Data
 	mode = 0;                             // Gauss point values
 	Fem_Ele_Std = NULL;
@@ -255,6 +257,11 @@ std::ios::pos_type CFluidProperties::Read(std::ifstream* mfp_file)
 			cal_gravity = false;
 			continue;
 		}
+		if(line_string.find("$DRHO_DT_UNSATURATED") != string::npos)  //JM considering drho/dT for the unsaturated case (richards)?
+		{
+			drho_dT_unsaturated = true; //if keyword found, drho/dT will be considered for unsaturated case (richards)
+			continue;
+		}
 		//....................................................................
 		// subkeyword found
 		if(line_string.find("$DENSITY") != string::npos)
@@ -333,13 +340,16 @@ std::ios::pos_type CFluidProperties::Read(std::ifstream* mfp_file)
 			{
 				std::string arg1,arg2,arg3;
 				in >> arg1 >> arg2 >> arg3; //get up to three arguments for density model
-
+				if (arg1.length() > 0)
+				{
 				if (isdigit(arg1[0]) != 0) // first argument is reference temperature
 				{
 					T_0 = atof(arg1.c_str());
 					arg1 = arg2;
 					arg2 = arg3;
 				}
+                }  
+				else T_0=0.0; 
 
 				if (arg1.length() == 0) // if no arguments are given use standard
 				{
@@ -402,11 +412,18 @@ std::ios::pos_type CFluidProperties::Read(std::ifstream* mfp_file)
 				viscosity_pcs_name_vector.push_back("PRESSURE1");
 			}
 			if(viscosity_model == 3) // my(T), Yaws et al. (1976)
-
+                        {  // optional: read reference temperature for viscosity model 
+                           std::string arg1;
+                           in >> arg1; //get one optional argument
+                           if (arg1.length() > 0)
+                           if (isdigit(arg1[0]) != 0) // first argument is temperature shift for viscosity, in order to allow the use of deg Celsius
+                             viscosity_T_shift = atof(arg1.c_str());
+                           viscosity_pcs_name_vector.push_back("PRESSURE1"); //JM dummy wird benoetigt!
 				//OK4704
 				viscosity_pcs_name_vector.push_back("TEMPERATURE1");
 			if(viscosity_model == 4) // my(T), after de Marsily ..see viscosity function
 			{
+			  viscosity_pcs_name_vector.push_back("PRESSURE1"); //JM dummy wird benoetigt!                          
               viscosity_pcs_name_vector.push_back("TEMPERATURE1"); // added by CB 
 			}
 			if(viscosity_model == 5) // my(p,T), Reichenberg (1971)
@@ -921,20 +938,24 @@ double CFluidProperties::Density(double* variables)
 		case 10:                  // Get density from temperature-pressure values from fct-file	NB 4.8.01
 			if(!T_Process)
 				variables[1] = T_0;
+			else variables[1]+=T_0;  //JM if T_0==273 (user defined), Celsius can be used within this model
 			density = GetMatrixValue(variables[1],variables[0],fluid_name,&gueltig);
 			break;
 		case 11:                  // Redlich-Kwong EOS for different fluids NB 4.9.05
 			if(!T_Process)
 				variables[1] = T_0;
+			else variables[1]+=T_0; //JM if T_0==273 (user defined), Celsius can be used within this model
 			density = rkeos(variables[1],variables[0],fluid_id);
 			break;
 		case 12:                  //Peng-Robinson EOS for different fluids NB 4.9.05
 			if(!T_Process)
 				variables[1] = T_0;
+			else variables[1]+=T_0; //JM if T_0==273 (user defined), Celsius can be used within this model
 			//NB
 			density = preos(this, variables[1],variables[0]);
 			break;
 		case 13:                  // Helmholtz free Energy NB JUN 09
+			variables[1]+=T_0; //JM if T_0==273 (user defined), Celsius can be used within this model
 			//NB
 			density = zbrent(variables[1],variables[0],fluid_id,1e-8);
 			break;
@@ -1038,6 +1059,7 @@ double CFluidProperties::Density(double* variables)
 		case 10:                  // Get density from temperature-pressure values from fct-file NB
 			if(!T_Process)
 				primary_variable[1] = T_0;
+			else primary_variable[1]+=T_0; //JM if T_0==273 (user defined), Celsius can be used within this model
 			density = GetMatrixValue(primary_variable[1],
 			                         primary_variable[0],
 			                         fluid_name,
@@ -1046,16 +1068,19 @@ double CFluidProperties::Density(double* variables)
 		case 11:                  //Peng-Robinson equation of state NB
 			if(!T_Process)
 				primary_variable[1] = T_0;
+			else primary_variable[1]+=T_0; //JM if T_0==273 (user defined), Celsius can be used within this model
 			density = rkeos(primary_variable[1],primary_variable[0],fluid_id);
 			break;
 		case 12:                  //Redlich-Kwong equation of state NB
 			if(!T_Process)
 				primary_variable[1] = T_0;
+			else primary_variable[1]+=T_0; //JM if T_0==273 (user defined), Celsius can be used within this model
 			density = preos(this, primary_variable[1],primary_variable[0]);
 			break;
 		case 13:                  // Helmholtz free Energy NB JUN 09
 			if(!T_Process)
 				primary_variable[1] = T_0;
+			else primary_variable[1]+=T_0; //JM if T_0==273 (user defined), Celsius can be used within this model
 			//NB
 			density = zbrent(primary_variable[1],primary_variable[0],fluid_id,1e-8);
 			break;
@@ -1430,8 +1455,10 @@ double CFluidProperties::Viscosity(double* variables)
 			                                    "TEMPERATURE1") + 1);
 		}
 		//ToDo pcs_name
-         viscosity = LiquidViscosity_Yaws_1976(primary_variable[1]); // CB: Why PV[1]?? T is in PV[0]
-         //viscosity = LiquidViscosity_Yaws_1976(primary_variable[0]);
+ 		if(!T_Process) 
+		    primary_variable[1] = T_0+viscosity_T_shift;
+ 		else primary_variable[1]+=viscosity_T_shift; //JM if viscosity_T_shift==273 (user defined), Celsius can be used within this model
+		viscosity = LiquidViscosity_Yaws_1976(primary_variable[1]);
 		break;
 	case 4:                               // my^g(T), Marsily (1986)
          viscosity = LiquidViscosity_Marsily_1986(primary_variable[1]);
@@ -3534,7 +3561,7 @@ double a0, A, B, c, C, dvdp, fctA, fctB, fctC, beta, beta_m, p, R, T, Tr, z, z1,
 		break;
 
 	default:
-		drhodP = 0;
+		drhodP = drho_dp;
 	}
 	return drhodP;
 }
@@ -3557,8 +3584,11 @@ double a0, A, B, c, C, da0, da, alpha, alpha_m, dvdT, fctA, fctB, fctC, p, R, T,
 	double arguments[2];
 	double rho1,rho2,drhodT;
 
+   if(!drho_dT_unsaturated)     //fluid expansion (drho/dT) for unsaturated case activated? 
+	{
 	if (P < 0)
 		return 0;
+	}
 
 	switch(compressibility_model_temperature)
 	{

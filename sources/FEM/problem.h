@@ -63,6 +63,12 @@ class Problem
       double getEndTime();
 #endif                                         //BRNS
 
+	/// Set rank and size for MPI
+    void setRankandSize(const int rank, const int size)
+	{
+        mrank = rank;  
+        msize = size;  
+	} 
    private:
       // Time:
       double start_time;
@@ -141,6 +147,11 @@ class Problem
 	 * used to access data in data manager GEOObjects
 	 */
 	std::string _geo_name;                // TF
+
+	/// rank for MPI
+	int mrank;
+    /// processor number for MPI  
+	int msize;
 };
 
 extern bool MODCreate();                          //OK

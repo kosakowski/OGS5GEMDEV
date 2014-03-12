@@ -12,9 +12,8 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
-#ifndef NON_GEO                                   //WW
+
 #include "gs_project.h"
-#endif                                            //#ifndef NON_GEO
 
 // BaseLib
 #include "Histogram.h"
@@ -218,9 +217,12 @@ CFEMesh::~CFEMesh(void)
 		delete face_normal[i];
 	face_normal.clear();
 
-#ifndef NON_GEO                             //WW
-	delete PT; // PCH
-#endif
+    if(PT)    //WW
+	{
+       delete PT; // PCH
+	   PT = NULL; 
+	}
+
 	// 1.11.2007 WW
 #ifdef NEW_EQS
 	delete sparse_graph;
@@ -229,7 +231,11 @@ CFEMesh::~CFEMesh(void)
 	sparse_graph_H = NULL;
 #endif
 
-	delete _mesh_grid;
+    if(_mesh_grid)
+	{
+       delete _mesh_grid;
+       _mesh_grid = NULL; 
+	}
 }
 
 void CFEMesh::setElementType(MshElemType::type type)
@@ -491,7 +497,9 @@ void CFEMesh::ConstructGrid()
 	Math_Group::vec<CNode*> e_edgeNodes0(3);
 	Math_Group::vec<CNode*> e_edgeNodes(3);
 
+#if !defined(USE_PETSC) // &&! defined(USE_OTHER Parallel solver lib) //WW 06.2013
 	NodesNumber_Linear = nod_vector.size();
+#endif
 
 	Edge_Orientation = 1;
 
@@ -770,7 +778,9 @@ void CFEMesh::ConstructGrid()
 		}
 		elem->SetNeighbors(Neighbors0);
 	}
+#if !defined(USE_PETSC) // &&! defined(USE_OTHER Parallel solver lib) //WW 06.2013
 	NodesNumber_Quadratic = (long) nod_vector.size();
+#endif
 	if ((_msh_n_hexs + _msh_n_tets + _msh_n_prisms + _msh_n_pyras) > 0)
 		max_ele_dim = 3;
 	else if ((_msh_n_quads + _msh_n_tris) > 0)
@@ -1196,22 +1206,18 @@ void CFEMesh::GenerateHighOrderNodes()
 void CFEMesh::FillTransformMatrix()
 {
 	CElem* elem = NULL;
-#ifndef NON_PROCESS                         //05.01.2011. WW
 	// PCH
 	CRFProcess* m_pcs = PCSGet("FLUID_MOMENTUM");
-#endif                                      //#ifndef NON_PROCESS
 	//
 	if ((_msh_n_hexs + _msh_n_tets + _msh_n_prisms + _msh_n_pyras)
 	    == ele_vector.size())
 		return;
 	else if (coordinate_system != 32 && !this->has_multi_dim_ele)
 	{
-#ifndef NON_PROCESS                      //05.01.2011. WW
 		if (m_pcs)
 			;  // Need to do FillTransformMatrix	// PCH
 		else
 			return;
-#endif                                   //#ifndef NON_PROCESS
 	}
 	bool tilted = false;
 	if (coordinate_system == 32 || coordinate_system == 21 || coordinate_system
@@ -1361,7 +1367,6 @@ void CFEMesh::RenumberNodesForGlobalAssembly()
    }
  */
 
-#ifndef NON_GEO
 /**************************************************************************
    FEMLib-Method:
    Task: Ermittelt den nahliegenden existierenden Knoten
@@ -1375,7 +1380,7 @@ long CFEMesh::GetNODOnPNT(const GEOLIB::Point* const pnt) const
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2012
   long node_id = -1;
   
-  const size_t nodes_in_usage=NodesInUsage(); 
+  const size_t nodes_in_usage = loc_NodesNumber_Quadratic;
 
   double sqr_dist = 0.0;
   double distmin = getMinEdgeLength()/10.0;
@@ -1473,9 +1478,10 @@ inline double dotProduction(const double* x1, const double* x2,
    07/2005 WW Node object is replaced
    10/2005 OK test
    03/2010 TF adaption to new data GEO-structures, changed the algorithm
+   05/3013 WW Add restriction for the ply for the sources term
 **************************************************************************/
 void CFEMesh::GetNODOnPLY(const GEOLIB::Polyline* const ply,
-                          std::vector<size_t>& msh_nod_vector)
+                          std::vector<size_t>& msh_nod_vector, const bool for_s_term)
 {
 	msh_nod_vector.clear();
 
@@ -1509,7 +1515,7 @@ void CFEMesh::GetNODOnPLY(const GEOLIB::Polyline* const ply,
 	}
 
 	// compute nodes (and supporting points) along polyline
-	_mesh_nodes_along_polylines.push_back(MeshNodesAlongPolyline(ply, this));
+	_mesh_nodes_along_polylines.push_back(MeshNodesAlongPolyline(ply, this, for_s_term));
 	const std::vector<size_t>
 	node_ids(
 	        _mesh_nodes_along_polylines[_mesh_nodes_along_polylines.size()
@@ -1579,10 +1585,10 @@ void CFEMesh::getPointsForInterpolationAlongPolyline(
 }
 
 void CFEMesh::GetNODOnPLY(const GEOLIB::Polyline* const ply,
-                          std::vector<long>& msh_nod_vector)
+                          std::vector<long>& msh_nod_vector,  const bool for_s_term)
 {
 	std::vector<size_t> tmp_msh_node_vector;
-	GetNODOnPLY(ply, tmp_msh_node_vector);
+	GetNODOnPLY(ply, tmp_msh_node_vector, for_s_term);
 	for (size_t k(0); k < tmp_msh_node_vector.size(); k++)
 		msh_nod_vector.push_back(tmp_msh_node_vector[k]);
 }
@@ -1594,7 +1600,7 @@ void CFEMesh::GetNODOnPLY(const GEOLIB::Polyline* const ply,
    04/2005 OK
    last modification:
 **************************************************************************/
-void CFEMesh::GetNODOnSFC(Surface* m_sfc, std::vector<long>&msh_nod_vector)
+void CFEMesh::GetNODOnSFC(Surface* m_sfc, std::vector<long>&msh_nod_vector, const bool for_s_term)
 {
 	msh_nod_vector.clear();
 	//----------------------------------------------------------------------
@@ -1602,7 +1608,7 @@ void CFEMesh::GetNODOnSFC(Surface* m_sfc, std::vector<long>&msh_nod_vector)
 	{
 	//....................................................................
 	case 0: // Surface polygon
-		GetNODOnSFC_PLY(m_sfc, msh_nod_vector);
+		GetNODOnSFC_PLY(m_sfc, msh_nod_vector, for_s_term);
 		break;
 	case 1: // TIN
 		if (!m_sfc->TIN)
@@ -1634,7 +1640,7 @@ void CFEMesh::GetNODOnSFC(Surface* m_sfc, std::vector<long>&msh_nod_vector)
    last modification:
 **************************************************************************/
 void CFEMesh::GetNODOnSFC(const GEOLIB::Surface* sfc,
-                          std::vector<size_t>& msh_nod_vector) const
+                          std::vector<size_t>& msh_nod_vector,  const bool for_s_term) const
 {
 	msh_nod_vector.clear();
 
@@ -1652,7 +1658,19 @@ void CFEMesh::GetNODOnSFC(const GEOLIB::Surface* sfc,
 	begin = clock();
 #endif
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2012
-  	const size_t nodes_in_usage= NodesInUsagePETSC(); //always use local nodes only ..
+  size_t nodes_in_usage;
+  if(for_s_term)
+  {
+	  nodes_in_usage = (size_t) NodesInUsage();
+  }
+  else
+  {
+	if (useQuadratic)
+       nodes_in_usage = getNumNodesLocal_Q();
+	else
+       nodes_in_usage = getNumNodesLocal();
+  }
+
 #else
 	const size_t nodes_in_usage((size_t) NodesInUsage());
 #endif
@@ -1682,7 +1700,7 @@ void CFEMesh::GetNODOnSFC(const GEOLIB::Surface* sfc,
    last modification:
 **************************************************************************/
 void CFEMesh::GetNODOnSFC_PLY(Surface const* m_sfc,
-                              std::vector<long>&msh_nod_vector) const
+                              std::vector<long>&msh_nod_vector, const bool for_s_term) const
 {
 	long i, k;
 	size_t j;
@@ -1738,7 +1756,18 @@ void CFEMesh::GetNODOnSFC_PLY(Surface const* m_sfc,
 		//....................................................................
 		// Check nodes by comparing area
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2012
-		const size_t nn =  NodesInUsagePETSC();
+       size_t nn;
+       if(for_s_term)
+       {
+	      nn =  NodesInUsage();
+       }
+       else
+       {
+	     if (useQuadratic)
+            nn =  getNumNodesLocal_Q();
+	     else
+            nn =  getNumNodesLocal();
+        }
 #else
 		const size_t nn =  NodesInUsage();
 #endif
@@ -2617,7 +2646,6 @@ void CFEMesh::GetNODOnSFC_PLY_Z(Surface* m_sfc,std::vector<long>&msh_nod_vector)
 		break;
 	}
 }
-#endif                                         //WW#ifndef NON_GEO
 /**************************************************************************
    GeoSys-Method:
    Task:
@@ -3210,7 +3238,6 @@ void CFEMesh::SetNetworkIntersectionNodes()
 	//      }
 }
 
-#ifndef NON_PROCESS                            // 05.03.2010 WW
 #ifdef NEW_EQS                                 // 1.11.2007 WW
 /**************************************************************************
    MSHLib-Method:
@@ -3249,8 +3276,7 @@ void CFEMesh::CreateSparseTable()
 	//ofstream Dum("sparse.txt", ios::out);
 	//sparse_graph_H->Write(Dum);
 }
-#endif                                         //#ifndef NON_PROCESS  // 05.03.2010 WW
-#endif
+#endif        //#ifndef NEW_EQS  // 05.03.2010 WW
 
 //---------------------------------------------------------------------------
 /*!
@@ -3994,7 +4020,7 @@ void CFEMesh::mHM2NeumannBC()
 	std::string aline;
 	std::stringstream ss;
 
-	std::string fname = FileName + ".pcp";
+	std::string fname = *_geo_name + ".pcp";
 
 	std::ifstream ins(fname.c_str());
 	if(!ins.good())
@@ -4023,8 +4049,20 @@ void CFEMesh::mHM2NeumannBC()
 	step = 0.;
 
 	std::string infiltration_files;
-	infiltration_files = FileName + ".ifl";
+	infiltration_files = *_geo_name + ".ifl";
 	std::ofstream infil(infiltration_files.c_str(), std::ios::trunc);
+
+	std::basic_string <char>::size_type indexChWin, indexChLinux;
+	indexChWin = indexChLinux = 0;
+	indexChWin =  _geo_name->find_last_of('\\');
+	indexChLinux = _geo_name->find_last_of('/');
+	//
+    std::string file_path; 
+	if(indexChWin != std::string::npos)
+		file_path = _geo_name->substr(0,indexChWin) + "\\";
+	else if(indexChLinux != std::string::npos)
+		file_path = _geo_name->substr(0,indexChLinux) + "/";
+
 	while(!ins.eof())
 	{
 		getline(ins, aline);
@@ -4040,10 +4078,10 @@ void CFEMesh::mHM2NeumannBC()
 
 		//sprintf(stro, "%f",step);
 		// ofname = stro;
-		ofname = FilePath + key + ".bin";
+		ofname = file_path + key + ".bin";
 		infil << step << " " << key + ".bin" << "\n";
 
-		key = FilePath + key;
+		key = file_path + key;
 		Precipitation2NeumannBC(key, ofname, ratio);
 
 		step += 1.0;
@@ -4079,7 +4117,7 @@ void CFEMesh::TopSurfaceIntegration()
 		val[i] = 0.0;
 	}
 
-	std::string ofname = FileName + "_top_surface_Neumann_BC.txt";
+	std::string ofname =  *_geo_name + "_top_surface_Neumann_BC.txt";
 	std::ofstream ofile_asci(ofname.c_str(), std::ios::trunc);
 	ofile_asci.setf(std::ios::scientific,std::ios::floatfield);
 	ofile_asci.precision(14);

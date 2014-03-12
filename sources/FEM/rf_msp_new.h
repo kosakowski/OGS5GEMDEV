@@ -74,6 +74,7 @@ namespace SolidProp
          //
          int Capacity_mode;
          int Conductivity_mode;
+         double T_0;
          int Plasticity_type;
          double primary_variable[10];             //CMCD
          double primary_variable_t0[10];          //CMCD

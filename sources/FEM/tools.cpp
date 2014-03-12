@@ -1266,6 +1266,9 @@ double GetMatrixValue(double var1, double var2, std::string caption, int *guelti
 	int j1 = 0;
 	int j2 = 0;
 
+	//JM avoid crash, if nan occurs  
+	if (!(var2==var2)) var2=0.0; 
+	if (!(var1==var1)) var1=288.15;
 	matrix = FCTGet(caption);
 	dim_x = matrix->matrix_dimension[0]; //NB 4.8.01
 	dim_y = matrix->matrix_dimension[1]; //NB

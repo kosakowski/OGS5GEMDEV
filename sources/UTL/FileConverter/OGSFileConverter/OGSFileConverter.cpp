@@ -343,4 +343,3 @@ bool OGSFileConverter::fileExists(const std::string &file_name) const
 	return false;
 }
 
-

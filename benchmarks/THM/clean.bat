@@ -13,3 +13,8 @@ del *.dat
 del *.glp
 del *.txt
 del *.rfg
+cd deco_2015_b2s1
+del *.tec
+del *.txt
+del *.exe
+cd ..

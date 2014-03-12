@@ -406,6 +406,12 @@ void CClockTime::StopTime(const std::string &name)
 
 void CClockTime::PrintTimes(void)
 {
+  if(    time_kinreact.size() == 0 
+      || time_equireact.size() == 0 
+      || time_reactdeact.size() == 0 
+	 ) //WW
+     return; 
+
 	int i,length;
 	double tot = 0., help = 0.0, tot_zeitschritt = 0.;
    string outname= FileName + "_ClockTimes.txt";

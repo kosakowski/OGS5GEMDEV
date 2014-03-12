@@ -278,12 +278,25 @@ int main ( int argc, char* argv[] )
 		FilePath = FileName.substr(0,indexChLinux) + "/";
 	// ---------------------------WW
 	Problem* aproblem = new Problem(dateiname);
+#ifdef USE_PETSC
+	aproblem->setRankandSize(rank, r_size);
+#endif
+#if defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL) || defined(USE_MPI_GEMS)  || defined(USE_MPI_KRC)
+	aproblem->setRankandSize(myrank, mysize);
+#endif
+
 	aproblem->Euler_TimeDiscretize();
 	delete aproblem;
 	aproblem = NULL;
   if(ClockTimeVec.size()>0)
     ClockTimeVec[0]->PrintTimes();  //CB time
 #ifdef TESTTIME
+#if defined(USE_MPI)
+     if(myrank == 0)
+#endif
+#if defined(USE_PETSC) 
+     if(rank == 0)
+#endif
 	std::cout << "Simulation time: " << TGetTimer(0) << "s" << "\n";
 #endif
 	/* Abspann ausgeben */

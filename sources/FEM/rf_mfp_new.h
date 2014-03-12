@@ -107,6 +107,7 @@ private:
 	double diffusion_coef; //AKS
 	// Viscosity
 	double viscosity;
+	double viscosity_T_shift; //JM in order to use some viscosity functions, based on total temperature, within Richards
 	double my_0;
 	double dmy_dp;
 	double dmy_dT;
@@ -259,7 +260,7 @@ public:
 	double phi_r_dd (double rho, double T) const;
 	double phi_0_tt (double T) const;
 	double EffectiveDiffusionCoef(int CIndex, double* variables = NULL); //AKS
-
+	bool drho_dT_unsaturated; 
 
 	  double specific_heat_source;
 

@@ -38,6 +38,10 @@
 
 #include "rf_node.h"
 
+#if defined(USE_PETSC) // || defined(other parallel libs)//03.3012. WW
+#include "PETSC/PETScLinearSolver.h"
+#endif
+
 using namespace std;
 
 // Solver
@@ -300,18 +304,26 @@ void CRFProcessDeformation::CalIniTotalStress()
 					pw +=  tmp_h_pcs->GetNodeValue(j,idx_p1)*SMat->bishop_model_value;
 				else if (SMat->bishop_model==2)
 					pw +=  tmp_h_pcs->GetNodeValue(j,idx_p1)*pow(tmp_h_pcs->GetNodeValue(j,idx_s),SMat->bishop_model_value);
+				else if (SMat->bishop_model==3) 
+				{
+					tmp_h_pcs->GetNodeValue(j,idx_s) >= SMat->bishop_model_value ? pw +=  tmp_h_pcs->GetNodeValue(j,idx_p1) :  pw +=0.0; 
+				} 
 				else
 					pw +=  tmp_h_pcs->GetNodeValue(j,idx_p1)*tmp_h_pcs->GetNodeValue(j,idx_s);
 			}
 			if(h_pcs_type == 1212 || h_pcs_type == 42)//multi phase flow  pg-sw*pc
 			{
 				if(SMat->bishop_model==1)
-					pw += tmp_h_pcs->GetNodeValue(j,idx_p2) - SMat->bishop_model_value;
+					pw += tmp_h_pcs->GetNodeValue(j,idx_p2) - SMat->bishop_model_value * tmp_h_pcs->GetNodeValue(j,idx_p1);
 				else if(SMat->bishop_model==2)
 					pw += tmp_h_pcs->GetNodeValue(j,idx_p2) - pow(tmp_h_pcs->GetNodeValue(j,idx_s),SMat->bishop_model_value)
 					*tmp_h_pcs->GetNodeValue(j,idx_p1);
-				else
-					pw += tmp_h_pcs->GetNodeValue(j,idx_p2) - SMat->bishop_model_value*tmp_h_pcs->GetNodeValue(j,idx_p1);
+				else if(SMat->bishop_model==3) 
+				{
+                  tmp_h_pcs->GetNodeValue(j,idx_p1) >= SMat->bishop_model_value ? pw += tmp_h_pcs->GetNodeValue(j,idx_p2) - tmp_h_pcs->GetNodeValue(j,idx_p1) : pw += tmp_h_pcs->GetNodeValue(j,idx_p2); 
+                }
+                else
+				  pw += tmp_h_pcs->GetNodeValue(j,idx_p2) - tmp_h_pcs->GetNodeValue(j,idx_s)*tmp_h_pcs->GetNodeValue(j,idx_p1); 
 			}
 		}
 		pw /= nnodes;//average node value, could be also interp. value
@@ -395,14 +407,14 @@ void CRFProcessDeformation::InitialMBuffer()
  **************************************************************************/
 double CRFProcessDeformation::Execute(int loop_process_number)
 {
-#if defined(USE_MPI)
+#if defined(USE_MPI) || defined(USE_PETSC)
 	if(myrank == 1)
 	{
 #endif
 		std::cout<<"\n      ================================================" << "\n";
 	    std::cout << "    ->Process " << loop_process_number << ": " << convertProcessTypeToString (getProcessType()) << "\n";
 	    std::cout << "      ================================================" << "\n";
-#if defined(USE_MPI)
+#if defined(USE_MPI) || defined(USE_PETSC)
 }
 #endif
 
@@ -460,7 +472,7 @@ double CRFProcessDeformation::Execute(int loop_process_number)
 		number_of_load_steps = 1;
 	// system matrix
 #if defined (USE_PETSC) // || defined (other parallel solver lib). 04.2012 WW
-	//TODO
+	eqs_new->Initialize(); 
 #elif NEW_EQS                              //WW
 	//
 #if defined(USE_MPI)
@@ -613,14 +625,15 @@ double CRFProcessDeformation::Execute(int loop_process_number)
 			ErrorU = 1.0e+8;
 			Norm = 1.0e+8;
 			NormU = 1.0e+8;
-#ifdef USE_MPI
+			   
+#if defined(USE_MPI) || defined(USE_PETSC)            		
 			if(myrank == 0)
 			{
 #endif
 			//Screan printing:
             std::cout <<"      Starting loading step "<< l << "/" << number_of_load_steps <<".  Load factor: " << LoadFactor << "\n";
 			std::cout <<"      ------------------------------------------------"<<"\n";
-#ifdef USE_MPI
+#if defined(USE_MPI) || defined(USE_PETSC)    
 		}
 #endif
 		}
@@ -630,7 +643,7 @@ double CRFProcessDeformation::Execute(int loop_process_number)
 			ite_steps++;
 			// Refresh solver
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
-			//TODO
+			//	   InitializeRHS_with_u0(); 
 #elif NEW_EQS                        //WW
 #ifndef USE_MPI
 			eqs_new->Initialize(); //27.11.2007 WW
@@ -656,28 +669,27 @@ double CRFProcessDeformation::Execute(int loop_process_number)
 			        pWin->SendMessage(WM_SETMESSAGESTRING,0,(LPARAM)(LPCSTR)m_str);
 			   #endif
 			 */
+#if defined( USE_MPI) || defined( USE_PETSC)         //WW
+	if(myrank == 0)
+#endif
 			std::cout << "      Assembling equation system..." << "\n";
-#ifdef USE_MPI                        //WW
+
+#if defined( USE_MPI) || defined( USE_PETSC)         //WW
 			clock_t cpu_time = 0; //WW
 			cpu_time = -clock();
 #endif
 			if(m_num->nls_method != 2) // Not JFNK method. 05.08.2010. WW
 				GlobalAssembly();
-#ifdef USE_MPI
+#if defined(USE_MPI) || defined( USE_PETSC)         //WW
 			cpu_time += clock();
 			cpu_time_assembly += cpu_time;
 #endif
 			//
 			if(type != 41)
+#if defined( USE_PETSC)         //WW
+                            InitializeRHS_with_u0();
+#else
 				SetInitialGuess_EQS_VEC();
-#ifdef MFC
-			m_str.Format(
-			        "Time step: t=%e sec, %s, Load step: %i, NR-Iteration: %i, Solve equation system", \
-			        aktuelle_zeit,
-			        pcs_type_name.c_str(),
-			        l,
-			        ite_steps);
-			pWin->SendMessage(WM_SETMESSAGESTRING,0,(LPARAM)(LPCSTR)m_str);
 #endif
 #ifdef USE_MPI                        //WW
 			// No initial guess for deformation.
@@ -686,10 +698,17 @@ double CRFProcessDeformation::Execute(int loop_process_number)
 			//
 #endif
 
+#if defined( USE_MPI) || defined( USE_PETSC)                             //WW
+		if(myrank == 0)
+#endif
 			std::cout << "      Calling linear solver..." << "\n";
 			/// Linear solver
 #if defined(USE_PETSC) //|| defined(other parallel libs)//03~04.3012. WW
-			//TODO
+		eqs_new->Solver();
+		eqs_new->MappingSolution();
+		if(!elasticity)
+                   Norm = eqs_new->GetVecNormRHS();
+
 #elif NEW_EQS                        //WW
 			//
 #if defined(USE_MPI)
@@ -727,7 +746,7 @@ double CRFProcessDeformation::Execute(int loop_process_number)
 				Error1 = Error;
 				ErrorU1 = ErrorU;
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
-			//TODO
+                                NormU =  eqs_new->GetVecNormX();
 #elif NEW_EQS
 				NormU = eqs_new->NormX();
 #else
@@ -778,7 +797,7 @@ double CRFProcessDeformation::Execute(int loop_process_number)
 					pcs_relative_error[0] = Error / Tolerance_global_Newton;
 				}
 				//
-#ifdef USE_MPI
+#if defined(USE_MPI) || defined(USE_PETSC)
 				if(myrank == 0)
 				{
 #endif
@@ -790,7 +809,7 @@ double CRFProcessDeformation::Execute(int loop_process_number)
                 cout<<"         NR-Error"<<"  "<<"RHS Norm 0"<<"  "<<"RHS Norm  "<<"  "<<"Unknowns Norm"<<"  "<<"Damping"<<"\n";
                 cout<<"         "<<Error<<"  "<<InitialNorm<<"  "<<Norm<<"   "<<NormU<<"   "<<"   "<<damping<<"\n";
                 std::cout <<"      ------------------------------------------------"<<"\n";
-#ifdef USE_MPI
+#if defined(USE_MPI) || defined(USE_PETSC)
 			}
 #endif
 				if(Error > 100.0 && ite_steps > 1)
@@ -832,6 +851,9 @@ double CRFProcessDeformation::Execute(int loop_process_number)
 	Error = 0.0;
 	if(type / 10 != 4)                    // Partitioned scheme
 	{
+#ifdef USE_PETSC
+                NormU =  eqs_new->GetVecNormX();
+#else
 		for(size_t n = 0; n < m_msh->GetNodesNumber(true); n++)
 			for(l = 0; l < pcs_number_of_primary_nvals; l++)
 			{
@@ -840,6 +862,7 @@ double CRFProcessDeformation::Execute(int loop_process_number)
 			}
 		NormU = Error;
 		Error = sqrt(NormU);
+#endif
 	}
 
 	// Determine the discontinuity surface if enhanced strain methods is on.
@@ -848,13 +871,13 @@ double CRFProcessDeformation::Execute(int loop_process_number)
 		Trace_Discontinuity();
 	//
 	dm_time += clock();
-#ifdef USE_MPI
+#if defined( USE_MPI) || defined( USE_PETSC)                             //WW
 	if(myrank == 0)
 	{
 #endif
     std::cout <<"      CPU time elapsed in deformation: " << (double)dm_time / CLOCKS_PER_SEC<<"s"<<"\n";
     std::cout <<"      ------------------------------------------------"<<"\n";
-#ifdef USE_MPI
+#if defined( USE_MPI) || defined( USE_PETSC)                             //WW
 }
 #endif
 	// Recovery the old solution.  Temp --> u_n	for flow proccess
@@ -1396,7 +1419,7 @@ void CRFProcessDeformation::UpdateIterativeStep(const double damp, const int u_t
 	double* eqs_x = NULL;
 
 #if defined (USE_PETSC) // || defined (other parallel solver lib). 04.2012 WW
-	//TODO
+	eqs_x = eqs_new->GetGlobalSolution();
 #elif NEW_EQS
 	eqs_x = eqs_new->x;
 #else
@@ -1405,6 +1428,11 @@ void CRFProcessDeformation::UpdateIterativeStep(const double damp, const int u_t
 
 	if(type == 41 && fem_dm->dynamic)
 	{
+
+#if defined (USE_PETSC) // || defined (other parallel solver lib). 06.2013 WW
+	  //const long size_q = num_nodes_p_var[0];
+                const long size_l = num_nodes_p_var[pcs_number_of_primary_nvals-1];
+#endif
 		for (i = 0; i < pcs_number_of_primary_nvals; i++)
 		{
 			number_of_nodes = num_nodes_p_var[i];
@@ -1413,18 +1441,37 @@ void CRFProcessDeformation::UpdateIterativeStep(const double damp, const int u_t
 			{
 				ColIndex = p_var_index[i] - 1;
 				for(j = 0; j < number_of_nodes; j++)
-					SetNodeValue(j,ColIndex,
-					             GetNodeValue(j,
-					                          ColIndex) +
-					             eqs_x[j + shift] * damp);
+	                 	  {                                        
+#if defined (USE_PETSC) // || defined (other parallel solver lib). 06.2013 WW
+				    long eqs_r = 0;
+                                    const long ja = m_msh->Eqs2Global_NodeIndex[j];
+
+                                    if(j < size_l)
+				        eqs_r = pcs_number_of_primary_nvals * ja + i;
+                                    else
+                                    {
+				        if( i > problem_dimension_dm)
+					  continue;
+
+				        eqs_r = pcs_number_of_primary_nvals * size_l +  problem_dimension_dm * (ja -size_l) + i;
+                                    }
+               
+                                    const long eqs_row = eqs_r;
+#else
+                                    const long eqs_row = j + shift;
+#endif
+                                    SetNodeValue(j,ColIndex,  GetNodeValue(j, ColIndex) +  eqs_x[eqs_row] * damp);
+				  }
 				shift += number_of_nodes;
 			}
 			else
 			{
 				ColIndex = p_var_index[i];
 				for(j = 0; j < number_of_nodes; j++)
+				  {
 					SetNodeValue(j,ColIndex, GetNodeValue(j,ColIndex) +
 					             GetNodeValue(j, ColIndex - 1));
+				  }
 			}
 		}
 		return;
@@ -1440,19 +1487,27 @@ void CRFProcessDeformation::UpdateIterativeStep(const double damp, const int u_t
 		if(u_type == 0)
 		{
 			for(j = 0; j < number_of_nodes; j++)
-				SetNodeValue(j,ColIndex, GetNodeValue(j,
-				                                      ColIndex) +
-				             eqs_x[j + shift] * damp);
+                        {
+#if defined (USE_PETSC) // || defined (other parallel solver lib). 06.2013 WW
+                             const long eqs_row =  problem_dimension_dm *  m_msh->Eqs2Global_NodeIndex[j] + i;
+#else
+                             const long eqs_row = j + shift;
+#endif
+                            SetNodeValue(j,ColIndex, GetNodeValue(j, ColIndex) +  eqs_x[eqs_row] * damp);
+                        }
 			shift += number_of_nodes;
 		}
 		else
-			for(j = 0; j < number_of_nodes; j++)
-				SetNodeValue(j,ColIndex + 1, GetNodeValue(j,
-				                                          ColIndex +
-				                                          1) +
-				             GetNodeValue(j,ColIndex));
+                {
+                      for(j = 0; j < number_of_nodes; j++)
+                         SetNodeValue(j,ColIndex + 1, GetNodeValue(j, ColIndex + 1) + GetNodeValue(j,ColIndex));
+                }
 	}
 
+#if defined (USE_PETSC) // || defined (other parallel solver lib). 06.2013 WW
+        // The node wise storage has already included the following stuff. 
+        return;
+#else
 	//if(type == 42&&m_num->nls_method>0)         //H2M, Newton-Raphson. 06.09.2010. WW
 	if(type / 10 == 4) //H2M, HM. 28.09.2011. WW
 	{
@@ -1467,13 +1522,17 @@ void CRFProcessDeformation::UpdateIterativeStep(const double damp, const int u_t
 			ColIndex = p_var_index[i];
 
 			for(j = 0; j < number_of_nodes; j++)
+			  {
+
+
 				SetNodeValue(j,ColIndex, GetNodeValue(j,
 				                                      ColIndex) +
 				             eqs_x[j + shift] * damp);
-
+			  }
 			shift += number_of_nodes;
 		}
 	}
+#endif
 }
 
 /**************************************************************************
@@ -2660,6 +2719,12 @@ void CRFProcessDeformation::GlobalAssembly()
 
 		// Apply Neumann BC
 		IncorporateSourceTerms();
+
+#if defined(USE_PETSC)  // || defined(other parallel libs)//05.3013. 
+		eqs_new->AssembleRHS_PETSc();
+		eqs_new->AssembleMatrixPETSc(MAT_FINAL_ASSEMBLY );
+#endif
+
 		//DumpEqs("rf_pcs2.txt");
 
 		// {			MXDumpGLS("rf_pcs1.txt",1,eqs->b,eqs->x); // abort();}

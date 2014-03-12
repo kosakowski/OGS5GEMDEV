@@ -112,6 +112,7 @@ CMediumProperties::CMediumProperties() :
 	mass_dispersion_transverse = 0.0;
 	mass_dispersion_longitudinal = 0.0;
 	heat_diffusion_model = -1;            //WW
+	base_heat_diffusion_coefficient = 2.16e-5;   //JM
 	geo_area = 1.0;
 //	geo_type_name = "DOMAIN";             //OK
 	vol_mat = 0.0;
@@ -1563,8 +1564,8 @@ std::ios::pos_type CMediumProperties::Read(std::ifstream* mmp_file)
 				}
 				break;
 			case 10:     // unconfined 3D GW. 5.3.07 JOD
-				in >> capillary_pressure_values[0]; // Pb
 				in >> capillary_pressure_values[1]; // Slr
+				in >> capillary_pressure_values[0]; // Pb
 				break;
 			default:
 				ScreenMessage("Error in MMPRead: no valid capillary pressure model.\n");
@@ -1686,6 +1687,10 @@ std::ios::pos_type CMediumProperties::Read(std::ifstream* mmp_file)
 		{
 			in.str(GetLineFromFile1(mmp_file));
 			in >> heat_diffusion_model;
+			if (heat_diffusion_model==1) 
+			  in >> base_heat_diffusion_coefficient; 
+			else if (heat_diffusion_model==273) //JM allow old model number
+			  heat_diffusion_model=1; 
 			in.clear();
 			continue;
 		}
@@ -2455,15 +2460,19 @@ double CMediumProperties::PermeabilitySaturationFunction(const double wetting_sa
 			break;
 		//
 		case 10: // for unconfined 3D GW 5.3.07 JOD
+			//MW correct function. did only get constants before
+			/*
 			b = capillary_pressure_values[0];
 			slr = capillary_pressure_values[1];
-			if(sl > 0) {
+			if(sl > 0 && sl < 1) {
 			  kr = max(0., 1 - (sl / b));
 			  kr = pow(kr, 2* (1 - kr));    //
 			  kr = slr  + (1 - slr) * kr;
 			}
 			else
 			  kr = 1;
+			*/
+			kr = sl;
 			break;
 		case 33: // FUNCTION: LINEAR OR POWER --> NON-WETTING krg = (b*(1-Se))^m
 			slr = 1.0 - maximum_saturation[phase];  // slr = 1.0 - sgm
@@ -2782,7 +2791,7 @@ double* CMediumProperties::HeatConductivityTensor(int number)
 			{
 				if (Fem_Ele_Std->FluidProp->density_model == 14
 				    && Fem_Ele_Std->MediaProp->heat_diffusion_model
-				    == 273 && Fem_Ele_Std->cpl_pcs)
+				    == 1 && Fem_Ele_Std->cpl_pcs)
 				{
 					dens_arg[0] = Fem_Ele_Std->interpolate(
 					        Fem_Ele_Std->NodalValC1); //Pressure
@@ -5108,14 +5117,15 @@ double CMediumProperties::SaturationCapillaryPressureFunction(const double capil
 			sl = MRange(slr+DBL_EPSILON,sl,slm-DBL_EPSILON);
 			break;
 		case 10: //  unconfined 3D GW.  5.3.07 JOD
-			/*pb = capillary_pressure_values[0];
+			//MW: remove comment to provide variables, not constants to PermeabilitySaturationFunction
+			pb = capillary_pressure_values[0];
 			slr = capillary_pressure_values[1];
 			if(pc > 0) {
 			  sl = max(0., 1 - (pc / pb));
-			  sl = pow(sl, 2* (1 - sl));    //
+			  sl = pow(sl, 2* (1 - sl));
 			  sl = slr  + (1 - slr) * sl;
 			}
-			else*/
+			else
 			  sl = 1;
 			break;
 	}

@@ -26,6 +26,15 @@ int CAP_MODE, CAP_Time, CAP_Node, CAP_icount, CAP_count;
 vector<vector<std::string> > CHEM_STATE,CHEM_STATE_AP;
 vector<vector<int> > PHASE_CONSTI_MAP;
 
+char getPathSepatator() //WW
+{
+#if defined(WIN32)
+	return '\\';
+#else
+	return '/';
+#endif
+}
+ 
 void write_file(void)
 {
 	
@@ -110,11 +119,8 @@ bool CAP_check_file(void)
     bool success = false;
 	int f;
 
-#if defined(WIN32)
-    ss << FilePath << "_CHEM_STATE\\T" << CAP_Time << "N" << CAP_Node << "C" << CAP_icount;
-#else
-	ss << FilePath << "_CHEM_STATE\/T" << CAP_Time << "N" << CAP_Node << "C" << CAP_icount;
-#endif
+	ss << FilePath << "_CHEM_STATE" << getPathSepatator() << CAP_Time << "N" << CAP_Node << "C" << CAP_icount;
+
 	ss >> file_name;		
 
 	in.clear();
@@ -133,8 +139,13 @@ bool CAP_check_file(void)
     locfilename=FileName;
 
     if(locfilepath==""){
+#if defined(WIN32)
+      locfilepath="";
+      locfilename=locfilename;
+#else
       locfilepath="./";
       locfilename="./"+locfilename;
+#endif
     }
       proj_name = locfilename.substr(locfilepath.length());
 
@@ -169,15 +180,15 @@ bool CAP_check_file(void)
 
 	ext_name.clear();
 	for(i=0;i<(int)ext_name0.size();i++){
-		in_file_new=locfilename+"\."+ext_name0[i];
-		in_file_old=locfilepath+"\\_CHEM_STATE\\"+proj_name+"\."+ext_name0[i];
+		in_file_new=locfilename+"."+ext_name0[i];
+		in_file_old=locfilepath+getPathSepatator()+"_CHEM_STATE"+getPathSepatator()+proj_name+"."+ext_name0[i];
 		if(!IO::file_compare(in_file_new,in_file_old))
 			ext_name.push_back(ext_name0[i]);
 	}
 
 	for(i=0;i<(int)ext_name.size();i++){
-		in_file_new=locfilename+"\."+ext_name[i];
-		in_file_old=locfilepath+"\\_CHEM_STATE\\"+proj_name+"\."+ext_name[i];
+		in_file_new=locfilename+"."+ext_name[i];
+		in_file_old=locfilepath+getPathSepatator()+"_CHEM_STATE"+getPathSepatator()+proj_name+"."+ext_name[i];
 		f=OGS_keyword_check(in_file_new,in_file_old,ext_name[i]);
 		if(f==1)
 			cout << in_file_new << " is removed " << endl;
@@ -370,13 +381,10 @@ void read_file(void)
 	CHEM_STATE_AP.clear();
 
     ss.clear();
-#if defined(WIN32)
-    ss << FilePath << "_CHEM_STATE\\T" << CAP_Time << "N" << CAP_Node << "C" << CAP_icount;
-#else
-	ss << FilePath << "_CHEM_STATE\/T" << CAP_Time << "N" << CAP_Node << "C" << CAP_icount;
-#endif
+	ss << FilePath << "_CHEM_STATE" << getPathSepatator() << CAP_Time << "N" << CAP_Node << "C" << CAP_icount;
 	ss >> file_name;		
-    //cout << file_name << "\n";
+
+	//cout << file_name << "\n";
     //read file to vector
 	in.clear();
 	in.open(file_name.c_str(),ios::in);

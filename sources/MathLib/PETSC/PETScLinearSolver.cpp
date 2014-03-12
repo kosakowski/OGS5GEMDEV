@@ -13,7 +13,7 @@ namespace petsc_group
 {
 
  PETScLinearSolver :: PETScLinearSolver (const int size)
-   :lsolver(NULL), prec(NULL), global_x0(NULL),  global_x1(NULL), global_buff(NULL) 
+   :lsolver(NULL), prec(NULL), global_x(NULL)
  {
    ltolerance = 1.e-10;
    m_size = size;
@@ -32,12 +32,8 @@ PETScLinearSolver:: ~PETScLinearSolver()
   if(lsolver) KSPDestroy(&lsolver);
   // if(prec) PCDestroy(&prec);
 
-  if(global_x0)
-    delete []  global_x0;
-  if(global_x1)
-    delete []  global_x1;
-  if(global_buff)
-    delete []  global_buff;
+  if(global_x)
+    delete []  global_x;
 
   PetscPrintf(PETSC_COMM_WORLD,"\n>>Number of Unknows: %d", m_size);
   PetscPrintf(PETSC_COMM_WORLD,"\n>>Elapsed time in linear solver: %fs", time_elapsed);
@@ -56,9 +52,7 @@ void PETScLinearSolver::Init(const int *sparse_index)
    VectorCreate(m_size);   
    MatrixCreate(m_size, m_size);
 
-   global_x0 = new PetscScalar[m_size];
-   global_x1 = new PetscScalar[m_size];
-   global_buff = new PetscScalar[m_size];
+   global_x = new PetscScalar[m_size];
 
 }
 
@@ -171,6 +165,8 @@ void PETScLinearSolver::VectorCreate(PetscInt m)
   VecSetFromOptions(b);
   VecSetUp(b); //kg44 for PETSC 3.3 
   VecDuplicate(b, &x);
+
+  VecGetLocalSize(x, &m_size_loc);
 
   //VecGetOwnershipRange(b, &i_start,&i_end);
 }
@@ -326,7 +322,7 @@ void PETScLinearSolver::AssembleMatrixPETSc(const MatAssemblyType type)
 }
 
 
-void PETScLinearSolver::UpdateSolutions(PetscScalar *u0, PetscScalar *u1)
+void PETScLinearSolver::UpdateSolutions(PetscScalar *u)
 {
 
 #ifdef TEST_MEM_PETSC
@@ -335,60 +331,14 @@ void PETScLinearSolver::UpdateSolutions(PetscScalar *u0, PetscScalar *u1)
    PetscMemoryGetCurrentUsage(&mem1);
 #endif
 
-
-  int i, j;
-  PetscScalar *xp;
- 
-  int receivecount;
-  PetscInt low,high,otherlow;
-  MPI_Status status; 
-  PetscInt count;
-  int tag = 9999;
-  VecGetOwnershipRange(x, &low, &high);
-  VecGetLocalSize(x, &count);
-
-
+   PetscScalar *xp = NULL; //nullptr;
   VecGetArray(x, &xp);
-  for(i=0; i<count; i++)
-    u1[i] = xp[i];
 
-
-  //double *global_buff = new double[m_size];
-
-
-  // Collect solution from processes.
-  for(j=0; j<count; j++)
-    global_buff[low+j] = u1[j];
-  for(i=0;i<mpi_size;i++) 
-  {
-     if(i != rank)
-     {
-
-       MPI_Sendrecv( &count, 1, MPI_INT, i,tag, 
-                     &receivecount,1,MPI_INT,i,tag, PETSC_COMM_WORLD ,&status);
-       MPI_Sendrecv( &low, 1, MPI_INT, i,tag,
-                 &otherlow,1,MPI_INT,i,tag,PETSC_COMM_WORLD,&status );
-       MPI_Sendrecv( u1, count, MPI_DOUBLE, i,tag,
-                     u0,receivecount,MPI_DOUBLE,i,tag, PETSC_COMM_WORLD,&status  );
-       for(j=0;j<receivecount;j++)
-         global_buff[otherlow+j] = u0[j];
-     }
-  }
-
+  gatherLocalVectors(xp, u);
 
   //MPI_Barrier(PETSC_COMM_WORLD);
-  // Copy the collected solution to the array for the previous solution
-  for(i=0;i<m_size;i++)
-  {
-    u1[i] = global_buff[i];
-    u0[i] = global_buff[i];
-  }
  
-
-  //delete [] global_buff;
-
   VecRestoreArray(x, &xp);
-
 
   //TEST
 #ifdef TEST_MEM_PETSC
@@ -400,7 +350,7 @@ void PETScLinearSolver::UpdateSolutions(PetscScalar *u0, PetscScalar *u1)
 
 void PETScLinearSolver::MappingSolution()
 {
-  UpdateSolutions(global_x0, global_x1);
+  UpdateSolutions(global_x);
 }
 
 
@@ -427,7 +377,7 @@ int PETScLinearSolver::GetLocalRHS(PetscScalar *rhs_l)
 
 double *PETScLinearSolver::GetGlobalSolution() const
 {
-  return global_x1;
+  return global_x;
 }
 
 /*!
@@ -555,7 +505,32 @@ void PETScLinearSolver::zeroRows_in_Matrix(const int nrows, const  PetscInt *row
     MatZeroRows(A, 0, PETSC_NULL, one, PETSC_NULL, PETSC_NULL);
 }
 
+void PETScLinearSolver::gatherLocalVectors( PetscScalar local_array[],
+                                       PetscScalar global_array[])
+{
+    // Collect vectors from processors.
+    int size_rank;
+    MPI_Comm_size(PETSC_COMM_WORLD, &size_rank);
 
+    // number of elements to be sent for each rank
+    std::vector<PetscInt>  i_cnt(size_rank);
+    // offset in the receive vector of the data from each rank
+    std::vector<PetscInt>  i_disp(size_rank);
+
+    MPI_Allgather(&m_size_loc, 1, MPI_INT, &i_cnt[0], 1, MPI_INT, PETSC_COMM_WORLD);
+
+    // colloect local array
+    PetscInt offset = 0;
+    for(PetscInt i=0; i<size_rank; i++)
+    {
+        i_disp[i] = offset;
+        offset += i_cnt[i];
+    }
+
+    MPI_Allgatherv(local_array, m_size_loc, MPI_DOUBLE,
+                   global_array, &i_cnt[0], &i_disp[0], MPI_DOUBLE, PETSC_COMM_WORLD);
+
+}
 
 void PETScLinearSolver::EQSV_Viewer(std::string file_name)
 {

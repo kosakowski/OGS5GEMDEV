@@ -486,14 +486,16 @@ using namespace FiniteElement;
 
    03.2012. WW
 */
-void CRFProcess::InitializeRHS_with_u0()
+void CRFProcess::InitializeRHS_with_u0(const bool quad)
 {
   int j, ish;
   vector<int> ix;
   vector<double> val;
   int nidx1; 
 
-  const int  g_nnodes = m_msh->getNumNodesLocal(); //GetNodesNumber(false); 
+  int  g_nnodes = m_msh->getNumNodesLocal(); //GetNodesNumber(false);
+  if(quad)
+      g_nnodes = m_msh->getNumNodesLocal_Q();
   const int size = g_nnodes * pcs_number_of_primary_nvals;
   ix.resize(size);
   val.resize(size);

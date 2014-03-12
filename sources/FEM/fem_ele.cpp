@@ -86,7 +86,7 @@ CElement::CElement(int CoordFlag, const int order)
 		break;
 	}
 	time_unit_factor = 1.0;
-#ifndef NON_PROCESS                         // 04.03.2010 WW
+
 	if(M_Process)
 		D_Flag = 4;
 	if(MH_Process)
@@ -97,7 +97,6 @@ CElement::CElement(int CoordFlag, const int order)
 	PT_Flag = 0;                          // PCH Initialize to be no RWPT.
 	RD_Flag = RD_Process;
 	MCF_Flag = MULTI_COMPONENTIAL_FLOW_Process;
-#endif
 
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
 	idxm = NULL;  //> global indices of local matrix rows 
@@ -267,6 +266,44 @@ void CElement::ConfigElement(CElem* MElement, bool FaceIntegration)
 			Y[i] = coords[1];
 			Z[i] = coords[2];
 		}
+
+
+#if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
+   if(!FaceIntegration)
+   {
+	//int dof_p_node = pcs->pcs_number_of_primary_nvals;
+        //if(pcs->GetContinnumType() == 1)
+	// dof_p_node = 1;
+
+	//int i_buff = 0;
+        if(MeshElement->g_index) // ghost nodes pcs->pcs_number_of_primary_nvals
+	  {
+	    act_nodes = MeshElement->g_index[0];
+	    act_nodes_h = MeshElement->g_index[1];
+
+	    for(i = 0; i < act_nodes_h; i++)
+	      {
+		local_idx[i] = MeshElement->g_index[i+2];
+	      }
+	  }
+	else
+	  {
+	    act_nodes = nnodes;
+	    act_nodes_h = nnodesHQ;
+	    for(i = 0; i < act_nodes_h; i++)
+	      {
+		local_idx[i] = i;
+	      }
+	  }
+
+
+	//i_buff = nn*nn;
+	//for(i = 0; i < i_buff; i++)
+	//  local_matrix[i] = 0.;
+	// If deformation related
+   }
+#endif
+
 }
 
 /**************************************************************************
@@ -413,7 +450,6 @@ double CElement::interpolate(double* nodalVal, const int order) const
 	return val;
 }
 
-#ifndef NON_PROCESS                            // 04.03.2010 WW
 /**************************************************************************
    FEMLib-Method:
    Task:
@@ -438,7 +474,7 @@ double CElement::interpolate(const int idx, CRFProcess* m_pcs, const int order)
 	for(int i = 0; i < nn; i++)
 		val += node_val[i] * inTerpo[i];
 	return val;
-}
+} 
 /**************************************************************************
    FEMLib-Method:
    Task:
@@ -461,7 +497,7 @@ double CElement::elemnt_average (const int idx, CRFProcess* m_pcs, const int ord
 		node_val[i] = m_pcs->GetNodeValue(nodes[i], idx);
 	return val / (double)nn;
 }
-#endif
+
 
 /**************************************************************************
    The generalized Jacobian caculation

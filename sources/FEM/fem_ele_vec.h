@@ -260,6 +260,13 @@ private:
 	// Auxillarary vector
 	Vec* dAcceleration;
 	void ComputeMass();
+
+#if defined(USE_PETSC) // || defined(other parallel libs)//03.3012. WW
+        double *local_matrix;
+        double *local_vec;
+#endif
+
+
 };
 }                                                 // end namespace
 

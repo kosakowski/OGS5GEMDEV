@@ -2724,7 +2724,6 @@ double* TensorDrehDich(double* d, double* velo)
 //
 ///////////////////////////////////////////////////////////////////
 
-#ifndef NON_GEO                                   // 05.03.2010. WW
 /***************************************************************************
    ROCKFLOW - Funktion: MCalcDistancePointToLine
 
@@ -2883,7 +2882,6 @@ double MCalcDistancePointToPlane(double const* const pt,double* e1,double* e2,do
 
 	return volume / (area + MKleinsteZahl);
 }
-#endif                                            //NON_GEO // 05.03.2010. WW
 
 /**************************************************************************/
 /* ROCKFLOW - Funktion: MMin
@@ -3002,7 +3000,6 @@ void MNulleMat(double* mat, long m, long n)
 		mat[i] = 0.0;
 }
 
-#ifndef NON_GEO                                   //   05.03.2010. WW
 #ifndef NEW_EQS                                   //WW. 05.03.2010
 /*##########################################################################
    Funktionen fuer Gleichungsloeser (CG)
@@ -3333,8 +3330,8 @@ int MAddSkalVektoren(double* v1, double m1, double* v2, double m2, double* vout,
 	return 1;
 }
 #endif                                            //   05.03.2010. WW
+
 ////
-//#ifndef NON_GEO //   05.03.2010. WW
 /**************************************************************************
    ROCKFLOW - Funktion: MMultVecVec
    Aufgabe:
@@ -3578,7 +3575,6 @@ int MMultMatMat(double* mat1, long m1, long n1,
 
 	return 1;
 }                                                 /* MMultMatMat */
-#endif                                            //#ifndef NEW_EQS //WW. 05.03.2010
 
 /***************************************************************************
    ROCKFLOW - Funktion: MXPGaussPkt

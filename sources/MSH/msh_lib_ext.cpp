@@ -21,6 +21,9 @@
 //#endif
 #include <sstream>
 
+#ifdef USEPETSC34
+#include "petsctime.h"
+#endif
 
 using namespace std;
 using namespace MeshLib;
@@ -33,11 +36,232 @@ void FEMRead(const string& file_base_name,
              vector<MeshLib::CFEMesh*>& mesh_vec,
              GEOLIB::GEOObjects* geo_obj, string* unique_name)
 {
-  int i;
-  int j;
-  int k;      
-  int msize;
-  int mrank;
+    int msize;
+    int mrank;
+
+    MPI_Comm_size(MPI_COMM_WORLD,&msize);
+    MPI_Comm_rank(MPI_COMM_WORLD,&mrank);
+  
+    PetscLogDouble v1,v2;
+   // #define PETSC34
+   //kg44 quick fix to compile PETSC with version PETSCV3.4
+#ifdef USEPETSC34
+   PetscTime(&v1);
+#else
+   PetscGetTime(&v1);
+#endif
+
+ 
+    // 
+    string s_msize;
+    stringstream ss;
+    ss << msize;
+    ss >> s_msize;
+    ss.clear();
+
+    string fname_new_base;
+    MPI_File fh;
+    int rc = 0;
+    
+    // Always try binary file first
+    fname_new_base = file_base_name+"_partitioned_msh_cfg"+s_msize+".bin";
+
+    rc = MPI_File_open(MPI_COMM_WORLD, &fname_new_base[0], 
+                       MPI_MODE_RDONLY, MPI_INFO_NULL, &fh);
+    if (rc ) 
+    {
+	   
+      if(mrank == 0)
+        printf("-->Reading ASCII mesh file ...");
+       
+      FEMRead_ASCII(msize, mrank, file_base_name,  mesh_vec, geo_obj,  unique_name);
+     // return;
+
+    }
+	else
+	{
+       MPI_File_close(&fh);
+       if(mrank == 0)
+           printf("-->Reading binary mesh file ...");
+
+       FEMRead_BIN(msize, mrank, file_base_name,  mesh_vec, geo_obj,  unique_name);
+	}
+
+   // #define PETSC34
+   //kg44 quick fix to compile PETSC with version PETSCV3.4
+#ifdef USEPETSC34
+   PetscTime(&v2);
+#else
+   PetscGetTime(&v2);
+#endif
+
+    if(mrank == 0)
+       printf("\t\n>>Total elapsed time in reading mesh:%f s\n",v2-v1);
+  
+    MPI_Barrier (MPI_COMM_WORLD);
+
+    //PetscFinalize();
+    //exit(0);
+
+}
+
+void FEMRead_BIN(const int msize, const int mrank, 
+             const string& file_base_name,
+             vector<MeshLib::CFEMesh*>& mesh_vec,
+             GEOLIB::GEOObjects* geo_obj, string* unique_name)
+{
+
+
+  //0 long size_sbd_nodes = 0;
+  //1 long size_sbd_nodes_l = 0;
+  //2 ong size_sbd_nodes_h = 0;
+  //3 long size_sbd_elems = 0;
+  //4 long size_g_elems = 0;
+  const int nheaders = 13;
+  long mesh_header[ nheaders];
+ 
+  MeshNodes *s_nodes = 0;  
+  long *elem_info = 0;
+
+  // 
+  string s_msize;
+  stringstream ss;
+  ss << msize;
+  ss >> s_msize;
+  ss.clear();
+
+  MPI_File fh;
+  string ftype = "native";
+  int rc = 0;
+  MPI_Offset offset_new;
+
+
+  CFEMesh *mesh = new CFEMesh(geo_obj, unique_name);
+  mesh_vec.push_back(mesh);
+
+  //--------------------------------------------------------------------------
+  // Header
+  string fname_new_base = file_base_name+"_partitioned_msh_cfg"+s_msize+".bin";
+  rc = MPI_File_open(MPI_COMM_WORLD, &fname_new_base[0], MPI_MODE_RDONLY, 
+       MPI_INFO_NULL, &fh);
+  if (rc ) 
+  {
+	   
+      MPI_Finalize();
+      if(mrank == 0 )
+         printf("! File %s does not exist.", &fname_new_base[0]);
+      exit(0);
+  }   
+
+  //
+  offset_new = 0;
+  offset_new = mrank * nheaders * sizeof(long);
+  MPI_File_set_view(fh, offset_new, MPI_LONG, MPI_LONG,  &ftype[0], MPI_INFO_NULL);
+  MPI_File_read(fh, mesh_header, nheaders, MPI_LONG, MPI_STATUS_IGNORE); //_all
+  MPI_File_close(&fh);
+
+
+  //--------------------------------------------------------------------------
+  //Node
+  MPI_Datatype MPI_node; 
+  fname_new_base = file_base_name+"_partitioned_msh_nod"+s_msize+".bin";
+  rc = MPI_File_open(MPI_COMM_WORLD, &fname_new_base[0], MPI_MODE_RDONLY, 
+       MPI_INFO_NULL, &fh);
+  if (rc ) 
+  {
+	   
+      MPI_Finalize();
+      if(mrank == 0 )
+         printf("! File %s does not exist.", &fname_new_base[0]);
+      exit(0);
+  }   
+
+  s_nodes = (MeshNodes *)realloc(s_nodes, sizeof(MeshNodes) * mesh_header[0]);
+  BuildNodeStruc(s_nodes, &MPI_node);       
+
+  offset_new =  mesh_header[10];
+  MPI_File_set_view(fh, offset_new, MPI_node, MPI_node,  &ftype[0], MPI_INFO_NULL);
+  MPI_File_read(fh, s_nodes, mesh_header[0], MPI_node, MPI_STATUS_IGNORE); 
+  MPI_File_close(&fh);
+  
+  mesh->setSubdomainNodes(mesh_header, s_nodes); 
+  free(s_nodes);
+  s_nodes = NULL;
+  MPI_Type_free(&MPI_node);
+
+  //--------------------------------------------------------------------------
+  //Element
+  fname_new_base = file_base_name+"_partitioned_msh_ele"+s_msize+".bin";
+  rc = MPI_File_open(MPI_COMM_WORLD, &fname_new_base[0], MPI_MODE_RDONLY, 
+       MPI_INFO_NULL, &fh);
+  if (rc ) 
+  {
+	   
+      MPI_Finalize();
+      if(mrank == 0 )
+         printf("! File %s does not exist.", &fname_new_base[0]);
+      exit(0);
+  }   
+
+
+  long size_elem_info =   mesh_header[2] + mesh_header[8];
+  elem_info = (long *)realloc(elem_info, sizeof(long) * size_elem_info );
+  offset_new =  mesh_header[11];
+  MPI_File_set_view(fh, offset_new, MPI_LONG, MPI_LONG,  &ftype[0], MPI_INFO_NULL);
+  MPI_File_read(fh, elem_info, size_elem_info, MPI_LONG, MPI_STATUS_IGNORE); 
+  MPI_File_close(&fh);
+
+  mesh->setSubdomainElements(mesh_header, elem_info, true);   
+
+  free(elem_info);
+  elem_info = NULL;
+
+
+  //--------------------------------------------------------------------------
+  //Ghost element 
+  fname_new_base = file_base_name+"_partitioned_msh_ele_g"+s_msize+".bin";
+  rc = MPI_File_open(MPI_COMM_WORLD, &fname_new_base[0], MPI_MODE_RDONLY, 
+       MPI_INFO_NULL, &fh);
+  if (rc ) 
+  {
+	   
+      MPI_Finalize();
+      if(mrank == 0 )
+         printf("! File %s does not exist.", &fname_new_base[0]);
+      exit(0);
+  }   
+
+
+  size_elem_info =   mesh_header[3] + mesh_header[9];
+  elem_info = (long *)realloc(elem_info, sizeof(long) * size_elem_info );
+  offset_new =  mesh_header[12];
+  MPI_File_set_view(fh, offset_new, MPI_LONG, MPI_LONG,  &ftype[0], MPI_INFO_NULL);
+  MPI_File_read(fh, elem_info, size_elem_info, MPI_LONG, MPI_STATUS_IGNORE); 
+  MPI_File_close(&fh);
+
+  mesh->setSubdomainElements(mesh_header, elem_info, false);   
+
+  free(elem_info);
+  elem_info = NULL;
+
+
+  //MPI_Barrier (MPI_COMM_WORLD);
+  mesh->ConstructGrid();
+  mesh->FillTransformMatrix(); 
+  //mesh->calMaximumConnectedNodes();
+
+
+}
+
+void FEMRead_ASCII(const int msize, const int mrank, 
+             const string& file_base_name,
+             vector<MeshLib::CFEMesh*>& mesh_vec,
+             GEOLIB::GEOObjects* geo_obj, string* unique_name)
+{
+  //long i;
+  // long j;
+  // long k;      
+
 
   //0 long size_sbd_nodes = 0;
   //1 long size_sbd_nodes_l = 0;
@@ -45,10 +269,10 @@ void FEMRead(const string& file_base_name,
   //3 long size_sbd_elems = 0;
   //4 long size_g_elems = 0;
   const int nheaders = 10;
-  int mesh_header[ nheaders];
+  long mesh_header[ nheaders];
  
   MeshNodes *s_nodes = (MeshNodes *)malloc(sizeof(MeshNodes));  
-  int *elem_info = (int *)malloc(1);
+  long *elem_info = (long *)malloc(1);
 
 
   string str_var = "";
@@ -59,9 +283,6 @@ void FEMRead(const string& file_base_name,
   //MPI_Request send_request, recv_request;
   MPI_Status status;  
 
-  MPI_Comm_size(MPI_COMM_WORLD,&msize);
-  MPI_Comm_rank(MPI_COMM_WORLD,&mrank);
- 
 
   ifstream is;
 #ifdef MULTI_MESH_FILE 
@@ -91,7 +312,7 @@ void FEMRead(const string& file_base_name,
   mesh_vec.push_back(mesh);
 
 
-  for(i=0; i<msize; i++)
+  for(int i=0; i<msize; i++)
   {
     if(mrank == 0)
     {
@@ -108,11 +329,11 @@ void FEMRead(const string& file_base_name,
 
       cout<<"-->Parallel reading the partitioned mesh: "<<i<<endl;
      
-      for(j=0; j< nheaders; j++)                   
+      for(int j=0; j< nheaders; j++)                   
          is>>mesh_header[j];
        is>>ws;
     }
-    MPI_Bcast(mesh_header,  nheaders, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(mesh_header,  nheaders, MPI_LONG, 0, MPI_COMM_WORLD);
     //cout<<"\ncccccccccc "<<mesh_header[0]<<"    "<<mesh_header[1]
     //	<<"   " <<mesh_header[2]<<"  "<<mesh_header[3]<<endl;
  
@@ -127,7 +348,7 @@ void FEMRead(const string& file_base_name,
     if(mrank == 0)
     {
        // Nodes
-       for(k=0; k<mesh_header[0]; k++)
+       for(long k=0; k<mesh_header[0]; k++)
        {
           MeshNodes *anode = &s_nodes[k];
           is>>anode->index;
@@ -183,12 +404,12 @@ void FEMRead(const string& file_base_name,
 
     //-------------------------------------------------------------------------
     // Element
-    const int size_elem_info = mesh_header[2] + mesh_header[8];
-    elem_info = (int *)realloc(elem_info, sizeof(int) * size_elem_info );
+    const long size_elem_info = mesh_header[2] + mesh_header[8];
+    elem_info = (long *)realloc(elem_info, sizeof(long) * size_elem_info );
     if(mrank == 0)
     {
-       int counter = mesh_header[2];
-       for(j=0; j<mesh_header[2]; j++)
+       long counter = mesh_header[2];
+       for(long j=0; j<mesh_header[2]; j++)
        {
            elem_info[j] = counter;
            is>> elem_info[counter];  //mat. idx
@@ -198,7 +419,7 @@ void FEMRead(const string& file_base_name,
            is>> elem_info[counter];  //nnodes
            const int nn_e =  elem_info[counter]; 
            counter++;
-           for(k=0; k<nn_e; k++)
+           for(int k=0; k<nn_e; k++)
            {
               is>> elem_info[counter];
               counter++; 
@@ -212,7 +433,7 @@ void FEMRead(const string& file_base_name,
 	 }     
        else
        {
-          MPI_Send(elem_info, size_elem_info, MPI_INT, i, tag[1], MPI_COMM_WORLD);  
+          MPI_Send(elem_info, size_elem_info, MPI_LONG, i, tag[1], MPI_COMM_WORLD);  
        }      
  
     }    
@@ -220,7 +441,7 @@ void FEMRead(const string& file_base_name,
     {
       if(mrank == i)  
       {
-         MPI_Recv(elem_info, size_elem_info, MPI_INT, 0, tag[1], MPI_COMM_WORLD, &status); 
+         MPI_Recv(elem_info, size_elem_info, MPI_LONG, 0, tag[1], MPI_COMM_WORLD, &status); 
 	 mesh->setSubdomainElements(mesh_header, elem_info, true);         
       }
     }  
@@ -233,12 +454,12 @@ void FEMRead(const string& file_base_name,
    
     //-------------------------------------------------------------------------
     // Ghost element
-    const int size_elem_g_info = mesh_header[3] + mesh_header[9];
-    elem_info = (int *)realloc(elem_info, sizeof(int) * size_elem_g_info );
+    const long size_elem_g_info = mesh_header[3] + mesh_header[9];
+    elem_info = (long *)realloc(elem_info, sizeof(long) * size_elem_g_info );
     if(mrank == 0)
     {
-       int counter = mesh_header[3];
-       for(j=0; j<mesh_header[3]; j++)
+       long counter = mesh_header[3];
+       for(long j=0; j<mesh_header[3]; j++)
        {
            elem_info[j] = counter;
            is>> elem_info[counter];  //mat. idx
@@ -248,18 +469,19 @@ void FEMRead(const string& file_base_name,
            is>> elem_info[counter];  //nnodes
            const int nn_e =  elem_info[counter]; 
            counter++;
-           for(k=0; k<nn_e; k++)
+           for(int k=0; k<nn_e; k++)
            {
               is>> elem_info[counter];
               counter++; 
            }
            is>> elem_info[counter];
-           const int nn_e_g =  elem_info[counter]; 
+	   //           const int nn_e_g =  elem_info[counter]; 
            counter++;
 	   // ghost nodes for linear element
            is>> elem_info[counter];
+           const int nn_e_g =  elem_info[counter]; 
            counter++;
-           for(k=0; k<nn_e_g; k++)
+           for(int k=0; k<nn_e_g; k++)
            {
               is>> elem_info[counter];
               counter++; 
@@ -273,7 +495,7 @@ void FEMRead(const string& file_base_name,
        }      
        else
        {
-	  MPI_Send(elem_info, size_elem_g_info, MPI_INT, i, tag[2], MPI_COMM_WORLD);  
+	  MPI_Send(elem_info, size_elem_g_info, MPI_LONG, i, tag[2], MPI_COMM_WORLD);  
        }      
  
     }    
@@ -281,7 +503,7 @@ void FEMRead(const string& file_base_name,
     {
       if(mrank == i)  
       {
-          MPI_Recv(elem_info, size_elem_g_info, MPI_INT, 0, tag[2], MPI_COMM_WORLD, &status); 
+          MPI_Recv(elem_info, size_elem_g_info, MPI_LONG, 0, tag[2], MPI_COMM_WORLD, &status); 
 	  mesh->setSubdomainElements(mesh_header, elem_info, false);         
       }
     }
@@ -329,7 +551,7 @@ namespace MeshLib
     
    WW. 02~03.2012
 */
-void CFEMesh::setSubdomainNodes(int *header, const MeshNodes *s_nodes)
+void CFEMesh::setSubdomainNodes(long *header, const MeshNodes *s_nodes)
 {
   int k;
 
@@ -348,7 +570,6 @@ void CFEMesh::setSubdomainNodes(int *header, const MeshNodes *s_nodes)
 
      new_node->SetEquationIndex(anode->index);
 
-
      nod_vector.push_back(new_node);    
 
   }
@@ -362,16 +583,16 @@ void CFEMesh::setSubdomainNodes(int *header, const MeshNodes *s_nodes)
    @param inside :    indicator for inside domain   
    WW. 02~03.2012
 */
-void CFEMesh::setSubdomainElements(int *header, const int *elem_info, const bool inside )
+void CFEMesh::setSubdomainElements(long *header, const long *elem_info, const bool inside )
 {
-  int i; 
-  int k;
-  int counter;
+  long i; 
+  long k;
+  long counter;
   int mat_idx;
   int e_type;
   int nnodes;
 
-  int ne = 0;
+  long ne = 0;
   if(inside)
     ne = header[2];
   else
@@ -505,19 +726,28 @@ void CFEMesh::ConfigHighOrderElements()
 
   int egde_line[] = {2};
   int egde_tri[] = {3, 4, 5};
-  int egde_quad[] = {4, 5, 6};
+  int egde_quad[] = {4, 5, 6, 7};
   int egde_tet[] = {4, 5, 6, 7, 8, 9};
   int egde_hex[] = {8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
   int egde_pri[] = {6, 7, 8, 9, 10, 11, 12, 13, 14};
 
   int *middle_node = NULL; 
 
-  
+
+  //TEST
+  //int myrank;
+  //MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
+
+  /*
   for(i=0; i<edge_vector.size(); i++ )
   {
     edge_vector[i]->SetMark(false);
   }
-  for(i=0; i<ele_vector.size(); i++ )
+  */
+
+  const size_t e_size = ele_vector.size();
+
+  for(i=0; i<e_size; i++ )
   {  
      
      elem = ele_vector[i];
@@ -553,21 +783,55 @@ void CFEMesh::ConfigHighOrderElements()
 	  break;
 	}
 
-
+     
      //Edges
      for(kk=0; kk<elem->nedges; kk++)
      {
         edge =  elem->edges[kk];
       
-        if(edge->GetMark())
-          continue;
+	//  if(edge->GetMark())
+        //  continue;
 
-        edge->SetNode(kk, elem->nodes[middle_node[kk]]);
-        
-        edge->SetMark(true);
+
+        edge->SetNode(2, elem->nodes[middle_node[kk]]);
+
+	//TEST
+	//if(myrank == 0)
+        //   edge->Write();
+	//        edge->SetMark(true);
      }
-
+     
   }
+  /*
+  for(i=0; i<edge_vector.size(); i++ )
+  {
+    edge_vector[i]->SetMark(false);
+  }
+  */
+
+  CNode *node = NULL;
+  for (size_t e = 0; e < e_size; e++)
+  {
+     elem  = ele_vector[e];
+     for (int i = elem->nnodes; i < elem->nnodesHQ; i++)
+     {
+         bool done = false;
+         node = elem->GetNode(i);
+         for (int k = 0; k < (int) node->getConnectedElementIDs().size(); k++)
+         if (e == node->getConnectedElementIDs()[k])
+         {
+             done = true;
+             break;
+         }
+         if (!done)
+           node->getConnectedElementIDs().push_back(e);
+     }
+  }
+
+  // For sparse matrix
+  ConnectedNodes(true);
+  ConnectedElements2Node(true);
+
 }
 //
 int CFEMesh::calMaximumConnectedNodes()
@@ -631,7 +895,7 @@ void BuildNodeStruc(MeshNodes *anode, MPI_Datatype *MPI_Node_ptr)
    MPI_Aint disp[4], base;
    int j;
 
-   my_comp_type[0] = MPI_INT;
+   my_comp_type[0] = MPI_LONG;
    my_comp_type[1] = MPI_DOUBLE;
    my_comp_type[2] = MPI_DOUBLE;
    my_comp_type[3] = MPI_DOUBLE;

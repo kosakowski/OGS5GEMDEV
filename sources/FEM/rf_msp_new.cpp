@@ -276,6 +276,12 @@ std::ios::pos_type CSolidProperties::Read(std::ifstream* msp_file)
 					in_sd.clear();
 				}
 				break;
+			case 5:       // DECOVALEX2015, Task B2, Buffer: f(S,T) by matrix function 
+				in_sd >> T_0;
+				in_sd.clear();
+				conductivity_pcs_name_vector.push_back("TEMPERATURE1");
+ 				conductivity_pcs_name_vector.push_back("SATURATION1");
+				break; 
 			}
 			in_sd.clear();
 		}
@@ -570,6 +576,9 @@ std::ios::pos_type CSolidProperties::Read(std::ifstream* msp_file)
 			case 2: //pow(Se, parameter)
 				in_sd >> bishop_model_value;
 				break;
+			case 3:              // JM model 3:    if p<bishop_model_value -> bishop_parameter=0.0;  else -> bishop_parameter=1.0  
+				in_sd >> bishop_model_value;                       
+				break;              
 			default:
 				break;
 			}
@@ -876,6 +885,7 @@ CSolidProperties::CSolidProperties()
 	Youngs_mode = -1;
 	Capacity_mode = -1;
 	Conductivity_mode = -1;
+	T_0 = 0.0; 
 	Creep_mode = -1;
 	grav_const = 9.81;                    //WW
 	excavation = -1;                      //12.2009. WW
@@ -1320,6 +1330,7 @@ double CSolidProperties::Enthalpy(double temperature, const double latent_factor
 double CSolidProperties::Heat_Conductivity(double refence)
 {
 	double val = 0.0;
+	int gueltig;
 	switch(Conductivity_mode)
 	{
 	case 0:
@@ -1350,6 +1361,10 @@ double CSolidProperties::Heat_Conductivity(double refence)
 	case 4:                               //21.12.2009. WW
 		val = CalulateValue(data_Conductivity, refence);
 		break;
+	case 5:                               // DECOVALEX2015, TaskB2 JM            
+		CalPrimaryVariable(capacity_pcs_name_vector);
+		val = GetMatrixValue(primary_variable[0]+T_0,primary_variable[1],name,&gueltig);
+		break; 
 	}
 	return val;
 }
@@ -1383,6 +1398,7 @@ void CSolidProperties::HeatConductivityTensor(const int dim, double* tensor, int
 	//--------------------------------------------------------------------
 	//There are a number of cases where the heat conductivity tensor is defined by the capacity model;
 	double base_thermal_conductivity = .0;
+	int gueltig=1; 
 	switch (Conductivity_mode)
 	{
 	case 0:
@@ -1401,6 +1417,9 @@ void CSolidProperties::HeatConductivityTensor(const int dim, double* tensor, int
 		saturation = primary_variable[1];
 		base_thermal_conductivity = Heat_Conductivity(saturation);
 		break;
+	case 5:                      
+		base_thermal_conductivity = GetMatrixValue(primary_variable[1],primary_variable[0]+T_0,name,&gueltig);  
+		break;  
 	default:                              //Normal case
 		cout <<
 		"***Error in CSolidProperties::HeatConductivityTensor(): conductivity mode is not supported "

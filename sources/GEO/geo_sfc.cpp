@@ -1115,6 +1115,7 @@ std::ios::pos_type Surface::Read(std::ifstream* gli_file)
 				position = gli_file->tellg();
 				gli_file->getline(line, MAX_ZEILEN);
 				line_string = line;
+                type = 0;
 				remove_white_space(&line_string);
 				if (line_string.find("#") != string::npos)
 					return position;
