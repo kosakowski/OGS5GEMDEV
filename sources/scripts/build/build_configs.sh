@@ -76,6 +76,10 @@ do
 		cmake_args="-DCMAKE_C_COMPILER=/opt/openmpi-1.4.1/bin/mpicc -DCMAKE_CXX_COMPILER=/opt/openmpi-1.4.1/bin/mpic++ -DMPI_INCLUDE_PATH=/opt/openmpi-1.4.1/include -DOGS_BUILD_TESTS=ON"
 	fi
 
+	if [ "$HOSTNAME" = "dev2.intern.ufz.de" ] ; then
+		cmake_args="$cmake_args -DBoost_USE_STATIC_LIBS=OFF"
+	fi
+
 	# Cleanup
 	rm -rf $build_dir
 

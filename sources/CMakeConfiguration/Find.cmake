@@ -142,15 +142,20 @@ MARK_AS_ADVANCED(CMAKE_THREAD_PREFER_PTHREAD)
 
 ## boost (see FindBoost.cmake for more options) ##
 ##kg44 this configuration works for boost and petsc on a cray
-set(Boost_USE_STATIC_LIBS    OFF)
-set(Boost_USE_MULTITHREADED  ON)
-set(Boost_USE_STATIC_RUNTIME ON)
+OPTION(Boost_USE_STATIC_LIBS "" ON)
+OPTION(Boost_USE_MULTITHREADED "" ON)
+OPTION(Boost_USE_STATIC_RUNTIME "" ON)
+MARK_AS_ADVANCED(Boost_USE_STATIC_LIBS Boost_USE_MULTITHREADED Boost_USE_STATIC_RUNTIME)
 
 IF(NOT OGS_FEM_GEMS)
 	FIND_PACKAGE( Boost 1.50.0 COMPONENTS filesystem system regex)
 ELSE()
 	# Boost with threads is required for GEMS
-	FIND_PACKAGE( Boost 1.50.0 COMPONENTS filesystem system regex thread )
+	FIND_PACKAGE(Boost 1.50.0 COMPONENTS system thread REQUIRED)
+        MESSAGE(STATUS "** Boost root: ${BOOST_ROOT}")
+        MESSAGE(STATUS "** Boost include: ${Boost_INCLUDE_DIR}")
+        MESSAGE(STATUS "** Boost libraries: ${Boost_LIBRARY_DIRS}")
+        MESSAGE(STATUS "** Boost libraries: ${Boost_LIBRARIES}")
 ENDIF()
 
 ## VTK ##
