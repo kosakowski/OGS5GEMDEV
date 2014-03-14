@@ -896,7 +896,8 @@ short REACT_GEM::GetInitialReactInfoFromMassTransport ( int timelevel )
 
         double *m_bIC_buff;
   	m_bIC_buff = new double [nNodes * nIC];  //we only need this here!
-
+// There was some trouble with the shadow nodes, as they do not have any values before calculations start
+//...therefore we manually fill a global vector for all domains and then extract the values for the shadow nodes from this vector
 // arrays are filled, now we should synchronize the values
 	SynchronizeData(m_P); //this also overwrites default values for shadow nodes!
 	SynchronizeData(m_T); //this also overwrites default values for shadow nodes!
