@@ -2895,10 +2895,11 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
         {
             in.str ( GetLineFromFile1 ( gem_file ) );
             in >> d_kin.phase_name >> d_kin.kinetic_model;
-            if ( d_kin.kinetic_model >= 1 && d_kin.kinetic_model < 7 )
+            if ( d_kin.kinetic_model >= 1 && d_kin.kinetic_model < 8 ) // this is lasaga kinetics with formulas according to plandri
             {
                 cout << " found kinetics " << d_kin.kinetic_model << " " <<
                      d_kin.phase_name << "\n";
+		          
                 in >> d_kin.n_activities;
                 if ( d_kin.n_activities > 10 )
                 {
@@ -2940,7 +2941,18 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
                                                 13] >>
                        d_kin.kinetic_parameters[j + 14];
                 }
-            }
+            } // end input for kinetic models  
+            else if (d_kin.kinetic_model == 33)
+	    {		              
+// for kinetic model = 33 (cement hydration according to Parrot & Killoh and as described in Lothenbach & Winnefeld (2006) Thermodynamic modelling of the hydration fo Portland cement, Cement and concrete Research, 36,209-226
+// we need a different set of input parameters: alpha_initial,K1,N1,K2,K3,N3,W/C, inital amount (should be, but must not be the same as component constraint) H
+// alpha_initial is the initial degree of hydration!...will be changed during course of the simulation!
+	      // H is here the surface area...W/C (mass of water)/(mass of cement) could be be calculated from initial setup, by fixing amounts for alite, belite, aluminate and ferrite phases, but better to give it directly!    
+                for ( j = 0; j < 8; j++ )  // read parameters for j=0 to j=7
+                {
+		  in >> d_kin.kinetic_parameters[j];
+		}
+	    }
             in.clear();
             // next line is surface area
             in.str ( GetLineFromFile1 ( gem_file ) );
@@ -2951,21 +2963,27 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
                 in >> d_kin.surface_area[0]; // surface: m*m / mol
                 cout << "surface area " << d_kin.surface_area[0] << "\n";
             }
-            else if ( d_kin.kinetic_model == 4 ) // model 4 is kinetic a la crunch
+            else if ( d_kin.surface_model == 4 ) // model 4 is kinetic a la crunch 
             {
                 in >> d_kin.surface_area[0]; // surface: m*m / mol
                 cout << "mimic crunch: surface area " << d_kin.surface_area[0] <<
                      "\n";
             }
-            else if ( d_kin.kinetic_model == 6 ) // model 6 is kinetic for spherical grains
+            else if ( d_kin.surface_model == 6 ) // model 6 is kinetic for spherical grains
             {
                 in >> d_kin.surface_area[0]; // surface: m*m / mol
                 cout << "const specific surface area for spherical particles" << d_kin.surface_area[0] <<
                      "\n";
             }
+            else if ( d_kin.surface_model == 33 ) // model 33 is kinetic for cement hydration
+            {
+                in >> d_kin.surface_area[0]; // surface: m*m / mol
+                cout << "surface area for cement hydration" << d_kin.surface_area[0] <<
+                     "\n";
+            }
             in.clear();
             
-            if ( d_kin.kinetic_model == 5 ) // model 5 is for solid solutions, needed parameters are the number of endmembers and the surface area for each endmember
+            if ( ( d_kin.kinetic_model == 5 ) || ( d_kin.kinetic_model == 7 )) // model 5/7 is for solid solutions, needed parameters are the number of endmembers and the surface area for each endmember
             {
                 // next line are SS parameters
                 in.str ( GetLineFromFile1 ( gem_file ) );
@@ -3059,16 +3077,20 @@ int REACT_GEM::CalcReactionRate ( long in, double temp,  TNode* m_Node )
 	{
 		k = m_kin[ii].phase_number;
 
-		if ( m_kin[ii].kinetic_model > 0 )  // do it only if kinetic model is defined take model
+		if ( (m_kin[ii].kinetic_model > 0 )&&( m_kin[ii].kinetic_model != 33) ) // do it only if kinetic model is defined take model
 		// kinetic_model==1 dissolution+precipitation kinetics
 		// kinetic_model==2 only dissolution (no precipitation)aktueller
 		// kinetic_mocel==3 only precipitation (no dissolution)
+		// kinetic_model==4 mimic kinetics in crunchflow -----ATTENTION: model implementation needs to be verified!!!!!!!!!!!  
+		// kinetic_model==5 dissolution+precipitation for solid solutions
+		// kinetic_model==6 scale surface area according to spherical particles -----ATTENTION: model implementation needs to be verified !!!!!!!!!!!!!!! 
+		// kinetic_model==7 dissolution only for solid solutions
 		{
 			mol_phase[in * nPH + k] = 0.0;
 			omega_phase[in * nPH + k] = 0.0;
 			dmdt[in * nPH + k] = 0.0;
 
-			if ( m_kin[ii].kinetic_model == 5 ) // special treatment of solid solution phases with e.g. vanselow convention
+			if ( m_kin[ii].kinetic_model == 5 || m_kin[ii].kinetic_model == 7) // special treatment of solid solution phases with e.g. vanselow convention
 			{
 				for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )
 					// do not include surface complexation species!
@@ -3272,6 +3294,7 @@ int REACT_GEM::CalcLimitsInitial ( long in, TNode* m_Node)
 	dBR = m_Node->pCNode();
 	if ( !dBR )
 		return 0;
+// ok here, for the very first beginning....
 	for ( j = 0; j < nDC; j++ )
 	{
 		m_dll[in * nDC + j] = 0.0;          // set to zero
@@ -3349,108 +3372,133 @@ int REACT_GEM::CalcLimitsInitial ( long in, TNode* m_Node)
  */
 int REACT_GEM::CalcLimits ( long in, TNode* m_Node)
 {
-	double dummy;
-	long ii,k,j;
-	DATACH* dCH;                            //pointer to DATACH
-	DATABR* dBR;
-	// Getting direct access to DataCH structure in GEMIPM2K memory
-	dCH = m_Node->pCSD();
-	if ( !dCH )
-		return 0;
+    double dummy, alpha_t;  // dummy value and degree of hydration for cementhydration kinetics
+    long ii,k,j;
+    DATACH* dCH;                            //pointer to DATACH
+    DATABR* dBR;
+    // Getting direct access to DataCH structure in GEMIPM2K memory
+    dCH = m_Node->pCSD();
+    if ( !dCH )
+        return 0;
 
-	// Getting direct access to work node DATABR structure which
-	// exchanges data between GEMIPM and FMT parts
-	dBR = m_Node->pCNode();
-	if ( !dBR )
-		return 0;
-	for ( j = 0; j < nDC; j++ )
-	{
-		m_dll[in * nDC + j] = 0.0;          // set to zero
-		m_dul[in * nDC + j] = 1.0e+10;       // very high number
-	}
+    // Getting direct access to work node DATABR structure which
+    // exchanges data between GEMIPM and FMT parts
+    dBR = m_Node->pCNode();
+    if ( !dBR )
+        return 0;
+    
+    // I removed the following block, as we need old limits eventually for kinetic models..e.g. cementhydration kinetics
+//    for ( j = 0; j < nDC; j++ )
+//    {
+//        m_dll[in * nDC + j] = 0.0;          // set to zero
+//        m_dul[in * nDC + j] = 1.0e+10;       // very high number
+//    }
+    
+    // kinetic_model==1 dissolution+precipitation kinetics
+    // kinetic_model==2 only dissolution (no precipitation)aktueller
+    // kinetic_mocel==3 only precipitation (no dissolution)
+    // kinetic_model==4 mimic kinetics in crunchflow -----ATTENTION: model implementation needs to be verified!!!!!!!!!!!
+    // kinetic_model==5 dissolution+precipitation for solid solutions
+    // kinetic_model==6 scale surface area according to spherical particles -----ATTENTION: model implementation needs to be verified !!!!!!!!!!!!!!!
+    // kinetic_model==7 dissolution only for solid solutions
+    // kinetic_model==33 cement hydration kinetics
+    for ( ii = 0; ii < ( int ) m_kin.size(); ii++ )
+    {
+        k = m_kin[ii].phase_number;
+        // cout << " kinetics phase " << ii << " "  << m_kin[ii].kinetic_model << "\n";
+        if ( m_kin[ii].kinetic_model == 33 || (m_kin[ii].kinetic_model > 0 && m_kin[ii].kinetic_model < 8) ) // do it only if kinetic model is defined take model
 
-	for ( ii = 0; ii < ( int ) m_kin.size(); ii++ )
-	{
-		k = m_kin[ii].phase_number;
-		// cout << " kinetics phase " << ii << " "  << m_kin[ii].kinetic_model << "\n";
-		if ( m_kin[ii].kinetic_model > 0 && m_kin[ii].kinetic_model < 7 ) // do it only if kinetic model is defined take model
 
-			// kinetic_model==1 dissolution+precipitation kinetics
-			// kinetic_model==2 only dissolution (no precipitation)
-			// kinetic_mocel==3 only precipitation (no dissolution)
-			for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k];
-			      j++ )
+            for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )
+            {
+                //     cout << "Kin debug " << in << " mol amount species " << m_xDC[in*nDC+j] << " saturation phase " << omega_phase[in*nPH+k] << " saturation species" << omega_components[in*nDC+j] << " mol fraction now" << (m_xDC[in*nDC+j]/mol_phase[in*nPH+k] )<< "\n";
+                // surface complexation species are not kinetically controlled -- 0 is old way...X is new way in DCH files
+                if ( ( dCH->ccDC[j]  == '0' ) || ( dCH->ccDC[j]  == 'X' ) || ( dCH->ccDC[j]  == 'Y' ) || ( dCH->ccDC[j]  == 'Z' ) )
+                {
+                    m_dll[in * nDC + j] = 0.0; // set to zero
+                    m_dul[in * nDC + j] = 1.0e+10; // very high number
+                }
+                else
+                {
+                    //  cout << m_kin[ii].kinetic_model << "\n";
+                    if ( (m_kin[ii].kinetic_model == 33) ) // cement hydration kinetics
+                    {
+                        alpha_t=0.0; //default value
+                        dummy=m_dll[in * nDC + j];
+                        if ( dummy > 0.0 ) // cementhydration should be done only if something of the original phase exists
 			{
-				//     cout << "Kin debug " << in << " mol amount species " << m_xDC[in*nDC+j] << " saturation phase " << omega_phase[in*nPH+k] << " saturation species" << omega_components[in*nDC+j] << " mol fraction now" << (m_xDC[in*nDC+j]/mol_phase[in*nPH+k] )<< "\n";
-				// surface complexation species are not kinetically controlled -- 0 is old way...X is new way in DCH files
-				if ( ( dCH->ccDC[j]  == '0' ) || ( dCH->ccDC[j]  == 'X' ) ||
-				     ( dCH->ccDC[j]  == 'Y' ) || ( dCH->ccDC[j]  == 'Z' ) )
-				{
-					m_dll[in * nDC + j] = 0.0; // set to zero
-					m_dul[in * nDC + j] = 1.0e+10; // very high number
-				}
-				else
-				{
-					// if (in == 281)  cout << "Kin debug SS mol phase " << mol_phase[in*nPH+k] << " dmdt " << dmdt[in*nPH+k]*dt << " omega comp " <<omega_components[in*nDC+j] <<" omega phase " << omega_phase[in*nPH+k]<< "\n";
-					dummy =( mol_phase[in * nPH + k] + dmdt[in * nPH + k] * dt ) * omega_components[in * nDC + j] / omega_phase[in * nPH + k];
+                            // calculate old value from old lower limit
+			    dummy=m_kin[ii].kinetic_parameters[7];
+                            dummy = 1.0 - m_dll[in * nDC + j] / m_kin[ii].kinetic_parameters[7] ; //zero is no hydration (initial)...1 is completely hydrated!
+                            // get new value
+                            alpha_t = CementHydrationKinetics(dummy, ii, dt);
+                         // if (in == 200) cout << "CementHydrationKinetics: old" << dummy << " new " << alpha_t <<"\n";
+                        }
+                        m_dll[in * nDC + j] = m_kin[ii].kinetic_parameters[7] * (1.0 - alpha_t);
+                        m_dul[in * nDC + j] = m_xDC[in * nDC + j];
+                    }
+                    else  //default kinetics
+                    {
+                        // if (in == 281)  cout << "Kin debug SS mol phase " << mol_phase[in*nPH+k] << " dmdt " << dmdt[in*nPH+k]*dt << " omega comp " <<omega_components[in*nDC+j] <<" omega phase " << omega_phase[in*nPH+k]<< "\n";
+                        dummy =( mol_phase[in * nPH + k] + dmdt[in * nPH + k] * dt ) * omega_components[in * nDC + j] / omega_phase[in * nPH + k];
+                        if ( (m_kin[ii].kinetic_model == 5) ||  (m_kin[ii].kinetic_model == 7)) // only for Solid solution models: rescale to change of endmember in case of Vanselow convenction or similar
+                            dummy /= m_kin[ii].ss_scaling[j -m_kin[ii].dc_counter];
+                        if (dummy > 1.0e10)
+                            dummy = 1.0e10;
 
-					if ( m_kin[ii].kinetic_model == 5 ) // only for Solid solution models: rescale to change of endmember in case of Vanselow convenction or similar
-					  dummy /= m_kin[ii].ss_scaling[j -m_kin[ii].dc_counter];
-					if (dummy > 1.0e10) 
-					  dummy = 1.0e10;
+                        if ( !( dummy <= 1.0 ) && !( dummy > 1.0 ) )
+                        {
+                            // no change!
+                            m_dul[in * nDC + j] = m_xDC[in * nDC + j];
+                            m_dll[in * nDC + j] = m_xDC[in * nDC + j];
+                        }
+                        else if ( m_xDC[in * nDC + j] > dummy ) // This is the dissolution case
+                        {
+                            m_dul[in * nDC + j] = m_xDC[in * nDC + j];
+                            m_dll[in * nDC + j] = dummy;
+                        }
+                        else // This is the precipitation case
+                        {
+                            m_dll[in * nDC + j] = m_xDC[in * nDC + j];
+                            m_dul[in * nDC + j] = dummy;
+                        }
+                    }
+                    // do some corrections
 
-					if ( !( dummy <= 1.0 ) && !( dummy > 1.0 ) )
-					{
-						// no change!
-						m_dul[in * nDC + j] = m_xDC[in * nDC + j];
-						m_dll[in * nDC + j] = m_xDC[in * nDC + j];
-					}
-					else if ( m_xDC[in * nDC + j] > dummy ) // This is the dissolution case
-					{
-						m_dul[in * nDC + j] = m_xDC[in * nDC + j];
-						m_dll[in * nDC + j] = dummy;
-					}
-					else // This is the precipitation case
-					{
-						m_dll[in * nDC + j] = m_xDC[in * nDC + j];
-						m_dul[in * nDC + j] = dummy;
-					}
-					// do some corrections
-					
-					// kinetic_model==2 only dissolution is kontrolled (free precipitation)
-					// kinetic_mocel==3 only precipitation is copntroleld (free dissolution)
-					if ( ( m_kin[ii].kinetic_model == 2 ) &&
-					     ( m_dul[in * nDC + j] > m_xDC[in * nDC + j] ) )
-						m_dul[in * nDC + j] = 1.0e+10; // m_dul[in*nDC+j]= m_xDC[in*nDC+j];
-					if ( ( m_kin[ii].kinetic_model == 3 ) &&
-					     ( m_dll[in * nDC + j] < m_xDC[in * nDC + j] ) )
-						m_dll[in * nDC + j] = 0.0; // m_dll[in*nDC+j]= m_xDC[in*nDC+j];
-					if ( ( m_xDC[in * nDC + j] < 1.0e-6 ) &&
-					     ( omega_phase[in * nPH + k] >= 1.0001 ) &&
-					     ( m_dul[in * nDC + j] < 1.0e-6 ) )
-					{
-						m_dul[in * nDC + j] = 1.0e-6; // allow some kind of precipitation...based on saturation index for component value...here we set 10-6 mol per m^3 ..which is maybe 10-10 per litre ...?
-						m_dll[in * nDC + j] = 0.0;
-					}
-					if ( m_dll[in * nDC + j] > m_dul[in * nDC + j] )
-						m_dll[in * nDC + j] = m_dul[in * nDC + j];    // dll should be always lower than dul
-					// no negative masses allowed
-					if ( m_dll[in * nDC + j] < 0.0 )
-						m_dll[in * nDC + j] = 0.0;
-					// no negative masses allowed..give some freedom
-					if ( m_dul[in * nDC + j] <= 0.0 )
-					{
-						m_dul[in * nDC + j] = 1.0e-6;
-						m_dll[in * nDC + j] = 0.0;
-					}
-				}
-				// cout << "Kin debug for component no. " << j << " at node " << in << " m_xDC "  <<  m_xDC[in*nDC+j] << " m_dll, mdul " << m_dll[in*nDC+j] << " " << m_dul[in*nDC+j] << " diff " << m_dul[in*nDC+j]- m_dll[in*nDC+j] << "\n";
-				//            if ((fabs((m_dul[in*nDC+j]- m_dll[in*nDC+j]))>0.0)) cout << "Kinetics for component no. " << j << " at node " << in << " m_xDC "  <<  m_xDC[in*nDC+j] << " m_dll, mdul " << m_dll[in*nDC+j] << " " << m_dul[in*nDC+j] << " diff " << m_dul[in*nDC+j]- m_dll[in*nDC+j] << "\n"; // give some debug output for kinetics
-			}
+                    // kinetic_model==2 or 7  only dissolution is kontrolled (NO precipitation) KG44 changed it to no precipitation
+                    // kinetic_mocel==3 only precipitation is copntroleld (free dissolution)
+                    if ( ( (m_kin[ii].kinetic_model == 2) || (m_kin[ii].kinetic_model == 7)) &&
+                            ( m_dul[in * nDC + j] > m_xDC[in * nDC + j] ) )
+                        m_dul[in*nDC+j]= m_xDC[in*nDC+j];
+                    if ( ( m_kin[ii].kinetic_model == 3 ) &&
+                            ( m_dll[in * nDC + j] < m_xDC[in * nDC + j] ) )
+                        m_dll[in * nDC + j] = 0.0; // m_dll[in*nDC+j]= m_xDC[in*nDC+j];
+                    if ( ( m_xDC[in * nDC + j] < 1.0e-6 ) &&
+                            ( omega_phase[in * nPH + k] >= 1.0001 ) &&
+                            ( m_dul[in * nDC + j] < 1.0e-6 ) )
+                    {
+                        m_dul[in * nDC + j] = 1.0e-6; // allow some kind of precipitation...based on saturation index for component value...here we set 10-6 mol per m^3 ..which is maybe 10-10 per litre ...?
+                        m_dll[in * nDC + j] = 0.0;
+                    }
+                    if ( m_dll[in * nDC + j] > m_dul[in * nDC + j] )
+                        m_dll[in * nDC + j] = m_dul[in * nDC + j];    // dll should be always lower than dul
+                    // no negative masses allowed
+                    if ( m_dll[in * nDC + j] < 0.0 )
+                        m_dll[in * nDC + j] = 0.0;
+                    // no negative masses allowed..give some freedom
+                    if ( m_dul[in * nDC + j] <= 0.0 )
+                    {
+                        m_dul[in * nDC + j] = 1.0e-6;
+                        m_dll[in * nDC + j] = 0.0;
+                    }
+                }
+                // cout << "Kin debug for component no. " << j << " at node " << in << " m_xDC "  <<  m_xDC[in*nDC+j] << " m_dll, mdul " << m_dll[in*nDC+j] << " " << m_dul[in*nDC+j] << " diff " << m_dul[in*nDC+j]- m_dll[in*nDC+j] << "\n";
+                //            if ((fabs((m_dul[in*nDC+j]- m_dll[in*nDC+j]))>0.0)) cout << "Kinetics for component no. " << j << " at node " << in << " m_xDC "  <<  m_xDC[in*nDC+j] << " m_dll, mdul " << m_dll[in*nDC+j] << " " << m_dul[in*nDC+j] << " diff " << m_dul[in*nDC+j]- m_dll[in*nDC+j] << "\n"; // give some debug output for kinetics
+            }
 
-	}                                          // end loop over phases
+    }                                          // end loop over phases
 
-	return 1;
+    return 1;
 }
 
 // simplest case....scaling with a specific surface area per volume mineral
@@ -3472,6 +3520,9 @@ double REACT_GEM::SurfaceAreaPh ( long kin_phasenr,long in,  TNode* m_Node )
 		surf_area *= m_kin[kin_phasenr].surface_area[0] / m_porosity[in]; // multiplication with specific surface area and division by porosity
 	else if ( m_kin[kin_phasenr].surface_model == 4 )
 		surf_area = m_kin[kin_phasenr].surface_area[0] * m_porosity[in]; // multiplication of specific surface area and  porosity
+	else if ( m_kin[kin_phasenr].surface_model == 33 )
+		// constant surface area value for cement hydration!
+		surf_area = m_kin[kin_phasenr].surface_area[0];		
 	else
 		surf_area = 0.0;                    // no kinetics...safe solution
 
@@ -3479,6 +3530,56 @@ double REACT_GEM::SurfaceAreaPh ( long kin_phasenr,long in,  TNode* m_Node )
 	return surf_area;
 }
 
+// calculation of cement hydration according to Lothenbach & Wieland 2006
+double REACT_GEM::CementHydrationKinetics (double oldvalue, long kin_phasenr, double dt )
+{
+    double alpha_t;  //this is the result we return
+    double Rn, Rd, Rs, Rm; // rates for nucleation, diffusion shell ....minimum rate Rm will be used
+    // alpha_t-1: m_kin[kin_phasenr].kinetic_parameters[0] "old hydration value"
+    // k1: m_kin[kin_phasenr].kinetic_parameters[1]
+    // N1: m_kin[kin_phasenr].kinetic_parameters[2]
+    // k2: m_kin[kin_phasenr].kinetic_parameters[3]
+    // k3: m_kin[kin_phasenr].kinetic_parameters[4]
+    // N3: m_kin[kin_phasenr].kinetic_parameters[5]
+    // W/C: m_kin[kin_phasenr].kinetic_parameters[6]
+    // H: m_kin[kin_phasenr].surface_area[0]
+    /*
+      cout << m_kin[kin_phasenr].kinetic_parameters[0] << "\n";
+      cout << m_kin[kin_phasenr].kinetic_parameters[1] << "\n";
+      cout << m_kin[kin_phasenr].kinetic_parameters[2] << "\n";
+      cout << m_kin[kin_phasenr].kinetic_parameters[3] << "\n";
+      cout << m_kin[kin_phasenr].kinetic_parameters[4] << "\n";
+      cout << m_kin[kin_phasenr].kinetic_parameters[5] << "\n";
+      cout << m_kin[kin_phasenr].kinetic_parameters[6] << "\n";
+      cout << m_kin[kin_phasenr].kinetic_parameters[7] << "\n";
+      cout << m_kin[kin_phasenr].kinetic_parameters[8] << "\n";
+     */
+    if (oldvalue >= 1.0) return 1.0; //
+
+    alpha_t=(1-oldvalue); // this is actually 1-alpha_t
+
+    Rn= m_kin[kin_phasenr].kinetic_parameters[1]/m_kin[kin_phasenr].kinetic_parameters[2] * (alpha_t)
+        * pow((-1.0*log(alpha_t)),1.0-m_kin[kin_phasenr].kinetic_parameters[2]);
+
+    Rd=m_kin[kin_phasenr].kinetic_parameters[3]* pow(alpha_t,2.0/3.0);
+    Rd /= (1-pow(alpha_t,1.0/3.0));
+    Rm=MIN(Rn,Rd);
+
+    Rs=m_kin[kin_phasenr].kinetic_parameters[4]*pow(alpha_t,(m_kin[kin_phasenr].kinetic_parameters[5]));
+    Rm=MIN(Rm,Rs);
+    // calculate new rate
+    if (  oldvalue < (m_kin[kin_phasenr].kinetic_parameters[6] * m_kin[kin_phasenr].surface_area[0])) // initial behaviour
+    {
+        alpha_t= oldvalue + dt/86400.0 * Rm; //parametization of cement kinetics requires time in unit days! 
+    }
+    else  // late behaviour
+    {
+        alpha_t=  oldvalue + dt/86400.0 * Rm * pow((1+3.333 * (m_kin[kin_phasenr].kinetic_parameters[6] * m_kin[kin_phasenr].surface_area[0] - oldvalue)),4.0 ); //parametization of cement kinetics requires time in unit days! 
+    }
+ // cout << "DEBUG: CementHydrationKinetics: alpha_t_old: " <<  oldvalue << " alpha_t_new " << alpha_t << " Rn " << Rn << " Rd " << Rd<< " Rs " << Rs << " minimum Rate " << Rm << "\n";
+    return alpha_t;
+
+}
 
 /** GetNodePorosityValue(long node_Index): function coming from GEMS coupling...extract node based porosities..does only
  * work with GEMS coupling
