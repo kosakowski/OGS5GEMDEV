@@ -107,6 +107,10 @@
    Sortierfunktionen
    MQSort_LongDouble     - Sortiert Datensaetze aus long und double nach dem groessten double
 
+   Axisymmetrie (taken from Bastian Graupners branch)
+   ComputeAxissymmetricTriangleVolume
+   ComputeAxissymmetricQuadVolume
+
    Aenderungen/Korrekturen:
    08/1994     Hans Herrmann        Erste Version
    09/1994     hh                   Aenderungen
@@ -136,7 +140,8 @@
    04/2002     OK                   M4Determinante
    07/2003     WW                   Triangle shape funtions
    06/2004     WW                   Generalized shape functions
- ***************************************************************************/
+   05/2014     KG                   Axisymmetry
+   ***************************************************************************/
 // There is a name conflict between stdio.h and the MPI C++ binding
 // with respect to the names SEEK_SET, SEEK_CUR, and SEEK_END.  MPI
 // wants these in the MPI namespace, but stdio.h will #define these
@@ -5562,6 +5567,108 @@ double GetFCTADiff(double K_ij, double K_ji)
 	double r = std::min(0.0, -K_ij);
 	r = std::min(r, -K_ji);
 	return r;
+}
+
+/***************************************************************************
+GeoSys - Funktion:
+CElement::ComputeAxissymmetricElementVolume(const *double x1, const *double x2,
+const *double x3)
+Aufgabe:
+Compute the volume of a axissymetric triangle
+Formalparameter:
+E:
+const *double x1    : Vertex 1
+const *double x2    : Vertex 2
+const *double x3    : Vertex 3
+Programming:
+05/2014     BG        Erste Version
+**************************************************************************/
+double ComputeAxissymmetricTriangleVolume(const double* x1, const double* x2,
+       const double* x3)
+{
+       static double x_s[3];
+       double a, b, c;
+       double A, s, l, V;
+
+       //calculate the side lenth of the triangle
+       a = sqrt(pow((x2[0] - x1[0]), 2) + pow((x2[1] - x1[1]),2) + pow((x2[2] - x1[2]),2));
+       b = sqrt(pow((x3[0] - x1[0]), 2) + pow((x3[1] - x1[1]), 2) + pow((x3[2] - x1[2]), 2));
+       c = sqrt(pow((x3[0] - x2[0]), 2) + pow((x3[1] - x2[1]), 2) + pow((x3[2] - x2[2]), 2));
+       s = (a + b + c) / 2;
+       //area of the triangle
+       A = sqrt(s*(s - a)*(s - b)*(s - c));
+
+       //calculate gravity centre of the triangle
+       x_s[0] = (x1[0] + x2[0] + x3[0]) / 3;
+       x_s[1] = (x1[1] + x2[1] + x3[1]) / 3;
+       x_s[2] = (x1[2] + x2[2] + x3[2]) / 3;
+       //lengt of the triangular tube in the gravity centre (rotation around z-axis); x-coordinate is radius
+       l = 2 * PI * x_s[0];
+       //calculate volume
+       V = A * l;
+       return V;
+}
+
+/***************************************************************************
+GeoSys - Funktion:
+CElement::ComputeAxissymmetricElementVolume(const *double x1, const *double x2,
+const *double x3)
+Aufgabe:
+Compute the volume of a axissymetric quad
+Formalparameter:
+E:
+const *double x1    : Vertex 1
+const *double x2    : Vertex 2
+const *double x3    : Vertex 3
+const *double x4    : Vertex 4
+Programming:
+05/2014     BG        Erste Version
+**************************************************************************/
+double ComputeAxissymmetricQuadVolume(const double* x1, const double* x2,
+       const double* x3, const double* x4)
+{
+       static double x_s[3];
+       double A, l, V;
+       //area of the triangle
+       if ((x1[1] == x2[1]) && (x1[1] == x3[1]) && (x1[1] == x4[1]))
+             A = 0.5 *abs(((x3[0] - x1[0])*(x4[2] - x2[2])) + ((x4[0] - x2[0])*(x1[2] - x3[2])));
+       else if ((x1[2] == x2[2]) && (x1[2] == x3[2]) && (x1[2] == x4[2]))
+             A = 0.5 *abs(((x3[0] - x1[0])*(x4[1] - x2[1])) + ((x4[0] - x2[0])*(x1[1] - x3[1])));
+       //calculate gravity centre of the triangle
+       x_s[0] = (x1[0] + x2[0] + x3[0] + x4[0]) / 4;
+       x_s[1] = (x1[1] + x2[1] + x3[1] + x4[1]) / 4;
+       x_s[2] = (x1[2] + x2[2] + x3[2] + x4[2]) / 4;
+       //lengt of the triangular tube in the gravity centre (rotation around z-axis); x-coordinate is radius
+       l = 2 * PI * x_s[0];
+       //calculate volume
+       V = A * l;
+       return V;
+}
+/***************************************************************************
+GeoSys - Funktion:
+CElement::ComputeAxissymmetricLineVolume(const *double x1, const *double x2)
+Aufgabe:
+Compute the volume of a axissymetric line
+Formalparameter:
+E:
+const *double x1    : Vertex 1
+const *double x2    : Vertex 2
+05/2014     KG        Erste Version
+**************************************************************************/
+double ComputeAxissymmetricLineVolume(const double* x1, const double* x2)
+{
+       static double x_s[3];
+       double A, l, V;
+       //length of the line
+	x_s[0] = x1[0] - x2[0];
+	x_s[1] = x1[1] - x2[1];
+	x_s[2] = x1[2] - x2[2];
+	A = sqrt(x_s[0] * x_s[0] + x_s[1] * x_s[1] + x_s[2] * x_s[2]); //C
+       //lengt of the triangular tube in the gravity centre (rotation around z-axis); x-coordinate is radius
+       l = 2 * PI * (x1[0] + x2[0])/2.0;
+       //calculate volume
+       V = A * l;
+       return V;
 }
 /*##########################################################################
  ##########################################################################

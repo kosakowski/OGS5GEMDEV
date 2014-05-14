@@ -4883,19 +4883,20 @@ void CFiniteElementStd::CalcLumpedMass()
 	// Initialize
 	(*Mass) = 0.0;
 	// Volume
-	if(axisymmetry)
-	{                                     // This calculation should be done in CompleteMesh.
-		// However, in order not to destroy the concise of the code,
-		// it is put here. Anyway it is computational cheap. WW
-		vol = 0.0;
-		for (gp = 0; gp < nGaussPoints; gp++)
-			//---------------------------------------------------------
-			//  Get local coordinates and weights
-			//  Compute Jacobian matrix and its determinate
-			//---------------------------------------------------------
-			vol += GetGaussData(gp, gp_r, gp_s, gp_t);
-	}
-	else
+	// 05/2015 BG, calculation of the volume of 2D axialsymmetric elements was corrected
+	//if(axisymmetry)
+	//{                                     // This calculation should be done in CompleteMesh.
+	//	// However, in order not to destroy the concise of the code,
+	//	// it is put here. Anyway it is computational cheap. WW
+	//	vol = 0.0;
+	//	for (gp = 0; gp < nGaussPoints; gp++)
+	//		//---------------------------------------------------------
+	//		//  Get local coordinates and weights
+	//		//  Compute Jacobian matrix and its determinate
+	//		//---------------------------------------------------------
+	//		vol += GetGaussData(gp, gp_r, gp_s, gp_t);
+	//}
+	//else
 		//NW multiply geo_area
 		vol = MeshElement->GetVolume() * MeshElement->GetFluxArea();
 	// Center of the reference element
@@ -4947,19 +4948,19 @@ void CFiniteElementStd::CalcLumpedMass2()
 	int dof_n = 2;
 	//----------------------------------------------------------------------
 	// Volume
-	if(axisymmetry)
-	{                                     // This calculation should be done in CompleteMesh.
-		// However, in order not to destroy the concise of the code,
-		// it is put here. Anyway it is computational cheap. WW
-		vol = 0.0;
-		for (gp = 0; gp < nGaussPoints; gp++)
-			//---------------------------------------------------------
-			//  Get local coordinates and weights
-			//  Compute Jacobian matrix and its determinate
-			//---------------------------------------------------------
-			vol += GetGaussData(gp, gp_r, gp_s, gp_t);
-	}
-	else
+        // 05/2015 BG, calculation of the volume of 2D axialsymmetric elements was corrected
+	//if(axisymmetry)
+	//{                                     // This calculation should be done in CompleteMesh.
+	//	// However, in order not to destroy the concise of the code,
+	//	// it is put here. Anyway it is computational cheap. WW
+	//	vol = 0.0;
+	//	for (gp = 0; gp < nGaussPoints; gp++)
+	//		//  Get local coordinates and weights
+	//		//  Compute Jacobian matrix and its determinate
+	//		//---------------------------------------------------------
+	//		vol += GetGaussData(gp, gp_r, gp_s, gp_t);
+	//}
+	//else
 	  vol = MeshElement->GetVolume() * MeshElement->area; //WW. 24.05.2012
 	//----------------------------------------------------------------------
 	// Initialize

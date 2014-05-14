@@ -316,6 +316,11 @@ extern double MinMod(double v1, double v2);
 extern double SuperBee(double v1, double v2);
 extern double GetFCTADiff(double v1, double v2);
 
+// KG taken von Bastian Graupners branch
+double ComputeAxissymmetricTriangleVolume(const double* x1, const double* x2,const double* x3);
+double ComputeAxissymmetricQuadVolume(const double* x1, const double* x2,const double* x3, const double* x4);
+double ComputeAxissymmetricLineVolume(const double* x1, const double* x2);
+
 #endif                                            /* gehoert zum Schutz gegen mehrfaches Einfuegen */
 
 /*##########################################################################

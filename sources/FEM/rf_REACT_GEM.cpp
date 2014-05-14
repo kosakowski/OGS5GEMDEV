@@ -4058,6 +4058,11 @@ void REACT_GEM::WriteVTKGEMValues ( fstream &vtk_file )
 	//....................................................................
 	for ( j = 0; j < nNodes; j++ )
 		vtk_file << " " <<  m_fluid_density[j] << "\n";
+		vtk_file << "SCALARS " << " RNodeVolume " << " double 1" << "\n";
+	vtk_file << "LOOKUP_TABLE default" << "\n";
+	//....................................................................
+	for ( j = 0; j < nNodes; j++ )
+		vtk_file << " " <<  m_Node_Volume[j] << "\n";
 
 }
 
