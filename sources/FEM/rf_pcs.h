@@ -270,7 +270,7 @@ protected:                                        //WW
    petsc_group::PETScLinearSolver *eqs_new;
   int mysize;                               
   int myrank; 
-#elif NEW_EQS
+#elif defined(NEW_EQS)
 #ifdef LIS
 public:
 	Linear_EQS* eqs_new;

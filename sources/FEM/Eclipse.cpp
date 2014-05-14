@@ -83,7 +83,7 @@ bool CReadTextfiles_ECL::Read_Text(std::string Filename)
 
 	// .data ... provides the filename as it is necessary for C, ios::in ... reads the file
 	ifstream in_file (Filename.data(),ios::in);
-	if (in_file == 0)
+	if (in_file.fail())
 	{
 		error = true;
 		cout << "The file " << Filename.data() << " can not be opened!" << "\n";
@@ -992,7 +992,7 @@ int CECLIPSEData::ReadDataFromInputFile(std::string Filename)
 						in >> this->ecl_well[jj]->control_mode;
 						in >> dummy_rate;
 						in >> dummy_zeile;
-						if (in != 0)
+						if (!in.fail())
 							rest_zeile += dummy_zeile;
 
 						in.clear();
@@ -2098,7 +2098,7 @@ bool CECLIPSEData::ReplaceWellRate(std::string Filename, std::string Keyword_wel
 					in >> this->ecl_well[jj]->control_mode;
 					in >> dummy_rate;
 					in >> dummy_zeile;
-					if (in != 0)
+					if (!in.fail())
 						rest_zeile += dummy_zeile;
 
 					in.clear();

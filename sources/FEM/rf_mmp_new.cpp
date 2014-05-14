@@ -8228,7 +8228,7 @@ double CMediumProperties::PermeabilityPressureFunctionMethod1(long index,double 
 	else
 		R = permeability_pressure_model_values[2];
 #endif
-	return R;
+	return 0.0;
 }
 
 /**************************************************************************
@@ -8413,7 +8413,7 @@ double CMediumProperties::PermeabilityPressureFunctionMethod2(long index,double 
 	else
 		R = permeability_pressure_model_values[2];
 #endif
-	return R;
+	return 0.0;
 }
 
 /**************************************************************************

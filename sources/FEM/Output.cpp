@@ -2871,7 +2871,7 @@ double COutput::NODFlux(long nod_number)
 	// All elements at node //OK
 #if defined (USE_PETSC) // || defined (other parallel solver lib). 04.2012 WW
 	return 0;
-#elif NEW_EQS                                 //WW. 07.11.2008
+#elif defined(NEW_EQS)                                 //WW. 07.11.2008
 	return 0.;                            //To do: m_pcs->eqs_new->b[nod_number];
 #else
 	// Element nodal RHS contributions

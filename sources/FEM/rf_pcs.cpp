@@ -100,7 +100,7 @@ REACT_BRNS* m_vec_BRNS;
 #if defined(USE_PETSC) // || defined(other parallel libs)//03.3012. WW
 #include "PETSC/PETScLinearSolver.h"
 // New EQS
-#elif NEW_EQS
+#elif defined(NEW_EQS)
 #include "equation_class.h"
 #else
 #include "solver.h"                               // ConfigRenumberProperties
@@ -251,7 +251,7 @@ CRFProcess::CRFProcess(void) :
 	MPI_Comm_rank(PETSC_COMM_WORLD, &myrank);
 	MPI_Comm_size(PETSC_COMM_WORLD, &mysize);
 
-#elif NEW_EQS                                //WW 07.11.2008
+#elif defined(NEW_EQS)                                //WW 07.11.2008
 	eqs_new = NULL;
 	configured_in_nonlinearloop = false;
 #else
@@ -721,7 +721,7 @@ void CRFProcess::Create()
 #ifdef USE_MPI
      eqs_new = EQS_Vector[eqs_num * k];
 #else
-     if(getProcessType() == FiniteElement::MULTI_PHASE_FLOW || getProcessType() == FiniteElement::PS_GLOBAL)
+     if(getProcessType() == FiniteElement::MULTI_PHASE_FLOW || getProcessType() == FiniteElement::PS_GLOBAL || getProcessType() == FiniteElement::TNEQ)
 	 {
 	   eqs_new = EQS_Vector[eqs_num * k + 2 ];
      }
@@ -1027,7 +1027,7 @@ void CRFProcess::Create()
 
 #if defined(USE_PETSC) // || defined(other parallel libs)//03.3012. WW
 	size_unknowns =  m_msh->NodesNumber_Quadratic * pcs_number_of_primary_nvals;
-#elif NEW_EQS
+#elif defined(NEW_EQS)
 	/// For JFNK. 01.10.2010. WW
 #ifdef JFNK_H2M
 	if(m_num->nls_method == 2)
@@ -4565,7 +4565,7 @@ double CRFProcess::Execute()
 
 #if defined(USE_PETSC) // || defined(other parallel libs)//03.3012. WW
 	eqs_new->Initialize(); 
-#elif NEW_EQS                                 //WW
+#elif defined(NEW_EQS)                                 //WW
 	if(!configured_in_nonlinearloop)
 #if defined(USE_MPI)
 	{
@@ -4653,7 +4653,7 @@ double CRFProcess::Execute()
 		eqs_new->Solver();
 		//TEST 	double x_norm = eqs_new->GetVecNormX();
 		eqs_new->MappingSolution();
-#elif NEW_EQS                                 //WW
+#elif defined(NEW_EQS)                                 //WW
 #if defined(USE_MPI)
 	//21.12.2007
 	iter_lin = dom->eqs->Solver(eqs_new->x, global_eqs_dim);
@@ -5666,9 +5666,13 @@ void CRFProcess::CalIntegrationPointValue()
 			fem->ConfigElement(elem);
 			fem->Config(); //OK4709
 			// fem->m_dom = NULL; // To be used for parallization
-			if(getProcessType() == FiniteElement::MULTI_COMPONENTIAL_FLOW) fem->Cal_VelocityMCF();
+			if(getProcessType() == FiniteElement::MULTI_COMPONENTIAL_FLOW)
+				fem->Cal_VelocityMCF();
 			else 
 			fem->Cal_Velocity();
+			//moved here from additional lower loop
+			if (getProcessType() == FiniteElement::TNEQ)
+				fem->CalcSolidDensityRate(); // HS, thermal storage reactions
 		}
 	}
    } else { //NW
@@ -5710,19 +5714,19 @@ void CRFProcess::CalIntegrationPointValue()
        std::cout << "  Local Picard iteration: itr. count = " << i_itr << "/" << v_itr_max << ", error(max. norm)=" << vel_error << std::endl;
    }
 
-    if (getProcessType() == FiniteElement::TNEQ) {
-        const size_t mesh_ele_vector_size(m_msh->ele_vector.size());
-        for (size_t i = 0; i < mesh_ele_vector_size; i++)
-        {
-            elem = m_msh->ele_vector[i];
-            if (elem->GetMark())                        // Marked for use
-            {
-                fem->ConfigElement(elem);
-                fem->Config();                
-		        fem->CalcSolidDensityRate(); // HS, thermal storage reactions
-            }
-        }
-    }
+    //if (getProcessType() == FiniteElement::TNEQ) {
+    //    const size_t mesh_ele_vector_size(m_msh->ele_vector.size());
+    //    for (size_t i = 0; i < mesh_ele_vector_size; i++)
+    //    {
+    //        elem = m_msh->ele_vector[i];
+    //        if (elem->GetMark())                        // Marked for use
+    //        {
+    //            fem->ConfigElement(elem);
+    //            fem->Config();                
+		  //      fem->CalcSolidDensityRate(); // HS, thermal storage reactions
+    //        }
+    //    }
+    //}
 
 
 	//	if (_pcs_type_name.find("TWO_PHASE_FLOW") != string::npos) //WW/CB
@@ -6636,7 +6640,7 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 									* dof_per_node + shift));
 				  bc_eqs_value.push_back(bc_value);
 				  
-#elif NEW_EQS                        //WW
+#elif defined(NEW_EQS)                        //WW
 				eqs_p->SetKnownX_i(bc_eqs_index, bc_value);
 #else
 				MXRandbed(bc_eqs_index,bc_value,eqs_rhs);
@@ -6922,7 +6926,7 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 							continue;
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
 					//TODO
-#elif NEW_EQS                        //WW
+#elif defined(NEW_EQS)                        //WW
 					eqs_p->SetKnownX_i(bc_eqs_index, bc_value);
 #else
 					MXRandbed(bc_eqs_index,bc_value,eqs_rhs);
@@ -7047,7 +7051,7 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 							continue;
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
 					//TODO
-#elif NEW_EQS                        //WW
+#elif defined(NEW_EQS)                        //WW
 					eqs_p->SetKnownX_i(bc_eqs_index, bc_value);
 #else
 					MXRandbed(bc_eqs_index,bc_value,eqs_rhs);
@@ -7172,7 +7176,7 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 							continue;
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
 					//TODO
-#elif NEW_EQS                        //WW
+#elif defined(NEW_EQS)                        //WW
 					eqs_p->SetKnownX_i(bc_eqs_index, bc_value);
 #else
 					MXRandbed(bc_eqs_index,bc_value,eqs_rhs);
@@ -12992,7 +12996,7 @@ CRFProcess* PCSGetMass(size_t component_number)
  **************************************************************************/
 #if defined(USE_PETSC)  //WW. 07.11.2008. 04.2012
 // New solvers WW
-#elif NEW_EQS                                    //1.09.2007 WW
+#elif defined(NEW_EQS)                                    //1.09.2007 WW
 
 	void CreateEQS_LinearSolver()
 	{

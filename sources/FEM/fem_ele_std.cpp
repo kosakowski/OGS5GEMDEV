@@ -3721,7 +3721,7 @@ double CFiniteElementStd::CalCoefAdvection()
 
        // heat in gas
        case 4:
-           val = 0.0;
+           val = 0.0;//-phi_g^-1 * grad phi_g
            break;
        case 5:
            val = MediaProp->HeatTransferCoefficient(Index, pcs->m_num->ls_theta, this);
@@ -7730,7 +7730,7 @@ void CFiniteElementStd::AssembleRHS(int dimension)
 	  {
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
 	  //TODO
-#elif NEW_EQS                        //WW
+#elif defined(NEW_EQS)                        //WW
 		m_pcs->eqs_new->b[eqs_number[i]] += NodalVal[i];
 #else
 		m_pcs->eqs->b[eqs_number[i]] += NodalVal[i];
@@ -7757,9 +7757,7 @@ void CFiniteElementStd::AssembleParabolicEquation()
 	long i_sh;
 	double relax0, relax1, pcs_time_step, dt_inverse;
 	long dm_shift = 0, cshift = 0;        //WW 05.01.07
-	bool H2_mono = false; // 15. 07.2011. WW
-	if(PcsType == V || PcsType == P || PcsType == S || PcsType == N) //TN DO I NEED IT
-		H2_mono = true;
+
 	//
 	// JT2012: Get the time step of this process! Now dt can be independently controlled.
 	pcs_time_step = pcs->Tim->time_step_length;
@@ -7792,7 +7790,7 @@ void CFiniteElementStd::AssembleParabolicEquation()
 	//----------------------------------------------------------------------
 	// Initialize.
 	// if (pcs->Memory_Type==2) skip the these initialization
-	if(H2_mono)
+	if(PcsType == V || PcsType == P || PcsType == S || PcsType == N)
 		(*Mass2) = 0.0;
 	else
 		(*Mass) = 0.0;
@@ -7884,7 +7882,7 @@ void CFiniteElementStd::AssembleParabolicEquation()
 	//Mass matrix
 	if(pcs->PartialPS != 1)               // PCH if not partial-pressure-based
 	{
-		if(H2_mono)
+		if(PcsType == V || PcsType == P || PcsType == S || PcsType == N)
 			*StiffMatrix    = *Mass2;
 		else
 			*StiffMatrix    = *Mass;
@@ -8103,7 +8101,7 @@ void CFiniteElementStd::AssembleParabolicEquation()
 	}
 
 	//
-	if(H2_mono)
+	if(PcsType == V || PcsType == P || PcsType == S || PcsType == N)
 		{
 		int nDF = 2;
 		if(PcsType == S || PcsType == N) nDF=pcs->dof;
@@ -9140,7 +9138,7 @@ void CFiniteElementStd::AssembleMassMatrix(int option)
 					{
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
 	  //TODO
-#elif NEW_EQS
+#elif defined(NEW_EQS)
 						(*A)(i_sh + eqs_number[i], j_sh + eqs_number[j]) += \
 						        (*Mass)(i + ii_sh,j + jj_sh);
 #else
@@ -9163,7 +9161,7 @@ void CFiniteElementStd::AssembleMassMatrix(int option)
 			{
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
 			  //TODO
-#elif NEW_EQS
+#elif defined(NEW_EQS)
 				(*A)(cshift + eqs_number[i], cshift + eqs_number[j]) += \
 				        (*Mass)(i,j);
 #else
@@ -9606,7 +9604,7 @@ void CFiniteElementStd::Assembly(int option, int dimension)
 
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
 	//TODO
-#elif NEW_EQS                              //PCH
+#elif defined(NEW_EQS)                              //PCH
 	eqs_rhs = pcs->eqs_new->b;
 #else
 	eqs_rhs = pcs->eqs->b;
@@ -10047,8 +10045,8 @@ void CFiniteElementStd::CalcSatution()
 		// In case the node is on the material interface
 		if(eS > 1.0)
 			eS = 1.0;
-		if(eS < MediaProp->capillary_pressure_values[1])	//MW: limit to non-negative 0saturation for stability
-			eS = MediaProp->capillary_pressure_values[1];
+		//if(eS < MediaProp->capillary_pressure_values[1])	//MW: limit to non-negative 0saturation for stability
+		//	eS = MediaProp->capillary_pressure_values[1];
 		//
 		pcs->SetNodeValue (nodes[i], idx_S, eS);
 	}
@@ -11760,7 +11758,7 @@ void CFiniteElementStd::AssembleRHSVector()
 		//CB 04008
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
 	  // TODO
-#elif NEW_EQS
+#elif defined(NEW_EQS)
 		pcs->eqs_new->b[NodeShift[problem_dimension_dm] + eqs_number[i]] += NodalVal[i];
 #else
 		pcs->eqs->b[NodeShift[problem_dimension_dm] + eqs_number[i]] += NodalVal[i];
@@ -11838,7 +11836,7 @@ void CFiniteElementStd::AssembleCapillaryEffect()
 		//CB 04008
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
 	  //TODO
-#elif NEW_EQS
+#elif defined(NEW_EQS)
 		pcs->eqs_new->b[NodeShift[problem_dimension_dm] + eqs_number[i]] += NodalVal[i];
 #else
 		pcs->eqs->b[NodeShift[problem_dimension_dm] + eqs_number[i]] += NodalVal[i];

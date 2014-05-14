@@ -78,7 +78,7 @@ bool CReadTextfiles_DuMux::Read_Text(string Filename)
 
 	// .data ... provides the filename as it is necessary for C, ios::in ... reads the file
 	std::ifstream in_file (Filename.data(),std::ios::in);
-	if (in_file == 0)
+	if (in_file.fail())
 	{
 		error = true;
 		cout << "The file " << Filename.data() << " can not be opened!" << "\n";
@@ -130,7 +130,7 @@ bool CReadTextfiles_DuMux::Read_SeparatedText(string Filename, string delimiter)
 
 	// .data ... provides the filename as it is necessary for C, ios::in ... reads the file
 	std::ifstream in_file (Filename.data(),std::ios::in);
-	if (in_file == 0)
+	if (in_file.fail())
 	{
 		error = true;
 		cout << "The file " << Filename.data() << " can not be opened!" << "\n";

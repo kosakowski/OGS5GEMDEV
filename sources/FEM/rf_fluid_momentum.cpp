@@ -243,7 +243,7 @@ void CFluidMomentum::SolveDarcyVelocityOnNode()
 			/* System matrix */
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
 		  //TODO
-#elif NEW_EQS                           //WW
+#elif defined(NEW_EQS)                           //WW
 			m_pcs->EQSInitialize();
 #else
 			SetLinearSolverType(m_pcs->getEQSPointer(), m_num); //NW
@@ -265,7 +265,7 @@ void CFluidMomentum::SolveDarcyVelocityOnNode()
 			// Solve for velocity
 #if defined (USE_PETSC) // || defined (other parallel solver lib). 04.2012 WW
 			//TODO
-#elif NEW_EQS
+#elif defined(NEW_EQS)
 
 			double* x;
 			int size = (int)m_msh->nod_vector.size(); //OK411??? long
@@ -305,7 +305,7 @@ void CFluidMomentum::SolveDarcyVelocityOnNode()
 
 #if defined (USE_PETSC) // || defined (other parallel solver lib). 04.2012 WW
 			//TODO
-#elif NEW_EQS
+#elif defined(NEW_EQS)
 			for(int j = 0; j < size; j++)
 				m_pcs->SetNodeValue(m_msh->Eqs2Global_NodeIndex[j],nidx1,x[j]);
 

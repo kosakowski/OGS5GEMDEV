@@ -24,7 +24,10 @@ class BenchmarkRun < Sequel::Model( :benchmark_runs )
   many_to_one :commit_info
 
   def benchmark_info
-    return "#{self.name} by #{self.author.name}"
+    if self.nil?
+      return "Benchmark Info == nil"
+    else
+      return "#{self.name} by #{self.author.name}"
   end
 
   def inspect2

@@ -119,7 +119,7 @@ bool CAP_check_file(void)
     bool success = false;
 	int f;
 
-	ss << FilePath << "_CHEM_STATE" << getPathSepatator() << CAP_Time << "N" << CAP_Node << "C" << CAP_icount;
+	ss << FilePath << "_CHEM_STATE" << getPathSepatator()<< "T" << CAP_Time << "N" << CAP_Node << "C" << CAP_icount;
 
 	ss >> file_name;		
 
@@ -381,7 +381,7 @@ void read_file(void)
 	CHEM_STATE_AP.clear();
 
     ss.clear();
-	ss << FilePath << "_CHEM_STATE" << getPathSepatator() << CAP_Time << "N" << CAP_Node << "C" << CAP_icount;
+	ss << FilePath << "_CHEM_STATE" << getPathSepatator() << "T" << CAP_Time << "N" << CAP_Node << "C" << CAP_icount;
 	ss >> file_name;		
 
 	//cout << file_name << "\n";

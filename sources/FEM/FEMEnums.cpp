@@ -469,6 +469,7 @@ FrictionPhase convertFrictionPhase( const std::string& friction_string)
 		return NONE;
 
 	std::cout << "Convert error: " << friction_string << " not found. \n";
+	return INVALID_FRICTION_TYPE;
 
 }
 std::string convertFrictionPhaseToString(FrictionPhase friction_phase)
@@ -481,6 +482,7 @@ std::string convertFrictionPhaseToString(FrictionPhase friction_phase)
 		return "NONE";
 
 	std::cout << "Invalid friction_phase type. \n";
+	return "INVALID_FRICTION_TYPE";
 }
 
 SolidReactiveSystem convertSolidReactiveSystem( const std::string& reactive_string)
@@ -495,7 +497,7 @@ SolidReactiveSystem convertSolidReactiveSystem( const std::string& reactive_stri
 		return Mn3O4;
 
 	std::cout << "Convert error: " << reactive_string << " not found. \n";
-
+	return INVALID_REACTIVE_SYSTEM;
 }
 
 std::string convertSolidReactiveSystemToString(SolidReactiveSystem reactive_system)
@@ -510,6 +512,7 @@ std::string convertSolidReactiveSystemToString(SolidReactiveSystem reactive_syst
 		return "Mn3O4";
 
 	std::cout << "Invalid reactive system type. \n";
+	return "INVALID_REACTIVE_SYSTEM";
 }
 
 } // end namespace FiniteElement

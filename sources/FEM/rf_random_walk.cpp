@@ -1094,7 +1094,7 @@ void RandomWalk::InterpolateVelocityOfTheParticleByBilinear(int option, Particle
 					/* System matrix */
 #if defined (USE_PETSC) // || defined (other parallel solver lib). 04.2012 WW
 				  //Todo
-#elif NEW_EQS                     //WW
+#elif defined(NEW_EQS)                     //WW
 					m_pcs->EQSInitialize();
 #else
 					SetZeroLinearSolver(m_pcs->getEQSPointer());
@@ -1113,7 +1113,7 @@ void RandomWalk::InterpolateVelocityOfTheParticleByBilinear(int option, Particle
 					// Solve for velocity
 #if defined (USE_PETSC) // || defined (other parallel solver lib). 04.2012 WW
 				  //Todo
-#elif NEW_EQS
+#elif defined(NEW_EQS)
 
 					double* x;
 					int size = m_msh->nod_vector.size();

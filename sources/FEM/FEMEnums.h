@@ -242,9 +242,10 @@ enum ErrorMethod
  */
 ErrorMethod convertErrorMethod ( const std::string& error_method_string );
 
-//Determines into which energy balance interphase friction is integrated in TNEQ models
+//Determines into which energy balance interphase friction is integrated in TES models
 enum FrictionPhase
 {
+	INVALID_FRICTION_TYPE = 0,
 	SOLID,
 	FLUID,
 	NONE
@@ -256,6 +257,7 @@ std::string convertFrictionPhaseToString(FrictionPhase friction_phase);
 //Solid Reactive System
 enum SolidReactiveSystem
 {
+	INVALID_REACTIVE_SYSTEM = 0,
 	INERT,
 	SINUSOIDAL,
 	CaOH2,
