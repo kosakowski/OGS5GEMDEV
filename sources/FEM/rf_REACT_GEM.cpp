@@ -3367,6 +3367,75 @@ int REACT_GEM::CalcLimitsInitial ( long in, TNode* m_Node)
 	return 1;
 }
 
+int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,TNode* m_Node)
+{
+    double dummy, alpha_t;  // dummy value and degree of hydration for cementhydration kinetics
+    long k,j;
+
+    // kinetic_model==5 dissolution+precipitation for solid solutions
+    // kinetic_model==7 dissolution only for solid solutions
+    DATACH* dCH;                            //pointer to DATACH
+    DATABR* dBR;
+    // Getting direct access to DataCH structure in GEMIPM2K memory
+    dCH = m_Node->pCSD();
+    if ( !dCH )
+        return 0;
+
+    // Getting direct access to work node DATABR structure which
+    // exchanges data between GEMIPM and FMT parts
+    dBR = m_Node->pCNode();
+    if ( !dBR )
+        return 0;
+    
+    k = m_kin[ii].phase_number;
+    // cout << " kinetics phase " << ii << " "  << m_kin[ii].kinetic_model << "\n";
+
+    for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )
+    {
+        //     cout << "Kin debug " << in << " mol amount species " << m_xDC[in*nDC+j] << " saturation phase " << omega_phase[in*nPH+k] << " saturation species" << omega_components[in*nDC+j] << " mol fraction now" << (m_xDC[in*nDC+j]/mol_phase[in*nPH+k] )<< "\n";
+        // surface complexation species are not kinetically controlled -- 0 is old way...X is new way in DCH files
+        if ( ( dCH->ccDC[j]  == '0' ) || ( dCH->ccDC[j]  == 'X' ) || ( dCH->ccDC[j]  == 'Y' ) || ( dCH->ccDC[j]  == 'Z' ) )
+        {
+            m_dll[in * nDC + j] = 0.0; // set to zero
+            m_dul[in * nDC + j] = 1.0e+10; // very high number
+        }
+        else
+        {
+            //  cout << m_kin[ii].kinetic_model << "\n";
+            // if (in == 281)  cout << "Kin debug SS mol phase " << mol_phase[in*nPH+k] << " dmdt " << dmdt[in*nPH+k]*dt << " omega comp " <<omega_components[in*nDC+j] <<" omega phase " << omega_phase[in*nPH+k]<< "\n";
+            dummy =( mol_phase[in * nPH + k] + dmdt[in * nPH + k] * dt ) * omega_components[in * nDC + j] / omega_phase[in * nPH + k];
+            if ( (m_kin[ii].kinetic_model == 5) ||  (m_kin[ii].kinetic_model == 7)) // only for Solid solution models: rescale to change of endmember in case of Vanselow convenction or similar
+                dummy /= m_kin[ii].ss_scaling[j -m_kin[ii].dc_counter];
+            if (dummy > 1.0e10)
+                dummy = 1.0e10;
+
+            if ( !( dummy <= 1.0 ) && !( dummy > 1.0 ) )
+            {
+                // no change!
+                m_dul[in * nDC + j] = m_xDC[in * nDC + j];
+                m_dll[in * nDC + j] = m_xDC[in * nDC + j];
+            }
+            else if ( m_xDC[in * nDC + j] > dummy ) // This is the dissolution case
+            {
+                m_dul[in * nDC + j] = m_xDC[in * nDC + j];
+                m_dll[in * nDC + j] = dummy;
+            }
+            else // This is the precipitation case
+            {
+                m_dll[in * nDC + j] = m_xDC[in * nDC + j];
+                m_dul[in * nDC + j] = dummy;
+            }
+        }
+    }
+    // this is the initial guess...now we iterate in order to make sure that lower and upper limits add up to correct values?
+    
+    // scale the limits such that total mass for upper resp lower limits are preserved!
+    // as we do this not within GEMS we might run either into trouble with GEMS convergence or with rates... 
+    
+    return 1;
+
+}
+
 /** In this function we calculate the actual upper and lower metastability constraints for the GEMS solution
  *  from the phase reaction rates (calculated at the previous time step)
  */
@@ -3407,7 +3476,13 @@ int REACT_GEM::CalcLimits ( long in, TNode* m_Node)
         k = m_kin[ii].phase_number;
         // cout << " kinetics phase " << ii << " "  << m_kin[ii].kinetic_model << "\n";
         if ( m_kin[ii].kinetic_model == 33 || (m_kin[ii].kinetic_model > 0 && m_kin[ii].kinetic_model < 8) ) // do it only if kinetic model is defined take model
-
+	  
+	  if ((m_kin[ii].kinetic_model == 5) || (m_kin[ii].kinetic_model == 5))
+	  {
+	    CalcLimitsSolidSolution(in,ii,m_Node);
+	  }
+	  else //kinetics not SS
+	  {
 
             for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )
             {
@@ -3418,7 +3493,7 @@ int REACT_GEM::CalcLimits ( long in, TNode* m_Node)
                     m_dll[in * nDC + j] = 0.0; // set to zero
                     m_dul[in * nDC + j] = 1.0e+10; // very high number
                 }
-                else
+                else  
                 {
                     //  cout << m_kin[ii].kinetic_model << "\n";
                     if ( (m_kin[ii].kinetic_model == 33) ) // cement hydration kinetics
@@ -3463,6 +3538,7 @@ int REACT_GEM::CalcLimits ( long in, TNode* m_Node)
                             m_dul[in * nDC + j] = dummy;
                         }
                     }
+		} //end else for kinetics not SS
                     // do some corrections
 
                     // kinetic_model==2 or 7  only dissolution is kontrolled (NO precipitation) KG44 changed it to no precipitation

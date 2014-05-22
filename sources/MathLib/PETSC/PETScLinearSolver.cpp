@@ -230,7 +230,6 @@ void PETScLinearSolver::Solver()
    PetscGetTime(&v1);
 #endif
    
-   KSPSetOperators(lsolver, A, A, DIFFERENT_NONZERO_PATTERN); 
    KSPSolve(lsolver, b, x);
   
    KSPGetConvergedReason(lsolver,&reason); //CHKERRQ(ierr);

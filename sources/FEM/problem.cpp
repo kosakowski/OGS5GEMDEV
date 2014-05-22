@@ -260,6 +260,7 @@ Problem::Problem (char* filename) :
 	// now start initialization of GEMS
         if ( m_vec_GEM -> Init_Nodes(path) == 0)
 	{
+	        m_vec_GEM->GetReactInfoFromMassTransport(0); // get concentrations, pressure and temperature values
 		if (m_vec_GEM->Init_RUN(path) == 0)
 		{
 			m_vec_GEM->initialized_flag = 1;

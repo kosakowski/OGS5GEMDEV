@@ -18,7 +18,7 @@
 //#include <thread.hpp>
 #include "rf_pcs.h"
 // #include "rfmat_cp.h"
-#include "node.h"
+#include "GEM/node.h"
 #include "rf_mfp_new.h"
 
 #if defined(USE_PETSC)
@@ -113,6 +113,7 @@ public:
     double *dmdt;                               // kinetically controlled rates
     int CalcLimits ( long in, TNode* m_Node);
     int CalcLimitsInitial ( long in, TNode* m_Node);
+    int CalcLimitsSolidSolution ( long in, long ii,TNode* m_Node);
     double CementHydrationKinetics (double oldvalue,  long kin_phasenr, double dt ); // calculates cement hydration kinetics according ot Lothenbach and Wieland (2008=
     int *m_boundary;                            //holds marker for boundary nodes
     double max_kinetic_timestep;               // variable used for limiting time step
