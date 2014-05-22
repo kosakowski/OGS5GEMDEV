@@ -1463,13 +1463,19 @@ double CElem::calcVolume () const
 {
 	double elemVolume = 0.0;
 	
-        MeshLib::CFEMesh* m_msh = fem_msh_vector[0]; //SB: ToDo hart gesetzt
+	// KG44 emergency bugfix....this does not work with PETSC!	  
+#ifndef USE_PETSC
+              MeshLib::CFEMesh* m_msh = fem_msh_vector[0]; //SB: ToDo hart gesetzt
+#endif
 	
 	if (this->geo_type == MshElemType::LINE)                // Line
 	{
+// KG44 emergency bugfix....this does not work with PETSC!
+#ifndef USE_PETSC	  
 	      if (m_msh->isAxisymmetry() == true)
                     elemVolume = ComputeAxissymmetricLineVolume(nodes[0]->getData(),nodes[1]->getData());
 	      else 
+#endif		
 	      {
 		double const* const pnt0 (nodes[0]->getData());
 		double const* const pnt (nodes[nnodes - 1]->getData());
@@ -1480,19 +1486,27 @@ double CElem::calcVolume () const
 	      }
 	}
 	else if (this->geo_type == MshElemType::TRIANGLE)
+// KG44 emergency bugfix....this does not work with PETSC!	  
+#ifndef USE_PETSC	  
 	             //05/2014 BG added correct volume calculation for 2D axialsymmetric elements
              if (m_msh->isAxisymmetry() == true)
                     elemVolume = ComputeAxissymmetricTriangleVolume(nodes[0]->getData(),
                            nodes[1]->getData(), nodes[2]->getData());
              else
-		     elemVolume = ComputeDetTri(nodes[0]->getData(),
+#endif
+	     {
+	       elemVolume = ComputeDetTri(nodes[0]->getData(),
 		                           nodes[1]->getData(), nodes[2]->getData());                //kg44 reactivated
+	     }	       
 	else if (this->geo_type == MshElemType::QUAD)
 	               //05/2014 BG added correct volume calculation for 2D axialsymmetric elements
+// KG44 emergency bugfix....this does not work with PETSC!	  
+#ifndef USE_PETSC	  
              if (m_msh->isAxisymmetry())
                     elemVolume = ComputeAxissymmetricQuadVolume(nodes[0]->getData(),
                            nodes[1]->getData(), nodes[2]->getData(), nodes[3]->getData());
              else
+#endif	       
 		elemVolume = ComputeDetTri(nodes[0]->getData(),
 		                           nodes[1]->getData(), nodes[2]->getData())
 		             + ComputeDetTri(nodes[2]->getData(),

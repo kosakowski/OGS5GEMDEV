@@ -437,7 +437,14 @@ bool CFEMesh::Read(std::ifstream* fem_file)
 		else if (line_string.find("$LAYER") != std::string::npos)
 			*fem_file >> _n_msh_layer >> std::ws;
 	}
+#if defined(USE_PETSC)	
 
+  if (_axisymmetry == true) 
+    {
+      std::cerr << "KG May 2014: DANGER! AXISYMMETRIC MESHES do not work for PETSC parallelised version... CElem::calcVolume () needs modifications \n";
+    }
+  
+#endif	
 	return more_mesh;
 }
 
