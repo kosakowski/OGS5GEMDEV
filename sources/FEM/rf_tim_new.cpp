@@ -1268,6 +1268,7 @@ double CTimeDiscretization::SelfAdaptiveTimeControl ( void )
 					imflag = 0;
 					std::cout <<
 					"failed: Self adaptive time step: to many iterations for Groundwater/LIQUID flow"
+					<< m_pcs->iter_lin << " " << time_adapt_tim_vector[1] 
 					          << "\n";
 						//  exit(1); // debug to find bug in flow field
 				}

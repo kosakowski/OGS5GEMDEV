@@ -37,7 +37,7 @@ public:
 
   void Init(const int *sparse_index = NULL);
   
-    void Solver();
+    int Solver();
     void AssembleRHS_PETSc();
     void AssembleUnkowns_PETSc();
     void AssembleMatrixPETSc(const MatAssemblyType type = MAT_FINAL_ASSEMBLY); //MAT_FLUSH_ASSEMBLY

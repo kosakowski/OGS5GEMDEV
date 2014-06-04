@@ -4650,7 +4650,7 @@ double CRFProcess::Execute()
 	//----------------------------------------------------------------------
 	// Execute linear solver
 #if defined(USE_PETSC) // || defined(other parallel libs)//03.3012. WW
-		eqs_new->Solver();
+	        iter_lin = eqs_new->Solver();
 		//TEST 	double x_norm = eqs_new->GetVecNormX();
 		eqs_new->MappingSolution();
 #elif defined(NEW_EQS)                                 //WW

@@ -3,7 +3,7 @@
    Task:
    Programing:
    08/2005 WW/OK Encapsulation from rf_ele_msh
-   last modified
+   last modified 
 **************************************************************************/
 
 #include "mathlib.h"
@@ -12,8 +12,6 @@
 #include <float.h>                                //WW
 // MSHLib
 //WW#include "MSHEnums.h" // KR 2010/11/15
-#include "msh_mesh.h"
-#include "msh_lib.h"
 #include "msh_elem.h"
 
 namespace MeshLib
@@ -1462,51 +1460,20 @@ void CElem::ComputeVolume()
 double CElem::calcVolume () const
 {
 	double elemVolume = 0.0;
-	
-	// KG44 emergency bugfix....this does not work with PETSC!	  
-#ifndef USE_PETSC
-              MeshLib::CFEMesh* m_msh = fem_msh_vector[0]; //SB: ToDo hart gesetzt
-#endif
-	
+
 	if (this->geo_type == MshElemType::LINE)                // Line
 	{
-// KG44 emergency bugfix....this does not work with PETSC!
-#ifndef USE_PETSC	  
-	      if (m_msh->isAxisymmetry() == true)
-                    elemVolume = ComputeAxissymmetricLineVolume(nodes[0]->getData(),nodes[1]->getData());
-	      else 
-#endif		
-	      {
 		double const* const pnt0 (nodes[0]->getData());
 		double const* const pnt (nodes[nnodes - 1]->getData());
 		double xDiff = pnt[0] - pnt0[0];
 		double yDiff = pnt[1] - pnt0[1];
 		double zDiff = pnt[2] - pnt0[2];
 		elemVolume = sqrt(xDiff * xDiff + yDiff * yDiff + zDiff * zDiff); //CMCD kg44 reactivated
-	      }
 	}
 	else if (this->geo_type == MshElemType::TRIANGLE)
-// KG44 emergency bugfix....this does not work with PETSC!	  
-#ifndef USE_PETSC	  
-	             //05/2014 BG added correct volume calculation for 2D axialsymmetric elements
-             if (m_msh->isAxisymmetry() == true)
-                    elemVolume = ComputeAxissymmetricTriangleVolume(nodes[0]->getData(),
-                           nodes[1]->getData(), nodes[2]->getData());
-             else
-#endif
-	     {
-	       elemVolume = ComputeDetTri(nodes[0]->getData(),
+		elemVolume = ComputeDetTri(nodes[0]->getData(),
 		                           nodes[1]->getData(), nodes[2]->getData());                //kg44 reactivated
-	     }	       
 	else if (this->geo_type == MshElemType::QUAD)
-	               //05/2014 BG added correct volume calculation for 2D axialsymmetric elements
-// KG44 emergency bugfix....this does not work with PETSC!	  
-#ifndef USE_PETSC	  
-             if (m_msh->isAxisymmetry())
-                    elemVolume = ComputeAxissymmetricQuadVolume(nodes[0]->getData(),
-                           nodes[1]->getData(), nodes[2]->getData(), nodes[3]->getData());
-             else
-#endif	       
 		elemVolume = ComputeDetTri(nodes[0]->getData(),
 		                           nodes[1]->getData(), nodes[2]->getData())
 		             + ComputeDetTri(nodes[2]->getData(),

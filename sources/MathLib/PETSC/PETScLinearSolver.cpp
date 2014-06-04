@@ -200,7 +200,7 @@ void  PETScLinearSolver::getOwnerRange(int *start_r, int *end_r)
   *end_r = i_end;
 }
 
-void PETScLinearSolver::Solver()
+int PETScLinearSolver::Solver()
 {
   
    //TEST
@@ -302,6 +302,7 @@ void PETScLinearSolver::Solver()
    PetscMemoryGetCurrentUsage(&mem2);
    PetscPrintf(PETSC_COMM_WORLD, "###Memory usage by solver. Before :%f After:%f Increase:%d\n", mem1, mem2, (int)(mem2 - mem1));
 #endif
+   return (int)its;
 }
 
   void PETScLinearSolver::AssembleRHS_PETSc()

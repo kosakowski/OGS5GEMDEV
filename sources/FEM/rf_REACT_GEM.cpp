@@ -2424,9 +2424,9 @@ int REACT_GEM::ConcentrationToMass ( long l /*idx of node*/, int i_timestep )
 
 			m_bIC[i] += m_soluteB[i];    //updated B vector for GEMS
 			// here we check again if the vector if negative or smaller than a minimum amount...if yes we add some stuff....
-			// adding 10-6 Mol/m^3 should be save, as this corresponds aprox to 10-9 Mol/kg ..which is well above the accuracy for most calculations
-			if ( m_bIC[i] <= 1.0e-8 )
-				m_bIC[i] = 1e-6;
+			// adding 10-9 Mol/m^3 should be save, as this corresponds aprox to 10-12 Mol/l ..accuracy is in any case not better than 1e-12 - 1e-14 for a system of 1kg...
+			if ( m_bIC[i] <= 1.0e-9 )
+				m_bIC[i] = 1e-9;
 			//                        cout <<  " i " << i << " " << m_bIC[i] << "\n";
 		}
 	else if ( flowflag == 3 ) // Richards flow
@@ -2464,9 +2464,9 @@ int REACT_GEM::ConcentrationToMass ( long l /*idx of node*/, int i_timestep )
 			m_bIC[i] += ( m_soluteB[i]);   //updated B vector for GEMS ....no correction in gas phase for Richards flow!
 
 			// here we check again if the vector if negative or smaller than a minimum amount...if yes we add some stuff....
-			// adding 10-6 Mol/m^3 should be save, as this corresponds aprox to 10-9 Mol/kg ..which is well above the accuracy for most calculations
-			if ( m_bIC[i] <= 1.0e-8 )
-				m_bIC[i] = 1e-6;
+			// adding 10-9 Mol/m^3 should be save, as this corresponds aprox to 10-12 Mol/l ..accuracy is in any case not better than 1e-12 - 1e-14 for a system of 1kg...
+			if ( m_bIC[i] <= 1.0e-9 )
+				m_bIC[i] = 1e-9;
 		}
 	}
 	return 1;
