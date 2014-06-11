@@ -35,7 +35,6 @@
 #include "m_param.h"
 #include "jama_lu.h"
 #include "jama_cholesky.h"
-#include "jama_svd.h"
 using namespace TNT;
 using namespace JAMA;
 
