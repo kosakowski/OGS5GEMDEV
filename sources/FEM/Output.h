@@ -103,9 +103,6 @@ public:
 
 	void Write(std::fstream*);
 
-#if defined(USE_PETSC) || defined(USE_MPI) //|| defined(other parallel libs)//03.3012. WW
-    void setMPI_Info(const int rank, const int size, std::string rank_str);
-#endif
 	// TF not used (at the moment?) REMOVE CANDIDATE
 	//    int GetPointClose(CGLPoint);
 	void WriteTimeCurveData(std::fstream &);
@@ -146,6 +143,15 @@ public:
 	void NODWriteWaterBalancePNT(double);	// 6/2012 JOD
 	void NODWritePointsCombined(double);	// 6/2012 JOD
 	void CalculateThroughflow(MeshLib::CFEMesh*, std::vector<long>&, std::vector<double>&);	// 6/2012 JOD
+      
+    //------------------------------------------------------
+#if defined(USE_PETSC) || defined(USE_MPI) //|| defined(other parallel libs)//03.3012. WW
+	void setMPI_Info(const int rank, const int size, std::string rank_str);
+	/// Head for binary output for parallel computing. 01.2014. WW 
+	void NODDomainWriteBinary_Header();
+	/// Binary output for parallel computing. 01.2014. WW
+	void NODDomainWriteBinary();
+#endif
 
 	void setTime (double time) { _time = time; }
 	/**
@@ -235,9 +241,16 @@ private:
 	bool tecplot_zone_share; // 10.2012. WW
 
 #if defined(USE_PETSC) || defined(USE_MPI) //|| defined(other parallel libs)//03.3012. WW
-    int mrank;
-    int msize;
-    std::string mrank_str;
+	int mrank;
+	int msize;
+	std::string mrank_str;
+
+	int int_disp;
+	MPI_Offset offset;
+
+	unsigned domain_output_counter; // WW 04.2014 
+
+	void setDataArrayDisp();    
 #endif
 };
 #endif // OUTPUT_H

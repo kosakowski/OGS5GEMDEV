@@ -191,6 +191,7 @@ const std::list<std::string> getAllPrimaryVariableNames();
 	PRECIPITATION,
 	SYSTEM_DEPENDENT,                     // ST
 	TRANSFER_SURROUNDING,
+	NODESCONSTANT,                        // IC (for DOMAIN keyword)
 	CLIMATE,	// climate data (by NB)
 	// Sort of Neumann BC //WW
 	// make sure that this is always the last entry (important for iterating over the enum entries)!
@@ -268,5 +269,26 @@ SolidReactiveSystem convertSolidReactiveSystem( const std::string& reactive_stri
 std::string convertSolidReactiveSystemToString(SolidReactiveSystem reactive_system);
 
 } // end namespace FiniteElement
+
+struct TimeControlType
+{
+	enum type
+	{
+		INVALID,
+		FIXED_STEPS,
+		PI_AUTO_STEP_SIZE,
+		DYNAMIC_VARIABLE,
+		DYNAMIC_COURANT,
+		DYNAMIC_PRESSURE,
+		STEP_SIZE_RESTRICTION,
+		NEUMANN,
+		ERROR_CONTROL_ADAPTIVE,
+		SELF_ADAPTIVE
+	};
+};
+
+TimeControlType::type convertTimeControlType(const std::string &str);
+
+std::string convertTimeControlTypeToString(TimeControlType::type st_type);
 
 #endif                                            //FEMENUMS_H

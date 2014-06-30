@@ -54,7 +54,8 @@ public:
 	int* rt_BRNS;
 
 #ifdef GCC
-	void* hDll, * hDll_1, * hDll_2;
+	void* hDll;
+//	void* hDll, * hDll_1, * hDll_2;
 	typedef void (*LPFNDLLFUNC)(double*, double*, double*, int*, double*, int*, int*, double*,
 	                            double*, double*, double*, double*, double*);
 	LPFNDLLFUNC invokebrns;

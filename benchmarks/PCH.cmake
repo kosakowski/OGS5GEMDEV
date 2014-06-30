@@ -39,8 +39,8 @@ ADD_BENCHMARK ("CHP_LONG" DENSITY-DEPENDENT_FLOW/Elder/elder "OGS_FEM" 1
 ADD_BENCHMARK ("CHP" MULTIPHASE/KueperProblem-PS/kueper "OGS_FEM_LIS" 1
 	MULTIPHASE/KueperProblem-PS/kueper_5.vtu)
 
-ADD_BENCHMARK ("CHP" MULTIPHASE/BuckleyLeverett/h2_line "OGS_FEM_MKL" 1
-	MULTIPHASE/BuckleyLeverett/h2_line_80.vtk)
+ADD_BENCHMARK ("CHP" MULTIPHASE/BuckleyLeverett/h2_line "OGS_FEM_LIS" 1
+	MULTIPHASE/BuckleyLeverett/h2_line0080.vtk)
 
 ADD_BENCHMARK ("CHP" MULTIPHASE/McWhorterProblem/h2_line "OGS_FEM_MKL" 1
-	MULTIPHASE/McWhorterProblem/h2_line_87.vtu)
+	MULTIPHASE/McWhorterProblem/h2_line_167.vtu)

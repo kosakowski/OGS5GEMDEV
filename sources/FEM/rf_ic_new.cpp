@@ -66,7 +66,13 @@ CInitialCondition::CInitialCondition(const InitialCondition* ic)
 	const std::vector<double> dis_values = ic->getDisValues();
 
 	if (this->getProcessDistributionType() == FiniteElement::CONSTANT)
+		this->geo_node_value = dis_values[0];
+	else if (this->getProcessDistributionType() == FiniteElement::NODESCONSTANT)
 	{
+		this->setGeoType(GEOLIB::GEODOMAIN);
+		this->setGeoObj(NULL);
+		this->geo_name = "";
+		this->setProcessDistributionType(FiniteElement::CONSTANT);
 		this->geo_node_value = dis_values[0];
 	}
 	else
@@ -442,14 +448,13 @@ void CInitialCondition::Write(fstream* ic_file) const
 	//--------------------------------------------------------------------
 	//GEO_TYPE
 	*ic_file << " $GEO_TYPE" << "\n";
-	*ic_file << "  " << getGeoTypeAsString() <<
-	" CInitialCondition::Write ToDo write name of GeoObject " << "\n";
+	*ic_file << "  " << getGeoTypeAsString() << this->geo_name << "\n";
 
 	//--------------------------------------------------------------------
 	//DIS_TYPE
 	*ic_file << " $DIS_TYPE" << "\n";
 	*ic_file << "  ";
-	*ic_file << convertDisTypeToString(this->getProcessDistributionType()) << "\n";
+	*ic_file << convertDisTypeToString(this->getProcessDistributionType()) << " ";
 	*ic_file << " ";
 	if (this->getProcessDistributionType() == FiniteElement::CONSTANT)
 		/* KR

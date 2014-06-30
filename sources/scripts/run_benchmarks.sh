@@ -47,7 +47,7 @@ fi
 # Run FEM benchmarks
 cd $BUILD_LOCATION/build_fem
 if  [ $RUN_EXCEEDING ]; then
-	ctest -R 'EXCEED' -E 'JOD|Tests|FILE' -j $NUM_PROCESSORS
+	ctest -R 'EXCEED' -E 'JOD|Tests|FILE' --output-on-failure -j $NUM_PROCESSORS
 	if [ "${?}" -ne "0" ] ; then
 		returncode=1
 	fi
@@ -57,7 +57,7 @@ if  [ $RUN_EXCEEDING ]; then
 	fi
 
 	cd $BUILD_LOCATION/build_brns
-	ctest -R 'EXCEED' -E 'Tests|FILE' -j $NUM_PROCESSORS
+	ctest -R 'EXCEED' -E 'Tests|FILE' --output-on-failure -j $NUM_PROCESSORS
 	if [ "${?}" -ne "0" ] ; then
 		returncode=1
 	fi
@@ -67,7 +67,7 @@ if  [ $RUN_EXCEEDING ]; then
 	fi
 
 	cd $BUILD_LOCATION/build_pqc
-	ctest -R 'EXCEED' -E 'Tests|FILE' -j $NUM_PROCESSORS
+	ctest -R 'EXCEED' -E 'Tests|FILE' --output-on-failure -j $NUM_PROCESSORS
 	if [ "${?}" -ne "0" ] ; then
 		returncode=1
 	fi
@@ -77,7 +77,7 @@ if  [ $RUN_EXCEEDING ]; then
 	fi
 
 	cd $BUILD_LOCATION/build_gems
-	ctest -R 'EXCEED' -E 'Tests|FILE' -j $NUM_PROCESSORS
+	ctest -R 'EXCEED' -E 'Tests|FILE' --output-on-failure -j $NUM_PROCESSORS
 	if [ "${?}" -ne "0" ] ; then
 		returncode=1
 	fi
@@ -87,7 +87,7 @@ if  [ $RUN_EXCEEDING ]; then
 	fi
 
 	cd $BUILD_LOCATION/build_petsc
-	ctest -R 'EXCEED' -E 'Tests|FILE' -j $NUM_PROCESSORS
+	ctest -R 'EXCEED' -E 'Tests|FILE' --output-on-failure -j $NUM_PROCESSORS
 	if [ "${?}" -ne "0" ] ; then
 		returncode=1
 	fi
@@ -97,7 +97,7 @@ if  [ $RUN_EXCEEDING ]; then
 	fi
 
 	cd $BUILD_LOCATION/build_petsc_gems
-	ctest -R 'EXCEED' -E 'Tests|FILE' -j $NUM_PROCESSORS
+	ctest -R 'EXCEED' -E 'Tests|FILE' --output-on-failure -j $NUM_PROCESSORS
 	if [ "${?}" -ne "0" ] ; then
 		returncode=1
 	fi
@@ -110,31 +110,39 @@ else
 	# Don´t abort on errors
 	set +e >/dev/null
 
-	ctest -E 'Tests|FILE|EXCEED' -j $NUM_PROCESSORS > ../benchOut.txt
+	ctest -E 'Tests|FILE|EXCEED' --output-on-failure -j $NUM_PROCESSORS > ../benchOut.txt
 	ctest -R 'FILECOMPARE' -E 'EXCEED' >> ../benchOut.txt
 
 	cd $BUILD_LOCATION/build_brns
-	ctest -E 'FILE|EXCEED|Tests' -j $NUM_PROCESSORS >> ../benchOut.txt
+	ctest -E 'FILE|EXCEED|Tests' --output-on-failure -j $NUM_PROCESSORS >> ../benchOut.txt
 	ctest -R 'FILECOMPARE' -E 'EXCEED' >> ../benchOut.txt
 
 	cd $BUILD_LOCATION/build_pqc
-	ctest -E 'FILE|EXCEED|Tests' -j $NUM_PROCESSORS >> ../benchOut.txt
+	ctest -E 'FILE|EXCEED|Tests' --output-on-failure -j $NUM_PROCESSORS >> ../benchOut.txt
 	ctest -R 'FILECOMPARE' -E 'EXCEED' >> ../benchOut.txt
 
 	cd $BUILD_LOCATION/build_gems
-	ctest -E 'FILE|EXCEED|Tests' -j $NUM_PROCESSORS >> ../benchOut.txt
+	ctest -E 'FILE|EXCEED|Tests' --output-on-failure -j $NUM_PROCESSORS >> ../benchOut.txt
 	ctest -R 'FILECOMPARE' -E 'EXCEED' >> ../benchOut.txt
 
 	cd $BUILD_LOCATION/build_petsc
-	ctest -E 'FILE|EXCEED|Tests' -j $NUM_PROCESSORS >> ../benchOut.txt
+	ctest -E 'FILE|EXCEED|Tests' --output-on-failure -j $NUM_PROCESSORS >> ../benchOut.txt
 	ctest -R 'FILECOMPARE' -E 'EXCEED' >> ../benchOut.txt
 
 	cd $BUILD_LOCATION/build_petsc_gems
-	ctest -VV -E 'FILE|EXCEED|Tests' -j $NUM_PROCESSORS >> ../benchOut.txt
+	ctest -E 'FILE|EXCEED|Tests' --output-on-failure -j $NUM_PROCESSORS >> ../benchOut.txt
 	ctest -R 'FILECOMPARE' -E 'EXCEED' >> ../benchOut.txt
 
 	cd $BUILD_LOCATION/build_mpi
-	ctest -E 'FILE|EXCEED|Tests' -j $NUM_PROCESSORS >> ../benchOut.txt
+	ctest -E 'FILE|EXCEED|Tests' --output-on-failure -j $NUM_PROCESSORS >> ../benchOut.txt
+	ctest -R 'FILECOMPARE' -E 'EXCEED' >> ../benchOut.txt
+
+	cd $BUILD_LOCATION/build_lis
+	ctest -E 'FILE|EXCEED|Tests' --output-on-failure -j $NUM_PROCESSORS >> ../benchOut.txt
+	ctest -R 'FILECOMPARE' -E 'EXCEED' >> ../benchOut.txt
+
+	cd $BUILD_LOCATION/build_mkl
+	ctest -E 'FILE|EXCEED|Tests' --output-on-failure -j $NUM_PROCESSORS >> ../benchOut.txt
 	ctest -R 'FILECOMPARE' -E 'EXCEED' >> ../benchOut.txt
 
 	# Print results

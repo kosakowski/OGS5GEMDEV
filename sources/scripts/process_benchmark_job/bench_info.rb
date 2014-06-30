@@ -2,8 +2,8 @@ require 'rubygems'
 require 'sequel'
 require 'time'
 #require 'database.rb'
-require 'ogs_author_mapping.rb'
-require 'commit_info.rb'
+require './ogs_author_mapping.rb'
+require './commit_info.rb'
 
 $DB.create_table? :benchmark_runs do
   primary_key :id

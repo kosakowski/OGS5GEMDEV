@@ -28,7 +28,7 @@ namespace Math_Group
 // Constructors
 Matrix::Matrix(size_t rows, size_t cols) :
 	nrows (rows), nrows0 (rows), ncols (cols), ncols0 (cols),
-	size (nrows * ncols), data (new double[size]), Sym (false)
+	size (nrows * ncols), data (new double[size])
 {
 	for(size_t i = 0; i < size; i++)
 		data[i] = 0.0;
@@ -36,12 +36,12 @@ Matrix::Matrix(size_t rows, size_t cols) :
 
 Matrix::Matrix() :
 	nrows (0), nrows0 (0), ncols (0), ncols0 (0),
-	size (nrows * ncols), data (NULL), Sym (false)
+	size (nrows * ncols), data (NULL)
 {}
 
 Matrix::Matrix(const Matrix& m) :
 	nrows (m.nrows), nrows0 (m.nrows), ncols (m.ncols), ncols0 (m.ncols),
-	size (nrows * ncols), data (new double[size]), Sym (m.Sym)
+	size (nrows * ncols), data (new double[size])
 {
 	for(size_t i = 0; i < size; i++)
 		data[i] = m.data[i];
@@ -55,7 +55,6 @@ void Matrix::resize(size_t rows, size_t cols)
 		data = NULL;
 	}
 
-	Sym = false;
 	nrows = rows;
 	ncols = cols;
 	nrows0 = rows;
@@ -71,6 +70,7 @@ Matrix::~Matrix()
 	delete [] data;
 	data = NULL;
 }
+
 // 06.2010. WW
 void Matrix::ReleaseMemory()
 {
@@ -78,70 +78,28 @@ void Matrix::ReleaseMemory()
 	data = NULL;
 }
 
-void Matrix::operator= (double a)
+/*
+void Matrix::operator= (const SymMatrix& m)
 {
-	for(size_t i = 0; i < size; i++)
-		data[i] = a;
-}
-void Matrix::operator *= (double a)
-{
-	for(size_t i = 0; i < size; i++)
-		data[i] *= a;
-}
-void Matrix::operator /= (double a)
-{
-	for(size_t i = 0; i < size; i++)
-		data[i] /= a;
-}
-void Matrix::operator += (double a)
-{
-	for(size_t i = 0; i < size; i++)
-		data[i] += a;
-}
-//
-void Matrix::operator = (const Matrix& m)
-{
-#ifdef gDEBUG
-	if(nrows != m.Rows() || ncols != m.Cols())
-	{
-		std::cout << "\n The sizes of the two matrices are not matched" << "\n";
-		abort();
-	}
-#endif
-	for(size_t i = 0; i < nrows; i++)
-		for(size_t j = 0; j < ncols; j++)
-			data[i * ncols + j] = m(i,j);
-}
+    const double *m_data = m.getEntryArray_const();
 
-//
-void Matrix::operator += (const Matrix& m)
-{
-#ifdef gDEBUG
-	if(nrows != m.Rows() || ncols != m.Cols())
-	{
-		std::cout << "\n The sizes of the two matrices are not matched" << "\n";
-		abort();
-	}
-#endif
-	for(size_t i = 0; i < nrows; i++)
-		for(size_t j = 0; j < ncols; j++)
-			data[i * ncols + j] += m(i,j);
-}
+    for(size_t i = 0; i < nrows; i++)
+    {
+        double *row_data = &data[i * ncols] ;
+        const double *row_data_m = &data[(i * (i + 1) / 2)] ;
+           
+        // diagonal 
+        row_data[i] = row_data_m[i];
 
-//
-void Matrix::operator -= (const Matrix& m)
-{
-#ifdef gDEBUG
-	if(nrows != m.Rows() || ncols != m.Cols()) //Assertion, will be removed
-	{
-		std::cout << "\n The sizes of the two matrices are not matched" << "\n";
-		abort();
-	}
-#endif
-	for(size_t i = 0; i < nrows; i++)
-		for(size_t j = 0; j < ncols; j++)
-			data[i * ncols + j] -= m(i,j);
+        for(size_t j = 0; j<ncols; j++)
+        {
+           row_data[j] = row_data_m[j];
+           data[j*ncols + i] = row_data_m[j];
+        }
+    }
 }
+*/
+
 //
 void Matrix::GetTranspose(Matrix& m)
 {
@@ -153,12 +111,19 @@ void Matrix::GetTranspose(Matrix& m)
 	}
 #endif
 
-	for(size_t i = 0; i < m.Rows(); i++)
-		for(size_t j = 0; j < m.Cols(); j++)
-			//          m(i,j) = data[j*ncols+i];
-			m(i,j) = (*this)(j,i);
+    double *m_data = m.getEntryArray();
+    const size_t mrows = m.Rows();
+    const size_t mcols = m.Cols();
+    for(size_t i = 0; i < mrows; i++)
+    {
+        double *row_m_data = &m_data[i * mcols] ;
+        for(size_t j = 0; j < mcols; j++)
+        {
+            row_m_data[j] = data[j*ncols+i];
+        }
+    }
 }
-//
+
 // m_results = this*m. m_results must be initialized
 void Matrix::multi(const Matrix& m, Matrix& m_result, double fac)
 {
@@ -169,16 +134,28 @@ void Matrix::multi(const Matrix& m, Matrix& m_result, double fac)
 		abort();
 	}
 #endif
-	for(size_t i = 0; i < m_result.Rows(); i++)
-		for(size_t j = 0; j < m_result.Cols(); j++)
-		{
-			if(Sym && (j > i))
-				continue;
-			// m_result(i,j) = 0.0;
-			for(size_t k = 0; k < ncols; k++)
-				//            m_result(i,j) += fac*data[i*ncols+k]*m(k,j);
-				m_result(i,j) += fac * (*this)(i,k) * m(k,j);
-		}
+   const double *m_data = m.getEntryArray_const();
+    const size_t mrows = m.Rows();
+    const size_t mcols = m.Cols();
+    double *r_data = m_result.getEntryArray();
+    const size_t r_rows = m_result.Rows();
+    const size_t r_cols = m_result.Cols();
+
+    for(size_t i = 0; i < r_rows; i++)
+    {
+        const double *row_data = &data[i * ncols] ;
+        double *r_row_data = &r_data[i * r_cols] ;
+        for(size_t j = 0; j < r_cols; j++)
+        {
+            // r_row_data[j] = 0.0;
+            double val = 0.;
+            for(size_t k = 0; k < ncols; k++)
+            {
+                val += row_data[k] * m_data[k*mcols + j];
+            }
+            r_row_data[j] += val * fac;
+        }
+    }
 }
 
 //
@@ -196,8 +173,6 @@ void Matrix::multi(const Matrix& m1, const Matrix& m2, Matrix& m_result)
 	for(size_t i = 0; i < m_result.Rows(); i++)
 		for(size_t j = 0; j < m_result.Cols(); j++)
 		{
-			if(Sym && (j > i))
-				continue;
 			//m_result(i,j) = 0.0;
 			for(size_t k = 0; k < ncols; k++)
 				for(size_t l = 0; l < m2.Rows(); l++)
@@ -208,9 +183,16 @@ void Matrix::multi(const Matrix& m1, const Matrix& m2, Matrix& m_result)
 // vec_result = This*vec. vec_result must be  initialized
 void Matrix::multi(const double* vec, double* vec_result, double fac)
 {
-	for(int i = 0; (size_t)i < nrows; i++)
-		for(int j = 0; (size_t)j < ncols; j++)
-			vec_result[i] += fac * (*this)(i,j) * vec[j];
+    for(size_t  i = 0; i < nrows; i++)
+    {
+        double val = 0.; 
+        const double *row_data = &data[i * ncols] ;
+        for(size_t j = 0; j < ncols; j++)
+        {
+            val += row_data[j] * vec[j];
+        }
+        vec_result[i] += fac * val;
+    }
 }
 
 double& Matrix::operator() (size_t i, size_t j) const
@@ -286,9 +268,8 @@ void Matrix::Read_BIN(std::fstream& is)
 //-----------------------------------------------------
 // Symmetrical matrix
 SymMatrix::SymMatrix(size_t dim) :
-	Matrix(0)
+	Matrix()
 {
-	Sym = true;
 	nrows = ncols = dim;
 	size = (int)nrows * (nrows + 1) / 2;
 	data = new double[size];
@@ -297,19 +278,8 @@ SymMatrix::SymMatrix(size_t dim) :
 		data[i] = 0.0;
 }
 
-SymMatrix::SymMatrix() : Matrix(0)
+SymMatrix::SymMatrix(const SymMatrix& m) : Matrix()
 {
-	Sym = true;
-	nrows = 0;
-	ncols = 0;
-	nrows0 = 0;
-	ncols0 = 0;
-	size = 0;
-	data = 0;
-}
-SymMatrix::SymMatrix(const SymMatrix& m) : Matrix(0)
-{
-	Sym = m.Sym;
 	nrows = m.nrows;
 	ncols = m.ncols;
 	nrows0 = m.nrows0;
@@ -317,7 +287,7 @@ SymMatrix::SymMatrix(const SymMatrix& m) : Matrix(0)
 	size = m.size;
 	data = new double[size];
 	for(size_t i = 0; i < size; i++)
-		data[i] = 0.0;
+		data[i] = m.data[i];
 }
 
 void SymMatrix::resize(size_t dim)
@@ -328,7 +298,6 @@ void SymMatrix::resize(size_t dim)
 		data = NULL;
 	}
 
-	Sym = true;
 	nrows = ncols = dim;
 	size = (int) nrows * (nrows + 1) / 2;
 	data = new double[size];
@@ -337,101 +306,7 @@ void SymMatrix::resize(size_t dim)
 		data[i] = 0.0;
 }
 
-void SymMatrix::operator = (double a)
-{
-	for(size_t i = 0; i < size; i++)
-		data[i] = a;
-}
-void SymMatrix::operator *= (double a)
-{
-	for(size_t i = 0; i < size; i++)
-		data[i] *= a;
-}
-void SymMatrix::operator += (double a)
-{
-	for(size_t i = 0; i < size; i++)
-		data[i] += a;
-}
-
 //
-void SymMatrix::operator = (const SymMatrix& m)
-{
-#ifdef gDEBUG
-	if(nrows != m.Rows() || ncols != m.Cols())
-	{
-		std::cout << "\n The sizes of the two matrices are not matched" << "\n";
-		abort();
-	}
-#endif
-	size_t id = 0;
-	for (size_t i = 0; i < nrows; i++)
-		for (size_t j = 0; j < ncols; j++)
-		{
-			if (j > i)
-				continue;
-			id = i * (i + 1) / 2 + j; // temporary
-			data[id] = m(i, j);
-		}
-}
-
-//
-void SymMatrix::operator += (const SymMatrix& m)
-{
-#ifdef gDEBUG
-	if(nrows != m.Rows())
-	{
-		std::cout << "\n The sizes of the two matrices are not matched" << "\n";
-		abort();
-	}
-#endif
-	size_t id = 0;
-	for (size_t i = 0; i < nrows; i++)
-		for (size_t j = 0; j < ncols; j++)
-		{
-			if (j > i)
-				continue;
-			id = i * (i + 1) / 2 + j; // temporary
-			data[id] += m(i, j);
-		}
-}
-
-//
-void SymMatrix::operator -= (const SymMatrix& m)
-{
-#ifdef gDEBUG
-	if(nrows != m.Rows())                 //Assertion, will be removed
-	{
-		std::cout << "\n The sizes of the two matrices are not matched" << "\n";
-		abort();
-	}
-#endif
-	size_t id = 0;
-	for (size_t i = 0; i < nrows; i++)
-		for (size_t j = 0; j < ncols; j++)
-		{
-			if (j > i)
-				continue;
-			id = i * (i + 1) / 2 + j; // temporary
-			data[id] -= m(i, j);
-		}
-}
-//
-double& SymMatrix::operator() (size_t i, size_t j) const
-{
-#ifdef gDEBUG
-	if(i >= nrows || j >= nrows)
-	{
-		std::cout << "\n Index exceeds the size of the matrix" << "\n";
-		abort();
-	}
-#endif
-
-	if(i >= j)
-		return data[i * (i + 1) / 2 + j];
-	else
-		return data[j * (j + 1) / 2 + i];
-}
-
 void SymMatrix::LimitSize(size_t dim)
 {
 #ifdef gDEBUG
@@ -445,11 +320,103 @@ void SymMatrix::LimitSize(size_t dim)
 	size = nrows * (nrows + 1) / 2;
 }
 
+// m_results = this*m. m_results must be initialized
+void SymMatrix::multi(const Matrix& m, Matrix& m_result, double fac)
+{
+#ifdef gDEBUG
+	if(ncols != m.Rows() && nrows != m_result.Rows() && m.Cols() != m_result.Cols())
+	{
+		std::cout << "\n The sizes of the two matrices are not matched" << "\n";
+		abort();
+	}
+#endif
+    const size_t mrows = m.Rows();
+    const size_t mcols = m.Cols();
+    double *r_data = m_result.getEntryArray();
+    const size_t r_rows = m_result.Rows();
+    const size_t r_cols = m_result.Cols();
+
+    for(size_t i = 0; i < r_rows; i++)
+    {
+        const double *row_data = &data[(i * (i + 1) / 2)] ;
+        double *row_data_r = &r_data[i * r_cols] ;
+
+        for(size_t j = 0; j<r_cols; j++)
+        {
+            // row_data_r[j] = 0.0;
+            double val = 0.;
+            for(size_t k = 0; k <= i; k++)
+            {
+                val += row_data[k] * m(k,j);
+            }
+            for(size_t k = i+1; k < ncols; k++)
+            {
+                val += data[(k * (k + 1) / 2) + i] * m(k,j);
+            }
+            row_data_r[j] += val * fac;
+        }
+    }
+}
+
+//
+// m_results = this*m1*m2. m_results must be  initialized
+void SymMatrix::multi(const Matrix& m1, const Matrix& m2, Matrix& m_result)
+{
+#ifdef gDEBUG
+	if(ncols != m1.Rows() && m1.Cols() != m2.Rows()
+	   && m2.Cols() != m_result.Cols() && nrows != m_result.Rows())
+	{
+		std::cout << "\n The sizes of the two matrices are not matched" << "\n";
+		abort();
+	}
+#endif
+    double *r_data = m_result.getEntryArray();
+    const size_t r_rows = m_result.Rows();
+	const size_t r_cols = m_result.Cols();
+
+	for(size_t i = 0; i < r_rows; i++)
+	{
+        double *row_data_r = &r_data[i * r_cols] ;
+		for(size_t j = 0; j < r_cols; j++)
+		{
+			//m_result(i,j) = 0.0;
+            double val = 0.;
+			for(size_t k = 0; k < ncols; k++)
+			{
+                const double entry_of_this = data[getArrayIndex(i,k)]; 
+				for(size_t l = 0; l < m2.Rows(); l++)
+					val += entry_of_this * m1(k,l) * m2(l,j);
+			}
+            row_data_r[j] += val;
+		}
+	}
+}
+// vec_result = This*vec. vec_result must be  initialized
+void SymMatrix::multi(const double* vec, double* vec_result, double fac)
+{
+    for(size_t  i = 0; i < nrows; i++)
+    {
+        double val = 0.; 
+
+        const double *row_data = &data[static_cast<size_t>(i * (i + 1) / 2)] ;
+        for(size_t j = 0; j <= i; j++)
+        {
+            val += row_data[j] * vec[j];
+        }
+
+        for(size_t j = i+1; j < ncols; j++)
+        {
+            val += data[static_cast<size_t>(j * (j + 1) / 2) + i] * vec[j];
+        }
+
+        vec_result[i] += fac * val;
+    }
+}
+
 //-----------------------------------------------------
 // Diagonal matrix
-DiagonalMatrix::DiagonalMatrix(size_t dim) : Matrix(0)
+DiagonalMatrix::DiagonalMatrix(size_t dim) : Matrix()
 {
-	Sym = true;
 	nrows = ncols = dim;
 	size = dim;
 	data = new double[dim];
@@ -459,9 +426,8 @@ DiagonalMatrix::DiagonalMatrix(size_t dim) : Matrix(0)
 	dummy_zero = 0.0;
 }
 
-DiagonalMatrix::DiagonalMatrix() : Matrix(0)
+DiagonalMatrix::DiagonalMatrix() : Matrix()
 {
-	Sym = true;
 	nrows = 0;
 	ncols = 0;
 	nrows0 = 0;
@@ -470,9 +436,8 @@ DiagonalMatrix::DiagonalMatrix() : Matrix(0)
 	data = 0;
 	dummy_zero = 0.0;
 }
-DiagonalMatrix::DiagonalMatrix(const DiagonalMatrix& m) : Matrix(0)
+DiagonalMatrix::DiagonalMatrix(const DiagonalMatrix& m) : Matrix()
 {
-	Sym = m.Sym;
 	nrows = m.nrows;
 	ncols = m.ncols;
 	nrows0 = m.nrows0;
@@ -492,7 +457,6 @@ void DiagonalMatrix::resize(size_t dim)
 		data = NULL;
 	}
 
-	Sym = true;
 	nrows = ncols = dim;
 	size = dim;
 	data = new double[size];
@@ -501,63 +465,6 @@ void DiagonalMatrix::resize(size_t dim)
 		data[i] = 0.0;
 }
 
-void DiagonalMatrix::operator = (double a)
-{
-	for(size_t i = 0; i < size; i++)
-		data[i] = a;
-}
-void DiagonalMatrix::operator *= (double a)
-{
-	for(size_t i = 0; i < size; i++)
-		data[i] *= a;
-}
-void DiagonalMatrix::operator += (double a)
-{
-	for(size_t i = 0; i < size; i++)
-		data[i] += a;
-}
-
-//
-void DiagonalMatrix::operator = (const DiagonalMatrix& m)
-{
-#ifdef gDEBUG
-	if(nrows != m.Rows() || ncols != m.Cols())
-	{
-		cout << "\n The sizes of the two matrices are not matched" << "\n";
-		abort();
-	}
-#endif
-	for(size_t i = 0; i < size; i++)
-		data[i] = m(i);
-}
-
-//
-void DiagonalMatrix::operator += (const DiagonalMatrix& m)
-{
-#ifdef gDEBUG
-	if(nrows != m.Rows())
-	{
-		cout << "\n The sizes of the two matrices are not matched" << "\n";
-		abort();
-	}
-#endif
-	for(size_t i = 0; i < size; i++)
-		data[i] += m(i);
-}
-
-//
-void DiagonalMatrix::operator -= (const DiagonalMatrix& m)
-{
-#ifdef gDEBUG
-	if(nrows != m.Rows())                 //Assertion, will be removed
-	{
-		cout << "\n The sizes of the two matrices are not matched" << "\n";
-		abort();
-	}
-#endif
-	for(size_t i = 0; i < size; i++)
-		data[i] -= m(i);
-}
 //
 double& DiagonalMatrix::operator() (size_t i, size_t j) const
 {

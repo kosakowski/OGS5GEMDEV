@@ -44,7 +44,7 @@ CTimeDiscretization::CTimeDiscretization(void)
 	time_start = 0.0;
 	time_end = 1.0;
 	time_type_name = "CONSTANT";          //OK
-	time_control_name = "NONE";           //kg44//JT
+	time_control_type = TimeControlType::INVALID;           //kg44//JT
 	time_unit = "SECOND";
 	max_time_step = 1.e10;                //YD
 	min_time_step = DBL_EPSILON;          //YD//JT Minimum allowed timestep, this process
@@ -305,10 +305,12 @@ std::ios::pos_type CTimeDiscretization::Read(std::ifstream* tim_file)
 					break;
 				}
 				line.str(line_string);
+				std::string time_control_name;
 				line >> time_control_name;
 				line.clear();
+				time_control_type = convertTimeControlType(time_control_name);
 
-				if(time_control_name == "PI_AUTO_STEP_SIZE") // 26.08.2008. WW
+				if(time_control_type == TimeControlType::PI_AUTO_STEP_SIZE) // 26.08.2008. WW
 				{
 					line.str(GetLineFromFile1(tim_file));
 					line >> PI_tsize_ctrl_type >> relative_error >>
@@ -324,7 +326,7 @@ std::ios::pos_type CTimeDiscretization::Read(std::ifstream* tim_file)
 						max_time_step = 0.0;
 					line.clear();
 				}
-				else if(time_control_name.find("DYNAMIC_VARIABLE") != std::string::npos) // JT2012
+				else if(time_control_type == TimeControlType::DYNAMIC_VARIABLE) // JT2012
 				{
 					// DYNAMIC TIME STEP SERIES
 					line.str(GetLineFromFile1(tim_file));
@@ -391,7 +393,7 @@ std::ios::pos_type CTimeDiscretization::Read(std::ifstream* tim_file)
 						dynamic_control_tolerance[DOF_NUMBER_MAX] = include_third_variable;
 					line.clear();
 				}
-				else if(time_control_name.find("DYNAMIC_COURANT") != std::string::npos) // JT2012
+				else if(time_control_type == TimeControlType::DYNAMIC_COURANT) // JT2012
 				{
 					std::cout<<"Josh apologizes (especially to Marc), but promises DYNAMIC_COURANT will be merged into the next release."<<"\n";
 					std::cout<<"emoticon:: sad face"<<"\n";
@@ -416,7 +418,7 @@ std::ios::pos_type CTimeDiscretization::Read(std::ifstream* tim_file)
 					//
 					line.clear();
 				}
-				else if(time_control_name.find("DYNAMIC_PRESSURE") != std::string::npos) // JT2012
+				else if(time_control_type == TimeControlType::DYNAMIC_PRESSURE) // JT2012
 				{
 					// DYNAMIC TIME STEP SERIES
 					line.str(GetLineFromFile1(tim_file));
@@ -428,21 +430,21 @@ std::ios::pos_type CTimeDiscretization::Read(std::ifstream* tim_file)
 					//
 					line.clear();
 				}
-				else if(time_control_name == "STEP_SIZE_RESTRICTION") // 26.08.2008. WW
+				else if(time_control_type == TimeControlType::STEP_SIZE_RESTRICTION) // 26.08.2008. WW
 				{
 					line.str(GetLineFromFile1(tim_file));
 					line >> h_min >> h_max;
 					line.clear();
 				}
-				else if(time_control_name == "NEUMANN"){
+				else if(time_control_type == TimeControlType::NEUMANN){
 					line.clear();
 				}
-				else if(time_control_name == "ERROR_CONTROL_ADAPTIVE")
+				else if(time_control_type == TimeControlType::ERROR_CONTROL_ADAPTIVE)
 				{
 					m_pcs->adaption = true;
 					line.clear();
 				}
-				else if(time_control_name == "SELF_ADAPTIVE")
+				else if(time_control_type == TimeControlType::SELF_ADAPTIVE)
 				{
 					//m_pcs->adaption = true; JOD removed
 					//WW minish = 10;
@@ -634,37 +636,31 @@ void CTimeDiscretization::Write(std::fstream* tim_file)
 	*tim_file << " $TIME_END" << "\n";
 	*tim_file << "  " << time_end << "\n";
 	//--------------------------------------------------------------------
-	if(time_control_name.size() == 0)
+	if(time_control_type == TimeControlType::FIXED_STEPS)
 	{
 		*tim_file << " $TIME_STEPS" << "\n";
 		for(i = 0; i < (int)time_step_vector.size(); i++)
 			*tim_file << "  " << 1 << " " << time_step_vector[i] << "\n";
 	}
-	//--------------------------------------------------------------------
-	if(time_control_name.size() > 0)
+	else
 	{
 		*tim_file << " $TIME_CONTROL" << "\n";
-		if(time_control_name == "COURANT_MANIPULATE")
+		*tim_file << "  " << convertTimeControlTypeToString(time_control_type) << std::endl;
+//		if(time_control_name == "COURANT_MANIPULATE")
+//		{
+//			*tim_file << "  " << time_control_name << std::endl;
+//			*tim_file << "   " << time_control_manipulate << std::endl;
+//		}
+		if(time_control_type == TimeControlType::PI_AUTO_STEP_SIZE)
 		{
-			*tim_file << "  " << time_control_name << "\n";
-			*tim_file << "   " << time_control_manipulate << "\n";
-		}
-		if(time_control_name == "PI_AUTO_STEP_SIZE")
-		{
-			*tim_file << "  " << time_control_name << "\n";
 			*tim_file << "   " << PI_tsize_ctrl_type << " " << relative_error << " " <<
 			absolute_error << " " << this_stepsize << "\n";
 		}
-		if(time_control_name == "STEP_SIZE_RESTRICTION")
+		else if(time_control_type == TimeControlType::STEP_SIZE_RESTRICTION)
 		{
-			*tim_file << "  " << time_control_name << "\n";
-			*tim_file << "   " << h_min << " " << h_max << "\n";
+			*tim_file << "   " << h_min << " " << h_max << std::endl;
 		}
-		if(time_control_name == "NEUMANN")
-			*tim_file << "  " << time_control_name << "\n";
-		if(time_control_name == "ERROR_CONTROL_ADAPTIVE")
-			*tim_file << "  " << time_control_name << "\n";
-		if(time_control_name == "SELF_ADAPTIVE")
+		else if(time_control_type == TimeControlType::SELF_ADAPTIVE)
 		{
 			*tim_file << "  MAX_TIME_STEP " << max_time_step << "\n";
 			*tim_file << "  MIM_TIME_STEP " << min_time_step << "\n";
@@ -697,18 +693,18 @@ double CTimeDiscretization::CalcTimeStep(double current_time)
 	//
 	// TIME CONTROL METHODS
 	// -----------------------------------
-	if(time_control_name == "NEUMANN" || time_control_name == "SELF_ADAPTIVE"){
+	if(time_control_type == TimeControlType::NEUMANN || time_control_type == TimeControlType::SELF_ADAPTIVE){
 		if(aktuelle_zeit < MKleinsteZahl && repeat == false){
 			time_step_length = FirstTimeStepEstimate();
 		}
-		else if( time_control_name == "NEUMANN" ){
+		else if( time_control_type == TimeControlType::NEUMANN){
 			time_step_length = NeumannTimeControl();
 		}
-		else if(time_control_name == "SELF_ADAPTIVE"){
+		else if(time_control_type == TimeControlType::SELF_ADAPTIVE){
 			time_step_length = SelfAdaptiveTimeControl();
 		}
 	}
-	else if(time_control_name == "ERROR_CONTROL_ADAPTIVE"){
+	else if(time_control_type == TimeControlType::ERROR_CONTROL_ADAPTIVE){
 		if(aktuelle_zeit < MKleinsteZahl){
 			time_step_length = AdaptiveFirstTimeStepEstimate();
 		}
@@ -716,10 +712,12 @@ double CTimeDiscretization::CalcTimeStep(double current_time)
 			time_step_length = ErrorControlAdaptiveTimeControl();
 		}
 	}
-	else if(time_control_name == "PI_AUTO_STEP_SIZE"){
+	else if(time_control_type == TimeControlType::PI_AUTO_STEP_SIZE){
 		time_step_length = this_stepsize;
 	}
-	else if(time_control_name.find("DYNAMIC") != std::string::npos){ // JT2012: Soon to come.
+	else if(time_control_type == TimeControlType::DYNAMIC_COURANT
+			|| time_control_type == TimeControlType::DYNAMIC_PRESSURE
+			|| time_control_type == TimeControlType::DYNAMIC_VARIABLE){ // JT2012: Soon to come.
 		if(!last_dt_accepted){
 			time_step_length *= dt_failure_reduction_factor;
 			dynamic_minimum_suggestion = time_step_length;
@@ -787,7 +785,7 @@ CTimeDiscretization::CTimeDiscretization(const CTimeDiscretization& a_tim, std::
 	repeat = a_tim.repeat;
 	pcs_type_name = pcsname;              // by argument
 	time_type_name = a_tim.time_type_name;
-	time_control_name = a_tim.time_control_name;
+	time_control_type = a_tim.time_control_type;
 	time_unit = a_tim.time_unit;
 	iter_times = a_tim.iter_times;
 	multiply_coef = a_tim.multiply_coef;
@@ -1520,7 +1518,7 @@ bool CTimeDiscretization::isDynamicTimeFailureSuggested(CRFProcess *m_pcs)
 		return false; // only checking on zeroth iteration (also do not fail if already at the minimum allowed dt)
 	//
 	// Currently only for use with DYNAMIC_VARIABLE time control
-	if(time_control_name.find("DYNAMIC_VARIABLE") == std::string::npos)
+	if(time_control_type != TimeControlType::DYNAMIC_VARIABLE)
 		return false;
 	//
 	FiniteElement::ErrorMethod method (FiniteElement::convertErrorMethod(this->dynamic_control_error_method));

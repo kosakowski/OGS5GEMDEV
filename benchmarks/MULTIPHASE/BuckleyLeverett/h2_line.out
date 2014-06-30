@@ -12,8 +12,6 @@ GeoSys-OUT: Output ------------------------------------------------
  $DAT_TYPE
   VTK
  $TIM_TYPE
-  STEPS 1
+  STEPS 10
 #STOP
 
-
-  PRESSURE_CAP

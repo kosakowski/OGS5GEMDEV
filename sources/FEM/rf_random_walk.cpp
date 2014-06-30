@@ -5984,6 +5984,8 @@ void PCTRead(string file_base_name)
 	pct_file_name = file_base_name + PCT_FILE_EXTENSION;
 
 	ifstream pct_file (pct_file_name.data(),ios::in);
+	if (!pct_file)
+		return;
 
 	std::stringstream ss;
 	int srand_seed;

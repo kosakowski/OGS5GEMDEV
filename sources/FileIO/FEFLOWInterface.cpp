@@ -72,12 +72,19 @@ CFEMesh* FEFLOWInterface::readFEFLOWModelFile(const std::string &filename)
 		// NODE
 		else if(line_string.compare("NODE") == 0)
 		{
+			MshElemType::type t = MshElemType::INVALID;
+			if (fem_dim.n_nodes_of_element==2) t = MshElemType::LINE;
+			else if (fem_dim.n_nodes_of_element==3) t = MshElemType::TRIANGLE;
+			else if (fem_dim.n_nodes_of_element==4 && fem_class.dimension==2) t = MshElemType::TRIANGLE;
+			else if (fem_dim.n_nodes_of_element==4 && fem_class.dimension==3) t = MshElemType::TETRAHEDRON;
+			else if (fem_dim.n_nodes_of_element==6 && fem_class.dimension==3) t = MshElemType::PRISM;
+			else if (fem_dim.n_nodes_of_element==8 && fem_class.dimension==3) t = MshElemType::HEXAHEDRON;
 			CElem* m_ele = NULL;
 			for(long i = 0; i < fem_dim.n_elements; i++)
 			{
 				m_ele = new CElem();
-				//m_ele->SetElementType(fem_dim.n_nodes_of_element);
-				m_ele->Read(feflow_file, fem_dim.n_nodes_of_element);
+				m_ele->SetElementType(t);
+				m_ele->Read(feflow_file, 6);
 				m_msh->ele_vector.push_back(m_ele);
 			}
 		}
@@ -144,24 +151,23 @@ CFEMesh* FEFLOWInterface::readFEFLOWModelFile(const std::string &filename)
 			long n0 = 0;
 			for(int l = 0; l < fem_class.n_layers3d + 1; l++)
 			{
-				for(long i = 0; i < no_nodes_per_layer; i++)
-				{
+				if (l>0) {
 					line_stream.clear();
 					line_string = GetLineFromFile1(&feflow_file);
-					line_stream.str(line_string);
-					line_stream >> z >> n0;
-					line_stream.clear();
+				}
+
+				line_stream.clear();
+				line_string = GetLineFromFile1(&feflow_file);
+				line_stream.str(line_string);
+				line_stream >> z >> n0;
+
+				for(long i = 0; i < no_nodes_per_layer; i++)
+				{
 					//n = i+l*no_nodes_per_layer;
-					long n = n0 - 1 + l * no_nodes_per_layer;
+					long n = n0 - 1 + i + l * no_nodes_per_layer;
 					m_nod = m_msh->nod_vector[n];
 					m_nod->SetZ(z);
 				}
-				line_string = GetLineFromFile1(&feflow_file);
-				line_stream.str(line_string);
-				int j = 0;
-				line_stream >> j;
-				//file << j << "\n";
-				line_stream.clear();
 			}
 		}
 		//....................................................................

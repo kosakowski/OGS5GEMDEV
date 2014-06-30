@@ -224,7 +224,7 @@ void CRFProcessDeformation::InitialNodeValueHpcs()
 	if(fem_dm->h_pcs==NULL)
 		return;
 
-	tmp_h_pcs = fem_dm->h_pcs;	   
+	tmp_h_pcs = fem_dm->h_pcs;
 	int h_pcs_type = tmp_h_pcs->type;
 	int idv_p_ini, idv_p1_ini, idv_p2_ini, idv_p_1, idv_p1_1, idv_p2_1;// idv_sw_ini, idv_sw_1;
 	size_t i;
@@ -304,10 +304,10 @@ void CRFProcessDeformation::CalIniTotalStress()
 					pw +=  tmp_h_pcs->GetNodeValue(j,idx_p1)*SMat->bishop_model_value;
 				else if (SMat->bishop_model==2)
 					pw +=  tmp_h_pcs->GetNodeValue(j,idx_p1)*pow(tmp_h_pcs->GetNodeValue(j,idx_s),SMat->bishop_model_value);
-				else if (SMat->bishop_model==3) 
+				else if (SMat->bishop_model==3)
 				{
-					tmp_h_pcs->GetNodeValue(j,idx_s) >= SMat->bishop_model_value ? pw +=  tmp_h_pcs->GetNodeValue(j,idx_p1) :  pw +=0.0; 
-				} 
+					tmp_h_pcs->GetNodeValue(j,idx_s) >= SMat->bishop_model_value ? pw +=  tmp_h_pcs->GetNodeValue(j,idx_p1) :  pw +=0.0;
+				}
 				else
 					pw +=  tmp_h_pcs->GetNodeValue(j,idx_p1)*tmp_h_pcs->GetNodeValue(j,idx_s);
 			}
@@ -318,12 +318,12 @@ void CRFProcessDeformation::CalIniTotalStress()
 				else if(SMat->bishop_model==2)
 					pw += tmp_h_pcs->GetNodeValue(j,idx_p2) - pow(tmp_h_pcs->GetNodeValue(j,idx_s),SMat->bishop_model_value)
 					*tmp_h_pcs->GetNodeValue(j,idx_p1);
-				else if(SMat->bishop_model==3) 
+				else if(SMat->bishop_model==3)
 				{
-                  tmp_h_pcs->GetNodeValue(j,idx_p1) >= SMat->bishop_model_value ? pw += tmp_h_pcs->GetNodeValue(j,idx_p2) - tmp_h_pcs->GetNodeValue(j,idx_p1) : pw += tmp_h_pcs->GetNodeValue(j,idx_p2); 
+                  tmp_h_pcs->GetNodeValue(j,idx_p1) >= SMat->bishop_model_value ? pw += tmp_h_pcs->GetNodeValue(j,idx_p2) - tmp_h_pcs->GetNodeValue(j,idx_p1) : pw += tmp_h_pcs->GetNodeValue(j,idx_p2);
                 }
                 else
-				  pw += tmp_h_pcs->GetNodeValue(j,idx_p2) - tmp_h_pcs->GetNodeValue(j,idx_s)*tmp_h_pcs->GetNodeValue(j,idx_p1); 
+				  pw += tmp_h_pcs->GetNodeValue(j,idx_p2) - tmp_h_pcs->GetNodeValue(j,idx_s)*tmp_h_pcs->GetNodeValue(j,idx_p1);
 			}
 		}
 		pw /= nnodes;//average node value, could be also interp. value
@@ -472,7 +472,7 @@ double CRFProcessDeformation::Execute(int loop_process_number)
 		number_of_load_steps = 1;
 	// system matrix
 #if defined (USE_PETSC) // || defined (other parallel solver lib). 04.2012 WW
-	eqs_new->Initialize(); 
+	eqs_new->Initialize();
 #elif defined(NEW_EQS)                              //WW
 	//
 #if defined(USE_MPI)
@@ -625,15 +625,15 @@ double CRFProcessDeformation::Execute(int loop_process_number)
 			ErrorU = 1.0e+8;
 			Norm = 1.0e+8;
 			NormU = 1.0e+8;
-			   
-#if defined(USE_MPI) || defined(USE_PETSC)            		
+
+#if defined(USE_MPI) || defined(USE_PETSC)
 			if(myrank == 0)
 			{
 #endif
 			//Screan printing:
             std::cout <<"      Starting loading step "<< l << "/" << number_of_load_steps <<".  Load factor: " << LoadFactor << "\n";
 			std::cout <<"      ------------------------------------------------"<<"\n";
-#if defined(USE_MPI) || defined(USE_PETSC)    
+#if defined(USE_MPI) || defined(USE_PETSC)
 		}
 #endif
 		}
@@ -643,7 +643,7 @@ double CRFProcessDeformation::Execute(int loop_process_number)
 			ite_steps++;
 			// Refresh solver
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
-			//	   InitializeRHS_with_u0(); 
+			//	   InitializeRHS_with_u0();
 #elif defined(NEW_EQS)                        //WW
 #ifndef USE_MPI
 			eqs_new->Initialize(); //27.11.2007 WW
@@ -823,13 +823,15 @@ double CRFProcessDeformation::Execute(int loop_process_number)
 				if(Norm < 0.001 * InitialNorm)
 					break;
 				if(Error <= Tolerance_global_Newton)
+				{
 					if(ite_steps==1)//WX:05.2012
 					{
 						UpdateIterativeStep(damping, 0);
-					break;
-			}
+						break;
+					}
 					else
 						break;
+				}
 			}
 			// w = w+dw for Newton-Raphson
 			UpdateIterativeStep(damping, 0); // w = w+dw
@@ -1441,7 +1443,7 @@ void CRFProcessDeformation::UpdateIterativeStep(const double damp, const int u_t
 			{
 				ColIndex = p_var_index[i] - 1;
 				for(j = 0; j < number_of_nodes; j++)
-	                 	  {                                        
+	                 	  {
 #if defined (USE_PETSC) // || defined (other parallel solver lib). 06.2013 WW
 				    long eqs_r = 0;
                                     const long ja = m_msh->Eqs2Global_NodeIndex[j];
@@ -1455,7 +1457,7 @@ void CRFProcessDeformation::UpdateIterativeStep(const double damp, const int u_t
 
 				        eqs_r = pcs_number_of_primary_nvals * size_l +  problem_dimension_dm * (ja -size_l) + i;
                                     }
-               
+
                                     const long eqs_row = eqs_r;
 #else
                                     const long eqs_row = j + shift;
@@ -1505,7 +1507,7 @@ void CRFProcessDeformation::UpdateIterativeStep(const double damp, const int u_t
 	}
 
 #if defined (USE_PETSC) // || defined (other parallel solver lib). 06.2013 WW
-        // The node wise storage has already included the following stuff. 
+        // The node wise storage has already included the following stuff.
         return;
 #else
 	//if(type == 42&&m_num->nls_method>0)         //H2M, Newton-Raphson. 06.09.2010. WW
@@ -2720,7 +2722,7 @@ void CRFProcessDeformation::GlobalAssembly()
 		// Apply Neumann BC
 		IncorporateSourceTerms();
 
-#if defined(USE_PETSC)  // || defined(other parallel libs)//05.3013. 
+#if defined(USE_PETSC)  // || defined(other parallel libs)//05.3013.
 		eqs_new->AssembleRHS_PETSc();
 		eqs_new->AssembleMatrixPETSc(MAT_FINAL_ASSEMBLY );
 #endif
@@ -2814,7 +2816,7 @@ void CRFProcessDeformation::PostExcavation()
 			if(ExcavMaterialGroup==m_msh->ele_vector[l]->GetPatchIndex())
 			{
 				if((m_msh->ele_vector[l]->GetExcavState()>-1)&&m_msh->ele_vector[l]->GetMark())
-				{				
+				{
 					if(m_msh->ele_vector[l]->GetExcavState()==1)
 						m_msh->ele_vector[l]->SetExcavState(0);//1=now, 0=past
 					PCS_ExcavState = 1;//not necessary
@@ -2943,7 +2945,7 @@ void CRFProcessDeformation::PostExcavation()
 		if(Neglect_H_ini == 1)//WX:04.2013
 			CalIniTotalStress();
 	}
-	
+
 	//WX:10.2011 strain update for excavated node, the excavated node Strain = 0
 	int Idx_Strain[6];
 	Idx_Strain[0] = GetNodeValueIndex("STRAIN_XX");

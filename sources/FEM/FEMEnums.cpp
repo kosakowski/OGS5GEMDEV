@@ -368,6 +368,8 @@ DistributionType convertDisType(const std::string& dis_type_string)
 		return PRECIPITATION;
 	if (dis_type_string.compare("DIRECT") == 0)
 		return DIRECT;
+	if (dis_type_string.compare("DOMAIN") == 0)
+		return NODESCONSTANT;
 	if (dis_type_string.compare("CLIMATE") == 0)
 		return CLIMATE;
 	if (dis_type_string.compare("FUNCTION") == 0)
@@ -417,6 +419,8 @@ std::string convertDisTypeToString(DistributionType dis_type)
 		return "PRECIPITATION";
 	if (dis_type == DIRECT)
 		return "DIRECT";
+	if (dis_type == NODESCONSTANT)
+		return "DOMAIN";
 	if (dis_type == CLIMATE)
 		return "CLIMATE";
 	if (dis_type == FUNCTION)
@@ -516,3 +520,51 @@ std::string convertSolidReactiveSystemToString(SolidReactiveSystem reactive_syst
 }
 
 } // end namespace FiniteElement
+
+TimeControlType::type convertTimeControlType(const std::string &str)
+{
+    if (str == "STEPS")
+        return TimeControlType::FIXED_STEPS;
+    else if (str == "PI_AUTO_STEP_SIZE")
+        return TimeControlType::PI_AUTO_STEP_SIZE;
+    else if (str == "DYNAMIC_VARIABLE")
+        return TimeControlType::DYNAMIC_VARIABLE;
+    else if (str.find("DYNAMIC_COURANT")!=std::string::npos)
+        return TimeControlType::DYNAMIC_COURANT;
+    else if (str == "DYNAMIC_PRESSURE")
+        return TimeControlType::DYNAMIC_PRESSURE;
+    else if (str == "STEP_SIZE_RESTRICTION")
+        return TimeControlType::STEP_SIZE_RESTRICTION;
+    else if (str == "NEUMANN")
+        return TimeControlType::NEUMANN;
+    else if (str == "ERROR_CONTROL_ADAPTIVE")
+        return TimeControlType::ERROR_CONTROL_ADAPTIVE;
+    else if (str.find("SELF_ADAPTIVE")!=std::string::npos)
+        return TimeControlType::SELF_ADAPTIVE;
+
+    return TimeControlType::INVALID;
+}
+
+std::string convertTimeControlTypeToString(TimeControlType::type tc_type)
+{
+    if (tc_type == TimeControlType::FIXED_STEPS)
+        return "STEPS";
+    else if (tc_type == TimeControlType::PI_AUTO_STEP_SIZE)
+        return "PI_AUTO_STEP_SIZE";
+    else if (tc_type == TimeControlType::DYNAMIC_VARIABLE)
+        return "DYNAMIC_VARIABLE";
+    else if (tc_type == TimeControlType::DYNAMIC_COURANT)
+        return "DYNAMIC_COURANT";
+    else if (tc_type == TimeControlType::DYNAMIC_PRESSURE)
+        return "DYNAMIC_PRESSURE";
+    else if (tc_type == TimeControlType::STEP_SIZE_RESTRICTION)
+        return "STEP_SIZE_RESTRICTION";
+    else if (tc_type == TimeControlType::NEUMANN)
+        return "NEUMANN";
+    else if (tc_type == TimeControlType::ERROR_CONTROL_ADAPTIVE)
+        return "ERROR_CONTROL_ADAPTIVE";
+    else if (tc_type == TimeControlType::SELF_ADAPTIVE)
+        return "SELF_ADAPTIVE";
+    return "INVALID";
+
+}

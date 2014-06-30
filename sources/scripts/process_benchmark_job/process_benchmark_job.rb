@@ -10,9 +10,9 @@ else
   $DB = Sequel.connect('sqlite://'+ ENV['HOME'] + '/db/ogsbench.db')
 end
 
-require 'bench_info.rb'
-require 'commit_info.rb'
-require 'ogs_author_mapping.rb'
+require './bench_info.rb'
+require './commit_info.rb'
+require './ogs_author_mapping.rb'
 require 'net/smtp'
 require 'csv'
 
@@ -30,9 +30,9 @@ class BenchmarkInfoProcessor
     
     @new_commit_info = commit_info
     if commit_info.is_svn_commit == 1
-      @old_commit_info = CommitInfo.filter(:revision < @new_commit_info.revision).order(:revision).last
+      @old_commit_info = CommitInfo.filter('revision < ?', @new_commit_info.revision).order(:revision).last
     else
-      @old_commit_info = CommitInfo.filter(:read_date < @new_commit_info.read_date).order(:read_date).last
+      @old_commit_info = CommitInfo.filter('read_date < ?', @new_commit_info.read_date).order(:read_date).last
     end
 
     puts "Comparing benchmarks of revision #{@old_commit_info.revision} and revision #{@new_commit_info.revision}:" if $debug
@@ -43,7 +43,7 @@ class BenchmarkInfoProcessor
   def process
 
     ## Get failed benchmarks
-    @actual_benchmark_runs = BenchmarkRun.filter(:commit_info_id => @new_commit_info.revision)
+    @actual_benchmark_runs = BenchmarkRun.filter('commit_info_id => ?', @new_commit_info.revision)
     @failed_benchmarks = @actual_benchmark_runs.filter(:passed => false)
     @crashed_benchmarks = @failed_benchmarks.filter(:crashed => true)
 

@@ -80,5 +80,6 @@ public:
 	double difftime;
 };
 extern void CreateClockTime(void);
+extern void DestroyClockTime(void);
 extern std::vector <CClockTime*> ClockTimeVec;
 #endif

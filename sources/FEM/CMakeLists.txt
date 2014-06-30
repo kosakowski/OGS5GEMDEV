@@ -158,6 +158,10 @@ IF (LIS)
   INCLUDE_DIRECTORIES(${LIS_INCLUDE_DIR})
 ENDIF (LIS)
 
+IF (MKL)
+  INCLUDE_DIRECTORIES(${MKL_INCLUDES})
+ENDIF (MKL)
+
 IF(OGS_FEM_PQC)
   INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/PQC)
 ENDIF (OGS_FEM_PQC)
@@ -207,12 +211,8 @@ if (WIN32)
 endif (WIN32)
 
 if (UNIX)
-	if (OGS_FEM_GEMS OR OGS_FEM_PETSC_GEMS)
-		target_link_libraries( FEM GEM boost_thread-mt )
-	endif (OGS_FEM_GEMS OR OGS_FEM_PETSC_GEMS)
-
 	if (OGS_FEM_BRNS)
-		target_link_libraries( FEM dl )
+		target_link_libraries( FEM dl ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 	endif (OGS_FEM_BRNS)
 
 	if (LIS)

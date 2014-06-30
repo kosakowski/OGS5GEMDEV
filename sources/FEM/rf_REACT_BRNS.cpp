@@ -39,16 +39,15 @@ REACT_BRNS::REACT_BRNS(void)
 	timeSpentInBrnsCoupling = 0.0;
 	cout << "Debugging #1." << endl;
 #ifdef GCC
-
-	hDll_1 = dlopen("libblas.so.3", RTLD_NOW);
-	cout << "Debugging #2." << endl;
-	hDll_2 = dlopen("liblapack.so.3", RTLD_NOW);
-	cout << "Debugging #3." << endl;
 	hDll = dlopen("./brns.so", RTLD_NOW);
-	cout << "Debugging #4." << endl;
+	if (hDll==NULL)
+		std::cout << "***error: failed to load a library ./brns.so" << std::endl;
+	cout << "Debugging #2." << endl;
 	invokebrns = (LPFNDLLFUNC)dlsym(hDll, "invokebrns_");
+	if (invokebrns==NULL)
+		std::cout << "***error: failed to find a symbol \"invokebrns_\"" << std::endl;
 #endif
-	cout << "Debugging #5." << endl;
+	cout << "Debugging #3." << endl;
 }
 
 REACT_BRNS::~REACT_BRNS(void)
@@ -64,8 +63,6 @@ REACT_BRNS::~REACT_BRNS(void)
 
 #ifdef GCC
 	dlclose(hDll);
-	dlclose(hDll_1);
-	dlclose(hDll_2);
 #endif
 
 #ifdef USE_MPI_BRNS

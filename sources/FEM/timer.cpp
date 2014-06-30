@@ -497,3 +497,10 @@ void CreateClockTime(void)
 	m_ct->delta_clocktime = 0.0;
 	ClockTimeVec.push_back(m_ct);
 }
+
+void DestroyClockTime(void)
+{
+	for (size_t i=0; i<ClockTimeVec.size(); i++)
+		delete ClockTimeVec[i];
+	ClockTimeVec.clear();
+}

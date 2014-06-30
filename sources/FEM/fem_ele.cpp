@@ -1293,13 +1293,13 @@ void ElementMatrix::AllocateMemory(CElem* ele, int type)
 	switch(type)
 	{
 	case 0:                               // H || T Process
-		Mass = new SymMatrix(nnodes);
+		Mass = new Matrix(nnodes, nnodes);
 		//        Laplace = new SymMatrix(nnodes);
 		Laplace = new Matrix(nnodes, nnodes);
 		RHS = new Vec(nnodes);
 		break;
 	case 1:                               // HM Partioned scheme, Flow
-		Mass = new SymMatrix(nnodes);
+		Mass = new Matrix(nnodes, nnodes);
 		//        Laplace = new SymMatrix(nnodes);
 		Laplace = new Matrix(nnodes, nnodes);
 		RHS = new Vec(nnodes);
@@ -1317,7 +1317,7 @@ void ElementMatrix::AllocateMemory(CElem* ele, int type)
 		CouplingA = new Matrix(dim * nnodesHQ, nnodes);
 		break;
 	case 4:                               // HM monothlic scheme
-		Mass = new SymMatrix(nnodes);
+		Mass = new Matrix(nnodes, nnodes);
 		//        Laplace = new SymMatrix(nnodes);
 		Laplace = new Matrix(nnodes, nnodes);
 		size = dim * nnodesHQ;
@@ -1327,7 +1327,7 @@ void ElementMatrix::AllocateMemory(CElem* ele, int type)
 		CouplingB = new Matrix(nnodes, dim * nnodesHQ);
 		break;
 	case 5:                               // Mass Transport process
-		Mass = new SymMatrix(nnodes);
+		Mass = new Matrix(nnodes, nnodes);
 		Laplace = new Matrix(nnodes, nnodes);
 		Advection = new Matrix(nnodes, nnodes);
 		Storage = new Matrix(nnodes, nnodes);

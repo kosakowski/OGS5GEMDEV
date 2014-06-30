@@ -96,6 +96,7 @@ CFluidProperties::CFluidProperties() :
 	compressibility_model_pressure = -1;
    specific_heat_source = 0.0;
    beta_T = 0.0;
+	cmpN = 0;
 
 #ifdef MFP_TEST //WW
 	scatter_data = NULL;

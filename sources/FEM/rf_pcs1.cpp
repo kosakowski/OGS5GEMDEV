@@ -723,7 +723,8 @@ void CreateEQS_LinearSolver()
           eqs->set_rank_size(rank_p, size_p);
       }
       else if(  (pcs_type == MULTI_PHASE_FLOW)
-	   ||(pcs_type == TWO_PHASE_FLOW) || (pcs_type == PS_GLOBAL) ) 
+	   ||(pcs_type == TWO_PHASE_FLOW)
+	   ||(pcs_type == PS_GLOBAL) ) 
       {
          sparse_info[0] = max_cnct_nodes * 2;
          sparse_info[1] = 0; //max_cnct_nodes * 2;

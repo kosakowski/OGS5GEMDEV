@@ -88,6 +88,7 @@ CFiniteElementStd:: CFiniteElementStd(CRFProcess* Pcs, const int C_Sys_Flad, con
 	StrainCoupling = NULL;
 	RHS = NULL;
 	FCT_MassL = NULL;                     //NW
+	GasProp = NULL;
 
 	//
 	edlluse =  edttuse = NULL;
@@ -855,9 +856,8 @@ void CFiniteElementStd::SetMaterial(int phase)
 	}
 	// 03.2009 PCH
 	// or JFNK. 10.08.2010. WW
-	if((PCSGet("RICHARDS_FLOW") &&
-	    PCSGet("HEAT_TRANSPORT")) || pcs->type == 1212 || pcs->type == 1313 || pcs->type ==
-	   42)
+	if(pcs->type == 1212 || pcs->type == 1313 || pcs->type == 42
+		|| (pcs->getProcessType()==FiniteElement::HEAT_TRANSPORT && (PCSGet("PS_GLOBAL") || PCSGet("RICHARDS_FLOW"))))
 	{
 		FluidProp = MFPGet("LIQUID");
 		FluidProp->Fem_Ele_Std = this;
@@ -1969,7 +1969,7 @@ void CFiniteElementStd::CalCoefMassMCF()
 	for(in = 0; in<nDF; in++)
 	{
 		arg_PV[in] = interpolate(NodalValue[in]);
-		std::cout << "NB-debug: " << arg_PV[in] << "\n";
+//WW		std::cout << "NB-debug: " << arg_PV[in] << "\n";
 	}
 
 	rho = FluidProp->Density(arg_PV);
@@ -2496,7 +2496,7 @@ void CFiniteElementStd::CalCoefLaplace(bool Gravity, int ip)
 				mat[i * dim + i] = SolidProp->Heat_Conductivity(TG);
 		}
 		// DECOVALEX THM1 or Curce 12.09. WW
-		else if(SolidProp->GetConductModel() == 3 || SolidProp->GetConductModel() == 4)
+		else if(SolidProp->GetConductModel()%3 == 0 || SolidProp->GetConductModel() == 4)
 		{
 			// WW
 			PG = interpolate(NodalValC1);
@@ -4832,7 +4832,9 @@ void CFiniteElementStd::CalcMassPSGLOBAL()
       fkt = GetGaussData(gp, gp_r, gp_s, gp_t);
       // Compute geometry
       ComputeShapefct(1);       // Linear interpolation function
+      
       for(in = 0; in < dof_n; in++)
+      {       
 	for(jn = 0; jn < dof_n; jn++)
 	  {
 	    // Material
@@ -4849,15 +4851,19 @@ void CFiniteElementStd::CalcMassPSGLOBAL()
 			     nnodes) += mat_fac * shapefct[ia] *  shapefct[j];
 		  }
 	      }
-
 #else
 	    for (i = 0; i < nnodes; i++)
+             {             
 	      for (j = 0; j < nnodes; j++)
+                 {                  
 		(*Mass2)(i + in * nnodes,j + jn *
 			 nnodes) += mat_fac * shapefct[i] *  shapefct[j];
+                 } 
+             }                                                    
 #endif
 	  }
     }
+}
 }
 
 /***************************************************************************
@@ -5202,7 +5208,6 @@ void CFiniteElementStd::CalcContent()
 			(*Content)(ia,j) += fkt * shapefct[ia] * shapefct[j];
 		      }
 		  }
-
 #else
 		for (i = 0; i < nnodes; i++)
 			for (j = 0; j < nnodes; j++)
@@ -5303,7 +5308,6 @@ void CFiniteElementStd::CalcLaplace()
 			    {
 			      (*Laplace)(iish, jjsh) += fkt * dshapefct[ksh] \
 				* mat[km + l] * dshapefct[l*nnodes+j];
-			      
 			    } 
 			}
 		    } // j: nodes
@@ -5325,7 +5329,6 @@ void CFiniteElementStd::CalcLaplace()
 			    {
 			      (*Laplace)(iish, jjsh) += fkt * dshapefct[ksh] \
 				* mat[km + l] * dshapefct[l*nnodes+j];
-			      
 			    } 
 			}
 		    } // j: nodes
@@ -5968,11 +5971,11 @@ void CFiniteElementStd::CalcRHS_by_ThermalDiffusion()
 	{
 		for (j = 0; j < nnodes; j++)
 		{
-			(*RHS)(i) -= (*Laplace)(i,j) * (NodalValC[j] + T_KILVIN_ZERO);
-			(*RHS)(i) += (*Mass)(i,j) * (NodalValC1[j] - NodalValC[j]) / dt;
+			(*RHS)[i] -= (*Laplace)(i,j) * (NodalValC[j] + T_KILVIN_ZERO);
+			(*RHS)[i] += (*Mass)(i,j) * (NodalValC1[j] - NodalValC[j]) / dt;
 		}
 		eqs_rhs[cshift + eqs_number[i]]
-		        += (*RHS)(i);
+		        += (*RHS)[i];
 	}
 
 	//TEST OUTPUT
@@ -6248,7 +6251,7 @@ void CFiniteElementStd::Assemble_Gravity()
 			//          eqs_rhs[cshift + eqs_number[i]]
 			//                  += k_rel_iteration* geo_fac*NodalVal[i+ii_sh];
 #endif
-			(*RHS)(i + LocalShift + ii_sh) += NodalVal[i + ii_sh];
+			(*RHS)[i + LocalShift + ii_sh] += NodalVal[i + ii_sh];
 		}
 	}
 	//TEST OUTPUT
@@ -6317,7 +6320,7 @@ void CFiniteElementStd::Assemble_GravityMCF()
 	for (i = 0; i < nnodes; i++)
 	{
 	eqs_rhs[cshift + eqs_number[i]] += NodalVal[i];
-	(*RHS)(i + LocalShift) += NodalVal[i];
+	(*RHS)[i + LocalShift] += NodalVal[i];
 	}
 	//RHS->Write();
 }
@@ -6473,7 +6476,7 @@ void CFiniteElementStd::Assemble_Gravity_Multiphase()
 			eqs_rhs[cshift + eqs_number[i]]
 			        += k_rel_iteration * geo_fac * NodalVal[i + ii_sh];
 #endif
-			(*RHS)(i + LocalShift + ii_sh) += NodalVal[i + ii_sh];
+			(*RHS)[i + LocalShift + ii_sh] += NodalVal[i + ii_sh];
 		}
 	}
 	//TEST OUTPUT
@@ -6787,8 +6790,7 @@ void CFiniteElementStd::Cal_Velocity()
 				vel[i] += NodalVal[j] * dshapefct[i * nnodes + j];
 			//			 vel[i] += fabs(NodalVal[j])*dshapefct[i*nnodes+j];
 		}
-		if(PcsType == V || PcsType == P) // PCH 05.2009
-
+		if(PcsType == V) {
 			for (size_t i = 0; i < dim; i++)
 			{
 				vel_g[i] = 0.0;
@@ -6796,6 +6798,15 @@ void CFiniteElementStd::Cal_Velocity()
 					// Change   NodalVal2 to NodalVal1. 02.2010. WW
 					vel_g[i] += NodalVal2[j] * dshapefct[i * nnodes + j];
 			}
+		} else if(PcsType == P) { // PCH 05.2009
+			for (size_t i = 0; i < dim; i++)
+			{
+				vel_g[i] = 0.0;
+				for(int j = 0; j < nnodes; j++)
+					vel_g[i] += NodalVal1[j] * dshapefct[i * nnodes + j];
+			}
+		}
+
 		// Gravity term
 		//NW
 		if(k == 2 && (!HEAD_Flag) && FluidProp->CheckGravityCalculation())
@@ -7861,7 +7872,7 @@ void CFiniteElementStd::AssembleParabolicEquation()
       }
 	if(RD_Flag)                           //YD /WW
 		Assemble_DualTransfer();
-	if(pcs->Tim->time_control_name.find("NEUMANN") != string::npos)
+	if(pcs->Tim->time_control_type == TimeControlType::NEUMANN)
 		pcs->timebuffer /= mat[0];  //YD
 	//======================================================================
 	// Assemble global matrix
@@ -8115,7 +8126,7 @@ void CFiniteElementStd::AssembleParabolicEquation()
 #if !defined(USE_PETSC) // && !defined(other parallel libs)//03~04.3012. WW
 				eqs_rhs[i_sh + eqs_number[i]] += NodalVal[i + ii_sh];
 #endif
-				(*RHS)(i + LocalShift + ii_sh) +=  NodalVal[i + ii_sh];
+				(*RHS)[i + LocalShift + ii_sh] +=  NodalVal[i + ii_sh];
 			}
 		}
 	}
@@ -8127,7 +8138,7 @@ void CFiniteElementStd::AssembleParabolicEquation()
 #if !defined(USE_PETSC) // && !defined(other parallel libs)//03~04.3012. WW
 			eqs_rhs[cshift + eqs_number[i]] += NodalVal[i];
 #endif
-			(*RHS)(i + LocalShift) +=  NodalVal[i];
+			(*RHS)[i + LocalShift] +=  NodalVal[i];
 		}
 	}
 	//
@@ -8479,7 +8490,7 @@ void CFiniteElementStd::CalcFEM_FCT()
 	}
 	AuxMatrix1->multi(NodalVal1, NodalVal);
 	for (int i = 0; i < nnodes; i++)
-        (*RHS)(i + LocalShift) +=  NodalVal[i];  // RHS is later added into a global RHS in add2GlobalMatrixII()
+        (*RHS)[i + LocalShift] +=  NodalVal[i];  // RHS is later added into a global RHS in add2GlobalMatrixII()
 
 #else
 	// assemble part of RHS: b_i += 1/dt * ml_i * u_i^n
@@ -8489,7 +8500,7 @@ void CFiniteElementStd::CalcFEM_FCT()
 	for (int i = 0; i < nnodes; i++)
 	{
 		eqs_rhs[NodeShift[problem_dimension_dm] + eqs_number[i]] += NodalVal[i];
-        (*RHS)(i + LocalShift) +=  NodalVal[i];
+        (*RHS)[i + LocalShift] +=  NodalVal[i];
 	}
 #endif
 }
@@ -8684,7 +8695,7 @@ void CFiniteElementStd::AssembleMixedHyperbolicParabolicEquation()
 #if !defined(USE_PETSC) // && !defined(other parallel libs)//03~04.3012. WW
 			eqs_rhs[NodeShift[problem_dimension_dm] + eqs_number[i]] += NodalVal[i];
 #endif
-			(*RHS)(i + LocalShift) +=  NodalVal[i];
+			(*RHS)[i + LocalShift] +=  NodalVal[i];
 		}
 	}                                     //end: femFCTmode
 	//----------------------------------------------------------------------
@@ -9006,7 +9017,7 @@ void CFiniteElementStd::Assemble_strainCPL(const int phase)
 			eqs_rhs[NodeShift[shift_index] + eqs_number[i]]
 			        += NodalVal[i];
 #endif
-			(*RHS)(i + LocalShift) +=  NodalVal[i];
+			(*RHS)[i + LocalShift] +=  NodalVal[i];
 		}
 	}
 	// Monolithic scheme.
@@ -9123,16 +9134,14 @@ void CFiniteElementStd::AssembleMassMatrix(int option)
 	// Add local matrix to global matrix
 	if(PcsType == V || PcsType == P)      // For DOF>1: 03.03.2009 PCH
 	{
-		int ii_sh, jj_sh;
-		long i_sh, j_sh = 0;
 		for(int ii = 0; ii < pcs->dof; ii++)
 		{
-			i_sh = NodeShift[ii];
-			ii_sh = ii * nnodes;
+			long i_sh = NodeShift[ii];
+			long ii_sh = ii * nnodes;
 			for(int jj = 0; jj < pcs->dof; jj++)
 			{
-				j_sh = NodeShift[jj];
-				jj_sh = jj * nnodes;
+				long j_sh = NodeShift[jj];
+				long jj_sh = jj * nnodes;
 				for(int i = 0; i < nnodes; i++)
 				{
 					for(int j = 0; j < nnodes; j++)
@@ -9266,7 +9275,7 @@ void CFiniteElementStd::Config()
 	// Initialize RHS
 	if(pcs->Memory_Type > 0)
 		for(i = LocalShift; (size_t)i < RHS->Size(); i++)
-			(*RHS)(i) = 0.0;
+			(*RHS)[i] = 0.0;
 	else
 		(*RHS) = 0.0;
 	//----------------------------------------------------------------------
@@ -9632,7 +9641,7 @@ void CFiniteElementStd::Assembly(int option, int dimension)
 	(*Laplace) = 0.0;
 	if(pcs->Memory_Type > 0)
 		for(i = LocalShift; (size_t)i < RHS->Size(); i++)
-			(*RHS)(i) = 0.0;
+			(*RHS)[i] = 0.0;
 	else
 		(*RHS) = 0.0;
 
@@ -9643,7 +9652,7 @@ void CFiniteElementStd::Assembly(int option, int dimension)
 	if(pcs->Write_Matrix)
 	{
 		for (i = 0; i < nnodes; i++)
-			(*RHS)(i) = NodalVal[i];
+			(*RHS)[i] = NodalVal[i];
 		(*pcs->matrix_file) << "### Element: " << Index << "\n";
 		(*pcs->matrix_file) << "---Mass matrix: " << "\n";
 		Mass->Write(*pcs->matrix_file);
@@ -10814,8 +10823,16 @@ void CFiniteElementStd::Assemble_RHS_T_MPhaseFlow()
 			// Material
 			fac = fkt * CalCoef_RHS_T_MPhase(ii) / dt;
 			// Calculate THS
+#if defined(USE_PETSC) //|| defined (other parallel solver) //WW 04.2014
+			for (int ia = 0; ia < act_nodes; ia++)
+	        {
+			    const int i = local_idx[ia];			    
+#else
 			for (i = 0; i < nnodes; i++)
+			{
+#endif			
 				NodalVal[i + ii * nnodes] += fac * shapefct[i];
+		}
 		}
 		// grad T
 		for(ii = 0; ii < dof_n; ii++)
@@ -10823,7 +10840,14 @@ void CFiniteElementStd::Assemble_RHS_T_MPhaseFlow()
 			// Material
 			fac = fkt * CalCoef_RHS_T_MPhase(ii + dof_n);
 			// Calculate THS
+#if defined(USE_PETSC) //|| defined (other parallel solver) //WW 04.2014
+			for (int ia = 0; ia < act_nodes; ia++)
+	        {
+			    const int i = local_idx[ia];			    
+#else
 			for (i = 0; i < nnodes; i++)
+			{
+#endif			
 				for (j = 0; j < nnodes; j++)
 					for (size_t k = 0; k < dim; k++)
 						NodalVal[i + ii * nnodes] +=
@@ -10832,6 +10856,7 @@ void CFiniteElementStd::Assemble_RHS_T_MPhaseFlow()
 						                  i] * dshapefct[k * nnodes + j]
 						        * (NodalValC1[j] + T_KILVIN_ZERO);
 		}
+	}
 	}
 	int ii_sh;
 	long i_sh;
@@ -10844,7 +10869,7 @@ void CFiniteElementStd::Assemble_RHS_T_MPhaseFlow()
 #if !defined(USE_PETSC) // && !defined(other parallel libs)//03~04.3012. WW
 			eqs_rhs[i_sh + eqs_number[i]] -= NodalVal[i + ii_sh];
 #endif
-			(*RHS)(i + LocalShift + ii_sh) -=  NodalVal[i + ii_sh];
+			(*RHS)[i + LocalShift + ii_sh] -=  NodalVal[i + ii_sh];
 		}
 	}
 	//
@@ -10888,11 +10913,16 @@ void CFiniteElementStd::Assemble_RHS_T_PSGlobal()
 			// Material
 			fac = fkt * CalCoef_RHS_T_PSGlobal(ii) / dt;
 			// Calculate THS
+#if defined(USE_PETSC) //|| defined (other parallel solver) //WW 04.2014
+			for (int ia = 0; ia < act_nodes; ia++)
+	        {
+			    const int i = local_idx[ia];			    
+#else
 			for (i = 0; i < nnodes; i++)
 			{
+#endif						
 				NodalVal[i + ii * nnodes] += fac * shapefct[i];
-				//remove
-				temp[i + ii * nnodes] += fac * shapefct[i];
+				//remove temp[i + ii * nnodes] += fac * shapefct[i];
 			}
 		}
 	}
@@ -10907,7 +10937,7 @@ void CFiniteElementStd::Assemble_RHS_T_PSGlobal()
 #if !defined(USE_PETSC) // && !defined(other parallel libs)//03~04.3012. WW
 			eqs_rhs[i_sh + eqs_number[i]] -= NodalVal[i + ii_sh];
 #endif
-			(*RHS)(i + LocalShift + ii_sh) -=  NodalVal[i + ii_sh];
+			(*RHS)[i + LocalShift + ii_sh] -=  NodalVal[i + ii_sh];
 		}
 	}
 	//
@@ -10960,7 +10990,14 @@ void CFiniteElementStd::Assemble_RHS_Pc()
 			// Material
 			CalCoef_RHS_Pc(ii + dof_n);
 			// Calculate Pc
+#if defined(USE_PETSC) //|| defined (other parallel solver) //WW 04.2014
+			for (int ia = 0; ia < act_nodes; ia++)
+	        {
+			    const int i = local_idx[ia];			    
+#else
 			for (i = 0; i < nnodes; i++)
+			{
+#endif			
 				for (j = 0; j < nnodes; j++)
 					for (size_t k = 0; k < dim; k++)
 						for (size_t l = 0; l < dim; l++)
@@ -10974,6 +11011,7 @@ void CFiniteElementStd::Assemble_RHS_Pc()
 							               * NodalVal1[j +
 							                           dof_n];
 		}
+	}
 	}
 
 //      for(i=0; i<2*nnodes; ++i)
@@ -10990,7 +11028,7 @@ void CFiniteElementStd::Assemble_RHS_Pc()
 #if !defined(USE_PETSC) // && !defined(other parallel libs)//03~04.3012. WW
 			eqs_rhs[i_sh + eqs_number[i]] += NodalVal[i + ii_sh];
 #endif
-			(*RHS)(i + LocalShift + ii_sh) +=  NodalVal[i + ii_sh];
+			(*RHS)[i + LocalShift + ii_sh] +=  NodalVal[i + ii_sh];
 		}
 	}
 	//
@@ -11064,14 +11102,24 @@ void CFiniteElementStd::Assemble_RHS_LIQUIDFLOW()
         //  Compute RHS+=int{N^T alpha_T dT/dt}
         //---------------------------------------------------------
 		const double fac = eff_thermal_expansion * dT / dt / time_unit_factor;//WX:bug fixed
+#if defined(USE_PETSC) //|| defined (other parallel solver) //WW 04.2014
+        for (int ia = 0; ia < act_nodes; ia++)
+	    {
+		   const int i = local_idx[ia];			    
+#else		
         for (int i = 0; i < nnodes; i++)
+        {
+#endif        
             NodalVal[i] += gp_fkt * fac * shapefct[i];
+    }
     }
     int i_sh = NodeShift[dm_shift];
     for (int i = 0; i < nnodes; i++)
     {
+#if !defined(USE_PETSC) // && !defined(other parallel libs)//03~04.3012. WW
         eqs_rhs[i_sh + eqs_number[i]] += NodalVal[i];
-        (*RHS)(i + LocalShift) +=  NodalVal[i];
+#endif        
+        (*RHS)[i + LocalShift] +=  NodalVal[i];
     }
 }
 
@@ -11152,9 +11200,17 @@ void CFiniteElementStd::Assemble_RHS_M()
 			fac *= SolidProp->biot_const;
 
 			// Calculate MHS
+#if defined(USE_PETSC) //|| defined (other parallel solver) //WW 04.2014
+            for (int ia = 0; ia < act_nodes; ia++)
+            {
+          	   const int i = local_idx[ia];			    
+#else			
 			for (i = 0; i < nnodes; i++)
+            {  
+#endif             
 				NodalVal[i + ii * nnodes] += fac * shapefct[i];
 		}
+	}
 	}
 	//
 	int ii_sh;
@@ -11168,7 +11224,7 @@ void CFiniteElementStd::Assemble_RHS_M()
 #if !defined(USE_PETSC) // && !defined(other parallel libs)//03~04.3012. WW
 			eqs_rhs[i_sh + eqs_number[i]] -= NodalVal[i + ii_sh];
 #endif
-			(*RHS)(i + LocalShift + ii_sh) -=  NodalVal[i + ii_sh];
+			(*RHS)[i + LocalShift + ii_sh] -=  NodalVal[i + ii_sh];
 		}
 	}
 	setOrder(1);
@@ -11273,7 +11329,7 @@ void CFiniteElementStd::Assemble_RHS_AIR_FLOW()
 #if !defined(USE_PETSC) // && !defined(other parallel libs)//03~04.3012. WW
 			eqs_rhs[i_sh + eqs_number[i]] -= NodalVal[i + ii_sh];
 #endif
-			(*RHS)(i + LocalShift + ii_sh) -=  NodalVal[i + ii_sh];
+			(*RHS)[i + LocalShift + ii_sh] -=  NodalVal[i + ii_sh];
 		}
 	}
 }
@@ -11351,7 +11407,7 @@ void CFiniteElementStd::Assemble_RHS_HEAT_TRANSPORT()
 #if !defined(USE_PETSC) // && !defined(other parallel libs)//03~04.3012. WW
 			eqs_rhs[i_sh + eqs_number[i]] -= NodalVal[i + ii_sh];
 #endif
-			(*RHS)(i + LocalShift + ii_sh) -=  NodalVal[i + ii_sh];
+			(*RHS)[i + LocalShift + ii_sh] -=  NodalVal[i + ii_sh];
 		}
 	}
 }
@@ -11537,7 +11593,7 @@ void CFiniteElementStd::Assemble_RHS_HEAT_TRANSPORT2()
 #if !defined(USE_PETSC) // && !defined(other parallel libs)//03~04.3012. WW
 			eqs_rhs[i_sh + eqs_number[i]] -= NodalVal[i + ii_sh];
 #endif
-			(*RHS)(i + LocalShift + ii_sh) -=  NodalVal[i + ii_sh];
+			(*RHS)[i + LocalShift + ii_sh] -=  NodalVal[i + ii_sh];
 		}
 	}
 }
@@ -11581,7 +11637,7 @@ void CFiniteElementStd::Assemble_RHS_HEAT_TRANSPORT2()
 		for (i=0;i<nnodes;i++)
 		{
 		eqs_rhs[i_sh + eqs_number[i]] += NodalVal[i+ii_sh];
-		(*RHS)(i+LocalShift+ii_sh) +=  NodalVal[i+ii_sh];
+		(*RHS)[i+LocalShift+ii_sh] +=  NodalVal[i+ii_sh];
 		//std::cout << eqs_rhs[i_sh + eqs_number[i]] << " " << (*RHS)(i+LocalShift+ii_sh) << " " << LocalShift << "\n";
 		}
 		}
@@ -11764,7 +11820,7 @@ void CFiniteElementStd::AssembleRHSVector()
 #else
 		pcs->eqs->b[NodeShift[problem_dimension_dm] + eqs_number[i]] += NodalVal[i];
 #endif
-		(*RHS)(i + LocalShift) += NodalVal[i];
+		(*RHS)[i + LocalShift] += NodalVal[i];
 	}
 	//----------------------------------------------------------------------
 	//RHS->Write();
@@ -11842,7 +11898,7 @@ void CFiniteElementStd::AssembleCapillaryEffect()
 #else
 		pcs->eqs->b[NodeShift[problem_dimension_dm] + eqs_number[i]] += NodalVal[i];
 #endif
-		(*RHS)(i + LocalShift) += NodalVal[i];
+		(*RHS)[i + LocalShift] += NodalVal[i];
 	}
 	//----------------------------------------------------------------------
 	//RHS->Write();

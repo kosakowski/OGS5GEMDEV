@@ -126,17 +126,6 @@ Linear_EQS::Linear_EQS(const SparseTable &sparse_table,
 	iter = 0;
 	bNorm = 1.0;
 	error = 1.0e10;
-
-	//NW moved below to rf.cpp. Initialization and finalization of LIS solver
-	//must be called only once but they were called several times with multiple meshes
-#ifdef LIS
-	////	A->Write();
-	//
-	int argc = 0;
-	char** argv = NULL;
-	// Initialization of the lis solver.
-	lis_initialize(&argc, &argv);
-#endif
 }
 #if defined(USE_MPI)
 /**************************************************************************
@@ -177,10 +166,6 @@ Linear_EQS::~Linear_EQS()
 	x = NULL;
 	b = NULL;
 
-	//NW moved to rf.cpp
-#ifdef LIS
-	lis_finalize();
-#endif
 	///GMRES. 30.06.2010. WW
 	if(solver_type == 13)
 		H.ReleaseMemory();

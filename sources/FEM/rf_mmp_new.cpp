@@ -141,6 +141,7 @@ CMediumProperties::CMediumProperties() :
    _fric_phase = FiniteElement::SOLID;
 	storage_effstress_model = 0;
 	permeability_effstress_model = 0;
+	evaporation = -1;
 }
 
 /**************************************************************************

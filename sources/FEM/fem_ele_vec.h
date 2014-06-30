@@ -159,7 +159,7 @@ private:
 	Matrix* PressureC;
 	Matrix* PressureC_S;                  // Function of S
 	Matrix* PressureC_S_dp;                  // Function of S and ds_dp
-	SymMatrix* Mass;                      // For dynamic analysis
+	Matrix* Mass;                      // For dynamic analysis
 	Vec* RHS;
 	// Global RHS. 08.2010. WW
 	double* b_rhs;

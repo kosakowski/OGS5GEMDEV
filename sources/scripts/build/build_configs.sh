@@ -4,13 +4,16 @@ SOURCE_LOCATION=`pwd`
 SOURCE_LOCATION="$SOURCE_LOCATION/../.."
 
 # Parse options
-while getopts "a:d:" opt; do
+while getopts "a:d:m" opt; do
 	case $opt in
 		a)
 			source $SOURCE_LOCATION/scripts/base/architecture_option_win.sh
 			;;
 		d)
 			BUILD_LOCATION="$SOURCE_LOCATION/$OPTARG"
+			;;
+		m)
+			mpi=true
 			;;
 		\?)
 			echo "Invalid option: -$OPTARG"
@@ -45,9 +48,12 @@ if [ "$OSTYPE" == 'msys' ]; then
 	exe_dir="bin/Release"
 elif [[ "$OSTYPE" == darwin* ]]; then
 	configs=("FEM" "SP")                                       # Mac
+elif [[ "$mpi" == true ]]; then
+	configs=("MPI" "PETSC" "PETSC_GEMS")                       # MPI Linux
+	export CC=mpicc
+	export CXX=mpic++
 else
-	configs=("FEM" "SP" "MPI" "GEMS" "PQC" "BRNS" "MKL" "LIS" "PETSC" "PETSC_GEMS") # Linux
-#	configs=("FEM" "PETSC" "PETSC_GEMS") # Linux fast version to debug petsc
+	configs=("FEM" "SP" "GEMS" "PQC" "BRNS" "MKL" "LIS")       # Linux
 fi
 
 # Iterate over configurations
@@ -64,16 +70,6 @@ do
 		config_cmake="OGS_FEM_$config"
 		exe_name="ogs_$config_low"
 		build_dir="build_$config_low"
-	fi
-
-	if [ "$config" = "MPI" ] ; then
-		cmake_args="-DCMAKE_C_COMPILER=/opt/openmpi-1.4.1/bin/mpicc -DCMAKE_CXX_COMPILER=/opt/openmpi-1.4.1/bin/mpic++ -DMPI_INCLUDE_PATH=/opt/openmpi-1.4.1/include -DOGS_BUILD_TESTS=ON"
-	fi
-	if [ "$config" = "PETSC" ] ; then
-		cmake_args="-DCMAKE_C_COMPILER=/opt/openmpi-1.4.1/bin/mpicc -DCMAKE_CXX_COMPILER=/opt/openmpi-1.4.1/bin/mpic++ -DMPI_INCLUDE_PATH=/opt/openmpi-1.4.1/include -DOGS_BUILD_TESTS=ON"
-	fi
-	if [ "$config" = "PETSC_GEMS" ] ; then
-		cmake_args="-DCMAKE_C_COMPILER=/opt/openmpi-1.4.1/bin/mpicc -DCMAKE_CXX_COMPILER=/opt/openmpi-1.4.1/bin/mpic++ -DMPI_INCLUDE_PATH=/opt/openmpi-1.4.1/include -DOGS_BUILD_TESTS=ON"
 	fi
 
 	if [ "$HOSTNAME" = "dev2.intern.ufz.de" ] ; then
@@ -104,18 +100,6 @@ do
 	cd ..
 
 done
-
-# Redistributable FEM config
-rm -rf build_fem_redist
-mkdir build_fem_redist && cd build_fem_redist
-cmake -DOGS_FEM=ON -DOGS_NO_EXTERNAL_LIBS=ON -DOGS_PACKAGING=ON -DCMAKE_BUILD_TYPE=Release -G "$CMAKE_GENERATOR" $SOURCE_LOCATION
-cmake -G "$CMAKE_GENERATOR" $SOURCE_LOCATION
-cmake --build . --config Release --target package $BUILD_ARGS
-if [ "${?}" -ne "0" ] ; then
-	returncode=1
-fi
-cp *.tar.gz ../Release/
-cd ..
 
 echo "exit code is ${returncode}"
 exit ${returncode}

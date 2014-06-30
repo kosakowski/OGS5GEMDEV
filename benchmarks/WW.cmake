@@ -77,6 +77,9 @@ ADD_BENCHMARK ("WW" PETSc/Richards/h_us_quad "OGS_FEM_PETSC" 4
 	PETSc/Richards/h_us_quad_domain_RICHARDS_FLOW_quad_2.tec
 	PETSc/Richards/h_us_quad_domain_RICHARDS_FLOW_quad_3.tec)
 
+ADD_BENCHMARK ("WW" PETSc/KueperProblem-PS/kueper "OGS_FEM_PETSC" 3
+	PETSc/KueperProblem-PS/kueper_time_POINT4_PS_GLOBAL.tec)
+
 ADD_BENCHMARK ("WW" PETSc/T_tri/t_tri "OGS_FEM_PETSC" 4
 	PETSc/T_tri/t_tri_time_POINT4.tec)
 

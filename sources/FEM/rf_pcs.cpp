@@ -812,8 +812,8 @@ void CRFProcess::Create()
 		Tim->pcs_type_name = pcs_type_name;
 		time_vector.push_back(Tim); //21.08.2008. WW
 	}
-	if(Tim->time_control_name == "NONE" && Tim->time_step_vector.size() > 0)
-		Tim->time_control_name = "STEPS";
+	if(Tim->time_control_type == TimeControlType::INVALID && Tim->time_step_vector.size() > 0)
+		Tim->time_control_type = TimeControlType::FIXED_STEPS;
 	//
 	if (Tim->time_unit.find("MINUTE") != std::string::npos)
 		time_unit_factor = 60.0;
@@ -2876,7 +2876,7 @@ void CRFProcess::ConfigMassTransport()
 	// 1 NOD values
 	// 1.1 primary variables
 	pcs_number_of_primary_nvals = 1;
-	pcs_primary_function_name[0] = new char[80];
+	pcs_primary_function_name[0] = "";
 	//  sprintf(pcs_primary_function_name[0], "%s%li","CONCENTRATION",comp);
 	//----------------------------------------------------------------------
 	// Tests
@@ -2905,13 +2905,13 @@ void CRFProcess::ConfigMassTransport()
 	pcs_secondary_function_name[0] = new char[80];
 	char pcs_secondary_function_name_tmp [80];
 	sprintf(pcs_secondary_function_name_tmp, "%s%li","MASS_FLUX_",comp);
-	pcs_secondary_function_name[0] = pcs_secondary_function_name_tmp;
+	strncpy((char*)pcs_secondary_function_name[0], pcs_secondary_function_name_tmp, 80);
 	//      pcs_secondary_function_name[0] = "MASS_FLUX1";
 	pcs_secondary_function_unit[0] = "kg/m3/s";
 	pcs_secondary_function_timelevel[0] = 0;
 	pcs_secondary_function_name[1] = new char[80];
 	sprintf(pcs_secondary_function_name_tmp, "%s%li","MASS_FLUX_",comp);
-	pcs_secondary_function_name[1] = pcs_secondary_function_name_tmp;
+	strncpy((char*)pcs_secondary_function_name[1], pcs_secondary_function_name_tmp, 80);
 	pcs_secondary_function_unit[1] = "kg/m3/s";
 	pcs_secondary_function_timelevel[1] = 1;
 	//KG44 added secondary function for adaptive time stepping
@@ -2920,7 +2920,7 @@ void CRFProcess::ConfigMassTransport()
 		pcs_number_of_secondary_nvals = 3;
 		pcs_secondary_function_name[2] = new char[80];
 		sprintf(pcs_secondary_function_name_tmp, "%s%li","CONC_BACK_",comp);
-		pcs_secondary_function_name[2] = pcs_secondary_function_name_tmp;
+		strncpy((char*)pcs_secondary_function_name[2], pcs_secondary_function_name_tmp, 80);
 		pcs_secondary_function_unit[2] = "kg/m3";
 		pcs_secondary_function_timelevel[2] = 0;
 	}
@@ -5473,7 +5473,7 @@ void CRFProcess::GlobalAssembly()
 					fem->ConfigElement(elem, Check2D3D);
 					fem->Assembly();
 					// NEUMANN CONTROL---------
-					if (Tim->time_control_name.compare("NEUMANN") == 0)
+					if (Tim->time_control_type == TimeControlType::NEUMANN)
 					{
 						Tim->time_step_length_neumann = MMin(
 						        Tim->time_step_length_neumann, timebuffer);
@@ -9082,13 +9082,13 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 
 	double CRFProcess::ExecuteNonLinear(int loop_process_number, bool print_pcs)
 	{
-		double nonlinear_iteration_error;
+		double nonlinear_iteration_error = 0.0;
 		double nl_theta, damping, norm_x0, norm_b0, norm_x, norm_b, val;
-		double error_x1, error_x2, error_b1, error_b2, error, last_error, percent_difference;
+		double error_x1, error_x2, error_b1, error_b2 = 0, error, last_error, percent_difference;
 		//double* eqs_x = NULL;     //
 		double* eqs_b = NULL;
 		bool converged, diverged;
-		int ii, nidx1, num_fail;
+		int ii, nidx1, num_fail = 0;
 		size_t j, g_nnodes;
 
 		string delim = " ";
@@ -10136,7 +10136,7 @@ void CRFProcess::CalcSecondaryVariablesTNEQ()
 			// between two fluids is big. To prevent negative Snw, the
 			// saturation restriction added.
 			CMediumProperties* mmp = NULL;
-			if(mmp_vector.size() > 1)
+			if(sat2 != .0 && mmp_vector.size() > 1)
 			{
 				double sum = 0.0;
 				CNode* thisNode = m_msh->nod_vector[i];
@@ -10166,6 +10166,13 @@ void CRFProcess::CalcSecondaryVariablesTNEQ()
 			//	SetNodeValue(i,ndx_s_nonwetting+1,sat2);
 
 			// Assigning the secondary variable, Pc
+			if((mmp->capillary_pressure_model == 4 || mmp->capillary_pressure_model == 6)
+				&& fabs(mmp->capillary_pressure_values[0]) < DBL_EPSILON)
+			{
+				p_cap = 0.;
+			}
+			else
+			{
 			if(mmp_vector.size() > 1)
 				p_cap = GetCapillaryPressureOnNodeByNeighobringElementPatches(
 				        i,
@@ -10174,6 +10181,7 @@ void CRFProcess::CalcSecondaryVariablesTNEQ()
 				        sat2);
 			else
 				p_cap = mmp->CapillaryPressureFunction(1.0 - sat2);
+			}
 
 			SetNodeValue(i,ndx_p_cap,p_cap);
 

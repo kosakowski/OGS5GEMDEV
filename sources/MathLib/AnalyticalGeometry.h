@@ -70,8 +70,20 @@ void rotatePointsToXY(MathLib::Vector &plane_normal, std::vector<GEOLIB::Point*>
  */
 void rotatePointsToXZ(MathLib::Vector &plane_normal, std::vector<GEOLIB::Point*> &pnts);
 
+/**
+ * Tests if the given point p is within the triangle, defined by its edge nodes a, b and c.
+ * Using the eps It is possible to test a 'epsilon' neighbourhood around the triangle.
+ * @param p test point
+ * @param a edge node of triangle
+ * @param b edge node of triangle
+ * @param c edge node of triangle
+ * @param eps size of neighbourhood (orthogonal distance to the plane
+ * spaned by triangle)
+ * @return true if the test point p is within the 'epsilon'-neighbourhood of the triangle
+ */
 bool isPointInTriangle (const GEOLIB::Point* p,
-                        const GEOLIB::Point* a, const GEOLIB::Point* b, const GEOLIB::Point* c);
+                        const GEOLIB::Point* a, const GEOLIB::Point* b, const GEOLIB::Point* c,
+                        double eps = std::numeric_limits<float>::epsilon());
 
 /**
  * test for intersections of the line segments of the Polyline

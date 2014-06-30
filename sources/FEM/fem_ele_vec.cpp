@@ -102,7 +102,7 @@ CFiniteElementVec::CFiniteElementVec(process::CRFProcessDeformation* dm_pcs,
 			Idx_dm1[2] = Idx_dm1[2] + 1;
 			Idx_Vel[2] = pcs->GetNodeValueIndex("VELOCITY_DM_Z");
 		}
-		Mass = new SymMatrix(20);
+		Mass = new Matrix(20, 20);
 		dAcceleration = new Vec(60);
 
 		beta2 = dm_pcs->m_num->GetDynamicDamping_beta2();
@@ -584,7 +584,7 @@ void CFiniteElementVec::SetMemory()
 
 	if(dynamic)
 	{
-		Mass->LimitSize(nnodesHQ);
+		Mass->LimitSize(nnodesHQ, nnodesHQ);
 		dAcceleration->LimitSize(nnodesHQ * dim);
 	}
 }
@@ -882,7 +882,7 @@ void CFiniteElementVec::ComputeMatrix_RHS(const double fkt,
 		// Local assembly of A*u=int(B^t*sigma) for Newton-Raphson method
 		for (j = 0; j < ele_dim; j++)
 			for (k = 0; k < ns; k++)
-				(*RHS)(j * nnodesHQ + ia) +=
+				(*RHS)[j * nnodesHQ + ia] +=
 				        (*tmp_B_matrix_T)(j,k) * (dstress[k] - stress0[k]) * fkt;
 		//TEST             (*B_matrix_T)(j,k)*dstress[k]*fkt;
 		if(PreLoad == 11)
@@ -1007,7 +1007,7 @@ void CFiniteElementVec::ComputeMatrix_RHS(const double fkt,
 #else
                     const int ka = k;
 #endif
-			(*RHS)(i + ka) += coeff * shapefctHQ[ka];
+			(*RHS)[i + ka] += coeff * shapefctHQ[ka];
 		//        (*RHS)(i+ka) += LoadFactor * rho * smat->grav_const * shapefctHQ[ka] * fkt;
         }
 	}
@@ -2090,13 +2090,15 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 			}
 			else
 			{
-				/*
+
+                if(pcs->Neglect_H_ini==2)
+				{
 				   for (i=0;i<nnodes;i++)
 				   {
-				   if(AuxNodal0[i]<0.0)
-				      AuxNodal0[i] = 0.;
+			          AuxNodal0[i] -= h_pcs->GetNodeValue(nodes[i],idx_p1_ini);
+			          AuxNodal2[i] -= h_pcs->GetNodeValue(nodes[i],idx_p2_ini);
 				   }
-				 */
+				}
 
 				PressureC->multi(AuxNodal2, AuxNodal1, LoadFactor);
 				PressureC_S->multi(AuxNodal0, AuxNodal1, -1.0 * LoadFactor);
@@ -2138,7 +2140,7 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 			PressureC->multi(AuxNodal, AuxNodal1);
 		}
 		for (i = 0; i < dim_times_nnodesHQ; i++)
-			(*RHS)(i) -= fabs(biot) * AuxNodal1[i];
+			(*RHS)[i] -= fabs(biot) * AuxNodal1[i];
 	}                                     // End if partioned
 
 	// If dymanic
@@ -2146,7 +2148,7 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 		for (size_t i = 0; i < dim; i++)
 			for (j = 0; j < nnodesHQ; j++)
 				for (k = 0; k < nnodesHQ; k++)
-					(*RHS)(i * nnodesHQ + j) += (*Mass)(j,k) * (
+					(*RHS)[i * nnodesHQ + j] += (*Mass)(j,k) * (
 					        (*dAcceleration)(i * nnodesHQ + k)
 					        + a_n[nodes[k] + NodeShift[i]]);
 
@@ -2154,7 +2156,7 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 #if !defined(USE_PETSC) // && !defined(other parallel libs)//06.2013. WW
 	for (size_t i = 0; i < dim; i++)
 		for (j = 0; j < nnodesHQ; j++)
-			b_rhs[eqs_number[j] + NodeShift[i]] -= (*RHS)(i * nnodesHQ + j);
+			b_rhs[eqs_number[j] + NodeShift[i]] -= (*RHS)[i * nnodesHQ + j];
 #endif
 
 	//WX:07.2011 if not on excav boundary, RHS=0

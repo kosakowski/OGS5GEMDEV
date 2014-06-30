@@ -6,6 +6,7 @@
  $COMPRESSIBILITY
   3 1
   0
+  0
  $DENSITY
   12 
  $VISCOSITY
@@ -21,6 +22,7 @@
   METHANE
  $COMPRESSIBILITY
   3 1
+  0
   0
  $DENSITY
   12

@@ -263,6 +263,16 @@ std::ios::pos_type CSolidProperties::Read(std::ifstream* msp_file)
 				capacity_pcs_name_vector.push_back("TEMPERATURE1");
 				capacity_pcs_name_vector.push_back("SATURATION1");
 				break;
+			case 30:       // another model for bentonite. WW
+				// 0. maximum conductivity
+				// 1. minimum conductivity
+				// 2. saturation
+				data_Conductivity = new Matrix(3);
+				for(i = 0; i < 3; i++)
+					in_sd >> (*data_Conductivity)(i);
+				in_sd.clear();
+				capacity_pcs_name_vector.push_back("SATURATION1");
+				break;
 			case 4:       //  = f(S) //21.12.2009 WW
 				in_sd >> Size;
 				in_sd.clear();
@@ -1340,23 +1350,33 @@ double CSolidProperties::Heat_Conductivity(double refence)
 		val = (*data_Conductivity)(0);
 		break;
 	case 2:
+		{  
+		const double *k_T = data_Conductivity->getEntryArray();
+
 		// 0. Wet conductivity
 		// 1. Dry conductivity
 		// 2. Boiling temperature
 		// 3. Boiling temperature range
-		if(refence < (*data_Conductivity)(2)) // Wet
-			val =  (*data_Conductivity)(0);
-		else if((refence >= (*data_Conductivity)(2)) &&
-		        (refence < ((*data_Conductivity)(2) + (*data_Conductivity)(3))))
-			val =  (*data_Conductivity)(0) +
-			      ((*data_Conductivity)(0) - (*data_Conductivity)(1))
-			      * (refence - (*data_Conductivity)(2)) / (*data_Conductivity)(3);
+		if(refence < k_T[2]) // Wet
+			val =  k_T[0];
+		else if((refence >= k_T[2]) &&
+		        (refence < (k_T[2] + k_T[3])))
+			val =  k_T[0] + (k_T[0] - k_T[1]) * (refence - k_T[2]) / k_T[3];
 		else
-			val =  (*data_Conductivity)(1);
+			val =  k_T[1];
+		}
 		break;
 	case 3:                               // refence: saturation
 		//val = 1.28-0.71/(1+10.0*exp(refence-0.65));  //MX
 		val = 1.28 - 0.71 / (1 + exp(10.0 * (refence - 0.65)));
+		break;
+	case 30:  // Another model for bentonite. 10.2013. WW
+		{
+		//val = k_max-k_min/(1+10.0*exp(refence-S0));  
+		const double *k_T = data_Conductivity->getEntryArray();
+//		val = k_T[0] - (k_T[0]-k_T[1]) / (1 + exp(10.0 * (refence - k_T[2])));
+		val = k_T[0] + k_T[1]* (refence - k_T[2]);
+		}
 		break;
 	case 4:                               //21.12.2009. WW
 		val = CalulateValue(data_Conductivity, refence);

@@ -873,7 +873,7 @@ void LegacyVtkInterface::WriteVTKDataArrays(fstream &vtk_file) const
 		// Write X, Y and Z arrays as vectors
 		//WW. 11.2012. if(k + 1 < numPointArrays)
 		{
-			if (_pointArrayNames[k].find("_X") != string::npos && _pointArrayNames[k + 1].find("_Y") != string::npos)
+			if (_pointArrayNames[k].find("_X") != string::npos && (k+1<numPointArrays && _pointArrayNames[k + 1].find("_Y") != string::npos))
 			{
                string arrayName = _pointArrayNames[k];
                CRFProcess* pcs = PCSGet(arrayName, true);

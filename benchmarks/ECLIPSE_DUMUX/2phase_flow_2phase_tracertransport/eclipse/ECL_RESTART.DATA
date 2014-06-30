@@ -244,7 +244,7 @@ SOLUTION
 
 -- Restart option
 RESTART 
-E:\OGS\Benchmarks\ECLIPSE_DUMUX_new\TEMPORARYRESULTS 99 /
+TEMPORARYRESULTS 99 /
 
 
 -- =======================

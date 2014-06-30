@@ -450,7 +450,7 @@ SOLUTION
 
 -- Restart option
 RESTART 
-E:\OGS\Benchmarks\ECLIPSE_DUMUX_new\kinetic_CO2phase_generation_E100\eclipse\TEMPORARYRESULTS 49 /
+TEMPORARYRESULTS 49 /
 
 
 
@@ -486,7 +486,7 @@ RPTRST
 ---------------------------------------------------------------------- 
 
 TSTEP
-1*1.15741e-005 /
+1*1.15741e-05 /
 
 END
 -------------------------------------------------
