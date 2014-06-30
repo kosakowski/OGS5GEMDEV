@@ -3545,10 +3545,17 @@ int REACT_GEM::CalcLimits ( long in, TNode* m_Node)
                     // kinetic_mocel==3 only precipitation is copntroleld (free dissolution)
                     if ( ( (m_kin[ii].kinetic_model == 2) || (m_kin[ii].kinetic_model == 7)) &&
                             ( m_dul[in * nDC + j] > m_xDC[in * nDC + j] ) )
+		    {
                         m_dul[in*nDC+j]= m_xDC[in*nDC+j];
+		        m_dll[in*nDC+j]= 0.0;
+		      
+		    }
                     if ( ( m_kin[ii].kinetic_model == 3 ) &&
                             ( m_dll[in * nDC + j] < m_xDC[in * nDC + j] ) )
-                        m_dll[in * nDC + j] = 0.0; // m_dll[in*nDC+j]= m_xDC[in*nDC+j];
+		    {
+                        m_dll[in * nDC + j] = m_xDC[in * nDC + j]; // m_dll[in*nDC+j]= m_xDC[in*nDC+j];
+			m_dul[in*nDC+j]= 1.0e6;
+		    }
                     if ( ( m_xDC[in * nDC + j] < 1.0e-6 ) &&
                             ( omega_phase[in * nPH + k] >= 1.0001 ) &&
                             ( m_dul[in * nDC + j] < 1.0e-6 ) )
