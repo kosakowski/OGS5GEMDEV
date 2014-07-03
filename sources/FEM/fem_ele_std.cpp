@@ -4119,7 +4119,7 @@ void CFiniteElementStd::CalcMass()
 	}   // loop gauss points
 	
 	//WW/CB //NW
-#ifndef USE_PETSC
+#if !defined(USE_PETSC)
 	if(PcsType != T && pcs->m_num->ele_supg_method == 0)
 	  {
 	    for(i = 0; i < nnodes; i++)
@@ -8403,7 +8403,7 @@ void CFiniteElementStd::CalcFEM_FCT()
     Math_Group::Vec *ML = this->pcs->Gl_ML;
 	for(int i = 0; i < nnodes; i++)
 	{
-#ifdef USE_PETSC
+#if defined(USE_PETSC)
         long node_i_id =  MeshElement->GetNode(i)->GetEquationIndex();
 #else
 		long node_i_id = this->MeshElement->nodes_index[i];
@@ -8422,7 +8422,7 @@ void CFiniteElementStd::CalcFEM_FCT()
         {
 			long node_j_id = this->MeshElement->nodes_index[j];
 			double v = (*this->Mass)(i,j);
-#ifdef USE_PETSC
+#if defined(USE_PETSC)
 			if (v==.0) v = (*this->Mass)(j,i); //look for inner nodes
 #endif
             (*FCT_Flux)(node_i_id,node_j_id) += v;
@@ -8438,7 +8438,7 @@ void CFiniteElementStd::CalcFEM_FCT()
 	*AuxMatrix += *Advection;
 	*AuxMatrix += *Storage;
 
-#ifdef USE_PETSC
+#if defined(USE_PETSC)
 	// store K (global)
 	for (int i = 0; i < nnodes; i++) {
 		long glob_i =  MeshElement->GetNode(i)->GetEquationIndex();
@@ -8468,7 +8468,7 @@ void CFiniteElementStd::CalcFEM_FCT()
 	//----------------------------------------------------------------------
 	// Setup local coefficient matrix and RHS vector
 	//----------------------------------------------------------------------
-#ifdef USE_PETSC
+#if defined(USE_PETSC)
 	// A=1/dt*ML + theta*K
 	*AuxMatrix   *= theta;
 	*StiffMatrix  = *FCT_MassL;

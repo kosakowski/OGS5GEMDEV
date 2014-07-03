@@ -202,7 +202,7 @@ int ReadData ( char* dateiname, GEOLIB::GEOObjects& geo_obj, std::string& unique
 	FCTRead(dateiname);                   //OK
 	CURRead(dateiname);                   //OK
 	//CURWrite(); //OK
-#ifdef USE_PETSC
+#if defined(USE_PETSC)
 	FCT_MPI::FCTCommRead(dateiname);
 #endif
 	//----------------------------------------------------------------------

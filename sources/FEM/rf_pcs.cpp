@@ -357,7 +357,7 @@ CRFProcess::CRFProcess(void) :
 	this->Gl_Vec = NULL;                  //NW
 	this->Gl_Vec1 = NULL;                 //NW
 	this->FCT_AFlux = NULL;               //NW
-#ifdef USE_PETSC
+#if defined(USE_PETSC)
 	this->FCT_K = NULL;
 	this->FCT_d = NULL;
 #endif
@@ -499,7 +499,7 @@ CRFProcess::~CRFProcess(void)
 		this->Gl_Vec = NULL;
 		this->Gl_Vec1 = NULL;
 		this->FCT_AFlux = NULL;
-#ifdef USE_PETSC
+#if defined(USE_PETSC)
 		delete this->FCT_K;
 		delete this->FCT_d;
 		this->FCT_K = NULL;
@@ -683,7 +683,7 @@ void CRFProcess::Create()
 	if (m_num->fct_method > 0)            //NW
 	{
 		//Memory_Type = 1;
-#ifdef USE_PETSC
+#if defined(USE_PETSC)
 		long gl_size = m_msh->getNumNodesGlobal();
 		this->FCT_K = new SparseMatrixDOK(gl_size, gl_size);
 		this->FCT_d = new SparseMatrixDOK(gl_size, gl_size);
@@ -4756,6 +4756,9 @@ double CRFProcess::Execute()
 //		eqs_new->EQSV_Viewer(eqs_output_file);
 		eqs_new->Solver();
 		eqs_new->MappingSolution();
+	        iter_lin = eqs_new->Solver();
+		//TEST 	double x_norm = eqs_new->GetVecNormX();
+		eqs_new->MappingSolution();
 #else
 #ifdef NEW_EQS                              //WW
 #if defined(USE_MPI)
@@ -5016,7 +5019,7 @@ void CRFProcess::AddFCT_CorrectionVector()
 	A = this->eqs_new->A;
 #endif
 
-#ifdef USE_PETSC
+#if defined(USE_PETSC)
 	// gather K
 	FCT_MPI::gatherK(FCT_MPI::ct, *FCT_K);
 	// compute D
@@ -5075,7 +5078,7 @@ void CRFProcess::AddFCT_CorrectionVector()
 				continue;  //do below only for upper triangle due to symmetric
 
 			// Get artificial diffusion operator D
-#ifdef USE_PETSC
+#if defined(USE_PETSC)
 			double d1 = (*FCT_d)(i_global, j_global);
 #else
 #if defined(NEW_EQS)
@@ -5113,13 +5116,13 @@ void CRFProcess::AddFCT_CorrectionVector()
 			else if (this->m_num->fct_prelimiter_type == 2)
 				v = SuperBee(v, -d1 * diff_uH);
 			(*FCT_AFlux)(i, j) = v;
-#ifdef USE_PETSC
+#if defined(USE_PETSC)
 			(*FCT_AFlux)(j, i) = -v;
 #else
 			(*FCT_AFlux)(j, i) = v;
 #endif
 
-#ifdef USE_PETSC
+#if defined(USE_PETSC)
 			// A += theta * D
 			if (i < (size_t)m_msh->getNumNodesLocal()) {
 				eqs_new->addMatrixEntry(i_global, i_global, -d1*theta);
@@ -5176,7 +5179,7 @@ void CRFProcess::AddFCT_CorrectionVector()
 			for (size_t j = 0; j < node_size; j++)
 			{
 				const size_t j_global = FCT_GLOB_ADDRESS(j);
-#ifdef USE_PETSC
+#if defined(USE_PETSC)
 				// b+=-(1-theta)*D*u^n
                 (*V)(i) += (*FCT_d)(i_global, j_global) * (*V1)(j);
 #else
@@ -5201,7 +5204,7 @@ void CRFProcess::AddFCT_CorrectionVector()
 		}
 	}
 
-#ifndef USE_PETSC
+#if !defined(USE_PETSC)
 	//----------------------------------------------------------------------
 	// Assemble A matrix: 1/dt*ML + theta * L
 	//----------------------------------------------------------------------
@@ -5266,7 +5269,7 @@ void CRFProcess::AddFCT_CorrectionVector()
 			if (i == j)
 				continue;
 			double f = (*jj).second; //double f = (*FCT_AFlux)(i,j);
-#ifndef USE_PETSC
+#if defined(USE_PETSC)
 			if (i > j)
 				f *= -1.0;
 #endif
@@ -5289,7 +5292,7 @@ void CRFProcess::AddFCT_CorrectionVector()
 			(*R_min)(i_global) = min(1.0, ml * Q_min / (dt * P_min));
 	}
 
-#ifdef USE_PETSC
+#if defined(USE_PETSC)
     FCT_MPI::gatherR(FCT_MPI::ct, *R_plus, *R_min);
 #endif
 
@@ -5316,7 +5319,7 @@ void CRFProcess::AddFCT_CorrectionVector()
 				continue;
 
 			double f = (*jj).second; //double f = (*FCT_AFlux)(i,j);
-#ifndef USE_PETSC
+#if defined(USE_PETSC)
 			if (i > j)
 				f *= -1;  // symmetric
 #endif
@@ -5332,7 +5335,7 @@ void CRFProcess::AddFCT_CorrectionVector()
 			else
 				val = this->m_num->fct_const_alpha * f;
 
-#ifdef USE_PETSC
+#if defined(USE_PETSC)
 			if (i < m_msh->getNumNodesLocal())
 				eqs_new->add_bVectorEntry(i_global, val, ADD_VALUES);
 #else
@@ -5392,7 +5395,7 @@ void CRFProcess::GlobalAssembly()
 		(*this->Gl_ML) = 0.0;
 		(*this->Gl_Vec) = 0.0;
 		(*this->Gl_Vec1) = 0.0;
-#ifdef USE_PETSC
+#if defined(USE_PETSC)
         (*this->FCT_K) = 0.0;
         (*this->FCT_d) = .0;
 #endif

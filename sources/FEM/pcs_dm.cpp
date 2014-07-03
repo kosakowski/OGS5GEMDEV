@@ -853,7 +853,7 @@ double CRFProcessDeformation::Execute(int loop_process_number)
 	Error = 0.0;
 	if(type / 10 != 4)                    // Partitioned scheme
 	{
-#ifdef USE_PETSC
+#if defined(USE_PETSC)
                 NormU =  eqs_new->GetVecNormX();
 #else
 		for(size_t n = 0; n < m_msh->GetNodesNumber(true); n++)
