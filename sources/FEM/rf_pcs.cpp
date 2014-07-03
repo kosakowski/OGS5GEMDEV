@@ -4759,9 +4759,10 @@ double CRFProcess::Execute()
 #if defined(USE_PETSC)
 //		std::string eqs_output_file = FileName + number2str(aktueller_zeitschritt);
 //		eqs_new->EQSV_Viewer(eqs_output_file);
-		eqs_new->Solver();
-		eqs_new->MappingSolution();
 	        iter_lin = eqs_new->Solver();
+		if (iter_lin < 0)  //kg44 if solver fails we do not map solution
+		  cout << "FCT: Solver failed, better take uncorrected solution! \n";
+		else
 		//TEST 	double x_norm = eqs_new->GetVecNormX();
 		eqs_new->MappingSolution();
 #else

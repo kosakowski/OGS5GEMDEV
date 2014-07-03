@@ -240,7 +240,8 @@ int PETScLinearSolver::Solver()
    }
    else if (reason<0)
    {
-     PetscPrintf(PETSC_COMM_WORLD,"\nOther kind of divergence: this should not happen.\n");
+     PetscPrintf(PETSC_COMM_WORLD,"\nOther kind of divergence: solver returned: %d. This should not happen.\n",(int)reason);
+     its=(int)reason; //kg44 ...return negative number...this allows to do error handling for FCT!
    }
    else 
    {
