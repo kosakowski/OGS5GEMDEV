@@ -64,9 +64,9 @@ double elapsed_time_mpi;
 
 
 // Use PETSc. WW
-#ifdef USE_PETSC
+#if defined(USE_PETSC)
 #include "petscksp.h"
-#ifdef USEPETSC34
+#if defined(USEPETSC34)
 #include "petsctime.h"
 #endif
 #endif
@@ -182,14 +182,14 @@ int main ( int argc, char* argv[] )
 /*---------- MPI Initialization ----------------------------------*/
 
 
-#ifdef USE_PETSC
+#if defined(USE_PETSC)
 	int rank, r_size;
 	PetscLogDouble v1,v2;
 	char help[] = "OGS with PETSc \n";
 	//PetscInitialize(argc, argv, help);
 	PetscInitialize(&argc,&argv,(char *)0,help);
 	//kg44 quick fix to compile PETSC with version PETSCV3.4
-#ifdef USEPETSC34
+#if defined(USEPETSC34)
        PetscTime(&v1);
 #else
        PetscGetTime(&v1);
@@ -221,7 +221,7 @@ int main ( int argc, char* argv[] )
 #if defined(USE_MPI) //WW
 	if(myrank == 0)
 #endif
-#ifdef USE_PETSC
+#if defined(USE_PETSC)
         if(rank == 0 )
 #endif
 
@@ -276,7 +276,7 @@ int main ( int argc, char* argv[] )
 		FilePath = FileName.substr(0,indexChLinux) + "/";
 	// ---------------------------WW
 	Problem* aproblem = new Problem(dateiname);
-#ifdef USE_PETSC
+#if defined(USE_PETSC)
 	aproblem->setRankandSize(rank, r_size);
 #endif
 #if defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL) || defined(USE_MPI_GEMS)  || defined(USE_MPI_KRC)
@@ -318,9 +318,9 @@ int main ( int argc, char* argv[] )
 
 	free(dateiname);
 
-#ifdef USE_PETSC
+#if defined(USE_PETSC)
 	//kg44 quick fix to compile PETSC with version PETSCV3.4
-#ifdef USEPETSC34
+#if defined(USEPETSC34)
        PetscTime(&v2);
 #else
        PetscGetTime(&v2);
