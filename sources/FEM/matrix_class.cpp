@@ -25,26 +25,93 @@
 
 namespace Math_Group
 {
-// Constructors
-Matrix::Matrix(size_t rows, size_t cols) :
+
+MatrixBase::MatrixBase(size_t rows, size_t cols, size_t size) :
 	nrows (rows), nrows0 (rows), ncols (cols), ncols0 (cols),
-	size (nrows * ncols), data (new double[size])
+	size(size), data(size>0?new double[size]:NULL)
 {
 	for(size_t i = 0; i < size; i++)
 		data[i] = 0.0;
 }
 
-Matrix::Matrix() :
-	nrows (0), nrows0 (0), ncols (0), ncols0 (0),
-	size (nrows * ncols), data (NULL)
-{}
-
-Matrix::Matrix(const Matrix& m) :
-	nrows (m.nrows), nrows0 (m.nrows), ncols (m.ncols), ncols0 (m.ncols),
-	size (nrows * ncols), data (new double[size])
+MatrixBase::MatrixBase(const MatrixBase &m) :
+	nrows (m.nrows), nrows0 (m.nrows0), ncols (m.ncols), ncols0 (m.ncols0),
+	size(m.size), data(size>0?new double[size]:NULL)
 {
 	for(size_t i = 0; i < size; i++)
 		data[i] = m.data[i];
+}
+
+MatrixBase::~MatrixBase()
+{
+	delete [] data;
+	data = NULL;
+}
+
+// 06.2010. WW
+void MatrixBase::ReleaseMemory()
+{
+	delete [] data;
+	data = NULL;
+}
+
+/**************************************************************************
+   MathLib-Method:
+   Task:
+   Programing:
+   08/2004 WW Implementation
+   02/2005 WW Change name
+**************************************************************************/
+void MatrixBase::Write(std::ostream& os)
+{
+	os.setf(std::ios::scientific, std::ios::floatfield);
+	os.precision(12);
+
+	for (size_t i = 0; i < nrows; i++)
+	{
+		os << "| ";
+		for (size_t j = 0; j < ncols; j++)
+			os << (*this)(i, j) << " ";
+		os << "| " << "\n";
+	}
+	os << "\n";
+}
+
+/**************************************************************************
+   MathLib-Method:
+   Task:
+   Programing:
+   01/2006 WW Implementation
+   03/2010 TF write whole matrix in one chunk
+**************************************************************************/
+void MatrixBase::Write_BIN(std::fstream& os)
+{
+	os.write((char*)data, size * sizeof(double));
+}
+/**************************************************************************
+   MathLib-Method:
+   Task:
+   Programing:
+   01/2006 WW Implementation
+**************************************************************************/
+void MatrixBase::Read_BIN(std::fstream& is)
+{
+	for(size_t i = 0; i < size; i++)
+		is.read((char*)(&data[i]), sizeof(data[i]));
+}
+
+// Constructors
+Matrix::Matrix(size_t rows, size_t cols) :
+	MatrixBase (rows, cols, rows * cols)
+{}
+
+Matrix::Matrix() :
+	MatrixBase (0, 0, 0)
+{}
+
+Matrix::Matrix(const Matrix& m) :
+	MatrixBase (m)
+{
 }
 
 void Matrix::resize(size_t rows, size_t cols)
@@ -67,38 +134,7 @@ void Matrix::resize(size_t rows, size_t cols)
 
 Matrix::~Matrix()
 {
-	delete [] data;
-	data = NULL;
 }
-
-// 06.2010. WW
-void Matrix::ReleaseMemory()
-{
-	delete [] data;
-	data = NULL;
-}
-
-/*
-void Matrix::operator= (const SymMatrix& m)
-{
-    const double *m_data = m.getEntryArray_const();
-
-    for(size_t i = 0; i < nrows; i++)
-    {
-        double *row_data = &data[i * ncols] ;
-        const double *row_data_m = &data[(i * (i + 1) / 2)] ;
-           
-        // diagonal 
-        row_data[i] = row_data_m[i];
-
-        for(size_t j = 0; j<ncols; j++)
-        {
-           row_data[j] = row_data_m[j];
-           data[j*ncols + i] = row_data_m[j];
-        }
-    }
-}
-*/
 
 //
 void Matrix::GetTranspose(Matrix& m)
@@ -134,7 +170,7 @@ void Matrix::multi(const Matrix& m, Matrix& m_result, double fac)
 		abort();
 	}
 #endif
-   const double *m_data = m.getEntryArray_const();
+    const double *m_data = m.getEntryArray();
     const size_t mrows = m.Rows();
     const size_t mcols = m.Cols();
     double *r_data = m_result.getEntryArray();
@@ -220,74 +256,18 @@ void Matrix::LimitSize(size_t nRows, size_t nCols)
 	size = nrows * ncols;
 }
 
-/**************************************************************************
-   MathLib-Method:
-   Task:
-   Programing:
-   08/2004 WW Implementation
-   02/2005 WW Change name
-**************************************************************************/
-void Matrix::Write(std::ostream& os)
-{
-	os.setf(std::ios::scientific, std::ios::floatfield);
-	os.precision(12);
-
-	for (size_t i = 0; i < nrows; i++)
-	{
-		os << "| ";
-		for (size_t j = 0; j < ncols; j++)
-			os << (*this)(i, j) << " ";
-		os << "| " << "\n";
-	}
-	os << "\n";
-}
-
-/**************************************************************************
-   MathLib-Method:
-   Task:
-   Programing:
-   01/2006 WW Implementation
-   03/2010 TF write whole matrix in one chunk
-**************************************************************************/
-void Matrix::Write_BIN(std::fstream& os)
-{
-	os.write((char*)data, size * sizeof(double));
-}
-/**************************************************************************
-   MathLib-Method:
-   Task:
-   Programing:
-   01/2006 WW Implementation
-**************************************************************************/
-void Matrix::Read_BIN(std::fstream& is)
-{
-	for(size_t i = 0; i < size; i++)
-		is.read((char*)(&data[i]), sizeof(data[i]));
-}
-
 //-----------------------------------------------------
 // Symmetrical matrix
 SymMatrix::SymMatrix(size_t dim) :
-	Matrix()
+	MatrixBase(dim, dim, (size_t)dim * (dim + 1) / 2)
 {
-	nrows = ncols = dim;
-	size = (int)nrows * (nrows + 1) / 2;
-	data = new double[size];
-	nrows0 = ncols0 = dim;
-	for(size_t i = 0; i < size; i++)
-		data[i] = 0.0;
 }
 
-SymMatrix::SymMatrix(const SymMatrix& m) : Matrix()
+SymMatrix::SymMatrix() : MatrixBase(0,0,0)
 {
-	nrows = m.nrows;
-	ncols = m.ncols;
-	nrows0 = m.nrows0;
-	ncols0 = m.ncols0;
-	size = m.size;
-	data = new double[size];
-	for(size_t i = 0; i < size; i++)
-		data[i] = m.data[i];
+}
+SymMatrix::SymMatrix(const SymMatrix& m) : MatrixBase(m)
+{
 }
 
 void SymMatrix::resize(size_t dim)
@@ -415,37 +395,17 @@ void SymMatrix::multi(const double* vec, double* vec_result, double fac)
 
 //-----------------------------------------------------
 // Diagonal matrix
-DiagonalMatrix::DiagonalMatrix(size_t dim) : Matrix()
+DiagonalMatrix::DiagonalMatrix(size_t dim) : MatrixBase(dim,dim,dim)
 {
-	nrows = ncols = dim;
-	size = dim;
-	data = new double[dim];
-	nrows0 = ncols0 = dim;
-	for(size_t i = 0; i < size; i++)
-		data[i] = 0.0;
 	dummy_zero = 0.0;
 }
 
-DiagonalMatrix::DiagonalMatrix() : Matrix()
+DiagonalMatrix::DiagonalMatrix() : MatrixBase(0,0,0)
 {
-	nrows = 0;
-	ncols = 0;
-	nrows0 = 0;
-	ncols0 = 0;
-	size = 0;
-	data = 0;
 	dummy_zero = 0.0;
 }
-DiagonalMatrix::DiagonalMatrix(const DiagonalMatrix& m) : Matrix()
+DiagonalMatrix::DiagonalMatrix(const DiagonalMatrix& m) : MatrixBase(m)
 {
-	nrows = m.nrows;
-	ncols = m.ncols;
-	nrows0 = m.nrows0;
-	ncols0 = m.ncols0;
-	size = m.size;
-	data = new double[size];
-	for(size_t i = 0; i < size; i++)
-		data[i] = 0.0;
 	dummy_zero = 0.0;
 }
 
@@ -463,36 +423,6 @@ void DiagonalMatrix::resize(size_t dim)
 	nrows0 = ncols0 = dim;
 	for(size_t i = 0; i < size; i++)
 		data[i] = 0.0;
-}
-
-//
-double& DiagonalMatrix::operator() (size_t i, size_t j) const
-{
-#ifdef gDEBUG
-	if(i >= nrows || j >= nrows)
-	{
-		cout << "\n Index exceeds the size of the matrix" << "\n";
-		abort();
-	}
-#endif
-
-	if(i == j)
-		return data[i];           // temporary
-	else
-		return dummy_zero;
-}
-
-double& DiagonalMatrix::operator() (size_t i) const
-{
-#ifdef gDEBUG
-	if(i >= size)
-	{
-		cout << "\n Index exceeds the size of the matrix" << "\n";
-		abort();
-	}
-#endif
-
-	return data[i];
 }
 
 void DiagonalMatrix::LimitSize(size_t dim)
