@@ -46,12 +46,12 @@ ADD_BENCHMARK ("HS_LONG" C/comedy2d/cement2d "OGS_FEM_GEMS" 1
 ADD_BENCHMARK ("HS" C/HAYEKIT/ab1d "OGS_FEM_GEMS" 1
 	C/HAYEKIT/ab1d0100.vtk)
 
-#kg44 petsc_gems benchmarks (temporarily) disabled 
-#ADD_BENCHMARK ("HS_EXCEEDING" PETSc/TransLay2d/lag2d "OGS_FEM_PETSC_GEMS" 4
-#        PETSc/TransLay2d/lag2d0001.vtk)
+#kg44 petsc_gems benchmarks 
+ADD_BENCHMARK ("HS_EXCEEDING" PETSc/TransLay2d/lag2d "OGS_FEM_PETSC_GEMS" 4
+        PETSc/TransLay2d/lag2d0001.vtk)
 
-#ADD_BENCHMARK ("HS_LONG" PETSc/ConcreteCrack/decal "OGS_FEM_PETSC_GEMS" 4
-#        PETSc/ConcreteCrack/decal0008.vtk)
+ADD_BENCHMARK ("HS_LONG" PETSc/ConcreteCrack/decal "OGS_FEM_PETSC_GEMS" 4
+        PETSc/ConcreteCrack/decal0008.vtk)
 
 # C/matrix_diffusion/crr:
 #C/matrix_diffusion/crr/mdif_time_POINT555_MASS_TRANSPORT.tec

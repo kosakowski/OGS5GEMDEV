@@ -2990,8 +2990,13 @@ void CRFProcess::ConfigHeatTransport()
 void CRFProcess::ConfigDeformation()
 {
 	// Generate high order nodes for all elements.
+#if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
+        m_msh->ConfigHighOrderElements();
+#else
 	m_msh->GenerateHighOrderNodes();      //WW
+#endif
 	type = 4;
+
 	//	if (_pcs_type_name.find("DEFORMATION") != string::npos
 	//			&& _pcs_type_name.find("FLOW") != string::npos) {
 	if (getProcessType() == FiniteElement::DEFORMATION_FLOW || getProcessType() == FiniteElement::DEFORMATION_H2 )
