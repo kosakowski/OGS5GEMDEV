@@ -80,7 +80,7 @@ void FEMDeleteAll()
 	fem_msh_vector.clear();
 }
 
-#ifndef USE_PETSC // && not defined(other parallel method with ddc)
+#if !defined(USE_PETSC) // && not defined(other parallel method with ddc)
 /**************************************************************************
    FEMLib-Method:
    Task:
