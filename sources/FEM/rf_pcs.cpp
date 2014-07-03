@@ -4762,7 +4762,6 @@ double CRFProcess::Execute()
 	        iter_lin = eqs_new->Solver();
 		if (iter_lin < 0)  //kg44 if solver fails we do not map solution
 		  cout << "FCT: Solver failed, better take uncorrected solution! \n";
-		else
 		//TEST 	double x_norm = eqs_new->GetVecNormX();
 		eqs_new->MappingSolution();
 #else
