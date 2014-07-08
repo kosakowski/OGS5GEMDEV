@@ -13,6 +13,9 @@
 // MSHLib
 //WW#include "MSHEnums.h" // KR 2010/11/15
 #include "msh_elem.h"
+// PCSLib
+#include "mathlib.h"
+#include "rf_mmp_new.h"
 
 namespace MeshLib
 {
@@ -1440,11 +1443,11 @@ void CElem::ComputeVolume()
 	volume = calcVolume();
 
 	if (this->geo_type == MshElemType::LINE)                  // Line
-		representative_length = volume;
+		representative_length = volume/area;
 	else if (this->geo_type == MshElemType::TRIANGLE)
-		representative_length = sqrt(volume) * 4.0;
+		representative_length = sqrt(volume/area) * 4.0 ;
 	else if (this->geo_type == MshElemType::QUAD)
-		representative_length = sqrt(volume);  //kg44 reactivated
+		representative_length = sqrt(volume/area);  //kg44 reactivated
 	else if (this->geo_type == MshElemType::TETRAHEDRON)
 		representative_length = sqrt(volume) * 6.0;
 	else if (this->geo_type == MshElemType::HEXAHEDRON)
@@ -1460,7 +1463,15 @@ void CElem::ComputeVolume()
 double CElem::calcVolume () const
 {
 	double elemVolume = 0.0;
+	double myarea =1.0;
+	int mmp_index = 0;
+	long group = this->GetPatchIndex();
+	mmp_index = group;
 
+    // TODO: For multidomain meshes accessing mmp_vector can result in SEGV,
+    // like above msp_vector[].
+	myarea =  mmp_vector[mmp_index]->geo_area; // NW
+	
 	if (this->geo_type == MshElemType::LINE)                // Line
 	{
 		double const* const pnt0 (nodes[0]->getData());
@@ -1468,20 +1479,22 @@ double CElem::calcVolume () const
 		double xDiff = pnt[0] - pnt0[0];
 		double yDiff = pnt[1] - pnt0[1];
 		double zDiff = pnt[2] - pnt0[2];
-		elemVolume = sqrt(xDiff * xDiff + yDiff * yDiff + zDiff * zDiff); //CMCD kg44 reactivated
+		
+		elemVolume = sqrt(xDiff * xDiff + yDiff * yDiff + zDiff * zDiff) * myarea ; // KG44 need multiplication with area which is set from material properties geo_area
+	//	std::cout << "DEBUG area "<< myarea << "\n";
 	}
 	else if (this->geo_type == MshElemType::TRIANGLE)
 		elemVolume = ComputeDetTri(nodes[0]->getData(),
-		                           nodes[1]->getData(), nodes[2]->getData());                //kg44 reactivated
+		                           nodes[1]->getData(), nodes[2]->getData()) * myarea;    // KG44 need multiplication with area which is set from material properties geo_area            
 	else if (this->geo_type == MshElemType::QUAD)
-		elemVolume = ComputeDetTri(nodes[0]->getData(),
+		elemVolume = (ComputeDetTri(nodes[0]->getData(),
 		                           nodes[1]->getData(), nodes[2]->getData())
 		             + ComputeDetTri(nodes[2]->getData(),
-		                             nodes[3]->getData(), nodes[0]->getData());
+		                             nodes[3]->getData(), nodes[0]->getData())) * myarea; // KG44 need multiplication with area which is set from material properties geo_area
 	else if (this->geo_type == MshElemType::TETRAHEDRON)
 		elemVolume  = ComputeDetTex(nodes[0]->getData(),
 		                            nodes[1]->getData(),
-		                            nodes[2]->getData(), nodes[3]->getData());                                     //kg44 reactivated
+		                            nodes[2]->getData(), nodes[3]->getData());                                     
 	else if (this->geo_type == MshElemType::HEXAHEDRON)
 	{
 		elemVolume  = ComputeDetTex(nodes[4]->getData(),
