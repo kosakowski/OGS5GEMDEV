@@ -1060,7 +1060,7 @@ void MainWindow::loadFEMConditionsFromFile(const QString &fileName, std::string 
 	QFileInfo fi(fileName);
 	if (fi.suffix().toLower() == "cnd")
 	{
-		std::string schemaName(_fileFinder.getPath("OpenGeoSysCond.xsd"));
+		std::string schemaName(_fileFinder.getPath("OpenGeoSysCND.xsd"));
 		XmlCndInterface xml(&_project, schemaName);
 		xml.readFile(conditions, fileName);
 	}
@@ -1194,7 +1194,7 @@ void MainWindow::writeFEMConditionsToFile(const QString &geoName, const FEMCondi
 	QFileInfo fi(fileName);
 	if (fi.suffix().compare("cnd") == 0 )
 	{
-		std::string schemaName(_fileFinder.getPath("OpenGeoSysCond.xsd"));
+		std::string schemaName(_fileFinder.getPath("OpenGeoSysCND.xsd"));
 		XmlCndInterface xml(&_project, schemaName);
 		xml.setNameForExport(geoName.toStdString());
 		xml.setConditionType(type);

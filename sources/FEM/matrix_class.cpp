@@ -55,6 +55,56 @@ void MatrixBase::ReleaseMemory()
 	data = NULL;
 }
 
+// m_results = this*m. m_results must be initialized
+void MatrixBase::multi(const MatrixBase& m, MatrixBase& m_result, double fac)
+{
+#ifdef gDEBUG
+	if(ncols != m.Rows() && nrows != m_result.Rows() && m.Cols() != m_result.Cols())
+	{
+		std::cout << "\n The sizes of the two matrices are not matched" << "\n";
+		abort();
+	}
+#endif
+	for(size_t i = 0; i < m_result.Rows(); i++)
+		for(size_t j = 0; j < m_result.Cols(); j++)
+		{
+			// m_result(i,j) = 0.0;
+			for(size_t k = 0; k < ncols; k++)
+				//            m_result(i,j) += fac*data[i*ncols+k]*m(k,j);
+				m_result(i,j) += fac * (*this)(i,k) * m(k,j);
+		}
+}
+
+//
+// m_results = this*m1*m2. m_results must be  initialized
+void MatrixBase::multi(const MatrixBase& m1, const MatrixBase& m2, MatrixBase& m_result)
+{
+#ifdef gDEBUG
+	if(ncols != m1.Rows() && m1.Cols() != m2.Rows()
+	   && m2.Cols() != m_result.Cols() && nrows != m_result.Rows())
+	{
+		std::cout << "\n The sizes of the two matrices are not matched" << "\n";
+		abort();
+	}
+#endif
+	for(size_t i = 0; i < m_result.Rows(); i++)
+		for(size_t j = 0; j < m_result.Cols(); j++)
+		{
+			//m_result(i,j) = 0.0;
+			for(size_t k = 0; k < ncols; k++)
+				for(size_t l = 0; l < m2.Rows(); l++)
+					//                m_result(i,j) += data[i*ncols+k]*m1(k,l)*m2(l,j);
+					m_result(i,j) += (*this)(i,k) * m1(k,l) * m2(l,j);
+		}
+}
+// vec_result = This*vec. vec_result must be  initialized
+void MatrixBase::multi(const double* vec, double* vec_result, double fac)
+{
+	for(int i = 0; (size_t)i < nrows; i++)
+		for(int j = 0; (size_t)j < ncols; j++)
+			vec_result[i] += fac * (*this)(i,j) * vec[j];
+}
+
 /**************************************************************************
    MathLib-Method:
    Task:
@@ -301,7 +351,7 @@ void SymMatrix::LimitSize(size_t dim)
 }
 
 // m_results = this*m. m_results must be initialized
-void SymMatrix::multi(const Matrix& m, Matrix& m_result, double fac)
+void SymMatrix::multi(const SymMatrix& m, Matrix& m_result, double fac)
 {
 #ifdef gDEBUG
 	if(ncols != m.Rows() && nrows != m_result.Rows() && m.Cols() != m_result.Cols())
@@ -340,7 +390,7 @@ void SymMatrix::multi(const Matrix& m, Matrix& m_result, double fac)
 
 //
 // m_results = this*m1*m2. m_results must be  initialized
-void SymMatrix::multi(const Matrix& m1, const Matrix& m2, Matrix& m_result)
+void SymMatrix::multi(const SymMatrix& m1, const Matrix& m2, Matrix& m_result)
 {
 #ifdef gDEBUG
 	if(ncols != m1.Rows() && m1.Cols() != m2.Rows()

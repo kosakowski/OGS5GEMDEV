@@ -145,7 +145,7 @@ void COutput::init()
 
     // For binary output of the domain data
 #if defined(USE_PETSC) // || defined(other solver libs)//01.3014. WW
-    if(getGeoType() == GEOLIB::GEODOMAIN)
+    if( (getGeoType() == GEOLIB::GEODOMAIN) || (dat_type_name.compare("BINARY") != 0 ) )
     {
       //dat_type_name = "BINARY";
        setDataArrayDisp();
@@ -871,12 +871,7 @@ void COutput::NODWriteDOMDataTEC()
 #if defined(USE_PETSC) // || defined(other solver libs)//01.2014. WW
 void COutput::setDataArrayDisp()
 {
-
-   if(getGeoType() != GEOLIB::GEODOMAIN)
-      return;
-
    //   MPI_Barrier (MPI_COMM_WORLD);
-
    //
    int *i_cnt;
    int *i_disp;
@@ -919,6 +914,9 @@ void COutput::NODDomainWriteBinary_Header()
 
    if(mrank != 0)
       return;
+
+   if( dat_type_name.compare("BINARY") != 0 )
+     return;
 
    string file_name;
 

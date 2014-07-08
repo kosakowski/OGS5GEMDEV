@@ -80,6 +80,10 @@ ADD_BENCHMARK ("WW" PETSc/Richards/h_us_quad "OGS_FEM_PETSC" 4
 ADD_BENCHMARK ("WW" PETSc/KueperProblem-PS/kueper "OGS_FEM_PETSC" 3
 	PETSc/KueperProblem-PS/kueper_time_POINT4_PS_GLOBAL.tec)
 
+ADD_BENCHMARK ("WW" PETSc/m_tri/m_tri "OGS_FEM_PETSC" 2
+	PETSc/m_tri/m_tri_domain_DEFORMATION_quad_0.tec
+	PETSc/m_tri/m_tri_domain_DEFORMATION_quad_1.tec)
+
 ADD_BENCHMARK ("WW" PETSc/T_tri/t_tri "OGS_FEM_PETSC" 4
 	PETSc/T_tri/t_tri_time_POINT4.tec)
 

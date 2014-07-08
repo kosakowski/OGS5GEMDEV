@@ -23,6 +23,10 @@ IF (NOT MSVC)
 		testOgs.cxx
 		testBmSkel.cxx)
 ENDIF (NOT MSVC)
+ 
+SET ( SOURCES ${SOURCES}
+	Matrix/testMatrix.cpp 
+    )
 
 INCLUDE_DIRECTORIES(
 	${CMAKE_SOURCE_DIR}/tests/gtest

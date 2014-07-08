@@ -82,6 +82,12 @@ public:
 			data[i] += a;
 	}
 
+	inline void operator-= (double a)
+	{
+		for(size_t i = 0; i < size; i++)
+			data[i] -= a;
+	}
+
 	inline void operator= (const MatrixBase& m)
 	{
 #ifdef gDEBUG
@@ -124,6 +130,13 @@ public:
 				data[i * ncols + j] -= m(i,j);
 	}
 
+	// vec_result = This*vec. vec_result must be initialized.
+	virtual void multi(const double* vec, double* vec_result, double fac = 1.0);
+	// m_result = this*m. m_result must be initialized.
+	virtual void multi(const MatrixBase& m, MatrixBase& m_result, double fac = 1.0);
+	// m_result = this*m1*m2. m_result must be initialized.To be removed
+	virtual void multi(const MatrixBase& m1, const MatrixBase& m2, MatrixBase& m_result);
+
 	// Print
 	void Write(std::ostream& os = std::cout);
 	void Write_BIN(std::fstream& os);
@@ -141,6 +154,10 @@ class Matrix : public MatrixBase
 {
 public:
 	using MatrixBase::operator=;
+	using MatrixBase::operator+=;
+	using MatrixBase::operator-=;
+	using MatrixBase::operator*=;
+	using MatrixBase::operator/=;
 
 	explicit Matrix(size_t rows, size_t cols = 1);
 	Matrix();
@@ -212,6 +229,10 @@ class SymMatrix : public MatrixBase
 {
 public:
 	using MatrixBase::operator=;
+	using MatrixBase::operator+=;
+	using MatrixBase::operator-=;
+	using MatrixBase::operator*=;
+	using MatrixBase::operator/=;
 
 	explicit SymMatrix(size_t dim);
 	SymMatrix();
@@ -272,9 +293,9 @@ public:
 	// vec_result = This*vec. vec_result must be initialized
 	virtual void multi(const double* vec, double* vec_result, double fac = 1.0);
 	// m_result = this*m. m_result must be initialized. m_result must be a full stored matrix
-	virtual void multi(const Matrix& m, Matrix& m_result, double fac = 1.0);
+	virtual void multi(const SymMatrix& m, Matrix& m_result, double fac = 1.0);
 	// m_result = this*m1*m2. m_result must be initialized.  m_result must be a full stored matrix
-	virtual void multi(const Matrix& m1, const Matrix& m2, Matrix& m_result);
+	virtual void multi(const SymMatrix& m1, const Matrix& m2, Matrix& m_result);
 
 	inline size_t getArrayIndex(const size_t i, const size_t j)  const
 	{
@@ -291,6 +312,10 @@ private:
 	mutable double dummy_zero;
 public:
 	using MatrixBase::operator=;
+	using MatrixBase::operator+=;
+	using MatrixBase::operator-=;
+	using MatrixBase::operator*=;
+	using MatrixBase::operator/=;
 
 	explicit DiagonalMatrix(size_t dim);
 	DiagonalMatrix();

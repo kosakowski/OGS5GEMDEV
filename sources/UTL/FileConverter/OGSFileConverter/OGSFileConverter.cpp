@@ -201,7 +201,7 @@ void OGSFileConverter::convertCND2BC(const QStringList &input, const QString &ou
 	geo_objects->addPointVec(fake_geo, fake_name);
 
 	FileFinder fileFinder = createFileFinder();
-	std::string schemaName(fileFinder.getPath("OpenGeoSysCond.xsd"));
+	std::string schemaName(fileFinder.getPath("OpenGeoSysCND.xsd"));
 	FileIO::XmlCndInterface xml(&project, schemaName);
 
 	std::size_t direct_file_count(0);
@@ -269,7 +269,7 @@ void OGSFileConverter::convertBC2CND(const QStringList &input, const QString &ou
 		const std::string output_str = QString(output + "/" + fi.completeBaseName() + "_" + fi.suffix().toLower() + ".cnd").toStdString();
 		project.addConditions(conditions);
 		FileFinder fileFinder = createFileFinder();
-		std::string schemaName(fileFinder.getPath("OpenGeoSysCond.xsd"));
+		std::string schemaName(fileFinder.getPath("OpenGeoSysCND.xsd"));
 		FileIO::XmlCndInterface xml(&project, schemaName);
 		xml.writeToFile(output_str);
 		project.removeConditions(FiniteElement::INVALID_PROCESS, "", FEMCondition::UNSPECIFIED);
