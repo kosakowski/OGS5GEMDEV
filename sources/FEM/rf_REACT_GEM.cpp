@@ -4501,9 +4501,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 				tdBR->NodeStatusCH = NEED_GEM_AIA; // first try without simplex using old solution
 				m_NodeStatusCH[in] = t_Node->GEM_run ( false );
 
-				if ( !( m_NodeStatusCH[in] == OK_GEM_AIA || m_NodeStatusCH[in] ==
-				        OK_GEM_SIA || m_NodeStatusCH[in] == BAD_GEM_AIA ||
-				        m_NodeStatusCH[in] == BAD_GEM_SIA )  ||
+				if ( !( m_NodeStatusCH[in] == OK_GEM_AIA || m_NodeStatusCH[in] == OK_GEM_SIA )  ||
 				     ( ( ( abs ( oldvolume - tdBR->Vs ) / oldvolume ) > 0.1 ) &&
 				       ( flowflag != 3 ) ))                               // not for Richards flow  // ups...failed..try again with changed kinetics
 				{
@@ -4546,8 +4544,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 
 				if (
 				        !( m_NodeStatusCH[in] == OK_GEM_AIA || m_NodeStatusCH[in] ==
-				           OK_GEM_SIA || m_NodeStatusCH[in] == BAD_GEM_AIA ||
-				           m_NodeStatusCH[in] == BAD_GEM_SIA ) ||
+				           OK_GEM_SIA ) ||
 				        ( ( ( abs ( oldvolume - tdBR->Vs ) / oldvolume ) > 0.1 ) &&
 				          ( flowflag != 3 ) )                                   // not for Richards flow
 				        )
@@ -4594,6 +4591,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 				if ( node_fail == 1 ) // do not take the new solution from gems
 				{
 					RestoreOldSolutionNode ( in ); 
+					GetBValue_MT ( in, 1, m_soluteB + in * nIC );
 					node_fail = 0;
 				}
 				else   // restore old solution and no update on kinetic parameters, porosity and fluid/gas properties
