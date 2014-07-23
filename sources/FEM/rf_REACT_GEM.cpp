@@ -397,7 +397,7 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 		for ( in = 0; in < nNodes; in++ )
 		{
 			m_boundary[in] = 0;          // cout << "boundary init ok"<<"\n";
-			m_NodeHandle[in] = 0;
+			m_NodeHandle[in] = 1;
 			m_NodeStatusCH[in] = 0;
 			m_IterDone[in] = 0;
 			m_IterDoneCumulative[in] = 0;
@@ -1015,6 +1015,8 @@ void REACT_GEM::SetReactInfoBackGEM ( long in,  TNode* m_Node )
 	//  for (i=0;i<nIC;i++) cout << m_bIC[in*nIC+i] << "\n";
 
 	if ( flag_transport_b == 1 ) //here we insert the actual B vector
+	// set charge to zero
+	m_bIC[in*nIC+nIC-1] = 0.0;
 
 		m_Node->GEM_from_MT ( m_NodeHandle[in],
 		                      m_NodeStatusCH[in],
@@ -1027,8 +1029,6 @@ void REACT_GEM::SetReactInfoBackGEM ( long in,  TNode* m_Node )
 		                      m_dll + in * nDC,
 		                      m_aPH + in * nPH );
 	//	cout << m_xDC+in*nDC << "\n";
-	// set charge to zero
-	m_Node->pCNode()->bIC[nIC - 1] = 0.0;
 }
 
 short REACT_GEM::Run_MainLoop ( )
@@ -3340,6 +3340,8 @@ int REACT_GEM::CalcLimitsInitial ( long in, TNode* m_Node)
 	}  // end restart
 	else // we test if kinetic constraints are set
 	{
+	      if ( ( int ) m_constraints.size() >=1) 
+	      {
 		for ( ii = 0; ii < ( int ) m_constraints.size(); ii++ )
 		{
                         // get componet number for constraint!
@@ -3361,7 +3363,8 @@ int REACT_GEM::CalcLimitsInitial ( long in, TNode* m_Node)
 			}
 		       }
 				    
-		}                                      // end loop over constraints
+		}
+	      }// end loop over constraints
 	  
 	}
 	return 1;
@@ -4248,8 +4251,9 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 	tdBR->NodeStatusCH = NEED_GEM_AIA;
 	t_Node->GEM_run ( false );
 
-//    t_Node->GEM_write_dbr ( "dbr_for_crash_node_init_thread1.txt" );
-//    t_Node->GEM_print_ipm ( "ipm_for_crash_node_init_thread1.txt" );
+	//    t_Node->GEM_write_dbr ( "dbr_for_crash_node_init_thread1.txt" );
+	//    t_Node->GEM_print_ipm ( "ipm_for_crash_node_init_thread1.txt" );
+        
 
 	rwmutex.unlock();
 
@@ -4274,12 +4278,14 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 			// Convert from concentration
 			REACT_GEM::ConcentrationToMass ( in,1); // I believe this is save for MPI
 			// this we have already
-
+  
 
 		// now we calculate kinetic constraints for GEMS!
 		if ( !( m_flow_pcs->GetRestartFlag() >= 2 ) )
 			REACT_GEM::CalcLimitsInitial ( in, t_Node);                                 //kg44 16.05.2013 new version, restart files contain upper and lower limits
-		// Manipulate some kinetic contstraints for special initial conditions
+
+
+			// Manipulate some kinetic contstraints for special initial conditions
 		// get all nodes of mesh
 		//	const std::vector<MeshLib::CNode*>& msh_nodes (m_flow_pcs->m_msh->getNodeVector());
 		//	double const* const coords (msh_nodes[in]->getData());
@@ -4292,11 +4298,10 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 
 		// Order GEM to run
 		tdBR->NodeStatusCH = NEED_GEM_AIA;
-		m_NodeStatusCH[in] = t_Node->GEM_run ( false );
-		//                t_Node->GEM_write_dbr ( "dbr_for_crash_node_init_thread_1.txt" );
-
+		m_NodeStatusCH[in] = t_Node->GEM_run ( true );
+		// t_Node->GEM_write_dbr ( "dbr_init1a.txt" );
+		// t_Node->GEM_print_ipm ( "ipm_init1a.txt" );
 		REACT_GEM::GetReactInfoFromGEM ( in, t_Node); // test case..get the data even if GEMS failed
-
 		if ( !( m_NodeStatusCH[in] == OK_GEM_AIA || m_NodeStatusCH[in] == OK_GEM_SIA ) )
 		{
 			rwmutex.lock();
@@ -4379,7 +4384,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 		// Order GEM to run
 		tdBR->NodeStatusCH = NEED_GEM_AIA;
 
-		m_NodeStatusCH[in] = t_Node->GEM_run ( false );
+		m_NodeStatusCH[in] = t_Node->GEM_run ( true );
 
 		if ( ( m_NodeStatusCH[in] == ERR_GEM_AIA || m_NodeStatusCH[in] == ERR_GEM_SIA ) )
 		{
