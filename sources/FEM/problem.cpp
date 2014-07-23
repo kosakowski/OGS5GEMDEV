@@ -745,7 +745,7 @@ void Problem::SetActiveProcesses()
 {
 	int i;
 	CRFProcess* m_pcs = NULL;
-   const int max_processes = 15;                  // PCH, TN
+        const int max_processes = 15;                  // PCH, TN
 	total_processes.resize(max_processes);
 	active_processes = new ProblemMemFn[max_processes];
 	coupled_process_index.resize(max_processes);
@@ -1180,8 +1180,8 @@ bool Problem::CouplingLoop()
 {
 	int i, index, cpl_index;
 	double max_outer_error, max_inner_error; //, error;
-    bool transient_bc = false;
-	bool run_flag[14];
+        bool transient_bc = false;
+	bool run_flag[15]; // KG: fixed upper number of processes (14) is not a good idea! use same number as for exe_flag ...
 	int outer_index, inner_index, inner_max; //, inner_min;
 	//
 	CRFProcess* a_pcs = NULL;
@@ -1191,6 +1191,7 @@ bool Problem::CouplingLoop()
 	print_result = false;
 	int acounter = 0;
 	//
+	
    for(i=0; i<(int)pcs_vector.size(); i++){
       pcs_vector[i]-> UpdateTransientBC();
       if(pcs_vector[i]->bc_transient_index.size() != 0)
