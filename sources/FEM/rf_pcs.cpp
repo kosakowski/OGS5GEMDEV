@@ -2893,7 +2893,7 @@ void CRFProcess::ConfigMassTransport()
 	//----------------------------------------------------------------------
 	pcs_primary_function_name[0] = cp_vec[pcs_component_number]->compname.c_str();
 	//sprintf(pcs_primary_function_name[0], "%s", cp_vec[pcs_component_number]->compname.c_str());
-	pcs_primary_function_unit[0] = "kg/m3"; //SB
+	pcs_primary_function_unit[0] = "kg/m3"; //SB     KG44 Aug2014 ..for OGS-GEM this is mol/m3!
 	/* SB: Eintrag component name in Ausgabestruktur */ //SB:todo : just one phase todo:name
 	/*
 	      pcs_primary_function_name[0] = GetTracerCompName(0,this->pcs_component_number-1);
@@ -2907,23 +2907,40 @@ void CRFProcess::ConfigMassTransport()
 	sprintf(pcs_secondary_function_name_tmp, "%s%li","MASS_FLUX_",comp);
 	strncpy((char*)pcs_secondary_function_name[0], pcs_secondary_function_name_tmp, 80);
 	//      pcs_secondary_function_name[0] = "MASS_FLUX1";
-	pcs_secondary_function_unit[0] = "kg/m3/s";
+	pcs_secondary_function_unit[0] = "kg/m3/s";  //KG44 for OGS-GEM this is mol/m3/s
 	pcs_secondary_function_timelevel[0] = 0;
+	//
 	pcs_secondary_function_name[1] = new char[80];
 	sprintf(pcs_secondary_function_name_tmp, "%s%li","MASS_FLUX_",comp);
 	strncpy((char*)pcs_secondary_function_name[1], pcs_secondary_function_name_tmp, 80);
-	pcs_secondary_function_unit[1] = "kg/m3/s";
+	pcs_secondary_function_unit[1] = "kg/m3/s";   //KG44 for OGS-GEM this is mol/m3/s
 	pcs_secondary_function_timelevel[1] = 1;
-	//KG44 added secondary function for adaptive time stepping
-	if (adaption)
-	{
+	//
+	//KG44 added secondary function for adaptive time stepping ....20.8.2014 removed restriction to adaption...
+//	if (adaption)
+//	{
 		pcs_number_of_secondary_nvals = 3;
 		pcs_secondary_function_name[2] = new char[80];
 		sprintf(pcs_secondary_function_name_tmp, "%s%li","CONC_BACK_",comp);
 		strncpy((char*)pcs_secondary_function_name[2], pcs_secondary_function_name_tmp, 80);
-		pcs_secondary_function_unit[2] = "kg/m3";
+		pcs_secondary_function_unit[2] = "kg/m3";  //KG44 for OGS-GEM this is mol/m3
 		pcs_secondary_function_timelevel[2] = 0;
-	}
+//	}
+//  KG44 Aug2014 charge per mol....will be filled from GEMS....can be used to assess charge transport for multispecies-transport
+	pcs_number_of_secondary_nvals += 1;
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals-1] = new char[80];
+	sprintf(pcs_secondary_function_name_tmp, "%s%li","CHARGE_",comp);
+	strncpy((char*)pcs_secondary_function_name[pcs_number_of_secondary_nvals-1], pcs_secondary_function_name_tmp, 80);
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals-1] = "e/mol";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals-1] = 0;
+	pcs_number_of_secondary_nvals += 1;
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals-1] = new char[80];
+	sprintf(pcs_secondary_function_name_tmp, "%s%li","CHARGE_",comp);
+	strncpy((char*)pcs_secondary_function_name[pcs_number_of_secondary_nvals-1], pcs_secondary_function_name_tmp, 80);
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals-1] = "e/mol";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals-1] = 0;
+
+	//
 	//OK  LOPCalcSecondaryVariables_USER = MTM2CalcSecondaryVariables;  //SB:todo
 	// 2 ELE values
 	pcs_number_of_evals = 0;

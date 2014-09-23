@@ -169,6 +169,8 @@ REACT_GEM::~REACT_GEM ( void )
 		delete [] m_fluid_volume;
 		delete [] m_fluid_density;
 		delete [] m_soluteB;
+		delete [] m_chargeB;
+		delete [] m_chargeB_pre;
 
 
 
@@ -335,6 +337,8 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 		m_porosity_Elem = new double [nElems];
 
 		m_soluteB = new double [nNodes * nIC];
+		m_chargeB = new double [nNodes * nIC];
+		m_chargeB_pre = new double [nNodes * nIC];
 
 		m_bIC = new double [nNodes * nIC];
 
@@ -432,6 +436,8 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 				m_bIC_dummy [ in * nIC + ii ] = 0.0;
 
 				m_soluteB[in * nIC + ii ] = 0.0;
+				m_chargeB[in * nIC + ii ] = 0.0;				
+				m_chargeB_pre[in * nIC + ii ] = 0.0;				
 				m_soluteB_pts[in * nIC + ii ] = 0.0;
 				m_bIC_pts[in * nIC + ii ] = 0.0;
 				m_rMB[in * nIC + ii ] = 0.0;
@@ -774,8 +780,8 @@ short REACT_GEM::Init_RUN(string Project_path)
 
 	for ( in = 0; in < nNodes; in++ ) // set the correct boundary conditions
 	{
-		REACT_GEM::SetBValue_MT ( in, 0, &( m_soluteB[in * nIC] ) ); // old timestep
-		REACT_GEM::SetBValue_MT ( in, 1, &( m_soluteB[in * nIC] ) ); // new timestep
+		REACT_GEM::SetBValue_MT ( in, 0, &( m_soluteB[in * nIC] ),&( m_chargeB[in * nIC] ) ); // old timestep
+		REACT_GEM::SetBValue_MT ( in, 1, &( m_soluteB[in * nIC] ),&( m_chargeB[in * nIC] ) ); // new timestep
 	}
 
 	// always calculate porosity at the beginning
@@ -960,7 +966,7 @@ short REACT_GEM::SetReactInfoBackMassTransport ( int timelevel )
 		if ( m_NodeStatusCH[in] == OK_GEM_AIA || m_NodeStatusCH[in] == OK_GEM_SIA ||
 		     m_NodeStatusCH[in] == BAD_GEM_AIA || m_NodeStatusCH[in] == BAD_GEM_SIA )
 			if ( flag_transport_b == 1 )
-				REACT_GEM::SetBValue_MT ( in, timelevel, &( m_soluteB[in * nIC] ) );
+				REACT_GEM::SetBValue_MT ( in, timelevel, &( m_soluteB[in * nIC] ),&( m_chargeB[in * nIC] ) );
 
 
 		// Set the extra water as source/sink term; not for boundary nodes
@@ -1415,7 +1421,7 @@ short REACT_GEM::GetDCValue_MT ( long node_Index,
 	return 1;
 }
 
-short REACT_GEM::GetBValue_MT ( long node_Index, int timelevel, double* m_soluteB )
+short REACT_GEM::GetBValue_MT ( long node_Index, int timelevel, double* m_soluteB )  //gets concentrations..charges are not changed in mass transport..yet
 {
 	string str;
 	double /*DC_MT_pre,*/ DC_B_cur;
@@ -1583,11 +1589,13 @@ short REACT_GEM::GetSoComponentValue_MT ( long node_Index,
     return 1;
    }
  */
-short REACT_GEM::SetBValue_MT ( long node_Index, int timelevel, double* m_soluteB )
+short REACT_GEM::SetBValue_MT ( long node_Index, int timelevel, double* m_soluteB, double* m_chargeB ) //sets concentrations and charges!
 {
 	CRFProcess* m_pcs = NULL;
 	string str;
-	long i = -1;
+	long i = -1 ;
+	char* charge_str;
+	charge_str = new char[80];
 	for ( size_t j = 0; j < pcs_vector.size(); j++ )
 	{
 		m_pcs = pcs_vector[j]; // not good!
@@ -1596,6 +1604,11 @@ short REACT_GEM::SetBValue_MT ( long node_Index, int timelevel, double* m_solute
 		if ( m_pcs->getProcessType() == FiniteElement::MASS_TRANSPORT )
 		{
 			str = m_pcs->pcs_primary_function_name[0];
+
+		        sprintf(charge_str, "%s%i","CHARGE_",m_pcs->pcs_component_number);
+
+//                     cout << "mcomp_name "<< charge_str<<" iterative flag " << flag_iterative_scheme <<"\n";
+
 			i += 1;
 			if ( flag_iterative_scheme > 0 )
 			{
@@ -1613,13 +1626,21 @@ short REACT_GEM::SetBValue_MT ( long node_Index, int timelevel, double* m_solute
 					                      m_pcs->GetNodeValueIndex (
 					                              str ) + timelevel,
 					                      *( m_soluteB + i ) );
+					// needs to set charges for iterative scheme
 
 			}
 			else
+			{
 
 				m_pcs->SetNodeValue ( node_Index, m_pcs->GetNodeValueIndex (
 				                              str ) + timelevel,
 				                      *( m_soluteB + i ) );
+// set charge				
+//cout << "DEBUG " << 	*( m_chargeB + i ) << "\n";			
+				m_pcs->SetNodeValue ( node_Index, m_pcs->GetNodeValueIndex (
+				                              charge_str ) + timelevel,
+				                      *( m_chargeB + i ) );		
+			}
 
 		}
 	}
@@ -2606,6 +2627,147 @@ void REACT_GEM::RestoreOldSolutionAll ( )
 		mol_phase[i] = mol_phase_pts[i];
 	for ( i = 0; i < nNodes *nPH; i++ )
 		dmdt[i] = dmdt_pts[i];
+}
+
+double REACT_GEM::CalculateCharge (long in,int timelevel) //for a given node number ..data from OGS!
+{
+    CRFProcess* m_process = NULL;
+    size_t i;
+    double charge,dummy,sum_charge, * test_conc, *change, sum_change;
+    char* mcomp_name;
+    test_conc= new double [nIC];
+    change= new double [nIC];
+    // loop over all Processes...identify mass transport process and add stored value for charge
+    charge=0.0;
+    sum_charge=0.0;
+    sum_change=0.0;
+    m_chargeB_pre[in*nIC+nIC-1]=0.0;
+//    cout << "DEBUG precharge \n" ;
+    for (i=0; i<nIC-1; i++)
+    {
+        dummy = (m_chargeB[in*nIC+i] * m_soluteB[in*nIC+i] * m_porosity[in]); //+=(charge/per mol * concentration * porosity
+        m_chargeB_pre[in*nIC+i]=dummy;
+        charge += dummy;
+        sum_charge += fabs(dummy);
+        change[i]= (m_soluteB[in*nIC+i]-m_soluteB_pts[in*nIC+i])* m_chargeB[in*nIC+i] * m_porosity[in];
+        sum_change+=fabs(change[i]);
+//        cout << " charge change " << change[i] << " charge " << m_chargeB_pre[in*nIC+i]  << " \n";
+
+    }
+    m_chargeB_pre[in*nIC+nIC-1]=charge;  //total charge! overwrite previous values
+//    cout << " charge " << charge << " charge/sum_charges "<< charge/sum_charge << " total charge change " << sum_change << " charge/sum_charge " << charge/sum_change<<"\n";
+
+// DEBUG: no correction executed...
+    return m_chargeB_pre[in*nIC+nIC-1];
+// now some corrections are tested..but they do not really work...pH is exploding once the corrections are executed....one really needs a good transport solver!
+
+    if (  (fabs(charge)>1.0e-8)  &&   (fabs(charge/sum_charge) > 1.0e-3))
+    {
+// do the charge correction only for dominating total changes more than 1/nIC
+        sum_charge=0.0; //this we need to adjust to the new weighting scheme
+        for (i=0; i<nIC-1; i++)
+        {
+            if (fabs(change[i]) > sum_charge/nIC)
+            {
+                sum_charge += fabs(m_chargeB_pre[in*nIC+i]);
+            }
+        }
+
+
+//EXPERIMENTAL now test a very simple and not mass-conservative method to "correct" for charged solution...
+        for (i=0; i<nIC-1; i++)
+        {
+            // not good...we map the error in Ba and Cl onto O and H which changes strongly pH ....
+            // simple averaging based on concentrations is not good!!!....strongest change in concentration from last to this timestep
+            if (fabs(change[i]) > sum_change/nIC)
+            {
+                if ((fabs(m_chargeB[in*nIC+i]) > 0.0))
+                {
+                    dummy= (charge * fabs(m_chargeB_pre[in*nIC+i])/sum_change); // the charge (weighted by overall charge) we have to add or remove
+                    test_conc[i]=m_soluteB[in*nIC+i]-dummy/(m_porosity[i]*m_chargeB[in*nIC+i]); //
+                }
+                else
+                    test_conc[i]=m_soluteB[in*nIC+i];
+                cout << "DEBUG Charge Correction "<< dummy << " old charge " << m_chargeB_pre[in*nIC+i] << " new charge " << test_conc[i]*(m_porosity[i]*m_chargeB[in*nIC+i]) << " total charge " << charge << " old conc " << m_soluteB[in*nIC+i] << " new conc " << test_conc[i]<< "\n";
+                // charge balance:
+            }
+            else
+            {
+                test_conc[i]=m_soluteB[in*nIC+i];
+            }
+        }
+        charge=0.0;
+        m_chargeB_pre[in*nIC+nIC-1]=0.0;
+        cout << "DEBUG resulting charge: " ;
+        for (i=0; i<nIC-1; i++)
+        {
+            m_soluteB[in*nIC+i]=test_conc[i] ;
+            dummy = (m_chargeB[in*nIC+i] * m_soluteB[in*nIC+i] * m_porosity[in]); //+=(charge/per mol * concentration * porosity
+            m_chargeB_pre[in*nIC+i]=dummy;
+            charge += dummy;
+        }
+        m_chargeB_pre[in*nIC+nIC-1]=charge;  //total charge! overwrite previous values
+    }
+    cout << m_chargeB_pre[in*nIC+nIC-1] << "\n";
+    return m_chargeB_pre[in*nIC+nIC-1];
+}
+
+void REACT_GEM::CalculateChargeFromGEMS (long in, TNode* m_Node)
+{
+    long i,j;
+    double mycharge[nIC], total;
+    DATACH* dCH;                            //pointer to DATACH
+    DATABR* dBR;
+    // Getting direct access to DataCH structure in GEMIPM2K memory
+    dCH = m_Node->pCSD();
+    if ( !dCH )
+        return ;
+    // Getting direct access to work node DATABR structure which
+    // exchanges data between GEMIPM and FMT parts
+    dBR = m_Node->pCNode();
+    if ( !dBR )
+        return ;
+    // mass to concentration was called..therefore m_soluteB contains the concentrations....total amounts of dissolved B is m_soluteB * m_porosity
+
+
+    /*
+        for (j=0;j<nDC;j++)
+                for (i=0;i<nIC;i++)
+          cout << "DEBUG i,j,A(i,j) " << i << " , " <<  j << " , " << dCH->A[j*nIC+i] << "\n";
+     */
+    m_chargeB[in*nIC+nIC-1] =0.0;
+
+    for (i=0; i<nIC; i++)
+        mycharge[i]=0.0;
+
+    for (j=0; j<idx_water; j++) //only for first phase and not including water! (although it would not matter, as water is always neutral)
+    {
+        total=0.0;
+        for (i=0; i<nIC-1; i++)
+            total += dCH->A[j*nIC+i];
+
+        if (fabs(total) > 0.0)
+	{
+            for (i=0; i<nIC-1; i++)
+            {
+                mycharge[i] += m_xDC[in*nDC+j] * dCH->A[j*nIC+i] * dCH->A[j*nIC+nIC-1]/total ; // mole times stoichiometry * charge /
+            }
+	}
+	      
+    }
+//    cout << "DEBUG charge: mycharge ";
+    for (i=0; i<nIC-1; i++)
+    {
+        m_chargeB[in*nIC+nIC-1] += mycharge[i];
+        if (m_soluteB[in*nIC+i] > 0.0)
+            m_chargeB[in*nIC + i] = mycharge[i]/(m_soluteB[in*nIC +i]*m_porosity[in]);
+	else
+	  m_chargeB[in*nIC + i] = mycharge[i]; // should be zero, but one never knows ;-)
+//	 cout << mycharge[i] << " " ;  
+    }
+//    cout << mycharge[nIC-1] << "\n";
+    //finished
+    return ;
 }
 
 
@@ -4213,11 +4375,23 @@ void REACT_GEM::WriteVTKGEMValues ( fstream &vtk_file )
 	//....................................................................
 	for ( j = 0; j < nNodes; j++ )
 		vtk_file << " " <<  m_fluid_density[j] << "\n";
-		vtk_file << "SCALARS " << " RNodeVolume " << " double 1" << "\n";
+	vtk_file << "SCALARS " << " RNodeVolume " << " double 1" << "\n";
 	vtk_file << "LOOKUP_TABLE default" << "\n";
 	//....................................................................
 	for ( j = 0; j < nNodes; j++ )
 		vtk_file << " " <<  m_Node_Volume[j] << "\n";
+	vtk_file << "SCALARS " << " NodeChargePre " << " double 1" << "\n";
+	vtk_file << "LOOKUP_TABLE default" << "\n";
+	//....................................................................
+	for ( j = 0; j < nNodes; j++ )
+//		vtk_file << " " <<  m_chargeB_pre[j * nIC + 0] << "\n"; //here the last component is total charge of fluid
+		vtk_file << " " <<  m_chargeB_pre[j * nIC + nIC - 1] << "\n"; //here the last component is total charge of fluid
+	vtk_file << "SCALARS " << " NodeChargePost " << " double 1" << "\n";
+	vtk_file << "LOOKUP_TABLE default" << "\n";
+	//....................................................................
+	for ( j = 0; j < nNodes; j++ )
+//		vtk_file << " " <<  m_chargeB[j * nIC + 0] << "\n"; //here the last component is total charge of fluid
+		vtk_file << " " <<  m_chargeB[j * nIC + nIC - 1] << "\n"; //here the last component is total charge of fluid
 
 }
 
@@ -4537,8 +4711,10 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
         // Convert to concentration: should be done always...
 
         REACT_GEM::MassToConcentration ( in,0, t_Node); // concentrations are now based on the fluid-gas volumes...
-
-    }                                    // end for loop for all nodes
+	// and now also calculate charge
+        REACT_GEM::CalculateChargeFromGEMS ( in, t_Node);
+  
+}                                    // end for loop for all nodes
 
     gem_barrier_finish->wait(); // init run finished ...now the init routine takes over
     time_gem_total += (GetTimeOfDayDouble() - tdummy);
@@ -4554,14 +4730,18 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
         for ( in = mystart; in < nNodes; in += mycount )
         {
             node_fail=0;   // set this in any case
-            if ( ( !flag_calculate_boundary_nodes &&
+
+
+	    if ( ( !flag_calculate_boundary_nodes &&
                     m_boundary[in] ) || ( CalcSoluteBDelta ( in ) < m_diff_gems ) || (m_calculate_gems[in] != 1))                       // do this only without calculation if  on a boundary or differences very small!!!
             {
 //			  cout <<"DEBUG: node " << in << " not calculated..flag is "<< m_calculate_gems[in] << "\n";
             }
             else if (m_calculate_gems[in]) // calculate if m_calculate_gems is 1 aka true
             {
-                // Convert from concentration
+                // first calculate charges and fill m_chargeB
+                REACT_GEM::CalculateCharge(in,1); // fill for current timelevel                
+		// Convert from concentration
                 REACT_GEM::ConcentrationToMass ( in,1); // I believe this is save for MPI
                 // now we calculate kinetic constraints for GEMS!
                 REACT_GEM::CalcLimits ( in,t_Node);
@@ -4685,7 +4865,18 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 
                     // Convert to concentration  ..
                     REACT_GEM::MassToConcentration ( in, 0,t_Node);
-
+		    // now calculate charge
+                    REACT_GEM::CalculateChargeFromGEMS ( in, t_Node);
+/* DEBUG
+if (in == 100) 
+{
+	    for (j=0;j<nIC;j++) cout << "pre charge for node " << in<< " " << m_chargeB_pre[in*nIC+j] << "\n";
+	    for (j=0;j<nIC-1;j++) cout << "charge for node " << in<< " " << m_chargeB[in*nIC+j]*m_soluteB[in*nIC+j]*m_porosity[in] << "\n";
+	    double total=0.0;
+	    for (j=0;j<nIC-1;j++) total+= m_chargeB[in*nIC+j]*m_soluteB[in*nIC+j]*m_porosity[in];
+	    cout << "total charge for node " << in<< " " << total << "\n";
+}
+*/
                     // calculate density of fluid phase, which is normally the first phase
                     m_fluid_density[in] = m_mPS[in * nPS + 0] / m_vPS[in * nPS + 0 ];
                 }

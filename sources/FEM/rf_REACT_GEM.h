@@ -90,7 +90,9 @@ public:
 
     /// data for transport of IC
     double *m_soluteB;
-
+    /// data for charge
+    double *m_chargeB, *m_chargeB_pre;
+    
     // previous time step DC values
     double *m_xDC_pts;                          // previous time step Concentration;
     double *m_xDC_MT_delta;                     // delta C from Mass Transport;
@@ -197,7 +199,7 @@ public:
     short SetTempValue_MT(long node_Index, int timelevel, double temp);
     short SetPressureValue_MT(long node_Index, int timelevel, double pressure);
 //    short SetDCValue_MT(long node_Index, int timelevel, double* m_DC);
-    short SetBValue_MT(long node_Index, int timelevel, double* m_soluteB);
+    short SetBValue_MT(long node_Index, int timelevel, double* m_soluteB, double* m_chargeB);
 
     int IsThisPointBCIfYesStoreValue ( long index, CRFProcess* m_pcs, double& value );/// taken from rf_REACT_BRNS
 
@@ -211,8 +213,9 @@ public:
     void RestoreOldSolutionAll ( );
     void RestoreOldSolutionNode ( long in );
     void CopyCurKineticsPre ( void );
-    
-    
+    // struff related to charge
+    double CalculateCharge (long in,int timelevel); //for a given node number in
+    void CalculateChargeFromGEMS ( long in, TNode* t_Node);
     /// this is only for porosity interpolation to elemens
     void ConvPorosityNodeValue2Elem(int i_timestep);
     int CalcPorosity(long in,  TNode* m_Node );
