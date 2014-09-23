@@ -219,13 +219,24 @@ void OGSFileConverter::convertCND2BC(const QStringList &input, const QString &ou
 		{
 			const FEMCondition::CondType type (conditions[i]->getCondType());
 			if (type == FEMCondition::BOUNDARY_CONDITION)
-				bc_list.push_back(new CBoundaryCondition(static_cast<BoundaryCondition*>(conditions[i])));
+			{
+				CBoundaryCondition* bc = new CBoundaryCondition(static_cast<BoundaryCondition*>(conditions[i]));
+				if (bc)
+					bc_list.push_back(bc);
+			}				
 			else if (type == FEMCondition::INITIAL_CONDITION)
-				ic_vector.push_back(new CInitialCondition(static_cast<InitialCondition*>(conditions[i])));
+			{
+				CInitialCondition* ic = new CInitialCondition(static_cast<InitialCondition*>(conditions[i]));
+				if (ic)
+					ic_vector.push_back(ic);
+			}
 			else if (type == FEMCondition::SOURCE_TERM)
-				st_vector.push_back(new CSourceTerm(static_cast<SourceTerm*>(conditions[i])));
-
-			if (conditions[i]->getProcessDistributionType() == FiniteElement::DIRECT)
+			{
+				CSourceTerm* st = new CSourceTerm(static_cast<SourceTerm*>(conditions[i]));
+				if (st)
+					st_vector.push_back(st);
+			}
+			if (type == FEMCondition::SOURCE_TERM && conditions[i]->getProcessDistributionType() == FiniteElement::DIRECT)
 			{
 				const QString count_str (QString::number(direct_file_count++));
 				const std::string direct_value_file = QString(output + "/direct_values" + count_str + ".txt").toStdString();

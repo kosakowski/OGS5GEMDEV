@@ -17,17 +17,17 @@ IF (Shapelib_FOUND AND QT4_FOUND)
 
 	# Create executables
 	ADD_EXECUTABLE( ConvertSHPToGLI ConvertSHPToGLI.cpp )
-  SET_TARGET_PROPERTIES(ConvertSHPToGLI PROPERTIES FOLDER Utilities)
+	SET_TARGET_PROPERTIES(ConvertSHPToGLI PROPERTIES FOLDER Utilities)
 
 	TARGET_LINK_LIBRARIES( ConvertSHPToGLI
 		FEM
-    MSH
-    MSHGEOTOOLS
-    FileIO
-    GEO
-    MathLib
-    Base
-    OGSProject
+		MSH
+		MSHGEOTOOLS
+		FileIO
+		GEO
+		MathLib
+		Base
+		OGSProject
 		${Shapelib_LIBRARIES}
 		${QT_LIBRARIES}
 	)

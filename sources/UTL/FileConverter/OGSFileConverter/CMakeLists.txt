@@ -75,7 +75,7 @@ TARGET_LINK_LIBRARIES( OGSFileConverter
 	FEM
 	QtDataView
 	VtkVis
-	QVTK	
+	${VTK_LIBRARIES}
 )
 
 # Adds useful macros and variables

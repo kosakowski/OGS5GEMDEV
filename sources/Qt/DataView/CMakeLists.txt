@@ -26,7 +26,6 @@ set( SOURCES
 	MshModel.cpp
 	MshQualitySelectionDialog.cpp
 	MshTabWidget.cpp
-	NetCdfConfigureDialog.cpp
 	NewProcessDialog.cpp
 	ProcessModel.cpp
 	ProcessView.cpp
@@ -35,7 +34,7 @@ set( SOURCES
 	SetNameDialog.cpp
 	StationTabWidget.cpp
 	StationTreeModel.cpp
-	StationTreeView.cpp	
+	StationTreeView.cpp
 )
 
 # Moc Header files
@@ -62,7 +61,6 @@ set( MOC_HEADERS
 	MshModel.h
 	MshQualitySelectionDialog.h
 	MshTabWidget.h
-	NetCdfConfigureDialog.h
 	NewProcessDialog.h
 	ProcessModel.h
 	ProcessView.h
@@ -78,14 +76,14 @@ set( MOC_HEADERS
 set( HEADERS
 	BaseItem.h
 	CondItem.h
-	DirectConditionGenerator.h	
+	DirectConditionGenerator.h
 	CondObjectListItem.h
 	GeoObjectListItem.h
 	GeoTreeItem.h
 	ModelTreeItem.h
 	MshItem.h
 	MshLayerMapper.h
-	ProcessItem.h	
+	ProcessItem.h
 )
 
 # UI files
@@ -103,7 +101,6 @@ set( UIS
 	MshEdit.ui
 	MshQualitySelection.ui
 	MshTabWidgetBase.ui
-	NetCdfConfigure.ui
 	NewProcess.ui
 	StationTabWidgetBase.ui
 )
@@ -113,6 +110,12 @@ IF (Shapelib_FOUND)
 	SET( MOC_HEADERS ${MOC_HEADERS} SHPImportDialog.h)
 	INCLUDE_DIRECTORIES( ${Shapelib_INCLUDE_DIR} )
 ENDIF () # Shapelib_FOUND
+
+IF(NETCDF_INCLUDES)
+	SET( SOURCES ${SOURCES} NetCdfConfigureDialog.cpp)
+	SET( MOC_HEADERS ${MOC_HEADERS} NetCdfConfigureDialog.h)
+	SET( UIS ${UIS} NetCdfConfigure.ui)
+ENDIF()
 
 # Put filter in a folder
 SOURCE_GROUP("Dialog Header Files" REGULAR_EXPRESSION "[.]*Dialog.h")
@@ -134,7 +137,7 @@ include_directories(
 	${CMAKE_BINARY_DIR}/Qt/DataView
 	${CMAKE_BINARY_DIR}/Qt/DataView/DiagramView
 	${CMAKE_BINARY_DIR}/Qt/DataView/StratView
-	
+
 	${CMAKE_SOURCE_DIR}/Base
 	${CMAKE_SOURCE_DIR}/MathLib
 	${CMAKE_SOURCE_DIR}/GEO
@@ -156,9 +159,9 @@ IF (OGS_USE_OPENSG)
 	INCLUDE_DIRECTORIES( ${OpenSG_INCLUDE_DIRS} )
 ENDIF (OGS_USE_OPENSG)
 
-IF (libgeotiff_FOUND)
-	INCLUDE_DIRECTORIES( ${libgeotiff_INCLUDE_DIR} ${libgeotiff_INCLUDE_DIR}/libxtiff ${VTK_DIR}/../Utilities/vtktiff )
-ENDIF () # libgeotiff_FOUND
+IF (GEOTIFF_FOUND)
+	INCLUDE_DIRECTORIES( ${GEOTIFF_INCLUDE_DIRS} )
+ENDIF () # GEOTIFF_FOUND
 
 # Put moc files in a project folder
 source_group("UI Files" REGULAR_EXPRESSION "\\w*\\.ui")
@@ -190,6 +193,6 @@ target_link_libraries( QtDataView
 IF (Shapelib_FOUND)
 	TARGET_LINK_LIBRARIES( QtDataView ${Shapelib_LIBRARIES} )
 ENDIF () # Shapelib_FOUND
-IF (libgeotiff_FOUND)
-	TARGET_LINK_LIBRARIES( QtDataView ${libgeotiff_LIBRARIES} )
-ENDIF () # libgeotiff_FOUND
+IF (GEOTIFF_FOUND)
+	TARGET_LINK_LIBRARIES( QtDataView ${GEOTIFF_LIBRARIES} )
+ENDIF () # GEOTIFF_FOUND
