@@ -2932,7 +2932,7 @@ void CRFProcess::ConfigMassTransport()
 		strncpy((char*)pcs_secondary_function_name[pcs_number_of_secondary_nvals-1], pcs_secondary_function_name_tmp, 80);
 		pcs_secondary_function_unit[pcs_number_of_secondary_nvals-1] = "kg/m3";
 		pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals-1] = 0;
-//	}
+	}
 //  KG44 Aug2014 charge per mol....will be filled from GEMS....can be used to assess charge transport for multispecies-transport
 	pcs_number_of_secondary_nvals += 1;
 	pcs_secondary_function_name[pcs_number_of_secondary_nvals-1] = new char[80];
