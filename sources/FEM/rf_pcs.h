@@ -826,14 +826,14 @@ public:
 	void PrimaryVariableStorageTransport(); //kg44
 	//double GetNewTimeStepSizeTransport(double mchange); //kg44
 	// FLX
-	void CalcELEFluxes(const GEOLIB::Polyline* const ply, double* result);
+	//void CalcELEFluxes(const GEOLIB::Polyline* const ply, double* result); removed by JOD 2014 - 11 - 10
 	/**
 	 * Necessary for the output of mass fluxes over polylines, BG 08/2011
 	 * @param ply a pointer to a GEOLIB::Polyline
 	 * @param NameofPolyline the name of the polyline
 	 * @param result
 	 */
-	void CalcELEMassFluxes(const GEOLIB::Polyline* const ply, std::string const& NameofPolyline, double *result);
+	// void CalcELEMassFluxes(const GEOLIB::Polyline* const ply, std::string const& NameofPolyline, double *result); removed by JOD 2014-11-10 
     double TotalMass[10];																				// Necessary for the output of mass fluxes over polylines, BG 08/2011
     std::vector <std::string> PolylinesforOutput;														// Necessary for the output of mass fluxes over polylines, BG 08/2011
 

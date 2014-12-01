@@ -124,6 +124,7 @@ CMediumProperties::CMediumProperties() :
     graindiameter = 0; //CB Chiogna et al alpha-t model
     hydraulicrad = 0;
     betaexpo = 0;
+	ElementVolumeMultiplyer = 1.0; //SB / JOD 2014-11-10
 
 	permeability_pressure_model = -1; //01.09.2011. WW
 	permeability_strain_model = -1; //01.09.2011. WW
@@ -1908,6 +1909,16 @@ std::ios::pos_type CMediumProperties::Read(std::ifstream* mmp_file)
          in.clear();
          continue;
       }
+	  //------------------------------------------------------------------------
+	  // Element volme multiplyer
+	  //------------------------------------------------------------------------
+	  if (line_string.find("$ELEMENT_VOLUME_MULTIPLYER") != std::string::npos)
+	  {
+		  in.str(GetLineFromFile1(mmp_file));
+		  in >> ElementVolumeMultiplyer;
+		  std::cout << " Setting ElementVolumeMultiplyer to " << ElementVolumeMultiplyer << "- times the grid value \n";
+	  }
+
 
    }
 	return position;

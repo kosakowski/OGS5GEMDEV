@@ -64,7 +64,9 @@ public:
 	void SetByNodeIndex(int);             // 19.11.2009 PCH
 	void SetPolyline(int);
 	void SetSurface(int);
-	void SetPoint(int);                   //MX
+	void SetPoint(int);    
+	void StoreInitialValues();// JOD 2014-11-10
+	bool storeValues;
 	//void SetMaterialDomain(int); //MX
 	double gradient_ref_depth;
 	double gradient_ref_depth_value;

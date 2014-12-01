@@ -215,6 +215,8 @@ public:
 	int permeability_porosity_updating_type; //ABM
 	int tortuosity_tensor_type;
 
+	double ElementVolumeMultiplyer; // Multiplyer of element volume
+
 	  std::string PhaseHeatedByFriction; //In TNEQ models: dissipated heat due to friction into solid or fluid energy balance
 
 	int permeability_pressure_model;

@@ -24,3 +24,18 @@ cd KueperProblem-PS
 echo "Running PETSc benchmark: KueperProblem-PS"
 mpirun -np 3 $1 kueper &> log.txt 
 cd ..
+
+cd hm_tri
+echo "Running PETSc benchmark: hm_tri"
+mpirun -np 4 $1 hm_tri &> log.txt 
+cd ..
+
+cd th2m
+echo "Running PETSc benchmark: th2m_quad"
+mpirun -np 4 $1 th2m_quad &> log.txt 
+cd ..
+
+cd m_tri
+echo "Running PETSc benchmark: m_tri"
+mpirun -np 2 $1 m_tri &> log.txt 
+cd ..

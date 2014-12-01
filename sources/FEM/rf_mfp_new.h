@@ -165,8 +165,8 @@ public:
 	int density_model;
 
 	// TF 11/2011 - used only in read- and write-method
-//	std::string _rho_fct_name;
-
+	int density_curve_number, viscosity_curve_number; // JOD 2014-11-10
+	
 	// Viscosity
 	int viscosity_model;
 	// TF 11/2011 - used only in read- and write-method

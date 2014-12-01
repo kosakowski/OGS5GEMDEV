@@ -352,6 +352,8 @@ public:
 	void FaceNormal(const int index0, const int index1, double*);
 	double* normal_vector;                    //WW normal_vector[3]; //OK
 	void SetNormalVector();                   //OK
+	void DirectNormalVector();                   //JOD 2014-11-10
+	void InvertNormalVector();                   //JOD 2014-11-10
 
 	// Since m_tim->CheckCourant() is deactivated, the following member are
 	// put in comment.
@@ -374,6 +376,7 @@ private:
 	int nnodesHQ;
 	Math_Group::vec<CNode*> nodes;
 	Math_Group::vec<long> nodes_index;
+
 #if defined(USE_PETSC) // || defined(using other parallel scheme). WW
         int *g_index;
 #endif

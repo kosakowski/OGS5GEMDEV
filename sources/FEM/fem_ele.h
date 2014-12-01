@@ -65,6 +65,7 @@ public:
 	virtual ~CElement ();
 	//
 	void ConfigElement(CElem* MElement, bool FaceIntegration = false);
+	void ConfigFaceElement(CElem* MElement, bool FaceIntegration = false); // JOD 2014-11-10
 	void setOrder(const int order);
 	// Set Gauss point
 	void SetGaussPoint(const int gp, int& gp_r, int& gp_s, int& gp_t);
@@ -105,7 +106,10 @@ public:
 
 	// Integrate Neumman type BC
 	void FaceIntegration(double* NodeVal);
-
+	
+	void Cal_Flux( CRFProcess* m_pcs );  // JOD 2014-11-10
+	void FaceNormalFluxIntegration(long index, double *NodeVal_adv, double *NodeVal, int* nodesFace, CElem* face, CRFProcess* m_pcs, double* normal_vector); // JOD 2014-11-10
+	
 	// Coupling
 	//
 	bool isTemperatureCoupling() const {return T_Flag; }

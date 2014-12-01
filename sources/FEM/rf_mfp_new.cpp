@@ -270,10 +270,13 @@ std::ios::pos_type CFluidProperties::Read(std::ifstream* mfp_file)
 			//WW new_subkeyword = false;
 			in.str(GetLineFromFile1(mfp_file));
 			in >> density_model;
+			
 			// TF - _rho_fct_name is only used for writing it back to the file
-//			if(density_model == 0) // rho = f(x)
-//				in >> _rho_fct_name;
-
+			if(density_model == 0) // rho = f(x)
+			{         // JOD 2014-11-10
+				in >> density_curve_number;
+				density_pcs_name_vector.push_back("TEMPERATURE1"); 
+			}
 			if(density_model == 1) // rho = const
 				in >> rho_0;
 
@@ -289,9 +292,8 @@ std::ios::pos_type CFluidProperties::Read(std::ifstream* mfp_file)
 				in >> rho_0;
 				in >> C_0;
 				in >> drho_dC;
-				//        density_pcs_name_vector.push_back("CONCENTRATION1");
-				// PCH
-				density_pcs_name_vector.push_back("Isochlor");
+				density_pcs_name_vector.push_back("CONCENTRATION1"); // JOD 2014-11-10, consistent with output DELTA_CONCENTRATION1
+				//density_pcs_name_vector.push_back("Isochlor");  // PCH
 			}
 			if(density_model == 4) // rho(T) = rho_0*(1+beta_T*(T-T_0))
 			{
@@ -380,6 +382,14 @@ std::ios::pos_type CFluidProperties::Read(std::ifstream* mfp_file)
 			if(density_model == 19) // KG44 get node densities from GEMS calculations
 			{
 			}
+			if (density_model == 20) // rho(C) = rho (p, T)*(1+beta_C*(C-C_0))  for water, range p < 100 MPa, 0 <= T <= 350 °C   Magri GFZ thesis
+			{     // JOD 2014-11-10
+				in >> C_0;
+				in >> drho_dC;
+				density_pcs_name_vector.push_back("PRESSURE1");
+				density_pcs_name_vector.push_back("TEMPERATURE1");
+				density_pcs_name_vector.push_back("CONCENTRATION1");
+			}
 			if (density_model == 26 && pcs_vector[0]->getProcessType() != FiniteElement::TNEQ)
 				std::cout << "Warning: This density model requires two components and their molar masses defined in the mcp file!\n";
 			//      mfp_file->ignore(MAX_ZEILE,'\n');
@@ -400,11 +410,12 @@ std::ios::pos_type CFluidProperties::Read(std::ifstream* mfp_file)
 			in.str(GetLineFromFile1(mfp_file));
 			in >> viscosity_model;
 			// TF 11/2011 - used only in read- and write-method
-//			if(viscosity_model == 0) // my = fct(x)
+			if (viscosity_model == 0) // my = fct(x)
+				in >> viscosity_curve_number; // JOD 2014-11-10
 //				in >> _my_fct_name;
 			if(viscosity_model == 1) // my = const
-
 				in >> my_0;
+
 			if(viscosity_model == 2) // my(p) = my_0*(1+gamma_p*(p-p_0))
 			{
 				in >> my_0;
@@ -889,12 +900,12 @@ void CFluidProperties::CalPrimaryVariable(std::vector<std::string>& pcs_name_vec
 **************************************************************************/
 double CFluidProperties::Density(double* variables)
 {
-
+	double pressure;
 	double Rho = 0.0;
 	double m_frac_w;
 	static double density;
 	// static double air_gas_density,vapour_density,vapour_pressure;
-	int fct_number = 0;
+	
 	int gueltig;
 
 	//----------------------------------------------------------------------
@@ -905,7 +916,7 @@ double CFluidProperties::Density(double* variables)
 		switch(density_model)
 		{
 		case 0:                   // rho = f(x)
-			density = GetCurveValue(fct_number,0,variables[0],&gueltig);
+			density = GetCurveValue(density_curve_number, 0, variables[1], &gueltig);
 			break;
 		case 1:                   // rho = const
 			density = rho_0;
@@ -1000,6 +1011,22 @@ double CFluidProperties::Density(double* variables)
 #endif
 		       //insert call for GEMS densities..
 		       break;
+	case 20: // rho(p,T, C) for water, range p < 100 MPa, 0 <= T <= 350 °C   Magri GFZ thesis
+
+		pressure = variables[0] / 1e5;
+			density =
+				9.99792877961606e+02 + 5.07605113140940e-04 * max(pressure, 0.0) - 5.28425478164183e-10 * pow(max(pressure, 0.0), 2.)
+				+ (5.13864847162196e-02 - 3.61991396354483e-06 * max(pressure, 0.0) + 7.97204102509724e-12 * pow(max(pressure, 0.0), 2.)) * max(variables[1], 0.0)
+				+ (-7.53557031774437e-03 + 6.32712093275576e-08 * max(pressure, 0.0) - 1.66203631393248e-13 * pow(max(pressure, 0.0), 2.)) * pow(max(variables[1], 0.0), 2.)
+				+ (4.60380647957350e-05 - 5.61299059722121e-10 * max(pressure, 0.0) + 1.80924436489400e-15 * pow(max(pressure, 0.0), 2.)) * pow(max(variables[1], 0.0), 3.)
+				+ (-2.26651454175013e-07 + 3.36874416675978e-12 * max(pressure, 0.0) - 1.30352149261326e-17 * pow(max(pressure, 0.0), 2.)) * pow(max(variables[1], 0.0), 4.)
+				+ (6.14889851856743e-10 - 1.06165223196756e-14 * max(pressure, 0.0) + 4.75014903737416e-20 * pow(max(pressure, 0.0), 2.)) * pow(max(variables[1], 0.0), 5.)
+				+ (-7.39221950969522e-13 + 1.42790422913922e-17 * max(pressure, 0.0) - 7.13130230531541e-23 * pow(max(pressure, 0.0), 2.)) * pow(max(variables[1], 0.0), 6.);
+
+			if (fabs(drho_dC) > 1.e-20)
+			   density *= 1. + drho_dC * (max(variables[2], 0.0) - C_0);
+			
+			break;
 	  case 26: //Dalton's law + ideal gas for use with TNEQ
 			m_frac_w = cp_vec[0]->molar_mass*variables[2]/(cp_vec[0]->molar_mass*variables[2] + cp_vec[1]->molar_mass*(1.0-variables[2])); //mass in mole fraction
 			density = variables[0]/(GAS_CONSTANT/1000.0*variables[1]) * (cp_vec[1]->molar_mass*m_frac_w + cp_vec[0]->molar_mass*(1.0-m_frac_w)); //R_uni in mNs
@@ -1019,7 +1046,7 @@ double CFluidProperties::Density(double* variables)
 		switch(density_model)
 		{
 		case 0:                   // rho = f(x)
-			density = GetCurveValue(fct_number,0,primary_variable[0],&gueltig);
+			density = GetCurveValue(density_curve_number,0,primary_variable[0],&gueltig);
 			break;
 		case 1:                   // rho = const
 			density = rho_0;
@@ -1118,6 +1145,21 @@ double CFluidProperties::Density(double* variables)
 #endif
 		       //insert call for GEMS densities..
 		       break;
+		case 20: // rho(p,T, C) for water, range p < 100 MPa, 0 <= T <= 350 °C   Magri GFZ thesis
+			pressure = primary_variable[0] / 1e5;
+		
+				density =
+					9.99792877961606e+02 + 5.07605113140940e-04 * max(pressure, 0.0) - 5.28425478164183e-10 * pow(max(pressure, 0.0), 2.)
+					+ (5.13864847162196e-02 - 3.61991396354483e-06 * max(pressure, 0.0) + 7.97204102509724e-12 * pow(max(pressure, 0.0), 2.)) * max(primary_variable[1], 0.0)
+					+ (-7.53557031774437e-03 + 6.32712093275576e-08 * max(pressure, 0.0) - 1.66203631393248e-13 * pow(max(pressure, 0.0), 2.)) * pow(max(primary_variable[1], 0.0), 2.)
+					+ (4.60380647957350e-05 - 5.61299059722121e-10 * max(pressure, 0.0) + 1.80924436489400e-15 * pow(max(pressure, 0.0), 2.)) * pow(max(primary_variable[1], 0.0), 3.)
+					+ (-2.26651454175013e-07 + 3.36874416675978e-12 * max(pressure, 0.0) - 1.30352149261326e-17 * pow(max(pressure, 0.0), 2.)) * pow(max(primary_variable[1], 0.0), 4.)
+					+ (6.14889851856743e-10 - 1.06165223196756e-14 * max(pressure, 0.0) + 4.75014903737416e-20 * pow(max(pressure, 0.0), 2.)) * pow(max(primary_variable[1], 0.0), 5.)
+					+ (-7.39221950969522e-13 + 1.42790422913922e-17 * max(pressure, 0.0) - 7.13130230531541e-23 * pow(max(pressure, 0.0), 2.)) * pow(max(primary_variable[1], 0.0), 6.);
+
+		    if (fabs(drho_dC) > 1.e-20)
+			    density *= 1. + drho_dC * (max(primary_variable[2], 0.0) - C_0);
+			break;
 		default:
 			std::cout << "Error in CFluidProperties::Density: no valid model" <<
 			"\n";
@@ -1413,7 +1455,7 @@ double CFluidProperties::Viscosity(double* variables)
     CRFProcess* m_pcs;
     m_pcs = PCSGet("MULTI_COMPONENTIAL_FLOW"); //NB: this should not be here! Most PCS are not "MULTI_COMPONENTIAL_FLOW"!
 	static double viscosity;
-	int fct_number = 0;
+	
 	int gueltig;
 	double mfp_arguments[2], x[2], Vs[2];
 	double density, my = 0.0;
@@ -1439,7 +1481,7 @@ double CFluidProperties::Viscosity(double* variables)
 	switch(viscosity_model)
 	{
 	case 0:                               // rho = f(x)
-		viscosity = GetCurveValue(fct_number,0,primary_variable[0],&gueltig);
+		viscosity = GetCurveValue(viscosity_curve_number,0,primary_variable[1],&gueltig);
 		break;
 	case 1:                               // my = const
 		viscosity = my_0;

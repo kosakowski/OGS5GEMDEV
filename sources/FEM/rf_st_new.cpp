@@ -3006,12 +3006,14 @@ const int ShiftInNodeVector)
       //	if (st->dis_type_name.compare("CRITICALDEPTH") == 0) {
       nod_val->setProcessDistributionType (st->getProcessDistributionType());
       nod_val->node_area = 1.0;
+	  std::cout << "      - Critical depth" << std::endl;
    }
 
    if (st->getProcessDistributionType() == FiniteElement::NORMALDEPTH)
    {
       nod_val->setProcessDistributionType (st->getProcessDistributionType());
       nod_val->node_area = 1.0;
+	  std::cout << "      - Normal depth" << std::endl;
    }
 
    //	if (st->dis_type_name.compare("PHILIP") == 0) { // JOD
@@ -3023,6 +3025,7 @@ const int ShiftInNodeVector)
    {
       nod_val->setProcessDistributionType (st->getProcessDistributionType());
       nod_val->node_area = 1.0;
+	  std::cout << "      - Green-Ampt" << std::endl;
    }
 
    if (st->getProcessDistributionType() == FiniteElement::SYSTEM_DEPENDENT)

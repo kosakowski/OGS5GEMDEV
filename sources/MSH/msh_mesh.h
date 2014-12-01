@@ -461,6 +461,8 @@ public:
 	void SetNODPatchAreas();                  //OK4310
 	void SetNetworkIntersectionNodes();       //OK4319->PCH
 
+	void GetConnectedElements(std::vector<long>&nodes_on_sfc, std::vector<long>&vec_elements);
+
 #ifdef NEW_EQS                              // 1.11.2007 WW
 	// Compute the graph of the sparse matrix related to this mesh. 1.11.2007 WW
 	void CreateSparseTable();

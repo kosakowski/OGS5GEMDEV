@@ -127,7 +127,7 @@ public:
 	void ELEWriteSFC_TEC();               //OK
 	void ELEWriteSFC_TECHeader(std::fstream&); //OK
 	void ELEWriteSFC_TECData(std::fstream&); //OK
-	void CalcELEFluxes();                 //OK
+	//void CalcELEFluxes();                 // removed by JOD 
 	void ELEWritePLY_TEC();               //OK
 	void ELEWritePLY_TECHeader(std::fstream&); //OK
 	void ELEWritePLY_TECData(std::fstream&); //OK
@@ -137,13 +137,15 @@ public:
 	void PCONWriteDOMDataTEC();           //MX
 	void WriteTECNodePCONData(std::fstream &); //MX
 
-	void NODWriteWaterBalance(double);	// 6/2012 JOD
-	void NODWriteWaterBalanceSFC(double);	// 6/2012 JOD
-	void NODWriteWaterBalancePLY(double);	// 6/2012 JOD
-	void NODWriteWaterBalancePNT(double);	// 6/2012 JOD
+
+	void NODWriteTotalFlux(double, int);	// JOD 2014-11-10
 	void NODWritePointsCombined(double);	// 6/2012 JOD
-	void CalculateThroughflow(MeshLib::CFEMesh*, std::vector<long>&, std::vector<double>&);	// 6/2012 JOD
-      
+	void NODWritePrimaryVariableList(double);	// JOD 2014-11-10
+	void CalculateTotalFlux(MeshLib::CFEMesh*, std::vector<long>&, std::vector<double>&, std::vector<double>&); // JOD 2014-11-10
+	void SetTotalFluxNodes(std::vector<long>& nodes_vector); //JOD 2014-11-10
+	void SetTotalFluxNodesPLY(std::vector<long>& nodes_vector); // JOD 2014-11-10
+	void SetTotalFluxNodesSURF(std::vector<long>& nodes_vector); // JOD 2014-11-10
+	void SetTotalFluxNodesDOM(std::vector<long>& nodes_vector); // JOD 2014-11-10
     //------------------------------------------------------
 #if defined(USE_PETSC) || defined(USE_MPI) //|| defined(other parallel libs)//03.3012. WW
 	void setMPI_Info(const int rank, const int size, std::string rank_str);

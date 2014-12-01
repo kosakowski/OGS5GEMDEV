@@ -1,6 +1,0 @@
-<?xml version="1.0" ?>
-<pqevents>
-  <pqevent object="MainWindow/objectInspectorDock/1pqProxyTabWidget0/qt_tabwidget_stackedwidget/objectInspector/Accept" command="activate" arguments="" />
-  <pqevent object="MainWindow/cameraToolbar/1QToolButton3" command="activate" arguments="" />
-  <pqevent object="MainWindow/objectInspectorDock/1pqProxyTabWidget0/qt_tabwidget_tabbar" command="set_tab" arguments="1" />
-</pqevents>

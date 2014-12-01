@@ -19,7 +19,8 @@ using namespace std;
 
 // Base
 #include "StringTools.h"
-
+// Math
+#include "matrix_class.h" //JOD 2014-11-10
 // FEM-Makros
 #include "files0.h"
 #include "makros.h"
@@ -611,13 +612,14 @@ void OUTData(double time_current, int time_step_number, bool force_output)
 				break;
 			}
 		}
-		else if (m_out->dat_type_name.compare("WATER_BALANCE") == 0)
-			m_out->NODWriteWaterBalance(time_current); // 6/2012 JOD, MW
+		else if (m_out->dat_type_name.compare("TOTAL_FLUX") == 0)
+			m_out->NODWriteTotalFlux(time_current, time_step_number); // 6/2012 JOD, MW 
 		else if (m_out->dat_type_name.compare("COMBINE_POINTS") == 0) m_out->NODWritePointsCombined(time_current);	// 6/2012 for calibration JOD
-
-		// ELE values, only called if ele values are defined for output, 05/2012 BG
-		if (m_out->getElementValueVector().size() > 0)
-			m_out->CalcELEFluxes();
+		else if (m_out->dat_type_name.compare("PRIMARY_VARIABLES") == 0)
+			m_out->NODWritePrimaryVariableList(time_current); //JOD 2014-11-10
+		
+		//if (m_out->getElementValueVector().size() > 0)
+		//	m_out->CalcELEFluxes();
 	}                                     // OUT loop
 	//======================================================================
 }

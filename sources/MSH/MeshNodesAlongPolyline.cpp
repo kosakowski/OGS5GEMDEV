@@ -22,7 +22,7 @@ MeshNodesAlongPolyline::MeshNodesAlongPolyline(
 {
 	std::vector<CNode*> const& mesh_nodes (mesh->getNodeVector());
 	double epsilon_radius (mesh->getMinEdgeLength()); // getSearchLength());
-
+	epsilon_radius *= 0.9; //JOD 2014-11-10
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2012
 	size_t n_linear_order_nodes;
 	size_t n_nodes;

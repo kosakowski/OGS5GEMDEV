@@ -1374,4 +1374,108 @@ ElementMatrix::~ElementMatrix()
 	CouplingA = NULL;
 	CouplingB = NULL;
 }
+
+/**************************************************************************
+CElement::FaceNormalFluxIntegration
+
+Used for TOTAL_FLUX calculation
+
+Programming:
+11/2014   JOD
+
+**************************************************************************/
+
+void CElement::FaceNormalFluxIntegration(long element_index, double *NodeVal, double *NodeVal_adv, int* nodesFace, CElem* face, CRFProcess* m_pcs, double* normal_vector)
+{
+
+	int gp, gp_r, gp_s;
+	double fkt = 0.0, det;
+	double *sf = shapefct;
+	double normal_diff_flux_interpol, normal_adv_flux_interpol;
+	double dbuff_adv[10], flux[3];
+	ElementValue* gp_ele = ele_gp_value[element_index];
+
+	setOrder(Order);
+	if (Order == 2)
+	{
+		sf = shapefctHQ;
+		if (MeshElement->GetElementType() == MshElemType::QUAD)
+			ShapeFunctionHQ = ShapeFunctionQuadHQ8;
+	}
+
+	for (int i = 0; i < nNodes; i++) {
+		dbuff[i] = 0.0;
+		dbuff_adv[i] = 0.0;
+	}
+
+	det = MeshElement->GetVolume();
+	// Loop over Gauss points
+	for (gp = 0; gp < nGaussPoints; gp++)
+	{
+		//---------------------------------------------------------
+		//  Get local coordinates and weights
+		//  Compute Jacobian matrix and its determinate
+		//---------------------------------------------------------
+		switch (MeshElement->GetElementType())
+		{
+		case MshElemType::LINE:   // Line
+			gp_r = gp;
+			unit[0] = MXPGaussPkt(nGauss, gp_r);
+			fkt = 0.5* det* MXPGaussFkt(nGauss, gp_r);
+			break;
+		case MshElemType::TRIANGLE: // Triangle
+			SamplePointTriHQ(gp, unit);
+			fkt = 2.0 * det * unit[2]; // Weights
+			break;
+		case MshElemType::QUAD:   // Quadrilateral
+			gp_r = (int)(gp / nGauss);
+			gp_s = gp % nGauss;
+			unit[0] = MXPGaussPkt(nGauss, gp_r);
+			unit[1] = MXPGaussPkt(nGauss, gp_s);
+			fkt = 0.25* det* MXPGaussFkt(nGauss, gp_r) * MXPGaussFkt(nGauss, gp_s);
+			break;
+		default:
+			std::cerr << "Error in mass balance calculation: CElement::FaceIntegration element type not supported" << "\n";
+		}
+		//---------------------------------------------------------
+		ComputeShapefct(Order);
+		
+		normal_diff_flux_interpol = 0.0;
+		
+		if ((m_pcs->getProcessType() == FiniteElement::GROUNDWATER_FLOW) || (m_pcs->getProcessType() == FiniteElement::LIQUID_FLOW)) {
+
+			for (int i = 0; i < nNodes; i++) 	// Darcy flux 
+				normal_diff_flux_interpol += NodeVal[i] * sf[i];
+
+			for (int i = 0; i < nNodes; i++)  // Integration
+				dbuff[i] += normal_diff_flux_interpol * sf[i] * fkt;
+		}
+		else if ((m_pcs->getProcessType() == FiniteElement::HEAT_TRANSPORT) || (m_pcs->getProcessType() == FiniteElement::MASS_TRANSPORT)) { 
+
+			normal_adv_flux_interpol = 0.0;
+
+			for (int i = 0; i < nNodes; i++) 	
+				normal_adv_flux_interpol += NodeVal_adv[i] * sf[i];
+
+			for (int i = 0; i < nNodes; i++) { // Integration
+				// Fick or Fourier diffusion
+				for (int l = 0; l < 3; l++)
+					flux[l] = gp_ele->TransportFlux(l, gp);
+				normal_diff_flux_interpol = PointProduction(flux, normal_vector);   //    fabs(PointProduction(flux, normal_vector));
+				dbuff[i] += normal_diff_flux_interpol * sf[i] * fkt;
+				// advection
+				dbuff_adv[i] += normal_adv_flux_interpol * sf[i] * fkt;
+			}
+		} // end transport
+	} // end gauss points
+
+	for (int i = 0; i < nNodes; i++) {
+		NodeVal[i] = dbuff[i];
+		NodeVal_adv[i] = dbuff_adv[i];
+	}
+}
+
+
+
+
 }                                                 // end namespace FiniteElement

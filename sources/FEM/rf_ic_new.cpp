@@ -49,6 +49,7 @@ CInitialCondition::CInitialCondition() : dis_linear_f(NULL)
 	// m_node = new CNodeValue();
 	// m_node->node_value = 0.0;
 	SubNumber = 0;
+	storeValues = false; // JOD 2014-11-10
 	this->setProcess(NULL);               //OK
 
 	m_msh = NULL;                         //OK
@@ -299,6 +300,14 @@ ios::pos_type CInitialCondition::Read(std::ifstream* ic_file,
 		}
 		//....................................................................
 		// subkeyword found
+		if (line_string.find("$STORE_VALUES") != string::npos)
+		{
+			storeValues = true;
+			in.clear();
+			continue;
+		}
+		//....................................................................
+		//subkeyword found
 		if (line_string.find("$DIS_TYPE") != string::npos)
 		{
 			in.str(GetLineFromFile1(ic_file));
@@ -507,6 +516,8 @@ void CInitialCondition::Set(int nidx)
 			break;
 		case GEOLIB::GEODOMAIN:
 			SetDomain(nidx);
+			if (storeValues)
+			  StoreInitialValues();// JOD 2014-11-10 
 			break;
 		case GEOLIB::INVALID:
 			std::cout << "WARNING: CInitialCondition::Set - invalid geo type" << "\n";
@@ -1085,3 +1096,26 @@ CInitialCondition* ICGet(string ic_name)
 	return NULL;
 }
 
+/**************************************************************************
+FEMLib-Method:
+
+For output of changes in primary variables
+Used for LIQUID_FLOW with varying fluid density
+
+11/2014 JOD Implementation
+**************************************************************************/
+void CInitialCondition::StoreInitialValues() {
+
+	string variable_name = "DELTA_" + convertPrimaryVariableToString(this->
+		getProcessPrimaryVariable());
+
+	int index = this->getProcess()->GetNodeValueIndex(variable_name);
+	for (int i = 0; i < (long)m_msh->nod_vector.size(); i++)
+	{
+	
+		this->getProcess()->SetNodeValue(i, this->getProcess()->GetNodeValueIndex(variable_name),
+			this->getProcess()->GetNodeValue(i, 0));
+		
+	}
+
+}
