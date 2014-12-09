@@ -30,6 +30,7 @@ _node_distype (FiniteElement::INVALID_DIS_TYPE)
    CurveIndex = -1;
    conditional = -1;
    check_me = true;                               //OK
+   _isConstrainedSTNode = false;
 }
 
 

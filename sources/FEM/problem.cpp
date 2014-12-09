@@ -136,11 +136,18 @@ Problem::Problem (char* filename) :
 	GetHeterogeneousFields();             //OK/MB
 	//----------------------------------------------------------------------
 	// Test MSH-MMP //OK
+	bool validMatID = true;
+	if (fem_msh_vector.size()==1) {
+		size_t max_matId = MSHGetMaxPatchIndex(fem_msh_vector[0]);
+		validMatID = (max_matId+1<=mmp_vector.size());
+	} else {
 	int g_max_mmp_groups = MSHSetMaxMMPGroups();
+		validMatID = !(g_max_mmp_groups > (int)mmp_vector.size());
+	}
 
-	if(g_max_mmp_groups > (int)mmp_vector.size())
+	if(!validMatID)
 	{
-		std::cout << "Error: not enough MMP data";
+		std::cout << "Error: not enough MMP data. please check MMP and material IDs in a mesh." << std::endl;
 		print_result = false;     //OK
 		return;
 	}
@@ -152,6 +159,18 @@ Problem::Problem (char* filename) :
 		print_result = false;     //OK
 		return;
 	}
+
+	initializeConstrainedProcesses(pcs_vector);
+
+	CRFProcess* pcs_fluid_momentum = PCSGet("FLUID_MOMENTUM");
+	if (pcs_fluid_momentum)
+	{
+		pcs_fluid_momentum->_idxVx = pcs_fluid_momentum->GetNodeValueIndex("VELOCITY1_X", true);
+		pcs_fluid_momentum->_idxVy = pcs_fluid_momentum->GetNodeValueIndex("VELOCITY1_Y", true);
+		pcs_fluid_momentum->_idxVz = pcs_fluid_momentum->GetNodeValueIndex("VELOCITY1_Z", true);
+	}
+	//delete pcs_fluid_momentum;
+
 	//
 	//JT: Set to true to force node copy at end of loop
 	force_post_node_copy = true;
@@ -448,6 +467,13 @@ Problem::Problem (char* filename) :
 			max_time_steps = m_tim->time_step_vector.size();
 		if (m_tim->GetPITimeStepCrtlType() > 0)
 			time_ctr = true;
+		m_tim->last_active_time = start_time; //NW
+
+		//check maximum number of coupling iterations against maximum time step increase
+		if (m_tim->time_control_type == TimeControlType::SELF_ADAPTIVE
+				&& m_tim->adapt_itr_type == IterationType::COUPLED
+				&& cpl_overall_max_iterations < m_tim->time_adapt_tim_vector.back())
+			std::cout << "Warning: Maximum number of coupling iterations is smaller than maximum time step increase!!!" << std::endl;
 	}
 	if(max_time_steps == 0)
 		max_time_steps = std::numeric_limits<std::size_t>::max()-1; // ULONG_MAX-1;  //kg44 increased the number to maximum number (size_t)
@@ -1017,15 +1043,27 @@ void Problem::Euler_TimeDiscretize()
 	if(mrank == 0)
 		{
 #endif
-	OUTData(0.0,aktueller_zeitschritt,true);
+	OUTData(current_time,aktueller_zeitschritt,true);
 #if defined(USE_MPI) || defined(USE_MPI_KRC) 
 		}
 #endif
 	
+	// check if this is a steady state simulation
+	bool isSteadySimulation = true;
+	for(i=0; i<(int)active_process_index.size(); i++)
+	{
+		if (total_processes[active_process_index[i]]->tim_type!=TimType::STEADY)
+		{
+			isSteadySimulation = false;
+			break;
+		}
+	}
+
 	//
 	// ------------------------------------------
 	// PERFORM TRANSIENT SIMULATION
 	// ------------------------------------------
+	double previous_rejected_dt = .0;
 	while(end_time > current_time)
 	{
 		// Get time step
@@ -1037,6 +1075,12 @@ void Problem::Euler_TimeDiscretize()
 			dt = MMin(dt,m_tim->CalcTimeStep(current_time));
 			dt_rec = MMin(dt_rec,m_tim->recommended_time_step); // to know if we have a critical time alteration
 		}
+
+		if (!last_dt_accepted && dt==previous_rejected_dt) {
+			ScreenMessage("Stop this simulation. New time step size is same as the rejected one.\n");
+			break;
+		}
+
 		SetTimeActiveProcesses(); // JT2012: Activate or deactivate processes with independent time stepping
 //
 #if defined(USE_MPI)
@@ -1096,6 +1140,11 @@ void Problem::Euler_TimeDiscretize()
 				if(m_tim->time_active) m_tim->accepted_step_count++;
 			}
 		}
+		else if (isSteadySimulation)
+		{
+			ScreenMessage("This time step is rejected. We stop the simulation because this is steady state simulation.\n");
+			break;
+		}
 		else
 		{
 			// ---------------------------------
@@ -1107,6 +1156,7 @@ void Problem::Euler_TimeDiscretize()
 			current_time -= dt;
 			aktuelle_zeit = current_time;
 			aktueller_zeitschritt--;
+			previous_rejected_dt = dt;
 			//
 			// decrement active dt, and increment count
 			for(i=0; i<(int)active_process_index.size(); i++)
@@ -1116,12 +1166,23 @@ void Problem::Euler_TimeDiscretize()
 					continue;
 				m_tim->rejected_step_count++;
 				m_tim->last_active_time -= dt;
+				m_tim->step_current--;
+				m_tim->repeat = true;
+				m_tim->last_rejected_timestep = aktueller_zeitschritt+1;
 				//
 				// Copy nodal values in reverse
 				if(isDeformationProcess(total_processes[active_process_index[i]]->getProcessType()))
 					continue;
 				total_processes[active_process_index[i]]->CopyTimestepNODValues(false);
 				// JT: This wasn't done before. Is it needed? // total_processes[active_process_index[i]]->CopyTimestepELEValues(false);
+			}
+			for(i = 0; i < (int)total_processes.size(); i++)
+			{
+				if(!active_processes[i] && total_processes[i] && total_processes[i]->tim_type==TimType::STEADY) {
+					m_tim = total_processes[i]->Tim;
+					m_tim->step_current--;
+					m_tim->repeat = true;
+		}
 			}
 		}
 		ScreenMessage("\n#############################################################\n");
@@ -1209,10 +1270,13 @@ bool Problem::CouplingLoop()
 			total_processes[i]->SetDefaultTimeStepAccepted();
 			acounter++;
 			m_tim->step_current++;
+			// reset
+			total_processes[i]->iter_nlin_max = 0;
+			total_processes[i]->iter_lin_max = 0;
 		}
 		else
 		{   //21.05.2010.  WW
-			if(total_processes[i] && total_processes[i]->tim_type_name.find("STEADY") != std::string::npos) {
+			if(total_processes[i] && total_processes[i]->tim_type == TimType::STEADY) {
 				acounter++;
                 m_tim = total_processes[i]->Tim;
                 m_tim->step_current++; //NW increment needed to get correct time step length in CTimeDiscretization::CalcTimeStep()
@@ -1339,6 +1403,17 @@ bool Problem::CouplingLoop()
 				a_pcs->first_coupling_iteration = false; // No longer true.
 				// Check for break criteria
 				max_outer_error = MMax(max_outer_error,a_pcs->cpl_max_relative_error);
+
+				// Reapply BCs if constrained BC
+				if(a_pcs->hasConstrainedBC())
+				{
+#ifdef USE_MPI
+					const int rank = myrank;
+#else
+					const int rank = -1;
+#endif
+					a_pcs->IncorporateBoundaryConditions(rank);
+			}
 			}
 			if(!accept) break;
 		}
@@ -1357,8 +1432,16 @@ bool Problem::CouplingLoop()
 			std::cout << "\n";
 	    }
 		// Coupling convergence criteria
-		if(max_outer_error <= 1.0 && outer_index+2 > cpl_overall_min_iterations) // JT: error is relative to the tolerance.
+		//if(max_outer_error <= 1.0 && outer_index+2 > cpl_overall_min_iterations) // JT: error is relative to the tolerance.	//MW outer_index + 2 is hard to follow - is it faster to write it like this?
+	    if(max_outer_error <= 1.0 && outer_index+1 >= cpl_overall_min_iterations) // JT: error is relative to the tolerance.
 			break;
+
+	    //MW
+	    if(max_outer_error > 1 && outer_index+1 == cpl_overall_max_iterations && cpl_overall_max_iterations>1)	//m_tim->step_current>1 &&
+	    {
+	    	accept = false;
+	    	break;
+	}
 	}
 	//
 	return accept;
@@ -1412,7 +1495,6 @@ void Problem::PostCouplingLoop()
 	if (total_processes[12])
 	{
 		CRFProcessDeformation* dm_pcs = (CRFProcessDeformation*)(total_processes[12]);
-		
 		bool doPostExcav = false;//WX
 		for(size_t l=0; l<msp_vector.size(); l++)
 		{
@@ -1538,7 +1620,7 @@ inline double Problem::LiquidFlow()
 		PCSCalcSecondaryVariables(); // PCS member function
 #endif
 		m_pcs->CalIntegrationPointValue(); //WW
-		if(m_pcs->tim_type_name.compare("STEADY") == 0)
+		if(m_pcs->tim_type == TimType::STEADY)
 			m_pcs->selected = false;
 	}
 
@@ -1550,7 +1632,7 @@ inline double Problem::LiquidFlow()
 		success = m_pcs->EclipseData->RunEclipse(m_pcs->Tim->step_current, m_pcs);
 		if (success == 0)
 			std::cout << "Error running Eclipse!" << "\n";
-		if(m_pcs->tim_type_name.compare("STEADY") == 0)
+		if(m_pcs->tim_type == TimType::STEADY)
 			m_pcs->selected = false;
 	}
 
@@ -1767,7 +1849,7 @@ inline double Problem::MultiPhaseFlow()
 		}
 	}
 
-	if(m_pcs->tim_type_name.compare("STEADY") == 0)
+	if(m_pcs->tim_type == TimType::STEADY)
 		m_pcs->selected = false;
 
 	//TestOutputEclipse(m_pcs);
@@ -2878,7 +2960,7 @@ inline double Problem::GroundWaterFlow()
 	// ELE values
 #if !defined(USE_PETSC) && !defined(NEW_EQS) // && defined(other parallel libs)//03~04.3012. WW
 	//#ifndef NEW_EQS                                //WW. 07.11.2008
-	if(m_pcs->tim_type_name.compare("STEADY") == 0) //CMCD 05/2006
+	if(m_pcs->tim_type == TimType::STEADY) //CMCD 05/2006
 	{
 		//std::cout << "      Calculation of secondary ELE values" << "\n";
 		m_pcs->AssembleParabolicEquationRHSVector(); //WW LOPCalcNODResultants();
@@ -3014,6 +3096,25 @@ inline double Problem::MassTrasport()
 	{
 		m_pcs = transport_processes[i]; //18.08.2008 WW
 		                                //Component Mobile ?
+
+		//MW reduce CONCENTRATION1 to non-negative values above water table for stability for Sugio approach with RICHARDS
+		if (mmp_vector[0]->permeability_saturation_model[0] == 10)
+		{
+			int nidx0 = m_pcs->GetNodeValueIndex("CONCENTRATION1",0);
+			CRFProcess *local_richards_flow = PCSGet("PRESSURE1",true);
+			if (local_richards_flow != NULL)
+			{
+				int nidx1 = local_richards_flow->GetNodeValueIndex("PRESSURE1",0);
+				for (int j=0; j<m_pcs->m_msh->GetNodesNumber(false);j++)
+				{
+					double local_conc = m_pcs->GetNodeValue(j,nidx0+1);
+					double local_pressure = local_richards_flow->GetNodeValue(j,nidx1+1);
+					if (local_pressure < 0 && local_conc < 0)
+						m_pcs->SetNodeValue(j,nidx0+1,0);
+				}
+			}
+		}
+
 		if(CPGetMobil(m_pcs->GetProcessComponentNumber()) > 0)
 			error = m_pcs->ExecuteNonLinear(loop_process_number);  //NW. ExecuteNonLinear() is called to use the adaptive time step scheme
 
@@ -3240,7 +3341,7 @@ inline double Problem::RandomWalker()
 	    }
 
 		// Do I need velocity fileds solved by the FEM?
-		if(m_pcs->tim_type_name.compare("PURERWPT") == 0)
+		if(m_pcs->tim_type == TimType::PURERWPT)
 		{
 			rw_pcs->PURERWPT = 1;
 			char* dateiname = NULL;

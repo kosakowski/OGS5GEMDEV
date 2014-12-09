@@ -1765,6 +1765,18 @@ int MSHSetMaxMMPGroups()
 
 /**************************************************************************
    MSHLib-Method:
+   12/2014 NW Implement
+**************************************************************************/
+size_t MSHGetMaxPatchIndex(const CFEMesh* m_msh)
+{
+	size_t max_mat_id = 0;
+	for (size_t j = 0; j < m_msh->ele_vector.size(); j++)
+		max_mat_id = std::max(max_mat_id, m_msh->ele_vector[j]->GetPatchIndex());
+	return max_mat_id;
+}
+
+/**************************************************************************
+   MSHLib-Method:
    07/2007 OK Implementation
 **************************************************************************/
 bool MSHTestMATGroups()

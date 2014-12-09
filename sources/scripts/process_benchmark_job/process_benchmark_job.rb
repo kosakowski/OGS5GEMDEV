@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 require 'rubygems'
 require 'sequel'
 
@@ -27,7 +29,7 @@ class BenchmarkInfoProcessor
     @crashed_benchmarks = []
     @new_failed_benchmarks = []
     @fixed_benchmarks = []
-    
+
     @new_commit_info = commit_info
     if commit_info.is_svn_commit == 1
       @old_commit_info = CommitInfo.filter('revision < ?', @new_commit_info.revision).order(:revision).last

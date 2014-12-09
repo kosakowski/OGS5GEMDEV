@@ -117,4 +117,28 @@ bool Surface::isPntInSfc (const double* pnt, double eps) const
 	return _sfc_grid->isPntInSurface(pnt, eps);
 }
 
+void Surface::calculateTriangleNormals() const
+{
+	for (std::size_t i = 0; i < this->_sfc_triangles.size(); i++)
+	{
+		this->_sfc_triangles[i]->calculateNormal();
+	}
+}
+
+double const* Surface::getTriangleNormal(const std::size_t triangle_id) const
+{
+	return _sfc_triangles[triangle_id]->getNormal();
+}
+
+int Surface::getTriangleIDOfPoint(const double* pnt) const
+{
+	for (std::size_t i = 0; i < this->_sfc_triangles.size(); i++)
+	{
+		if (_sfc_triangles[i]->containsPoint(pnt,0.1))
+			return i;
+	}
+	return -1;
+}
+
+
 } // end namespace

@@ -618,8 +618,9 @@ void OUTData(double time_current, int time_step_number, bool force_output)
 		else if (m_out->dat_type_name.compare("PRIMARY_VARIABLES") == 0)
 			m_out->NODWritePrimaryVariableList(time_current); //JOD 2014-11-10
 		
-		//if (m_out->getElementValueVector().size() > 0)
-		//	m_out->CalcELEFluxes();
+		// ELE values, only called if ele values are defined for output, 05/2012 BG
+		if (m_out->getElementValueVector().size() > 0)
+			m_out->CalcELEFluxes();
 	}                                     // OUT loop
 	//======================================================================
 }

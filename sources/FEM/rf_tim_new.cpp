@@ -9,6 +9,7 @@
 //#include <math.h>
 //#include <iostream>
 #include <cfloat>
+#include <cctype>
 // FEM-Makros
 #include "makros.h"
 // GeoSys-GeoLib
@@ -23,6 +24,7 @@
 // kg44 not found #include "elements.h"
 #include "rfmat_cp.h"
 #include "tools.h"
+#include <cctype>
 //WW #include "elements.h" //set functions for stability criteria
 // ToDo
 double aktuelle_zeit;
@@ -48,6 +50,8 @@ CTimeDiscretization::CTimeDiscretization(void)
 	time_unit = "SECOND";
 	max_time_step = 1.e10;                //YD
 	min_time_step = DBL_EPSILON;          //YD//JT Minimum allowed timestep, this process
+	initial_step_size = 1;
+	adapt_itr_type = IterationType::LINEAR;
 	repeat = false;                       //OK/YD
 	step_current = 0;                     //WW
 	this_stepsize = 0.;                   //WW
@@ -71,6 +75,8 @@ CTimeDiscretization::CTimeDiscretization(void)
 	for(size_t ii=0; ii<DOF_NUMBER_MAX+1; ii++){
 		dynamic_control_tolerance[ii] = -1.0;
 	}
+	last_rejected_timestep = 0;
+	stay_steps_after_rejection = 0;
 }
 
 /**************************************************************************
@@ -469,7 +475,7 @@ std::ios::pos_type CTimeDiscretization::Read(std::ifstream* tim_file)
 							line.clear();
 							// kg44 should not break break;
 						}
-						if(line_string.find("MIN_TIME_STEP") !=
+						else if(line_string.find("MIN_TIME_STEP") !=
 						   std::string::npos)
 						{
 							*tim_file >> line_string;
@@ -485,15 +491,63 @@ std::ios::pos_type CTimeDiscretization::Read(std::ifstream* tim_file)
 						   line.clear();
 						   }
 						 */
-						if(line_string.find("M") == std::string::npos)
+						else if(line_string.find("INITIAL_STEP_SIZE") !=
+								std::string::npos)
 						{
+							*tim_file >> line_string;
+							initial_step_size = strtod(
+							line_string.data(),NULL);
+							line.clear();
+						}
+						else if(line_string.find("ITERATIVE_TYPE") !=
+								std::string::npos)
+						{
+							*tim_file >> line_string;
+							adapt_itr_type = convertIterationType(line_string);
+							line.clear();
+						}
+						else if(line_string.find("STAY") !=
+								std::string::npos)
+						{
+							*tim_file >> line_string;
+							stay_steps_after_rejection = strtod(line_string.data(),NULL);
+							line.clear();
+						}
+						else if(line_string.find("MULTIPLIER") != std::string::npos
+								|| (!line_string.empty() && isdigit(line_string[0])))
+						{
+							if (line_string.find("MULTIPLIER") != std::string::npos) {
+								position = tim_file->tellg();
+								line_string = GetLineFromFile1(tim_file);
+							}
+
+							while(!tim_file->eof())
+							{
 							line.str(line_string);
 							line >> iter_times;
 							line >> multiply_coef;
+								if (line.fail()) {
+									tim_file->seekg(position,std::ios::beg);
+									line.clear();
+									break;
+								}
 							time_adapt_tim_vector.push_back(iter_times);
-							time_adapt_coe_vector.push_back(
-							        multiply_coef);
+								time_adapt_coe_vector.push_back(multiply_coef);
 							line.clear();
+
+								position = tim_file->tellg();
+								line_string = GetLineFromFile1(tim_file);
+						}
+							if (time_adapt_tim_vector.size()<2) {
+								std::cout << "ERROR: at least two multipliers should be provided for SELF_ADAPTIVE time stepping" << std::endl;
+								exit(1);
+							}
+						}
+						else
+						{
+							std::cout << "ERROR: Unrecognized keyword in .tim file: " << line.str() << std::endl;
+							std::cout << " You may want to check line endings (carriage return)." << std::endl;
+							exit(1);
 						}
 					} // end of while loop adaptive
 				// end of if "SELF_ADAPTIVE"
@@ -898,26 +952,36 @@ double CTimeDiscretization::FirstTimeStepEstimate(void)
 //	m_mfp = MFPGet("LIQUID");             //WW
 //	double density_fluid = m_mfp->Density(); //WW // TF: set, but never used
 
+	const double initial_time_step = std::max(initial_step_size, min_time_step);
+
 	for (size_t n_p = 0; n_p < pcs_vector.size(); n_p++)
 	{
 		m_pcs = pcs_vector[n_p];
 		CFiniteElementStd* fem = m_pcs->GetAssembler();
 
-		time_step_length = min_time_step; // take min time step as conservative best guess for testing
+		time_step_length = initial_time_step; // default guess
 		//		switch (m_pcs->pcs_type_name[0]) {
 		switch (m_pcs->getProcessType()) // TF
 		{
 		//		case 'G': // kg44 groudnwater flow ---if steady state, time step should be greater zero...transient flow does not work with adaptive stepping
 		case FiniteElement::GROUNDWATER_FLOW:    // TF, if steady state, time step should be greater zero...transient flow does not work with adaptive stepping
-			time_step_length = min_time_step; // take min time step as conservative best guess for testing
-			break;
-		//		case 'L': // kg44 liquid flow ---if steady state, time step should be greater zero...transient flow does not work with adaptive stepping
 		case FiniteElement::LIQUID_FLOW:    // TF, if steady state, time step should be greater zero...transient flow does not work with adaptive stepping
-			time_step_length = min_time_step; // take min time step as conservative best guess for testing
+			time_step_length = initial_time_step; // take min time step as conservative best guess for testing
 			break;
 		//		case 'M': // kg44 Mass transport ---if steady state, time step should be greater zero..
+		case FiniteElement::HEAT_TRANSPORT:      //MW copied from MASS_TRANSPORT // TF, if steady state, time step should be greater zero..
 		case FiniteElement::MASS_TRANSPORT:      // TF, if steady state, time step should be greater zero..
-			time_step_length = min_time_step; // take min time step as conservative best guess for testing
+			time_step_length = initial_time_step; // take min time step as conservative best guess for testing
+			if(time_control_type == TimeControlType::SELF_ADAPTIVE)	//MW
+			{
+				// time step will be reduced in an exponential way until min_time_step.
+				time_step_length = pow( time_adapt_coe_vector[time_adapt_coe_vector.size() - 1] , rejected_step_count ) * initial_step_size;
+
+				if (time_step_length < min_time_step) {
+					std::cout << "-> ***ERROR*** Next time step size is less than the given minimum size. The simulation is aborted." << std::endl;
+					exit(1);
+				}
+			}
 			break;
 		//		case 'R': // Richards
 		case FiniteElement::RICHARDS_FLOW:       // TF
@@ -964,6 +1028,22 @@ double CTimeDiscretization::FirstTimeStepEstimate(void)
 				time_step_length = MMin(time_step_length, buffer);
 			}             // ele_vector
 
+			if(time_control_type == TimeControlType::SELF_ADAPTIVE)	//MW
+			{
+				//				if (rejected_step_count==0)
+				//					time_step_length=ini_time_step;
+				//				else
+				//				{
+				time_step_length = pow( time_adapt_coe_vector[time_adapt_coe_vector.size() - 1] , rejected_step_count ) * initial_step_size;
+
+				if (time_step_length<=min_time_step)
+				{
+					std::cout << "-> ***ERROR*** Next time step size is less than or equal to the given minimum size. The simulation is aborted." << std::endl;
+					exit(1);
+				}
+				//				}
+			}
+
 			if (time_step_length < MKleinsteZahl)
 			{
 				std::cout << "Warning : Time Control Step Wrong, dt = 0.0 " <<
@@ -983,6 +1063,7 @@ double CTimeDiscretization::FirstTimeStepEstimate(void)
 		default:
 			std::cout << "CTimeDiscretization::FirstTimeStepEstimate default case" <<
 			"\n";
+			break;
 		}
 	}
 	return time_step_length;
@@ -1201,109 +1282,63 @@ double CTimeDiscretization::NeumannTimeControl(void)
 **************************************************************************/
 double CTimeDiscretization::SelfAdaptiveTimeControl ( void )
 {
-	int imflag = 1, iprocs = 0;
-	int iterdum = 1;
-	double my_max_time_step = 0.0;
-	CRFProcess* m_pcs = NULL;             //YDToDo: m_pcs should be member
-
 	// First calculate maximum time step according to Neumann and Courant criteria
 #ifdef GEM_REACT
-	my_max_time_step = MMin(max_time_step,MaxTimeStep());
+	const double my_max_time_step = MMin(max_time_step,MaxTimeStep());
 	std::cout << "Self_Adaptive Time Step: max time step " << my_max_time_step << "\n";
 #else
-// kg44 This does not work in this way with multiple mass tranport processes!
-	if ( repeat )
-	{
-		std::cout << "   TIM step is repeated" << "\n";
-		m_pcs = PCSGet ( pcs_type_name );
-		m_pcs->PrimaryVariableReload();
-	}
+	const double my_max_time_step = max_time_step;
 #endif
-	// TF
+
+	// get iteration number
+	int n_itr = 0;
+	CRFProcess* m_pcs = NULL;
 	const FiniteElement::ProcessType pcs_type (FiniteElement::convertProcessType (pcs_type_name));
 	for (size_t n_p = 0; n_p < pcs_vector.size(); n_p++)
 	{
+		if (pcs_vector[n_p]->getProcessType() == pcs_type) {
 		m_pcs = pcs_vector[n_p];
+			if (adapt_itr_type==IterationType::LINEAR) {
+				n_itr = std::max(n_itr, m_pcs->iter_lin_max);
+			} else if (adapt_itr_type==IterationType::NONLINEAR) {
+				n_itr = std::max(n_itr, m_pcs->iter_nlin_max);
+			} else if (adapt_itr_type==IterationType::COUPLED) {
+				n_itr = m_pcs->iter_outer_cpl + 1;
+				}
+				
+		}
+	}	
+	if (!m_pcs) {
+		ScreenMessage("-> ERROR in SelfAdaptiveTimeControl(): PCS not found\n");
+		return 0.0;
+				}
 
-		if (m_pcs->getProcessType() == pcs_type) //compare process type and type name from Tim object
-		{
-			iprocs++;
-			//			switch (m_pcs->pcs_type_name[0]) {
-			switch (m_pcs->getProcessType()) // TF
-			{
-			default:
-				std::cout << "Fatal error: No valid PCS type" << "\n";
-				break;
-			//			case 'R': // Richards
-			case FiniteElement::RICHARDS_FLOW: // TF
-                                imflag = 1;
-				if ( (imflag > 0) && ( m_pcs->iter_lin  >=   time_adapt_tim_vector[1] ) )
-				{
-					imflag = 0;
-					std::cout <<
-					"Self adaptive time step: to many iterations for Richards_flow "
-					          << m_pcs->iter_lin << " " <<
-					time_adapt_tim_vector[1] <<
-					"\n";
-//					time_step_length = time_step_length *
-//					                   time_adapt_coe_vector[
-//					        time_adapt_tim_vector.size() - 1];
-				}
-				if ((imflag == 1) && (m_pcs->iter_lin <= time_adapt_tim_vector[0]))
-				{
-					imflag = 2;
-//					time_step_length = time_step_length *
-//					                   time_adapt_coe_vector[0];
-				}
-				break;
-			//			case 'G': //Groundwater flow and LIQUID_FLOW
-			case FiniteElement::GROUNDWATER_FLOW: // TF
-			case FiniteElement::LIQUID_FLOW: // TF
-				// iterdum=MMax(iterdum,m_pcs->iter);
-				imflag = 1;
-				if ( (imflag > 0) && ( m_pcs->iter_lin  >= time_adapt_tim_vector[1] ) )
-				{
-					imflag = 0;
-					std::cout <<
-					"failed: Self adaptive time step: to many iterations for Groundwater/LIQUID flow"
-					<< m_pcs->iter_lin << " " << time_adapt_tim_vector[1] 
-					          << "\n";
-						//  exit(1); // debug to find bug in flow field
-				}
-				if (((imflag == 1) && (m_pcs->iter_lin <= time_adapt_tim_vector[0])))
-					imflag = 2;
-				break;
-			//			case 'M': // Mass transport
-			case FiniteElement::MASS_TRANSPORT: // TF
-				iterdum = std::max(iterdum, m_pcs->iter_lin);
-				if ( (imflag > 0) && ( m_pcs->iter_lin  >= time_adapt_tim_vector[1] ) )
-				{
-					imflag = 0;
-					std::cout <<
-					"Self adaptive time step: to many iterations for Transport "
-					          << m_pcs->iter_lin << " " <<
-					time_adapt_tim_vector[1] <<
-					"\n";
-				}
-				if ( ((imflag == 1) &&
-				      ( m_pcs->iter_lin  <= time_adapt_tim_vector[0] ) ))
-					imflag = 2;
+	// get the multiplier
+	double multiplier = 1.0;
+	if (!time_adapt_coe_vector.empty())
+		multiplier = time_adapt_coe_vector.back();
+	for (std::size_t i=0; i<time_adapt_tim_vector.size(); i++ ) {
+		if (n_itr <= time_adapt_tim_vector[i] ) {
+			multiplier = time_adapt_coe_vector[i];
 				break;
 			}
 		}
+	if (!m_pcs->accepted) {
+		multiplier = time_adapt_coe_vector.back();
+	} else if (stay_steps_after_rejection > 0 && multiplier > 1.0) {
+		// don't increase time step size if a simulation has experienced rejection recently
+		double consecutive_successful_steps = aktueller_zeitschritt - last_rejected_timestep;
+		if (consecutive_successful_steps <= stay_steps_after_rejection) {
+			multiplier = 1.0;
+			std::cout << "Time step size will not be increased because of rejection experienced in last time steps. \n";
+	}
 	}
 
-	if (imflag == 0 &&
-	    (time_adapt_coe_vector[time_adapt_tim_vector.size() - 1] * time_step_length ) >
-	    min_time_step)
-		time_step_length = time_step_length *
-		                   time_adapt_coe_vector[time_adapt_tim_vector.size() - 1];                                                                                                          //timestep smaller
-	else if (imflag == 2)
-		time_step_length = time_step_length * time_adapt_coe_vector[0];       //timestep bigger
+	// update the time step length
+	time_step_length *= multiplier;
+	time_step_length = std::min(time_step_length, my_max_time_step);
+	time_step_length = std::max(time_step_length, min_time_step);
 
-	// BUG my_max_time_step is not necessarily initialised
-	time_step_length = MMin ( time_step_length,my_max_time_step );
-	time_step_length = MMax ( time_step_length,min_time_step );
 #if defined(USE_PETSC)
 // synchronice time step size between processes
     PetscScalar *gtimp; //used for pointer
@@ -1322,15 +1357,15 @@ double CTimeDiscretization::SelfAdaptiveTimeControl ( void )
     time_step_length= tresult;  // assign to time step size
 #endif	
 
-	std::cout << "Self_Adaptive time step size: " << " imflag " << imflag << " dr " <<
-	time_step_length << " max iterations: " << iterdum << " number of evaluated processes: " <<
-	iprocs << "\n";
+	std::cout << "Self_Adaptive time step size: " <<
+	time_step_length << " max iterations: " << n_itr << "\n";
 	if ( Write_tim_discrete )
 		*tim_discrete << aktueller_zeitschritt << "  " << aktuelle_zeit << "   " <<
 		time_step_length << "  " << m_pcs->iter_lin << "\n";
 	//}
 	return time_step_length;
 }
+
 
 /**************************************************************************
    FEMLib-Method:
@@ -1536,6 +1571,16 @@ bool CTimeDiscretization::isDynamicTimeFailureSuggested(CRFProcess *m_pcs)
 			}
 		}
 	}
+	else if (time_control_type == TimeControlType::SELF_ADAPTIVE) {
+		int n_itr = 0;
+		if (adapt_itr_type==IterationType::LINEAR) {
+			n_itr = m_pcs->iter_lin_max;
+		} else if (adapt_itr_type==IterationType::NONLINEAR) {
+			n_itr = m_pcs->iter_nlin_max;
+		}
+		if (n_itr>=time_adapt_tim_vector.back())
+			return true;
+	}
 #if !defined(USE_PETSC) // && !defined(other parallel libs)//03.3012. WW
 
 	else{ // Alright, this is annoying. Unfortunately we have to recalculate the node errors.
@@ -1548,6 +1593,7 @@ bool CTimeDiscretization::isDynamicTimeFailureSuggested(CRFProcess *m_pcs)
 		}
 	}
 #endif
+
 	//
 	return false;
 }

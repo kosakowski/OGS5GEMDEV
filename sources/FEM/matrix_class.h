@@ -149,6 +149,10 @@ protected:
 	double* data;
 };
 
+#ifdef _MSC_VER
+#pragma warning( disable: 4522 )
+#endif
+
 /// Dense matrix
 class Matrix : public MatrixBase
 {
@@ -396,6 +400,10 @@ public:
 		return data[i];
 	}
 };
+
+#ifdef _MSC_VER
+#pragma warning( default: 4522 )
+#endif
 
 typedef Matrix Vec;
 

@@ -368,10 +368,14 @@ DistributionType convertDisType(const std::string& dis_type_string)
 		return PRECIPITATION;
 	if (dis_type_string.compare("DIRECT") == 0)
 		return DIRECT;
+	if (dis_type_string.compare("RECHARGE_DIRECT") == 0)
+		return RECHARGE_DIRECT;
 	if (dis_type_string.compare("DOMAIN") == 0)
 		return NODESCONSTANT;
 	if (dis_type_string.compare("CLIMATE") == 0)
 		return CLIMATE;
+	if (dis_type_string.compare("RECHARGE") == 0)	//MW
+		return RECHARGE;
 	if (dis_type_string.compare("FUNCTION") == 0)
 		return FUNCTION;                              //24.08.2011. WW
 	if (dis_type_string.compare("TRANSFER_SURROUNDING") == 0)
@@ -419,10 +423,14 @@ std::string convertDisTypeToString(DistributionType dis_type)
 		return "PRECIPITATION";
 	if (dis_type == DIRECT)
 		return "DIRECT";
+	if (dis_type == RECHARGE_DIRECT)
+		return "RECHARGE_DIRECT";
 	if (dis_type == NODESCONSTANT)
 		return "DOMAIN";
 	if (dis_type == CLIMATE)
 		return "CLIMATE";
+	if (dis_type == RECHARGE)	//MW
+			return "RECHARGE";
 	if (dis_type == FUNCTION)
 		return "FUNCTION";         //24.08.2011. WW
 	if (dis_type == TRANSFER_SURROUNDING)
@@ -521,6 +529,52 @@ std::string convertSolidReactiveSystemToString(SolidReactiveSystem reactive_syst
 
 } // end namespace FiniteElement
 
+TimType::type convertTimType(const std::string& str)
+{
+    if (str.compare("STEADY") == 0)
+        return TimType::STEADY;
+    if (str.compare("TRANSIENT") == 0)
+        return TimType::TRANSIENT;
+    if (str.compare("PURERWPT") == 0)
+        return TimType::PURERWPT;
+    return TimType::INVALID_TIM_TYPE;
+}
+
+std::string convertTimTypeToString(TimType::type type)
+{
+    if (type == TimType::STEADY)
+        return "STEADY";
+    if (type == TimType::TRANSIENT)
+        return "TRANSIENT";
+    if (type == TimType::PURERWPT)
+        return "PURERWPT";
+    return "INVALID_TIM_TYPE";
+}
+
+IterationType::type convertIterationType(const std::string& str)
+{
+	if (str.find("LINEAR")!=std::string::npos)
+		return IterationType::LINEAR;
+	else if (str.find("NONLINEAR")!=std::string::npos)
+		return IterationType::NONLINEAR;
+	else if (str.find("COUPLED")!=std::string::npos)
+		return IterationType::COUPLED;
+	else
+		return IterationType::INVALID;
+
+}
+
+std::string convertIterationTypeToString(IterationType::type itr_type)
+{
+    if (itr_type == IterationType::LINEAR)
+        return "LINEAR";
+    else if (itr_type == IterationType::NONLINEAR)
+        return "NONLINEAR";
+    else if (itr_type == IterationType::COUPLED)
+        return "COUPLED";
+    return "INVALID";
+}
+
 TimeControlType::type convertTimeControlType(const std::string &str)
 {
     if (str == "STEPS")
@@ -568,3 +622,45 @@ std::string convertTimeControlTypeToString(TimeControlType::type tc_type)
     return "INVALID";
 
 }
+
+ConstrainedType::type convertConstrainedType(const std::string &str)
+{
+	if (str.compare("SMALLER") == 0)
+		return ConstrainedType::SMALLER;
+	else if (str.compare("GREATER") == 0)
+		return ConstrainedType::GREATER;
+	else if (str.compare("POSITIVE") == 0)
+		return ConstrainedType::POSITIVE;
+	else if (str.compare("NEGATIVE") == 0)
+		return ConstrainedType::NEGATIVE;
+	return ConstrainedType::INVALID_CONSTRAINED_TYPE;
+}
+
+std::string convertConstrainedTypeToString(ConstrainedType::type constrained_type)
+{
+	if (constrained_type == ConstrainedType::SMALLER)
+		return "SMALLER";
+	else if (constrained_type == ConstrainedType::GREATER)
+		return "GREATER";
+	else if (constrained_type == ConstrainedType::POSITIVE)
+		return "POSITIVE";
+	else if (constrained_type == ConstrainedType::NEGATIVE)
+		return "NEGATIVE";
+	return "INVALID_CONSTRAINED_TYPE";
+}
+
+
+ConstrainedVariable::type convertConstrainedVariable(const std::string &str)
+{
+	if (str.compare("VELOCITY") == 0)
+		return ConstrainedVariable::VELOCITY;
+	return ConstrainedVariable::INVALID_CONSTRAINED_VARIABLE;
+}
+
+std::string convertConstrainedVariableToString(ConstrainedVariable::type constrained_variable)
+{
+	if (constrained_variable == ConstrainedVariable::VELOCITY)
+		return "VELOCITY";
+	return "INVALID_CONSTRAINED_VARIABLE";
+}
+

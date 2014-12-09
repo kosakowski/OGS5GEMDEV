@@ -63,6 +63,7 @@ void Read_RFI(std::istream& msh_file, MeshLib::CFEMesh* m_msh);
 extern void GMSH2MSH(const char*, MeshLib::CFEMesh*);
 extern int MSHSetMaxMMPGroups();                  //OK
 extern bool MSHTestMATGroups();                   //OK
+extern size_t MSHGetMaxPatchIndex(const MeshLib::CFEMesh* m_msh);
 extern void GEOGetNodesInMaterialDomain(MeshLib::CFEMesh const*const, int, std::vector<long>&, bool);
 
 extern void MSHDefineMobile(CRFProcess*);         //OK411

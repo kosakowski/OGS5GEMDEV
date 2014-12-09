@@ -107,7 +107,6 @@ public:
 	// Integrate Neumman type BC
 	void FaceIntegration(double* NodeVal);
 	
-	void Cal_Flux( CRFProcess* m_pcs );  // JOD 2014-11-10
 	void FaceNormalFluxIntegration(long index, double *NodeVal_adv, double *NodeVal, int* nodesFace, CElem* face, CRFProcess* m_pcs, double* normal_vector); // JOD 2014-11-10
 	
 	// Coupling

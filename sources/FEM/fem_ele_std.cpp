@@ -5573,6 +5573,59 @@ void CFiniteElementStd::CalcAdvection()
 	ElementValue* gp_ele = ele_gp_value[Index];
 	CRFProcess* pcs_fluid_momentum = PCSGet("FLUID_MOMENTUM");
 
+	std::vector<std::vector<double> > nodal_vel(3);
+	if(pcs_fluid_momentum)
+	{
+		/*
+		 * get connected nodes
+		 * get vel at nodes
+		 * interpolate vel
+		 */
+		std::vector<size_t> connected_nodes;
+		this->MeshElement->getNodeIndices(connected_nodes);
+
+		for (std::size_t i(0); i < dim; i++)
+			nodal_vel[i].resize(connected_nodes.size());
+
+		for (std::size_t i(0); i < connected_nodes.size(); i++)
+		{
+			switch (coordinate_system)
+			{
+			case 10:	// only x-direction
+				nodal_vel[0][i] = pcs_fluid_momentum->GetNodeValue(connected_nodes[i], pcs_fluid_momentum->_idxVx);
+				break;
+			case 11:	// only y-direction
+				nodal_vel[0][i] = pcs_fluid_momentum->GetNodeValue(connected_nodes[i], pcs_fluid_momentum->_idxVy);
+				break;
+			case 12:	// only z-direction
+				nodal_vel[0][i] = pcs_fluid_momentum->GetNodeValue(connected_nodes[i], pcs_fluid_momentum->_idxVz);
+				break;
+			case 21:	// x & y direction
+				nodal_vel[0][i] = pcs_fluid_momentum->GetNodeValue(connected_nodes[i], pcs_fluid_momentum->_idxVx);
+				nodal_vel[1][i] = pcs_fluid_momentum->GetNodeValue(connected_nodes[i], pcs_fluid_momentum->_idxVy);
+				break;
+			case 22:	// x & z direction
+				nodal_vel[0][i] = pcs_fluid_momentum->GetNodeValue(connected_nodes[i], pcs_fluid_momentum->_idxVx);
+				nodal_vel[1][i] = pcs_fluid_momentum->GetNodeValue(connected_nodes[i], pcs_fluid_momentum->_idxVz);
+				break;
+			case 23:	// y & z direction
+				nodal_vel[0][i] = pcs_fluid_momentum->GetNodeValue(connected_nodes[i], pcs_fluid_momentum->_idxVy);
+				nodal_vel[1][i] = pcs_fluid_momentum->GetNodeValue(connected_nodes[i], pcs_fluid_momentum->_idxVz);
+				break;
+			case 32:	// x, y & z direction
+				nodal_vel[0][i] = pcs_fluid_momentum->GetNodeValue(connected_nodes[i], pcs_fluid_momentum->_idxVx);
+				nodal_vel[1][i] = pcs_fluid_momentum->GetNodeValue(connected_nodes[i], pcs_fluid_momentum->_idxVy);
+				nodal_vel[2][i] = pcs_fluid_momentum->GetNodeValue(connected_nodes[i], pcs_fluid_momentum->_idxVz);
+				break;
+			default:
+				std::cout << "  Invalid coordinate_system: " << coordinate_system << ". Exiting now." << std::endl;
+				exit(0);
+				break;
+			}
+		}
+	}
+
+
 	//Initial values
 	gp_t = 0;
 	(*Advection) = 0.0;
@@ -5631,18 +5684,10 @@ void CFiniteElementStd::CalcAdvection()
 		// Velocity by Fluid_Momentum - 13.11.2009  PCH
 		if(pcs_fluid_momentum)
 		{
-			CRFProcess* m_pcs = pcs_fluid_momentum;
-
-			vel[0] = mat_factor * m_pcs->GetElementValue(index,
-			                                             m_pcs->GetElementValueIndex(
-			                                                     "VELOCITY1_X") + 1);
-			vel[1] = mat_factor * m_pcs->GetElementValue(index,
-			                                             m_pcs->GetElementValueIndex(
-			                                                     "VELOCITY1_Y") + 1);
-			vel[2] = mat_factor * m_pcs->GetElementValue(index,
-			                                             m_pcs->GetElementValueIndex(
-			                                                     "VELOCITY1_Z") + 1);
+			for (std::size_t i(0); i < dim; i++)
+				vel[i] = mat_factor * interpolate(&nodal_vel[i][0]);
 		}
+
 
 #if defined(USE_PETSC) //|| defined (other parallel solver)
 		for (i = 0; i < act_nodes; i++)
@@ -8570,7 +8615,7 @@ void CFiniteElementStd::AssembleMixedHyperbolicParabolicEquation()
 		// Calculate matrices
 		// Mass matrix..........................................................
 		//NW
-		if(this->pcs->tim_type_name.compare("STEADY") != 0)
+		if(this->pcs->tim_type != TimType::STEADY)
 		{
 			if(pcs->m_num->ele_mass_lumping)
 				CalcLumpedMass();
@@ -10069,8 +10114,8 @@ void CFiniteElementStd::CalcSatution()
 		// In case the node is on the material interface
 		if(eS > 1.0)
 			eS = 1.0;
-		//if(eS < MediaProp->capillary_pressure_values[1])	//MW: limit to non-negative 0saturation for stability
-		//	eS = MediaProp->capillary_pressure_values[1];
+		if(MediaProp->permeability_saturation_model[0] == 10 && eS < MediaProp->capillary_pressure_values[1])	//MW: limit to non-negative saturation for stability in unconfined gw
+			eS = MediaProp->capillary_pressure_values[1];
 		//
 		pcs->SetNodeValue (nodes[i], idx_S, eS);
 	}
@@ -12286,297 +12331,6 @@ double CFiniteElementStd::Get_ctx_(long ele_index, int gaussp, int i_dim){
 }*/
 
 
-/***************************************************************************
-GeoSys - Funktion:
-CFiniteElementStd:: Darcy-, Fick-, Fourier-Flux calulation 
-(extension of the classic velocity calculation function)
-Programming:  JOD
-10/2014
-**************************************************************************/
-// Local assembly
-/*
-void CFiniteElementStd::Cal_Flux()
-{
-	int k;
-	static double vel[3], vel_g[3];
-	// ---- Gauss integral
-	int gp_r = 0, gp_s = 0, gp_t;
-	double coef = 0.0;
-	int dof_n = 1;
-	if (PcsType == V || PcsType == P)
-		dof_n = 2;
-	if (PcsType == N)
-		dof_n = 4;
-	//
-	gp_t = 0;
-
-	// Get room in the memory for local matrices
-	SetMemory();
-	// Set material
-	SetMaterial();
-
-	ElementValue* gp_ele = ele_gp_value[Index];
-
-	//gp_ele->Velocity = 0.0; // CB commented and inserted below due to conflict with transport calculation, needs velocities
-	// Loop over Gauss points
-	k = (coordinate_system) % 10;
-	if (PcsType == T)                      //WW/CB
-	{
-		if (pcs->pcs_type_number == 0)
-		{
-			// gas pressure
-			idx1 = pcs->GetNodeValueIndex("PRESSURE1") + 1;
-			for (int i = 0; i < nnodes; i++)
-				NodalVal[i] = pcs->GetNodeValue(nodes[i], idx1);
-		}
-		else if (pcs->pcs_type_number == 1)
-		{
-			idxp21 = pcs->GetNodeValueIndex("PRESSURE_CAP");
-			// gas pressure
-			idx1 = cpl_pcs->GetNodeValueIndex("PRESSURE1") + 1;
-			gp_ele = ele_gp_value[Index + (long)pcs->m_msh->ele_vector.size()];
-			for (int i = 0; i < nnodes; i++)
-				// P_l = P_g - P_cap
-				NodalVal[i] =
-				cpl_pcs->GetNodeValue(nodes[i], idx1) - pcs->GetNodeValue(
-				nodes[i],
-				idxp21);
-		}
-	}
-	else
-		// This should be enough for Vw in PS_GLOBAL as well,
-		// since the first primary variable is Pw.
-	for (int i = 0; i < nnodes; i++)
-	{
-		NodalVal[i] = pcs->GetNodeValue(nodes[i], idx1);
-		NodalVal1[i] = NodalVal[i];
-	}
-	//
-	if (PcsType == V)
-	{
-		gp_ele->Velocity_g = 0.0; //WW
-		for (int i = 0; i < nnodes; i++)
-		{
-			// 02.2010. WW
-			NodalVal2[i] = pcs->GetNodeValue(nodes[i], idxp21);
-			NodalVal[i] = NodalVal2[i] - NodalVal[i];
-		}
-	}
-	if (PcsType == P)
-	{
-		gp_ele->Velocity_g = 0.0; //PCH
-		// Just get Pnw, which is the secondary variable in PS_GLOBAL
-		int idx_pn = pcs->GetNodeValueIndex("PRESSURE2");
-		for (int i = 0; i < nnodes; i++)
-			NodalVal1[i] = pcs->GetNodeValue(nodes[i], idx_pn);
-	}
-	Matrix tmp_gp_velocity(gp_ele->Velocity);
-	tmp_gp_velocity = 0.0;
-	//gp_ele->Velocity = 0.0;                     // CB inserted here and commented above due to conflict with transport calculation, needs
-	for (gp = 0; gp < nGaussPoints; gp++)
-	{
-		//---------------------------------------------------------
-		//  Get local coordinates and weights
-		//  Compute Jacobian matrix and its determination
-		//---------------------------------------------------------
-		GetGaussData(gp, gp_r, gp_s, gp_t);
-
-		//---------------------------------------------------------
-		// Compute geometry
-		//---------------------------------------------------------
-		ComputeGradShapefct(1);   // Linear interpolation function
-		ComputeShapefct(1);       // Moved from CalCoefLaplace(). 12.3.2007 WW
-		//WW/CB
-		if ((PcsType == T) && (pcs->pcs_type_number == 1))
-			flag_cpl_pcs = true;
-		// Material
-		if (dof_n == 1)
-			CalCoefLaplace(true);
-		else if (dof_n == 4 && PcsType == N)
-			CalCoefLaplaceTNEQ(0);
-		else if (dof_n == 2 && PcsType == V) // PCH 05.2009
-			CalCoefLaplace2(true, 0);
-		else if (dof_n == 2 && PcsType == P) // PCH 05.2009
-			CalCoefLaplacePSGLOBAL(true, 0);
-		//WW/CB
-		if ((PcsType == T) && (pcs->pcs_type_number == 1))
-			flag_cpl_pcs = false;
-		// Velocity
-		for (size_t i = 0; i < dim; i++)
-		{
-			vel[i] = 0.0;
-			for (int j = 0; j < nnodes; j++)
-				vel[i] += NodalVal[j] * dshapefct[i * nnodes + j];
-			//			 vel[i] += fabs(NodalVal[j])*dshapefct[i*nnodes+j];
-		}
-		if (PcsType == V) {
-			for (size_t i = 0; i < dim; i++)
-			{
-				vel_g[i] = 0.0;
-				for (int j = 0; j < nnodes; j++)
-					// Change   NodalVal2 to NodalVal1. 02.2010. WW
-					vel_g[i] += NodalVal2[j] * dshapefct[i * nnodes + j];
-			}
-		}
-		else if (PcsType == P) { // PCH 05.2009
-			for (size_t i = 0; i < dim; i++)
-			{
-				vel_g[i] = 0.0;
-				for (int j = 0; j < nnodes; j++)
-					vel_g[i] += NodalVal1[j] * dshapefct[i * nnodes + j];
-			}
-		}
-
-		// Gravity term
-		//NW
-		if (k == 2 && (!HEAD_Flag) && FluidProp->CheckGravityCalculation())
-		{
-			if (PcsType == N)
-			{
-				eos_arg[0] = (1 - pcs->m_num->ls_theta)*interpolate(NodalVal0) + pcs->m_num->ls_theta*interpolate(NodalVal1);
-				eos_arg[1] = (1 - pcs->m_num->ls_theta)*interpolate(NodalVal_t0) + pcs->m_num->ls_theta*interpolate(NodalVal_t1);
-				eos_arg[2] = (1 - pcs->m_num->ls_theta)*interpolate(NodalVal_X0) + pcs->m_num->ls_theta*interpolate(NodalVal_X1);
-				coef = gravity_constant*FluidProp->Density(eos_arg);
-			}
-			else {
-				eos_arg[0] = interpolate(NodalVal1);
-				eos_arg[1] = interpolate(NodalValC1);
-				eos_arg[2] = 1;
-				if (eos_arg[1] > 14)
-					eos_arg[2] = 1;
-				coef = gravity_constant*FluidProp->Density(eos_arg);
-				//	coef = gravity_constant * FluidProp->Density();
-			}
-			if (dim == 3 && ele_dim == 2)
-			{
-				vel[dim - 1] += coef; //NW local permeability tensor is already transformed to global one in CalCoefLaplace()
-				if (PcsType == V || PcsType == P)
-				{
-					for (size_t i = 0; i < dim; i++)
-					for (size_t j = 0; j < ele_dim; j++)
-					{
-						if (PcsType == V)
-							vel_g[i] += rho_g *
-							gravity_constant *
-							(*MeshElement->
-							transform_tensor)(i, k)
-							* (*MeshElement->
-							transform_tensor)(2,
-							k);
-						if (PcsType == P) // PCH 05.2009
-							vel_g[i] += coef *
-							GasProp->Density() /
-							FluidProp->Density() *
-							(*MeshElement->
-							transform_tensor)(i, k)
-							* (*MeshElement->
-							transform_tensor)(2,
-							k);
-					}
-				}
-			}             // To be correctted
-			else
-			{
-				if (PcsType == V)
-				{
-					vel[dim - 1] += coef;
-					vel_g[dim - 1] += gravity_constant * rho_ga;
-				}
-				else if (PcsType == P) // PCH 05.2009
-				{
-					//vel[dim-1] -= coef;
-					// CB_merge_0513 ?? gravity term
-					vel[dim - 1] += coef; // CB I think this should be added 
-					vel_g[dim - 1] += gravity_constant * GasProp->Density();
-				}
-				else
-					vel[dim - 1] += coef;
-			}
-		}
-		//
-		if (PcsType == V)
-		{
-			for (size_t i = 0; i < dim; i++) // 02.2010. WW
-			{
-				for (size_t j = 0; j < dim; j++)
-					tmp_gp_velocity(i, gp) += mat[dim*i + j] * vel[j] / time_unit_factor;
-				//gp_ele->Velocity(i, gp) += mat[dim*i+j]*vel[j]/time_unit_factor;
-			}
-			CalCoefLaplace2(true, 3);
-			double coef_tmp; //WX:08.2010.
-			coef_tmp = rhow / rho_ga;
-			for (size_t i = 0; i < dim; i++)
-			for (size_t j = 0; j < dim; j++)
-				gp_ele->Velocity_g(i,
-				gp) -= coef_tmp *
-				mat[dim * i +
-				j] * vel_g[j] /
-				time_unit_factor;
-			//WX:modified.08.2010
-		}
-		else if (PcsType == N)
-		{
-			eos_arg[0] = (1 - pcs->m_num->ls_theta)*interpolate(NodalVal0) + pcs->m_num->ls_theta*interpolate(NodalVal1);
-			eos_arg[1] = (1 - pcs->m_num->ls_theta)*interpolate(NodalVal_t0) + pcs->m_num->ls_theta*interpolate(NodalVal_t1);
-			eos_arg[2] = (1 - pcs->m_num->ls_theta)*interpolate(NodalVal_X0) + pcs->m_num->ls_theta*interpolate(NodalVal_X1);
-			coef = gravity_constant*FluidProp->Density(eos_arg);
-			for (size_t i = 0; i < dim; i++)
-			{
-				for (size_t j = 0; j<dim; j++)
-					//              gp_ele->Velocity(i, gp) -= mat[dim*i+j]*vel[j];  // unit as that given in input file
-					//SI Unit
-
-#ifdef GAS_MASS_FORM //TN otherwise wrong velocity
-					tmp_gp_velocity(i, gp) -= mat[dim*i + j] / FluidProp->Density(eos_arg)*vel[j] / time_unit_factor;
-				//tmp_gp_velocity(i,gp) -= mat[dim*i+j]*vel[j]/time_unit_factor;
-#else				 
-					tmp_gp_velocity(i, gp) -= mat[dim*i + j] * vel[j] / time_unit_factor;
-#endif
-				//gp_ele->Velocity(i, gp) -= mat[dim*i+j]*vel[j]/time_unit_factor;
-			}
-
-		}
-		else                      // 02.2010. WW
-		{
-			for (size_t i = 0; i < dim; i++)
-			{
-				for (size_t j = 0; j < dim; j++)
-					//              gp_ele->Velocity(i, gp) -= mat[dim*i+j]*vel[j];  // unit as that given in input file
-					//SI Unit
-					tmp_gp_velocity(i, gp) -= mat[dim*i + j] * vel[j] / time_unit_factor;
-				//gp_ele->Velocity(i, gp) -= mat[dim*i+j]*vel[j]/time_unit_factor;
-			}
-
-		}
-		if (PcsType == P)          // PCH 05.2009
-		{
-			// Juse use the coefficient of PSGLOBAL Pressure-based velocity (4)
-			CalCoefLaplacePSGLOBAL(true, 4);
-			for (size_t i = 0; i < dim; i++)
-			for (size_t j = 0; j < dim; j++)
-				gp_ele->Velocity_g(i,
-				gp) -=
-				mat[dim * i + j] * vel_g[j] / time_unit_factor;
-		}
-		//
-	}
-	gp_ele->Velocity = tmp_gp_velocity;
-	//
-	if (pcs->Write_Matrix)
-	{
-		(*pcs->matrix_file) << "### Element: " << Index << "\n";
-		(*pcs->matrix_file) << "---Velocity of water " << "\n";
-		gp_ele->Velocity.Write(*pcs->matrix_file);
-		if (gp_ele->Velocity_g.Size() > 0)
-		{
-			(*pcs->matrix_file) << "---Velocity of gas " << "\n";
-			gp_ele->Velocity_g.Write(*pcs->matrix_file);
-		}
-	}
-	// gp_ele->Velocity.Write();
-	
-}
-*/
 
 }                                                 // end namespace
 

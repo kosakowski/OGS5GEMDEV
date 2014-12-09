@@ -198,7 +198,6 @@ int main ( int argc, char* argv[] )
 	MPI_Comm_size(PETSC_COMM_WORLD, &r_size);
 	PetscSynchronizedPrintf(PETSC_COMM_WORLD, "===\nUse PETSc solver");
 	PetscSynchronizedPrintf(PETSC_COMM_WORLD, "Number of CPUs: %d, rank: %d\n", r_size, rank);
-	PetscSynchronizedFlush(PETSC_COMM_WORLD);
 #endif
 
 
@@ -211,8 +210,6 @@ int main ( int argc, char* argv[] )
 #endif
 /*========================================================================*/
 /* Kommunikation mit Betriebssystem */
-	/* Ctrl-C ausschalten */
-	NoBreak();
 	/* Timer fuer Gesamtzeit starten */
 #ifdef TESTTIME
 	TStartTimer(0);
@@ -299,8 +296,6 @@ int main ( int argc, char* argv[] )
 	std::cout << "Simulation time: " << TGetTimer(0) << "s" << "\n";
 #endif
 	/* Abspann ausgeben */
-	/* Ctrl-C wieder normal */
-	StandardBreak();
 /*--------- MPI Finalize ------------------*/
 #if defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL) || defined(USE_MPI_KRC)
 	elapsed_time_mpi += MPI_Wtime(); // 12.09.2007 WW

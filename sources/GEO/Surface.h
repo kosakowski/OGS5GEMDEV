@@ -70,6 +70,9 @@ public:
 	AABB const & getAABB () const { return _bv; }
 
 	void initSurfaceGrid();
+	void calculateTriangleNormals() const;
+	double const* getTriangleNormal(const std::size_t triangle_id) const;
+	int getTriangleIDOfPoint(const double* pnt) const;
 
 protected:
 	/** a vector of pointers to Points */

@@ -1,6 +1,6 @@
 NUM_PROCESSORS=""
 if [ "$OSTYPE" == 'msys' ]; then
-	source $SOURCE_LOCATION/scripts/base/configure_win_vs.sh
+	source "$SOURCE_LOCATION/scripts/base/configure_win_vs.sh"
 else
 	CMAKE_GENERATOR="Unix Makefiles"
 	if [[ "$OSTYPE" == darwin* ]]; then

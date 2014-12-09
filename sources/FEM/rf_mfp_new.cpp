@@ -390,8 +390,13 @@ std::ios::pos_type CFluidProperties::Read(std::ifstream* mfp_file)
 				density_pcs_name_vector.push_back("TEMPERATURE1");
 				density_pcs_name_vector.push_back("CONCENTRATION1");
 			}
-			if (density_model == 26 && pcs_vector[0]->getProcessType() != FiniteElement::TNEQ)
+			if (density_model == 26) // && pcs_vector[0]->getProcessType() != FiniteElement::TNEQ)
+			{
 				std::cout << "Warning: This density model requires two components and their molar masses defined in the mcp file!\n";
+				density_pcs_name_vector.push_back("PRESSURE1");
+				density_pcs_name_vector.push_back("TEMPERATURE1");
+				density_pcs_name_vector.push_back("CONCENTRATION1");
+			}
 			//      mfp_file->ignore(MAX_ZEILE,'\n');
 			in.clear();
 			continue;
@@ -483,8 +488,13 @@ std::ios::pos_type CFluidProperties::Read(std::ifstream* mfp_file)
 			if(viscosity_model == 19) // KG44 extract viscosity from GEMS
 			{
 			}
-			if (viscosity_model == 26 && pcs_vector[0]->getProcessType() != FiniteElement::TNEQ)
+			if (viscosity_model == 26) // && pcs_vector[0]->getProcessType() != FiniteElement::TNEQ)
+			{
 				std::cout << "Warning: This viscosity model requires two components and their molar masses defined in the mcp file!\n";
+				viscosity_pcs_name_vector.push_back("PRESSURE1");
+				viscosity_pcs_name_vector.push_back("TEMPERATURE1");
+				viscosity_pcs_name_vector.push_back("CONCENTRATION1");
+			}
 			
 
 			//    mfp_file->ignore(MAX_ZEILE,'\n');
@@ -541,8 +551,13 @@ std::ios::pos_type CFluidProperties::Read(std::ifstream* mfp_file)
 			in >> cp[0] >> cp[1] >> cp[2] >> cp[3];
 			}
 
-			if ((heat_capacity_model == 11 || heat_capacity_model == 12) && pcs_vector[0]->getProcessType() != FiniteElement::TNEQ)
+			if ((heat_capacity_model == 11 || heat_capacity_model == 12)) // && pcs_vector[0]->getProcessType() != FiniteElement::TNEQ)
+			{
 				std::cout << "Warning: This heat capacity model requires two components and their molar masses defined in the mcp file!\n";
+				specific_heat_capacity_pcs_name_vector.push_back("PRESSURE1");
+				specific_heat_capacity_pcs_name_vector.push_back("TEMPERATURE1");
+				specific_heat_capacity_pcs_name_vector.push_back("CONCENTRATION1");
+			}
 
 			in.clear();
 			continue;
@@ -589,8 +604,13 @@ std::ios::pos_type CFluidProperties::Read(std::ifstream* mfp_file)
 			in >> kappa[0] >> kappa[1] >> kappa[2] >> kappa[3];
 			}
 
-			if (heat_conductivity_model == 11 && pcs_vector[0]->getProcessType() != FiniteElement::TNEQ)
+			if (heat_conductivity_model == 11) // && pcs_vector[0]->getProcessType() != FiniteElement::TNEQ)
+			{
 				std::cout << "Warning: This heat conductivity model requires two components and their molar masses defined in the mcp file!\n";
+				heat_conductivity_pcs_name_vector.push_back("PRESSURE1");
+				heat_conductivity_pcs_name_vector.push_back("TEMPERATURE1");
+				heat_conductivity_pcs_name_vector.push_back("CONCENTRATION1");
+			}
 
 			in.clear();   //OK
 			continue;
@@ -1661,10 +1681,15 @@ double CFluidProperties::LiquidViscosity_Yaws_1976(double T)
    //C =  2.1641e-02;
    //D = -1.5990e-05;
    
+	if (T>0)
+	{
 	ln_my = A + B / T + C * T + D * T * T;
     my = exp(ln_my);                      /* in cP */
     //my = pow(10, ln_my); 
 	my = my * 1.e-3;                      /* in Pa s */
+	}
+	else
+		my = 1e-3;
 	return my;
 }
 
@@ -1680,12 +1705,17 @@ double CFluidProperties::LiquidViscosity_Yaws_1976(double T)
 **************************************************************************/
 double CFluidProperties::LiquidViscosity_Marsily_1986(double T)
 {
-	double my;
-//	my = 2.285e-5 + 1.01e-3 * log(T);     kg44: I guess this is dynamic viscosity of water...which should decrease with temperature ...but the formula actually results in increase with temperature!
-	// we limit the value for temperatures up to 100 degrees C
-	if (T> 373.15) T=373.15;
-        my = 2.414e-5 * pow(10.0, 247.8 / (T-140.0));  // kg44: from wikipedia: my=A x pow(10,B/(T-C)) C in K B in K A in Pa s ..T in K
-	return my;
+	const double A = 2.29E-03, B = -1.01E-03;
+
+	//MW:	coefficients are wrong!
+	//		log(T) gives natural logarithm, here decadal log is needed.
+	//		There is no benchmark for this, so nobody noticed...
+	//my = 2.285e-5 + 1.01e-3 * log(T);
+
+	if (T>0)
+		return A + B * log10(T);	// T in Celsius needed
+	else
+		return 0.001758784;
 }
 
 /**************************************************************************
@@ -3379,127 +3409,81 @@ double CFluidProperties::CalcEnthalpy(double temperature)
 **************************************************************************/
 double MFPGetNodeValue(long node,const string &mfp_name, int phase_number)
 {
-	double mfp_value = 0.0;               //OK411
-	//  char c;
-	double arguments[6];
-	string pcs_name1;
-	string pcs_name2;
-	string pcs_name3;
-	CRFProcess* tp;
-		CRFProcess* m_pcs;
-	    m_pcs = PCSGet("MULTI_COMPONENTIAL_FLOW");
-
-	//NB
 	CFluidProperties* m_mfp = mfp_vector[max(phase_number,0)];
-
-	int mfp_id = -1;
-	int val_idx = 0;                      // for later use, NB case 'V': mfp_id = 0; //VISCOSITY
-	switch (mfp_name[0])
-	{
-	case 'V': mfp_id = 0;                 //VISCOSITY
-		if(m_mfp->viscosity_pcs_name_vector.size() < 1)
-			pcs_name1 = "PRESSURE1";
-		else
-			pcs_name1 = m_mfp->viscosity_pcs_name_vector[0];
-		if(m_mfp->viscosity_pcs_name_vector.size() < 2)
-			pcs_name2 = "TEMPERATURE1";
-		else
-			pcs_name2 = m_mfp->viscosity_pcs_name_vector[1];
-		if(m_mfp->viscosity_pcs_name_vector.size()<3)
-			pcs_name3 = "CONCENTRATION1";
-		else
-			pcs_name3 = m_mfp->viscosity_pcs_name_vector[3];
-		break;
-	case 'D': mfp_id = 1;                 //DENSITY
-		if(m_mfp->density_pcs_name_vector.size() < 1)
-			pcs_name1 = "PRESSURE1";
-		else
-			pcs_name1 = m_mfp->density_pcs_name_vector[0];
-		if(m_mfp->density_pcs_name_vector.size() < 2)
-			pcs_name2 = "TEMPERATURE1";
-		else
-			pcs_name2 = m_mfp->density_pcs_name_vector[1];
-		if(m_mfp->density_pcs_name_vector.size()<3)
-			pcs_name3 = "CONCENTRATION1";
-		else
-			pcs_name3 = m_mfp->density_pcs_name_vector[3];
-		break;
-	case 'H': mfp_id = 2;                 //HEAT_CONDUCTIVITY
-		if(m_mfp->heat_conductivity_pcs_name_vector.size() < 1)
-			pcs_name1 = "PRESSURE1";
-		else
-			pcs_name1 = m_mfp->heat_conductivity_pcs_name_vector[0];
-		if(m_mfp->heat_conductivity_pcs_name_vector.size() < 2)
-			pcs_name2 = "TEMPERATURE1";
-		else
-			pcs_name2 = m_mfp->heat_conductivity_pcs_name_vector[1];
-		if(m_mfp->heat_conductivity_pcs_name_vector.size()<3)
-			pcs_name3 = "CONCENTRATION1";
-		else
-			pcs_name3 = m_mfp->heat_conductivity_pcs_name_vector[3];
-		break;
-	case 'S': mfp_id = 3;                 //SPECIFIC HEAT CAPACITY
-		if(m_mfp->specific_heat_capacity_pcs_name_vector.size() < 1)
-			pcs_name1 = "PRESSURE1";
-		else
-			pcs_name1 = m_mfp->specific_heat_capacity_pcs_name_vector[0];
-		if(m_mfp->specific_heat_capacity_pcs_name_vector.size() < 2)
-			pcs_name2 = "TEMPERATURE1";
-		else
-			pcs_name2 = m_mfp->specific_heat_capacity_pcs_name_vector[1];
-	  	if(m_mfp->specific_heat_capacity_pcs_name_vector.size()<3)
-			pcs_name3 = "CONCENTRATION1";
-				else
-			pcs_name3 = m_mfp->specific_heat_capacity_pcs_name_vector[3];
-		break;
-	default:  mfp_id = -1;
-		pcs_name1 = "PRESSURE1";
-		pcs_name2 = "TEMPERATURE1";
-	    pcs_name3 = "CONCENTRATION1";
-	}
-	//......................................................................
-
-	int restore_mode = m_mfp->mode;
+	const int restore_mode = m_mfp->mode;
 	m_mfp->mode = 0;
 	m_mfp->node = node;
 
-
-	tp = PCSGet(pcs_name1,true);          //NB 4.8.01
-	val_idx = tp->GetNodeValueIndex(pcs_name1,true); // NB // JT latest
-	arguments[0] = tp->GetNodeValue(node,val_idx);
-
-	tp = PCSGet(pcs_name2,true);          //NB 4.8.01
-	val_idx = tp->GetNodeValueIndex(pcs_name2,true); // NB // JT latest
-	arguments[1] = tp->GetNodeValue(node,val_idx);
-//Include concentration as primary variable
-	tp = PCSGet(pcs_name3,true);          //NB 4.8.01
-	if (tp){
-		val_idx = tp->GetNodeValueIndex(pcs_name3,true); // NB // JT latest
-		arguments[2] = tp->GetNodeValue(node,val_idx);
+	int mfp_id = -1;
+	std::vector<std::string>* vec_var_names;
+	switch (mfp_name[0])
+	{
+	case 'V': mfp_id = 0;                 //VISCOSITY
+		vec_var_names = &m_mfp->viscosity_pcs_name_vector;
+		break;
+	case 'D': mfp_id = 1;                 //DENSITY
+		vec_var_names = &m_mfp->density_pcs_name_vector;
+		break;
+	case 'H': mfp_id = 2;                 //HEAT_CONDUCTIVITY
+		vec_var_names = &m_mfp->heat_conductivity_pcs_name_vector;
+		break;
+	case 'S': mfp_id = 3;                 //SPECIFIC HEAT CAPACITY
+		vec_var_names = &m_mfp->specific_heat_capacity_pcs_name_vector;
+		break;
+	default:  mfp_id = -1;
+		static std::vector<std::string> default_var_names;
+		if (default_var_names.empty()) {
+			default_var_names.push_back("PRESSURE1");
+			default_var_names.push_back("TEMPERATURE1");
+			default_var_names.push_back("CONCENTRATION1");
 	}
-	else
-		arguments[2] = 0.0;
+		vec_var_names = &default_var_names;
+		break;
+	}
+
+	//std::vector<double> arguments(vec_var_names->size());
+	std::vector<double> arguments(std::max(static_cast<size_t>(3),vec_var_names->size()));
+	for (unsigned i=0; i<vec_var_names->size(); i++) {
+		CRFProcess* pcs = PCSGet((*vec_var_names)[i],true);
+		if (pcs) {
+			int var_idx = pcs->GetNodeValueIndex((*vec_var_names)[i],true);
+			if( (*vec_var_names)[i] == "PRESSURE1")
+				arguments[0] = pcs->GetNodeValue(node,var_idx);
+			else if( (*vec_var_names)[i] == "TEMPERATURE1")
+				arguments[1] = pcs->GetNodeValue(node,var_idx);
+			else if( (*vec_var_names)[i] == "CONCENTRATION1")
+				arguments[2] = pcs->GetNodeValue(node,var_idx);
+			else
+				std::cout << "The variable " << (*vec_var_names)[i] << " is not supported in MFPGetNodeValue." << std::endl;
+		} else {
+			arguments[i] = 0.0;
+	}
+	}
 
 	if (m_mfp->cmpN > 0)
 	{
+		CRFProcess* m_pcs = PCSGet("MULTI_COMPONENTIAL_FLOW");
+		arguments.resize(m_mfp->cmpN + 2);
 	for(int PVIndex=0; PVIndex < m_mfp->cmpN + 2; PVIndex++) 
 	arguments[PVIndex] = m_pcs->GetNodeValue(node, m_pcs->GetNodeValueIndex(m_pcs->pcs_primary_function_name[PVIndex]));
 	}
 
 	//......................................................................
+	double mfp_value = .0;
 	switch(mfp_id)
 	{
-	case 0: mfp_value = m_mfp->Viscosity(arguments);
+	case 0: mfp_value = m_mfp->Viscosity(&arguments[0]);
 		break;
 	//NB 4.8.01
-	case 1: mfp_value = m_mfp->Density(arguments);
+	case 1:	mfp_value = m_mfp->Density(&arguments[0]);
 		break;
-	case 2: mfp_value = m_mfp->HeatConductivity(arguments);
+	case 2: mfp_value = m_mfp->HeatConductivity(&arguments[0]);
 		break;
 	//NB AUG 2009
-	case 3: mfp_value = m_mfp->SpecificHeatCapacity(arguments);
+	case 3: mfp_value = m_mfp->SpecificHeatCapacity(&arguments[0]);
 		break;
 	default: cout << "MFPGetNodeValue: no MFP data" << "\n";
+		break;
 	}
 	//......................................................................
 	m_mfp->mode = restore_mode;           //NB changeback

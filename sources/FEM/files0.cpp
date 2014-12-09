@@ -37,6 +37,7 @@
 //#endif
 //#include "rf_pcs.h"
 //#include "rf_mmp_new.h"
+#include "FileTools.h"
 #include "rf_bc_new.h"
 #include "rf_ic_new.h"
 #include "rf_st_new.h"
@@ -96,6 +97,46 @@ void CURWrite();                                  //OK
 
 using namespace std;
 
+static bool isValidTextFileFormat(const std::string &basename, const std::string &fext)
+{
+	const std::string fname(basename + fext);
+	if (!IsFileExisting(fname))
+		return true;
+#ifdef _WIN32
+	const bool is_win32 = true;
+#else
+	const bool is_win32 = false;
+#endif
+	if (is_win32 == HasCRInLineEnding(fname)) {
+		return true;
+	} else {
+		if (is_win32)
+			std::cout << "*** ERROR: Detect UNIX file format " << fname.data() << std::endl;
+		else
+			std::cout << "*** ERROR: Detect Windows file format " << fname.data() << std::endl;
+		return false;
+	}
+}
+
+static bool checkFormatOfInputFiles(const std::string &basename)
+{
+	bool valid = true;
+	valid &= isValidTextFileFormat(basename, ".gli");
+	valid &= isValidTextFileFormat(basename, ".msh");
+	valid &= isValidTextFileFormat(basename, ".pcs");
+	valid &= isValidTextFileFormat(basename, ".ic");
+	valid &= isValidTextFileFormat(basename, ".bc");
+	valid &= isValidTextFileFormat(basename, ".st");
+	valid &= isValidTextFileFormat(basename, ".mfp");
+	valid &= isValidTextFileFormat(basename, ".msp");
+	valid &= isValidTextFileFormat(basename, ".mmp");
+	valid &= isValidTextFileFormat(basename, ".mcp");
+	valid &= isValidTextFileFormat(basename, ".out");
+	valid &= isValidTextFileFormat(basename, ".tim");
+
+	return valid;
+}
+
 /**************************************************************************/
 /* ROCKFLOW - Funktion: ReadData
  */
@@ -151,6 +192,12 @@ int ReadData ( char* dateiname, GEOLIB::GEOObjects& geo_obj, std::string& unique
 			msgdat = (char*)Free(msgdat);
 		else
 			fclose (f);
+	}
+	//----------------------------------------------------------------------
+	// Check line ending of input files
+	if (!checkFormatOfInputFiles(dateiname)) {
+		ScreenMessage("terminate this program");
+		exit(0);
 	}
 	//----------------------------------------------------------------------
 	// Read GEO data
@@ -782,10 +829,10 @@ int LineFeed ( FILE* f )
 //   return 1;
 //}
 
-int TFString ( char* x, FILE* f )
-{
-	return 1;
-}
+//int TFString ( char* x, FILE* f )
+//{
+//	return 1;
+//}
 
 /**************************************************************************
    STRLib-Method:

@@ -70,6 +70,9 @@ void rotatePointsToXY(MathLib::Vector &plane_normal, std::vector<GEOLIB::Point*>
  */
 void rotatePointsToXZ(MathLib::Vector &plane_normal, std::vector<GEOLIB::Point*> &pnts);
 
+double calcTriangleArea(GEOLIB::Point const& a,
+	GEOLIB::Point const& b, GEOLIB::Point const& c);
+
 /**
  * Tests if the given point p is within the triangle, defined by its edge nodes a, b and c.
  * Using the eps It is possible to test a 'epsilon' neighbourhood around the triangle.

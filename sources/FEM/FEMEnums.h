@@ -180,6 +180,7 @@ const std::list<std::string> getAllPrimaryVariableNames();
 	CONSTANT_NEUMANN,                     // ST
 	CRITICALDEPTH,                        // ST
 	DIRECT,
+	RECHARGE_DIRECT,
 	FUNCTION,
 	GRADIENT,                             // IC
 	GREEN_AMPT,                           // ST
@@ -193,6 +194,7 @@ const std::list<std::string> getAllPrimaryVariableNames();
 	TRANSFER_SURROUNDING,
 	NODESCONSTANT,                        // IC (for DOMAIN keyword)
 	CLIMATE,	// climate data (by NB)
+	RECHARGE,	// MW
 	// Sort of Neumann BC //WW
 	// make sure that this is always the last entry (important for iterating over the enum entries)!
 	// make sure that this is always the last entry (important for iterating over the enum entries)!
@@ -270,6 +272,37 @@ std::string convertSolidReactiveSystemToString(SolidReactiveSystem reactive_syst
 
 } // end namespace FiniteElement
 
+struct TimType
+{
+	enum type
+	{
+		INVALID_TIM_TYPE = 0,
+		STEADY,
+		TRANSIENT,
+		PURERWPT
+	};
+};
+
+TimType::type convertTimType(const std::string& str);
+
+std::string convertTimTypeToString(TimType::type type);
+
+
+struct IterationType
+{
+	enum type
+	{
+		INVALID,
+		LINEAR,
+		NONLINEAR,
+		COUPLED
+	};
+};
+
+IterationType::type convertIterationType(const std::string& str);
+
+std::string convertIterationTypeToString(IterationType::type type);
+
 struct TimeControlType
 {
 	enum type
@@ -290,5 +323,32 @@ struct TimeControlType
 TimeControlType::type convertTimeControlType(const std::string &str);
 
 std::string convertTimeControlTypeToString(TimeControlType::type st_type);
+
+struct ConstrainedType
+{
+	enum type
+	{
+		INVALID_CONSTRAINED_TYPE = 0,
+		SMALLER,
+		GREATER,
+		POSITIVE,
+		NEGATIVE
+	};
+};
+
+ConstrainedType::type convertConstrainedType(const std::string &str);
+std::string convertConstrainedTypeToString(ConstrainedType::type constrained_type);
+
+struct ConstrainedVariable
+{
+	enum type
+	{
+		INVALID_CONSTRAINED_VARIABLE = 0,
+		VELOCITY
+	};
+};
+
+ConstrainedVariable::type convertConstrainedVariable(const std::string &str);
+std::string convertConstrainedVariableToString(ConstrainedVariable::type constrained_variable);
 
 #endif                                            //FEMENUMS_H

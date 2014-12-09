@@ -39,6 +39,8 @@
 #include <iostream>
 //#include <algorithm> // header of transform. WW
 #include <set>
+
+#include "isnan.h"
 // GEOLib
 #include "PointWithID.h"
 
@@ -70,12 +72,6 @@
 #include "rf_kinreact.h"
 #include "fem_ele_vec.h"//WX:08.2011
 #include "StepperBulischStoer.h"
-
-/*-----------------------------------------------------------------------*/
-/*-----------------------------------------------------------------------*/
-/* Tools */
-
-
 
 #ifdef MFC                                        //WW
 #include "rf_fluid_momentum.h"
@@ -164,7 +160,7 @@ EvalInfo* eval_data = NULL;
 string project_title("New project");              //OK41
 
 bool hasAnyProcessDeactivatedSubdomains = false;  //NW
-
+extern double gravity_constant;
 //--------------------------------------------------------
 // Coupling Flag. WW
 bool T_Process = false;					// Heat
@@ -230,6 +226,12 @@ CRFProcess::CRFProcess(void) :
 #endif
 	ele_val_name_vector (std::vector<std::string>())
 {
+	iter_lin = 0;
+	iter_lin_max = 0;
+	iter_nlin = 0;
+	iter_nlin_max = 0;
+	iter_inner_cpl = 0;
+	iter_outer_cpl = 0;
 	TempArry = NULL;
 	//SB:GS4  pcs_component_number=0; //SB: counter for transport components
 	pcs_component_number = pcs_no_components - 1;
@@ -285,7 +287,7 @@ CRFProcess::CRFProcess(void) :
 	PCSSetIC_USER = NULL;
 	//----------------------------------------------------------------------
 	// TIM
-	tim_type_name = "TRANSIENT";          //OK
+	tim_type = TimType::TRANSIENT;
 	time_unit_factor = 1.0;
 	timebuffer = 1.0e-5;                  //WW
 	//_pcs_type_name.empty();
@@ -369,6 +371,8 @@ CRFProcess::CRFProcess(void) :
    m_solver  = NULL;                              //WW
 	isRSM = false; //WW
 	eqs_x = NULL;
+	_hasConstrainedBC=false;
+	_hasConstrainedST = false;
 }
 
 
@@ -394,6 +398,10 @@ Problem* CRFProcess::getProblemObjectPointer () const
 **************************************************************************/
 CRFProcess::~CRFProcess(void)
 {
+#ifdef USE_PETSC
+	 PetscPrintf(PETSC_COMM_WORLD,"\t\n>>Total Wall clock time in the assembly for %s (with PETSC):%f s\n", 	     FiniteElement::convertProcessTypeToString(this->getProcessType()).c_str(), cpu_time_assembly);
+  
+#endif
 	long i;
 	//----------------------------------------------------------------------
 	// Finite element
@@ -515,6 +523,8 @@ CRFProcess::~CRFProcess(void)
 		delete m_solver;
 
 #if defined(USE_PETSC) // || defined(other parallel libs)//10.3012. WW
+        PetscPrintf(PETSC_COMM_WORLD,"\n>>PETSc solver info for %s :\n",\
+                    FiniteElement::convertProcessTypeToString(this->getProcessType()).c_str());
 	delete eqs_new;
         eqs_new = NULL;
 #endif
@@ -1050,6 +1060,62 @@ void CRFProcess::Create()
 }
 
 
+void initializeConstrainedProcesses(std::vector<CRFProcess*> &pcs_vector)
+{
+	// set bool for existing constrained BCs
+	for (std::size_t i = 0; i < pcs_vector.size(); i++)
+	{
+		for (std::size_t j = 0; j<pcs_vector[i]->bc_node.size(); j++)
+		{
+			if (pcs_vector[i]->bc_node[j]->isConstrainedBC())
+			{
+				pcs_vector[i]->hasConstrainedBC(true);
+				break;
+			}
+		}
+
+		for (std::size_t j = 0; j < pcs_vector[i]->st_node.size(); j++)
+		{
+			if (pcs_vector[i]->st_node[j]->isConstrainedST())
+			{
+				pcs_vector[i]->hasConstrainedST(true);
+				break;
+			}
+		}
+	}
+
+	// get the indices of velocity of flow process if contrained BC
+	for (std::size_t i = 0; i < pcs_vector.size(); i++)
+	{
+		if ( !(pcs_vector[i]->hasConstrainedBC()) )
+			continue;
+
+		bool found(false);
+		for (std::size_t j = 0; j<pcs_vector[i]->bc_node.size(); j++)
+		{
+			if (found)
+				break;
+			for (std::size_t k = 0; k<pcs_vector[i]->bc_node[j]->getNumberOfConstrainedBCs(); k++)
+			{
+				if (found)
+					break;
+				Constrained tmp(pcs_vector[i]->bc_node[j]->getConstrainedBC(k));
+				if (tmp.constrainedVariable == ConstrainedVariable::VELOCITY)
+				{
+					CRFProcess *pcs = PCSGetFlow();
+					pcs_vector[i]->setidxVx(pcs->GetNodeValueIndex("VELOCITY_X1", true));
+					pcs_vector[i]->setidxVy(pcs->GetNodeValueIndex("VELOCITY_Y1", true));
+					pcs_vector[i]->setidxVz(pcs->GetNodeValueIndex("VELOCITY_Z1", true));
+					//jump out of j & k loop
+					found=true;
+				}
+			}
+		}
+	}
+}
+
+
+
 /**************************************************************************
    FEMLib-Method:
    Task: Write the contribution of ST or Neumann BC to RHS to a file after
@@ -1307,8 +1373,10 @@ void CRFProcess:: ReadSolution()
 		for (j = 0; j < 2 * pcs_number_of_primary_nvals; j++ )
 			is >> val[j];
 		is >> ws;
-		for (j = 0; j < 2 * pcs_number_of_primary_nvals; j++ )
-			SetNodeValue ( i,idx[j], val[j] );
+		for (int j = 0; j < pcs_number_of_primary_nvals; j++ ) {
+			SetNodeValue (i, idx[j], val[j+pcs_number_of_primary_nvals] );
+			SetNodeValue (i, idx[j+pcs_number_of_primary_nvals], val[j+pcs_number_of_primary_nvals] );
+	}
 	}
 	is.close();
 	delete [] idx;
@@ -1901,7 +1969,9 @@ std::ios::pos_type CRFProcess::Read(std::ifstream* pcs_file)
 		// subkeyword found
 		if (line_string.find("$TIM_TYPE") != string::npos)
 		{
+			std::string tim_type_name;
 			*pcs_file >> tim_type_name;
+			tim_type = convertTimType(tim_type_name);
 			pcs_file->ignore(MAX_ZEILE, '\n');
 			continue;
 		}
@@ -2187,7 +2257,7 @@ void CRFProcess::Write(std::fstream* pcs_file)
 	*pcs_file << "  " << cpl_type_name << "\n";
 
 	*pcs_file << " $TIM_TYPE" << "\n";
-	*pcs_file << "  " << tim_type_name << "\n";
+	*pcs_file << "  " << convertTimTypeToString(tim_type) << "\n";
 
 	if (msh_type_name.size() > 0)
 	{
@@ -3530,13 +3600,13 @@ void CRFProcess::ConfigUnsaturatedFlow()
 		pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 0;
 		pcs_number_of_secondary_nvals++;
 #endif
-		/* if(adaption) //WW, JOD removed
+		 if(adaption) //WW, JOD removed	//MW added
 		   {
 		   pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "STORAGE_P";
 		   pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "Pa";
 		   pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 0;
 		   pcs_number_of_secondary_nvals++;
-		   }*/
+		   }
 		// Nodal velocity. WW
 		pcs_secondary_function_name[pcs_number_of_secondary_nvals]
 		        = "VELOCITY_X1";
@@ -4707,6 +4777,7 @@ double CRFProcess::Execute()
 #else
 	iter_lin = ExecuteLinearSolver();
 #endif
+	iter_lin_max = std::max(iter_lin_max, iter_lin);
 
 	//----------------------------------------------------------------------
 	// Linearized Flux corrected transport (FCT) by Kuzmin 2009
@@ -4934,6 +5005,16 @@ double CRFProcess::Execute()
 			   }
 			}
 		}
+
+		// maybe works also for other processes involving velocities
+		// update nod velocity if constrained BC
+		if (this->accepted		// do I really need to check every single bc node, or how can I access a bc group?
+			&& (this->getProcessType() == FiniteElement::RICHARDS_FLOW
+				|| this->getProcessType() == FiniteElement::LIQUID_FLOW) )
+		{
+			this->CalIntegrationPointValue();
+			this->Extropolation_GaussValue();
+	}
 	}
 	//----------------------------------------------------------------------
 	// END OF PICARD
@@ -4949,6 +5030,12 @@ double CRFProcess::Execute()
 		eqs_new->Clean();
 #endif
 #endif
+
+	if(BASELIB::isNAN(pcs_error))
+	{
+		accepted = false;
+	}
+
 	return pcs_error;
 }
 
@@ -5404,6 +5491,15 @@ void CRFProcess::AddFCT_CorrectionVector()
  **************************************************************************/
 void CRFProcess::GlobalAssembly()
 {
+#ifdef USE_PETSC
+	PetscLogDouble v1,v2;
+#ifdef USEPETSC34
+	PetscTime(&v1);
+#else
+	PetscGetTime(&v1);
+#endif
+#endif
+
 	// Tests
 	if (!Tim)
 		Tim = TIMGet(convertProcessTypeToString(this->getProcessType()));
@@ -5586,6 +5682,15 @@ void CRFProcess::GlobalAssembly()
 		//eqs_new->AssembleMatrixPETSc(MAT_FINAL_ASSEMBLY );
 #endif
 	}
+
+#ifdef USE_PETSC
+#ifdef USEPETSC34
+	PetscTime(&v2);
+#else
+	PetscGetTime(&v2);
+#endif
+	cpu_time_assembly += v2 - v1;
+#endif
 }
 
 //--------------------------------------------------------------------
@@ -6551,8 +6656,39 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 					        idx_1);
 				}
 				else
+				{
+
+					//MW calculate pressure from given head at bc with density, gravity constant and geodetic height for PRESSURE as primary variable
+					if (m_bc->getPressureAsHeadModel() == -1)	//this is the default case
+					{
 					// time_fac*fac*PCSGetNODValue(bc_msh_node,"PRESSURE1",0);
 					bc_value = time_fac * fac * m_bc_node->node_value;
+					}
+					else	//this is the PressureAsHead case
+					{
+						double local_density;
+						switch (m_bc->getPressureAsHeadModel())
+						{
+						case 0:
+							//use current density at node
+							local_density = MFPGetNodeValue(m_bc_node->msh_node_number, "DENSITY", 0);
+							break;
+						case 1:
+							//use given density
+							local_density = m_bc->getPressureAsHeadDensity();
+							break;
+						default:
+							std::cout << "Warning! No PressureAsHeadDensity specified. Calculating density (i.e. PressureAsHeadModel 0)!" << std::endl;
+							local_density = MFPGetNodeValue(m_bc_node->msh_node_number, "DENSITY", 0);
+							break;
+						}
+						
+						const double local_node_elevation = this->m_msh->nod_vector[m_bc_node->msh_node_number]->Z();
+
+						// pressure = gravitational_constant * density * ( head - geodetic_height )
+						bc_value = fac * gravity_constant * local_density * ( time_fac * m_bc_node->node_value - local_node_elevation );
+					}
+				}
 				//----------------------------------------------------------------
 				// MSH
 				/// 16.08.2010. WW
@@ -6681,6 +6817,15 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 				}
 #endif //end defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
 
+
+				//save last bc_value for later usage (in constrained BC)
+				m_bc_node->node_value_last_calc = bc_value;
+
+				if(m_bc->isConstrainedBC())
+				{
+					if (checkConstrainedBC(*m_bc, *m_bc_node, bc_value))
+						continue;
+				}
 				//////////////////////////////////
 
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
@@ -7247,6 +7392,241 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 		 */
 	}
 
+
+bool CRFProcess::checkConstrainedST(std::vector<CSourceTerm*> & st_vector, CSourceTerm const & st, CNodeValue const & st_node)
+{
+	bool return_value(false);
+	for (std::size_t i = 0; i < st.getNumberOfConstrainedSTs(); i++)
+	{
+		bool constrained_bool(false);
+		const Constrained &local_constrained(st.getConstrainedST(i));
+		
+		if (local_constrained.constrainedPrimVar == FiniteElement::PRESSURE
+			|| local_constrained.constrainedPrimVar == FiniteElement::CONCENTRATION
+			|| local_constrained.constrainedPrimVar == FiniteElement::TEMPERATURE)
+		{
+			//other process
+			CRFProcess* pcs(PCSGet(local_constrained.constrainedProcessType));
+
+			//other variable
+			for (std::size_t k = 0; k < pcs->GetPrimaryVNumber(); k++)
+			{
+				if (pcs->GetPrimaryVName(k) == FiniteElement::convertPrimaryVariableToString(local_constrained.constrainedPrimVar))
+				{
+					//value of PrimVar of other process at current node
+					double local_value = pcs->GetNodeValue(st_node.geo_node_number, 2*k+1);
+
+					if (local_constrained.constrainedDirection == ConstrainedType::GREATER)	//exclude greater and equal values
+					{
+						if (local_value >= local_constrained.constrainedValue) 		//check if calculated value (eg of other process) meets criterium
+							constrained_bool = true;
+
+					}
+					else if (local_constrained.constrainedDirection == ConstrainedType::SMALLER) // exclude smaller values
+					{
+						if (local_value < local_constrained.constrainedValue)
+							constrained_bool = true;
+					}
+					/*else	is already checked when reading
+					return false;*/
+				}
+			}
+		}
+		st_vector[st_node.getSTVectorGroup()]->setConstrainedSTNode(
+			i, constrained_bool, st_node.getSTVectorIndex());
+		if (constrained_bool)
+			return_value=true;
+	}
+
+	return return_value;
+}
+
+bool CRFProcess::checkConstrainedBC(CBoundaryCondition const & bc, CBoundaryConditionNode const & bc_node, double & bc_value)
+{
+	for (std::size_t i=0; i < bc.getNumberOfConstrainedBCs(); i++)
+	{
+		const Constrained &local_constrained(bc.getConstrainedBC(i));
+		if (local_constrained.constrainedVariable == ConstrainedVariable::VELOCITY)
+		{
+			//get velocity vector at node
+			std::vector<double>vel_v(3);
+			this->getNodeVelocityVector(bc_node.geo_node_number, &(vel_v)[0]);
+
+			//check if velocity is zero
+			double magn_vel_v(MBtrgVec(&vel_v[0], 3));
+			if (magn_vel_v < std::numeric_limits<size_t>::epsilon()*1e-10 || magn_vel_v == 0)
+			{
+				std::cout << "No constrained applied at node " << bc_node.msh_node_number
+						<< " as magnitude of velocity " << magn_vel_v
+						<< " is < than epsilon() " << std::numeric_limits<size_t>::epsilon()*1e-10
+						<< std::endl;
+				continue;
+			}
+
+
+			//nomalize velocity vector
+			NormalizeVector(&vel_v[0], 3);
+
+			//calculate scalar product of velocity vector and BC surface normal
+			double const scalar_prod(MathLib::scpr(&(vel_v)[0], bc_node.GetNormalVector(), 3));
+
+			//select case to handle BC
+			if (scalar_prod < 0 && scalar_prod >= -1.01
+					&& local_constrained.constrainedDirection == ConstrainedType::NEGATIVE)	// velocity vector and bc surface normal point in opposite directions
+			{
+				return true;	//do not apply BC (maybe later implementation: change BC to ST at this node)
+			}
+			else if(scalar_prod <= 1.01 && scalar_prod >= 0
+					&& local_constrained.constrainedDirection == ConstrainedType::POSITIVE)	// velocity vector points in same direction as bc surface normal
+			{
+				return true;	//do not apply BC (maybe later implementation: change BC to ST at this node)
+			}
+
+		}
+		if (local_constrained.constrainedPrimVar == FiniteElement::PRESSURE
+			|| local_constrained.constrainedPrimVar == FiniteElement::CONCENTRATION
+			|| local_constrained.constrainedPrimVar == FiniteElement::TEMPERATURE)
+		{
+			//other process
+			CRFProcess* pcs(PCSGet(local_constrained.constrainedProcessType));
+
+			//other variable
+			for (std::size_t k = 0; k < pcs->GetPrimaryVNumber(); k++)
+			{
+				if (pcs->GetPrimaryVName(k) == FiniteElement::convertPrimaryVariableToString(local_constrained.constrainedPrimVar))
+				{
+					//value of PrimVar of other process at current node
+					double local_value = pcs->GetNodeValue(bc_node.geo_node_number, 2*k+1);
+
+					if (local_constrained.constrainedDirection == ConstrainedType::GREATER)	//exclude greater and equal values
+					{
+						if (local_value >= local_constrained.constrainedValue 		//check if calculated value (eg of other process) meets criterium
+								|| bc_node.node_value_last_calc >= local_constrained.constrainedValue)		//check if BC value meets criterium
+							return true;
+					}
+					else if (local_constrained.constrainedDirection == ConstrainedType::SMALLER) // exclude smaller values
+					{
+						if (local_value < local_constrained.constrainedValue
+								|| bc_node.node_value_last_calc < local_constrained.constrainedValue)
+						{
+							if (bc.isSeepageBC()		//this probably only makes sense if constrained primary variable is pressure
+									&& local_value > bc_node.node_value_last_calc	//could add a check, but don't want to limit it
+									&& local_value > local_constrained.constrainedValue)
+								bc_value = local_constrained.constrainedValue;
+							else
+								return true;
+						}
+					}
+					/*else	is already checked when reading
+						return false;*/
+				}
+			}
+		}
+	}
+	return false;
+}
+
+
+/**************************************************************************
+Copied & modified from 
+rf_kinreact.cpp (Reaction-Method:)
+**************************************************************************/
+void CRFProcess::getNodeVelocityVector(const long node_id, double * vel_nod)
+{
+	CRFProcess *m_pcs = NULL;
+	long i;
+	
+	m_pcs = PCSGetFlow();
+	
+	// initialize data structures
+	for (i = 0; i<3; i++)
+		vel_nod[i] = 0;
+	
+	/*
+	// get the indices of velocity of flow process
+	idxVx = m_pcs->GetNodeValueIndex("VELOCITY_X1", true);
+	idxVy = m_pcs->GetNodeValueIndex("VELOCITY_Y1", true);
+	idxVz = m_pcs->GetNodeValueIndex("VELOCITY_Z1", true);
+	*/
+
+	// Get the velocity components
+	vel_nod[0] = m_pcs->GetNodeValue(node_id, this->_idxVx);
+	vel_nod[1] = m_pcs->GetNodeValue(node_id, this->_idxVy);
+	vel_nod[2] = m_pcs->GetNodeValue(node_id, this->_idxVz);
+	
+	const int dimensions(m_msh->GetCoordinateFlag());
+	if (dimensions == 22)
+	{
+		vel_nod[2] = vel_nod[1];
+		vel_nod[1] = 0;
+	}
+	else if (dimensions == 23)
+	{
+		vel_nod[2] = vel_nod[1];
+		vel_nod[1] = vel_nod[0];
+		vel_nod[0] = 0;
+	}
+
+	//return vel_nod;
+}
+
+	int CRFProcess::getFirstNodeBelowGWL(size_t current_node)
+	{
+		//searches for PRESSURE1<0 and returns the node below or above node i
+
+		int sorted_node(-1);
+		for (size_t i(0);i<this->m_msh->sorted_nodes.size();i++)
+		{
+			if (current_node == this->m_msh->sorted_nodes[i])
+			{
+				sorted_node=i;
+				break;
+			}
+		}
+
+		const int val_idx=this->GetNodeValueIndex("PRESSURE1",true);
+		int new_GWL_st_node(-1);
+
+		for(size_t k(1);k<this->m_msh->xy_change.size();k++)	//look for range of xy-coordinates
+		{
+			const long node_id = this->m_msh->xy_change[k];
+			if(node_id >= sorted_node)	//found range
+			{
+				
+				new_GWL_st_node=this->m_msh->sorted_nodes[this->m_msh->xy_change[k-1]+1];		//set to bottom node first
+
+				if(this->GetNodeValue(this->m_msh->sorted_nodes[node_id],val_idx) > 0)	//top node has p>0
+				{
+					new_GWL_st_node=this->m_msh->sorted_nodes[node_id];	//return top node id
+					break;
+				}
+				else
+				{
+					for(size_t j(node_id-1);j>this->m_msh->xy_change[k-1]+1;j--)	//look in range from top to bottom (but skip top node)
+					{
+						
+						if(this->GetNodeValue(this->m_msh->sorted_nodes[j],val_idx) > 0)	//look for first node with p>0
+						{
+							new_GWL_st_node=this->m_msh->sorted_nodes[j-1];	//for p<0, return node id two nodes below gwl
+							break;
+						}
+					}
+				}
+				break;
+			}
+
+		}
+
+		return new_GWL_st_node;
+	}
+
+
+
+
+
+
+
+
 /**************************************************************************
    FEMLib-Method:
    Task: PCS source terms into EQS
@@ -7309,9 +7689,31 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 
 //###############################
 //NB Climate Data
+//MW Use loop for constrained ST evaluation
 
 		for (size_t i=0; i<st_vector.size();i++)
 		{
+			// for constrainedST
+			if ( !(st_vector[i]->isConstrainedST()) )
+				continue;
+
+			for (std::size_t j(0); j < st_vector[i]->getNumberOfConstrainedSTs(); j++)
+			{
+				if ( !(st_vector[i]->isCompleteConstrainST(j)) )
+					continue;
+
+				st_vector[i]->setCompleteConstrainedSTStateOff(false,j);
+				size_t end = st_vector[i]->getNumberOfConstrainedSTNodes(j);
+				for (std::size_t k(0); k < end; k++)
+				{
+					if (st_vector[i]->getConstrainedSTNode(j,k))
+					{
+						st_vector[i]->setCompleteConstrainedSTStateOff(true,j);
+						break;
+					}
+				}
+			}
+
 			// NOTE (KR): This only works correctly if there is only ONE source term with DisType CLIMATE! TODO
 			// If more are needed pls let me know
 			if (st_vector[i]->getProcessDistributionType()==FiniteElement::CLIMATE)
@@ -7426,6 +7828,7 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 
 		for (i = begin; i < end; i++)
 		{
+
 			gindex = i;
 #if !defined(USE_PETSC) // && !defined(other parallel libs)//03.3012. WW
 			if (rank > -1)
@@ -7433,6 +7836,14 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 #endif
 
 			cnodev = st_node_value[gindex];
+
+			// MW Recharge applied at GW Surface (p>0), tested only with LIQUID_FLOW or RICHARDS_FLOW and mmp  $PERMEABILITY_SATURATION = 10
+			if(cnodev->getProcessDistributionType()==FiniteElement::RECHARGE
+					|| cnodev->getProcessDistributionType()==FiniteElement::RECHARGE_DIRECT)
+			{
+				cnodev->msh_node_number = getFirstNodeBelowGWL(cnodev->msh_node_number);
+				cnodev->geo_node_number = cnodev->msh_node_number;
+			}
 
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
 			msh_node = cnodev->geo_node_number;
@@ -7496,6 +7907,26 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 			if (st_node.size() > 0 && (long) st_node.size() > i)
 			{
 				m_st = st_node[gindex];
+
+				if (m_st->isConstrainedST())
+				{
+					bool continue_bool(false);
+					continue_bool = checkConstrainedST(st_vector, *m_st, *cnodev);
+
+					for (std::size_t temp_i(0); temp_i < m_st->getNumberOfConstrainedSTs(); temp_i++)
+					{
+						if (st_vector[cnodev->getSTVectorGroup()]->isCompleteConstrainST(temp_i)
+							&& st_vector[cnodev->getSTVectorGroup()]->getCompleteConstrainedSTStateOff(temp_i))
+						{
+							continue_bool = true;
+							break;
+						}
+					}
+
+					if (continue_bool)
+						continue;
+				}
+
 				//--------------------------------------------------------------------
 				// CPL
 				//if(m_st->_pcs_type_name_cond.size()>0) continue; // this is a CPL source term, JOD removed
@@ -9406,6 +9837,7 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 				break;
 			}
 		}
+		iter_nlin_max = std::max(iter_nlin_max, iter_nlin);
 		// ------------------------------------------------------------
 		// NON-LINEAR ITERATIONS COMPLETE
 		// ------------------------------------------------------------
@@ -11061,9 +11493,8 @@ void CRFProcess::CalcSecondaryVariablesLiquidFlow()
     PCSLib-Method:
     08/2006 OK Implementation
 	04/2012 BG Extension to 2 Phases
-	11/2014 JOD replaced by TOTAL_FLUX calculation
 **************************************************************************/
-/*void CRFProcess::CalcELEFluxes(const GEOLIB::Polyline* const ply, double *result)
+	void CRFProcess::CalcELEFluxes(const GEOLIB::Polyline* const ply, double *result)
 {
 	int coordinateflag, dimension = 0, axis = 0;
 	bool Edge_already_used;
@@ -11096,8 +11527,7 @@ void CRFProcess::CalcSecondaryVariablesLiquidFlow()
 		m_pcs_flow = this;
 	else m_pcs_flow = PCSGet(FiniteElement::GROUNDWATER_FLOW);
 
-	// calculates element 
-	based on 1 GP
+		// calculates element velocity based on 1 GP
 	//CalcELEVelocities();
 
 	int v_eidx[3];
@@ -11291,92 +11721,15 @@ void CRFProcess::CalcSecondaryVariablesLiquidFlow()
 	ele_vector_at_geo.clear();
 
 }
-*/
-/**************************************************************************
-   FEMLib-Method:
-   Task:
-   Programing:
-   11/2004 OK Implementation
-   08/2006 OK new
-**************************************************************************/
-	void CRFProcess::CalcELEVelocities(void)
-	{
-		int eidx[3];
-
-		// If not FLUID_MOMENTUM,
-		//	if (_pcs_type_name.compare("RANDOM_WALK") != 0) {
-		FiniteElement::ProcessType pcs_type (getProcessType());			//BG
-
-		if (this->getProcessType() != FiniteElement::RANDOM_WALK)
-		{
-			int eidx[3];
-			eidx[0] = GetElementValueIndex("VELOCITY1_X");
-			eidx[1] = GetElementValueIndex("VELOCITY1_Y");
-			eidx[2] = GetElementValueIndex("VELOCITY1_Z");
-			for (size_t i = 0; i < 3; i++)
-				if (eidx[i] < 0)
-					cout <<
-					"Fatal error in CRFProcess::CalcELEVelocities - abort"
-					     << "\n";
-			//abort();	// PCH commented abort() out for FM.
-
-			FiniteElement::ElementValue* gp_ele = NULL;
-			double vx, vy, vz;
-			const size_t mesh_ele_vector_size(m_msh->ele_vector.size());
-			for (size_t i = 0; i < mesh_ele_vector_size; i++)
-			{
-				gp_ele = ele_gp_value[i];
-				vx = gp_ele->Velocity(0, 0);
-				SetElementValue(i, eidx[0], vx);
-				SetElementValue(i, eidx[0] + 1, vx);
-				vy = gp_ele->Velocity(1, 0);
-				SetElementValue(i, eidx[1], vy);
-				SetElementValue(i, eidx[1] + 1, vy);
-				vz = gp_ele->Velocity(2, 0);
-				SetElementValue(i, eidx[2], vz);
-				SetElementValue(i, eidx[2] + 1, vz);
-			}
-		}
-		if (pcs_type == FiniteElement::MULTI_PHASE_FLOW)
-		{
-			eidx[0] = GetElementValueIndex("VELOCITY2_X");
-			eidx[1] = GetElementValueIndex("VELOCITY2_Y");
-			eidx[2] = GetElementValueIndex("VELOCITY2_Z");
-						for (size_t i = 0; i < 3; i++)
-			if (eidx[i] < 0)
-				cout <<
-				"Fatal error in CRFProcess::CalcELEVelocities - abort"
-				     << "\n";
-			//abort();	// PCH commented abort() out for FM.
-
-			FiniteElement::ElementValue* gp_ele = NULL;
-			double vx, vy, vz;
-			const size_t mesh_ele_vector_size(m_msh->ele_vector.size());
-			for (size_t i = 0; i < mesh_ele_vector_size; i++)
-			{
-				gp_ele = ele_gp_value[i];
-				vx = gp_ele->Velocity_g(0, 0);
-				SetElementValue(i, eidx[0], vx);
-				SetElementValue(i, eidx[0] + 1, vx);
-				vy = gp_ele->Velocity_g(1, 0);
-				SetElementValue(i, eidx[1], vy);
-				SetElementValue(i, eidx[1] + 1, vy);
-				vz = gp_ele->Velocity_g(2, 0);
-				SetElementValue(i, eidx[2], vz);
-				SetElementValue(i, eidx[2] + 1, vz);
-			}
-		}
-	}
-
 
 /**************************************************************************
 GeoSys - Function: CalcELEMassFluxes
 Task: Calculate the Mass Flux for Elements at Polylines
 Return: MassFlux
 Programming: 05/2011 BG
-Modification: removed by JOD 2014-11-10, replaced by TOTAL_FLUX calculation
+	Modification:
  **************************************************************************/
-/*void CRFProcess::CalcELEMassFluxes(const GEOLIB::Polyline* const ply, std::string const& NameofPolyline, double* result)
+	void CRFProcess::CalcELEMassFluxes(const GEOLIB::Polyline* const ply, std::string const& NameofPolyline, double* result)
 {
 	CRFProcess* m_pcs_flow = NULL;
 	std::vector<size_t> ele_vector_at_geo;
@@ -11438,7 +11791,6 @@ Modification: removed by JOD 2014-11-10, replaced by TOTAL_FLUX calculation
 	else
 	{
 		m_pcs_flow = PCSGet(FiniteElement::GROUNDWATER_FLOW);
-	
 	}
 
 	// get the indices of the velocity
@@ -11468,6 +11820,8 @@ Modification: removed by JOD 2014-11-10, replaced by TOTAL_FLUX calculation
 	for (size_t i = 0; i < ele_vector_at_geo.size(); i++)
 	{
 		m_ele = m_msh->ele_vector[ele_vector_at_geo[i]];
+			if (m_ele->GetIndex() == 4421)
+				cout << i << "\n";
 		m_ele->SetNormalVector();
 		m_ele->GetNodeIndeces(element_nodes);
 		Use_Element = true;
@@ -11521,8 +11875,6 @@ Modification: removed by JOD 2014-11-10, replaced by TOTAL_FLUX calculation
 		{
 			// edge projection // edge marked
 			m_ele->GetEdges(ele_edges_vector);
-			
-			
 			//cout << "Element: " << "\n";
 			edg_length = 0;
 			//loop over the edges of the element to find the edge at the polyline
@@ -11569,13 +11921,6 @@ Modification: removed by JOD 2014-11-10, replaced by TOTAL_FLUX calculation
 				{
 					vecConsideredEdges.push_back(m_edg->GetIndex());		//all edges that were already used are stored
 					m_edg->SetNormalVector(m_ele->normal_vector, edg_normal_vector);
-
-					if (axis == 2) //  xz-axis 
-					{
-						edg_normal_vector[1] = edg_normal_vector[2];
-						edg_normal_vector[2] = 0;
-					}
-
 					edg_length = m_edg->getLength();
 					//cout << "Element: " << m_ele->GetIndex() << " LÃ¤nge: " << edg_length << " Normalvektor: x=" << edg_normal_vector[0] << " y=" << edg_normal_vector[1] << " z=" << edg_normal_vector[2] << "\n";
 					m_edg->GetEdgeVector(edge_vector);
@@ -11749,15 +12094,15 @@ Modification: removed by JOD 2014-11-10, replaced by TOTAL_FLUX calculation
 
 	delete [] ConcentrationGradient;
 }
-*/
+
+
 /**************************************************************************
 GeoSys - Function: Calc2DElementGradient
 Task: Calculate the Gradient for an 2D Element
 Return: nothing
 Programming: 05/2011 BG
-Modification: 11/2014 JOD, replaced by TOTAL_FLUX calculation
+	Modification:
  **************************************************************************/
-/*
 void CRFProcess::Calc2DElementGradient(MeshLib::CElem* m_ele, double ElementConcentration[4], double *grad)
 {
 	double coord_Point1[3];
@@ -11796,19 +12141,10 @@ void CRFProcess::Calc2DElementGradient(MeshLib::CElem* m_ele, double ElementConc
 			double const* const p2 (vecElementNodes[2]->getData());
 			double const* const p3 (vecElementNodes[3]->getData());
 
-			if (m_msh->GetCoordinateFlag() == 22) { // xz-axis 
-				coord_Point1[0] = p0[0]; coord_Point1[1] = p0[2]; coord_Point1[2] = ElementConcentration[0];
-				coord_Point2[0] = p1[0]; coord_Point2[1] = p1[2]; coord_Point2[2] = ElementConcentration[1];
-				coord_Point3[0] = p2[0]; coord_Point3[1] = p2[2]; coord_Point3[2] = ElementConcentration[2];
-				coord_Point4[0] = p3[0]; coord_Point4[1] = p3[2]; coord_Point4[2] = ElementConcentration[3];
-			}
-			else {
 			coord_Point1[0] = p0[0]; coord_Point1[1] = p0[1]; coord_Point1[2] = ElementConcentration[0];
 			coord_Point2[0] = p1[0]; coord_Point2[1] = p1[1]; coord_Point2[2] = ElementConcentration[1];
 			coord_Point3[0] = p2[0]; coord_Point3[1] = p2[1]; coord_Point3[2] = ElementConcentration[2];
 			coord_Point4[0] = p3[0]; coord_Point4[1] = p3[1]; coord_Point4[2] = ElementConcentration[3];
-			}
-
 
 			//Calculate the plane equation
 			PlaneEquation->CalculatePlaneEquationFrom3Points(coord_Point1, coord_Point2, coord_Point4);
@@ -11817,7 +12153,7 @@ void CRFProcess::Calc2DElementGradient(MeshLib::CElem* m_ele, double ElementConc
 				return;
 		}
 
-		else if (m_ele->GetElementType() == MshElemType::TRIANGLE)
+			if (m_ele->GetElementType() == MshElemType::TRIANGLE)
 		{
 			//define the points used for the plane equation
 			// order of points: 1, 2, 3 against clock direction -> points are given in the order 2, 3, 1 to get a positive normal vector
@@ -11825,16 +12161,10 @@ void CRFProcess::Calc2DElementGradient(MeshLib::CElem* m_ele, double ElementConc
 			double const* const p1 (vecElementNodes[1]->getData());
 			double const* const p2 (vecElementNodes[2]->getData());
 
-			if (m_msh->GetCoordinateFlag() == 22) { // xz-axis 
-				coord_Point1[0] = p0[0]; coord_Point1[1] = p0[2]; coord_Point1[2] = ElementConcentration[0];
-				coord_Point2[0] = p1[0]; coord_Point2[1] = p1[2]; coord_Point2[2] = ElementConcentration[1];
-				coord_Point3[0] = p2[0]; coord_Point3[1] = p2[2]; coord_Point3[2] = ElementConcentration[2];
-			}
-			else {
 			coord_Point1[0] = p0[0]; coord_Point1[1] = p0[1]; coord_Point1[2] = ElementConcentration[0];
 			coord_Point2[0] = p1[0]; coord_Point2[1] = p1[1]; coord_Point2[2] = ElementConcentration[1];
 			coord_Point3[0] = p2[0]; coord_Point3[1] = p2[1]; coord_Point3[2] = ElementConcentration[2];
-			}
+
 			//Calculate the plane equation
 			PlaneEquation->CalculatePlaneEquationFrom3Points(coord_Point2, coord_Point3, coord_Point1);
 		}
@@ -11851,7 +12181,82 @@ void CRFProcess::Calc2DElementGradient(MeshLib::CElem* m_ele, double ElementConc
 	else
 		cout << "This element option is not yet considered for calculating the concentration gradient!" << "\n";
 }
-*/
+
+/**************************************************************************
+   FEMLib-Method:
+   Task:
+   Programing:
+   11/2004 OK Implementation
+   08/2006 OK new
+**************************************************************************/
+	void CRFProcess::CalcELEVelocities(void)
+	{
+		int eidx[3];
+
+		// If not FLUID_MOMENTUM,
+		//	if (_pcs_type_name.compare("RANDOM_WALK") != 0) {
+		FiniteElement::ProcessType pcs_type (getProcessType());			//BG
+
+		if (this->getProcessType() != FiniteElement::RANDOM_WALK)
+		{
+			int eidx[3];
+			eidx[0] = GetElementValueIndex("VELOCITY1_X");
+			eidx[1] = GetElementValueIndex("VELOCITY1_Y");
+			eidx[2] = GetElementValueIndex("VELOCITY1_Z");
+			for (size_t i = 0; i < 3; i++)
+				if (eidx[i] < 0)
+					cout <<
+					"Fatal error in CRFProcess::CalcELEVelocities - abort"
+					     << "\n";
+			//abort();	// PCH commented abort() out for FM.
+
+			FiniteElement::ElementValue* gp_ele = NULL;
+			double vx, vy, vz;
+			const size_t mesh_ele_vector_size(m_msh->ele_vector.size());
+			for (size_t i = 0; i < mesh_ele_vector_size; i++)
+			{
+				gp_ele = ele_gp_value[i];
+				vx = gp_ele->Velocity(0, 0);
+				SetElementValue(i, eidx[0], vx);
+				SetElementValue(i, eidx[0] + 1, vx);
+				vy = gp_ele->Velocity(1, 0);
+				SetElementValue(i, eidx[1], vy);
+				SetElementValue(i, eidx[1] + 1, vy);
+				vz = gp_ele->Velocity(2, 0);
+				SetElementValue(i, eidx[2], vz);
+				SetElementValue(i, eidx[2] + 1, vz);
+			}
+		}
+		if (pcs_type == FiniteElement::MULTI_PHASE_FLOW)
+		{
+			eidx[0] = GetElementValueIndex("VELOCITY2_X");
+			eidx[1] = GetElementValueIndex("VELOCITY2_Y");
+			eidx[2] = GetElementValueIndex("VELOCITY2_Z");
+						for (size_t i = 0; i < 3; i++)
+			if (eidx[i] < 0)
+				cout <<
+				"Fatal error in CRFProcess::CalcELEVelocities - abort"
+				     << "\n";
+			//abort();	// PCH commented abort() out for FM.
+
+			FiniteElement::ElementValue* gp_ele = NULL;
+			double vx, vy, vz;
+			const size_t mesh_ele_vector_size(m_msh->ele_vector.size());
+			for (size_t i = 0; i < mesh_ele_vector_size; i++)
+			{
+				gp_ele = ele_gp_value[i];
+				vx = gp_ele->Velocity_g(0, 0);
+				SetElementValue(i, eidx[0], vx);
+				SetElementValue(i, eidx[0] + 1, vx);
+				vy = gp_ele->Velocity_g(1, 0);
+				SetElementValue(i, eidx[1], vy);
+				SetElementValue(i, eidx[1] + 1, vy);
+				vz = gp_ele->Velocity_g(2, 0);
+				SetElementValue(i, eidx[2], vz);
+				SetElementValue(i, eidx[2] + 1, vz);
+			}
+		}
+	}
 
 /*************************************************************************
    GeoSys-FEM Function:

@@ -17,30 +17,15 @@
 namespace MeshLib
 {
 MeshNodesAlongPolyline::MeshNodesAlongPolyline(
-        GEOLIB::Polyline const* const ply, MeshLib::CFEMesh const* mesh,  const bool for_s_term) :
-	_ply(ply), _mesh(mesh), _linear_nodes (0), for_source_term(for_s_term)
+        GEOLIB::Polyline const* const ply, MeshLib::CFEMesh const* mesh) :
+	_ply(ply), _mesh(mesh), _linear_nodes (0)
 {
 	std::vector<CNode*> const& mesh_nodes (mesh->getNodeVector());
 	double epsilon_radius (mesh->getMinEdgeLength()); // getSearchLength());
-	epsilon_radius *= 0.9; //JOD 2014-11-10
-#if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2012
-	size_t n_linear_order_nodes;
-	size_t n_nodes;
- 
-    if(for_s_term)
-	{
-	    n_linear_order_nodes = mesh->GetNodesNumber (false);
-	    n_nodes = mesh->GetNodesNumber (true);
-	}
-	else
-	{
-           n_linear_order_nodes = mesh->getNumNodesLocal();
-	   n_nodes = mesh->getNumNodesLocal_Q();
-	}
-#else
+
 	size_t n_linear_order_nodes (mesh->GetNodesNumber (false));
 	size_t n_nodes (mesh->GetNodesNumber (true));
-#endif
+
 	std::vector<size_t> msh_node_higher_order_ids;
 	std::vector<double> dist_of_proj_higher_order_node_from_ply_start;
 

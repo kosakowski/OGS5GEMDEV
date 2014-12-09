@@ -78,13 +78,14 @@ public:
 
 /// For parallel computing. 03.2012. WW
 #if defined(USE_PETSC) // || defined(using other parallel scheme)
-typedef struct
+typedef long MyInt;
+struct MeshNodes
 {
-  long index;
+  MyInt index;
   double x;
   double y;
   double z;
-} MeshNodes;
+};
 
 #endif 
 
@@ -191,14 +192,14 @@ public:
            @param header  : mesh header
            @param s_nodes : mesh nodes
 	*/
-	void setSubdomainNodes(long *header, const MeshNodes *s_nodes);
+	void setSubdomainNodes(MyInt *header, const MeshNodes *s_nodes);
 	/*!
 	   Fill data for subdomain mesh
            @param header    : mesh header
            @param elem_info : element information
            @param inside    : indicator for elements that are inside the subdomain
 	*/
-	void setSubdomainElements(long *header, const long *elem_info, const bool inside);
+	void setSubdomainElements(MyInt *header, const MyInt *elem_info, const bool inside);
 	int calMaximumConnectedNodes();
         /// Get number of nodes of the entire mesh       
         int getNumNodesGlobal() const
@@ -220,25 +221,12 @@ public:
         {
 	   return loc_NodesNumber_Quadratic; 
         }
-        /// Get number of nodes of the subdomain mesh including shadow nodes      
-        int getNumNodesLocal_s() const
+        /// Get the largest ID of active nodes for higher order interpolation
+        size_t getLargestActiveNodeID_Quadratic() const
         {
-	   return NodesNumber_Linear; 
-        }
-        /// Get number of nodes of the subdomain mesh of quadratic elements including shadow nodes     
-        int getNumNodesLocal_Q_s() const
-        {
-	   return NodesNumber_Quadratic; 
-        }        
-        /// return number of nodes for subdomain including shadow nodes
-        size_t NodesInUsagePETSC() const
-	{
-		if (useQuadratic)
-			return NodesNumber_Quadratic; //kg44 ... test if this solves problem with initial values
-		else
-			return NodesNumber_Linear;   // kg44 ... test if this solves problem with initial values
-	}
-
+	  return static_cast<size_t> ( NodesNumber_Linear + loc_NodesNumber_Quadratic 
+                                    - loc_NodesNumber_Linear );          
+        } 
 #endif
 
 	//
@@ -365,7 +353,7 @@ public:
 	 * @param msh_nod_vector the mesh node indices are saved in this vector
 	 * */
 	void GetNODOnPLY(const GEOLIB::Polyline* const ply,
-	                 std::vector<size_t>& msh_nod_vector, const bool for_s_term = false);
+	                 std::vector<size_t>& msh_nod_vector);
 
 	/**
 	 *
@@ -483,13 +471,17 @@ public:
 
 	CFluidMomentum* fm_pcs;                   // by PCH
 
+	std::vector<size_t> sorted_nodes;
+	std::vector<size_t> xy_change;
+	bool nodes_are_sorted;
+
 	/// Import MODFlow grid. 10.2009 WW
 	void ImportMODFlowGrid(std::string const & fname);
 	/// Convert raster cells into grid. 12.2009 WW
 	void ConvertShapeCells(std::string const & fname);
 #ifdef USE_HydSysMshGen
 	// Be activated if it is still needed.
-	// WW
+	// WWmesh_header
 	/// Generate Column-surface grid system for the modeling of surafce-subsuface coupled processes
 	//15.05.2009. WW // removed useless const TF
 	void HydroSysMeshGenerator(std::string fname, int nlayers, double thickness, int mapping);
@@ -556,18 +548,20 @@ private:
 	int glb_NodesNumber_Quadratic;
 	int loc_NodesNumber_Linear; //index of shadow nodes starts from this number
 	int loc_NodesNumber_Quadratic;
+
 #endif
 	bool useQuadratic;
 	bool _axisymmetry;
 	bool top_surface_checked;                 // 07.06.2010.  WW
 
 	// Coordinate indicator
-	// 1:  X component only
-	// 12: Y component only
-	// 13: Z component only
-	// 2:  X, Y component
-	// 23:  X, Z component
-	// 3:  X, Y, Z component
+	// 10:  X component only
+	// 11: Y component only
+	// 12: Z component only
+	// 21:  X, Y component
+	// 22:  X, Z component
+	// 23:  Y, Z component
+	// 32:  X, Y, Z component
 	int coordinate_system;
 	bool has_multi_dim_ele;
 	int max_ele_dim;
@@ -598,6 +592,12 @@ private:
 
 	void CreateLineElementsFromMarkedEdges(CFEMesh* m_msh_ply,
 	                                       std::vector<long> &ele_vector_at_ply); //NW
+  
+        /// Find nodes in convex polygon
+	void findNodesInPolygon(const double area_orig, const double tol,
+				 const size_t start_id, const size_t end_id, 
+				 const CGLPolyline *ply, 
+				 std::vector<long> &node_id_vector) const;
 public:
 	void constructMeshGrid();
 private:

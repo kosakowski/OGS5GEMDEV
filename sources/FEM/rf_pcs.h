@@ -212,6 +212,9 @@ private:
     double *eqs_x;     //> Pointer to x array of eqs (added due to PETSC)
 
 	std::vector<std::string> pcs_type_name_vector;
+	bool _hasConstrainedBC;
+	bool _hasConstrainedST;
+	long _idxVx, _idxVy, _idxVz;
 
 protected:                                        //WW
 	friend class FiniteElement::CFiniteElementStd;
@@ -281,8 +284,6 @@ public:
 #else
   LINEAR_SOLVER* eqs;
 #endif
-
-
 
 	//
 #if defined( USE_MPI) || defined( USE_PETSC)     //WW
@@ -575,7 +576,7 @@ public:
 	int rwpt_count;                       //YS 05.2013 Count the number of particles.
 	int srand_seed;
 	const char* pcs_num_name[2];          //For monolithic scheme
-	std::string tim_type_name;            //OK
+	TimType::type tim_type;
 	const char* pcs_sol_name;
 	std::string cpl_type_name;
 	CNumerics* m_num;
@@ -720,6 +721,19 @@ public:
 	// This function is a part of the monolithic scheme
 	//  and it is related to ST, BC, IC, TIM and OUT. WW
 	void SetOBJNames();
+
+
+	//MW
+	int getFirstNodeBelowGWL(size_t i);
+	bool hasConstrainedBC(){ return _hasConstrainedBC; }
+	bool hasConstrainedST(){ return _hasConstrainedST; }
+	void hasConstrainedBC(const bool state){ _hasConstrainedBC = state; }
+	void hasConstrainedST(const bool state){ _hasConstrainedST = state; }
+	
+	void setidxVx(int index){ _idxVx = index; }
+	void setidxVy(int index){ _idxVy = index; }
+	void setidxVz(int index){ _idxVz = index; }
+
 	// ST
 	void IncorporateSourceTerms(const int rank = -1);
 	//WW void CheckSTGroup(); //OK
@@ -753,7 +767,9 @@ public:
 	int num_diverged;
 	int num_notsatisfied;
 	int iter_nlin;
+	int iter_nlin_max;
 	int iter_lin;
+	int iter_lin_max;
 	int iter_outer_cpl;							// JT2012
 	int iter_inner_cpl;							// JT2012
 	int pcs_num_dof_errors;						// JT2012
@@ -826,16 +842,16 @@ public:
 	void PrimaryVariableStorageTransport(); //kg44
 	//double GetNewTimeStepSizeTransport(double mchange); //kg44
 	// FLX
-	//void CalcELEFluxes(const GEOLIB::Polyline* const ply, double* result); removed by JOD 2014 - 11 - 10
+	void CalcELEFluxes(const GEOLIB::Polyline* const ply, double* result);
 	/**
 	 * Necessary for the output of mass fluxes over polylines, BG 08/2011
 	 * @param ply a pointer to a GEOLIB::Polyline
 	 * @param NameofPolyline the name of the polyline
 	 * @param result
 	 */
-	// void CalcELEMassFluxes(const GEOLIB::Polyline* const ply, std::string const& NameofPolyline, double *result); removed by JOD 2014-11-10 
-    double TotalMass[10];																				// Necessary for the output of mass fluxes over polylines, BG 08/2011
-    std::vector <std::string> PolylinesforOutput;														// Necessary for the output of mass fluxes over polylines, BG 08/2011
+	void CalcELEMassFluxes(const GEOLIB::Polyline* const ply, std::string const& NameofPolyline, double *result);
+	double TotalMass[10];																				// Necessary for the output of mass fluxes over polylines, BG 08/2011
+	std::vector <std::string> PolylinesforOutput;														// Necessary for the output of mass fluxes over polylines, BG 08/2011
 
 	/**
 	 * Necessary for the output of mass fluxes over polylines, BG 08/2011
@@ -891,6 +907,9 @@ public:
 #if defined(USE_PETSC) //03.3012. WW
         /// Initialize the RHS array of the system of equations with the previous solution.
         void InitializeRHS_with_u0(const bool quad = false); //in rf_pcs1.cpp
+       
+        /// Initialize the unknows of equations with existing solutions within a index range.
+        void initializeRHS_with_u0(const int min_id, const int max_id); //in rf_pcs1.cpp
 #endif
 
 private:
@@ -900,6 +919,11 @@ private:
 	 * PERMEABILITY_X1 and POROSITY
 	 */
 	void configMaterialParameters ();
+	// method to check on constrained source terms
+	bool checkConstrainedST(std::vector<CSourceTerm*> & st_vector, CSourceTerm const & st, CNodeValue const & st_node);
+	// method to check on constrained boundary conditions
+	bool checkConstrainedBC(CBoundaryCondition const & bc, CBoundaryConditionNode const & bc_node, double & bc_value);
+	void getNodeVelocityVector(const long node_id, double * vel_nod);
 
 };
 
@@ -1027,6 +1051,8 @@ extern int GetRFProcessNumContinua(void);
 extern int GetRFProcessNumElectricFields(void);
 extern int GetRFProcessNumTemperatures(void);
 extern int GetRFProcessSimulation(void);
+
+extern void initializeConstrainedProcesses(std::vector<CRFProcess*> &pcs_vector);
 
 // Coupling Flag. WW
 extern bool T_Process;					// Heat

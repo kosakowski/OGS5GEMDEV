@@ -79,12 +79,12 @@ public:
 	void CalcMass();
 	void CalcMass2();
 	void CalcMassMCF();                   //AKS/NB
-         void CalcMassTNEQ();                      //AKS/NB
+	void CalcMassTNEQ();                      //AKS/NB
 	void CalcMassPSGLOBAL();              // PCH
 	// 2. Lumped mass matrix
 	void CalcLumpedMass();
 	void CalcLumpedMass2();
-    void CalcLumpedMassMCF();  //AKS
+	void CalcLumpedMassMCF();  //AKS
 	void CalcLumpedMassPSGLOBAL();        // PCH
 	// 3. Laplace matrix
 	void CalcLaplace();
@@ -103,7 +103,7 @@ public:
 	void CalcStorage();
 	// 9. Content matrix
 	void CalcContent();
-         void CalcContentTNEQ(); //NW
+	void CalcContentTNEQ(); //NW
 	//
 	void CalcSatution();                  //WW
 	//
@@ -120,7 +120,7 @@ public:
 	void Assembly(int option, int dimension); // PCH for Fluid Momentum
 	void Cal_Velocity();
 
-    void CalcSolidDensityRate();                     //HS thermal storage application, calculate rho_s
+	void CalcSolidDensityRate();                     //HS thermal storage application, calculate rho_s
 	void Cal_VelocityMCF();//AKS
 	void Cal_Velocity_2();                //CB this is to provide velocity only at the element center of gravity
 	void Cal_GP_Velocity_FM(int* i_ind); //SB 4900 interpolate node velocities to Gauss point velocities
@@ -175,7 +175,7 @@ public:
 	//CB added by CB: 090507
 	void UpwindUnitCoord(int p, int point, int ind);
 	int UpwindElement(int option, int phase); // PCH
-	                                          //CB added by CB: 090507
+	//CB added by CB: 090507
 	void UpwindSummandMass(const int gp,
 	                       int& gp_r,
 	                       int& gp_s,
@@ -190,12 +190,12 @@ public:
 	double CalcSUPGEffectiveElemenetLength(double* vel);
 	// Gauss value
 	void ExtropolateGauss(CRFProcess* m_pcs, const int idof);
-         // Extrapolate reaction rates on TNEQ flow
-    void ExtrapolateGauss_ReactRate_TNEQ(CRFProcess *m_pcs); 
+	// Extrapolate reaction rates on TNEQ flow
+	void ExtrapolateGauss_ReactRate_TNEQ(CRFProcess *m_pcs);
 	void UpdateSolidDensity(size_t elem_idx);       // HS
 	// CB _ctx_ CB_merge_0513
 	//void Set_ctx_(long ele_index, double val, int gaussp, int i_dim);
-    //double Get_ctx_(long ele_index, int gaussp, int i_dim);
+	//double Get_ctx_(long ele_index, int gaussp, int i_dim);
 
 private:
 	bool newton_raphson;                  //24.05.2007 WW
@@ -214,7 +214,7 @@ private:
 	int* idx_vel;                         //WW
 	// Material properties
 	double* mat;
-    double MassMatrixElements[36];
+	double MassMatrixElements[36];
 	double AdvectionMatrixElements[36];
 	double ContentMatrixElements[36];
 	double LaplaceMatrixElements[36][9];
@@ -249,7 +249,7 @@ private:
 	// Gauss point value. Buffers. // Some changes. 27.2.2007 WW
 	double TG, TG0, PG, PG0, PG2,PG20, drho_gw_dT;
 	double Sw, rhow, poro, dSdp;
-         double rho_gw, rho_ga, rho_g, p_gw, M_g, tort, Xw, eos_arg[5], heat_capacity, heat_conductivity, viscosity;
+	double rho_gw, rho_ga, rho_g, p_gw, M_g, tort, Xw, eos_arg[5], heat_capacity, heat_conductivity, viscosity;
 
 
 	//
@@ -276,20 +276,20 @@ private:
 	double CalCoefMass();
 	// 25.2.2007 WW
 	double CalCoefMass2(int dof_index);
-         double CalCoefMasstneq(int dof_index);
-                                                  // 03.3.2009 PCH
+	double CalCoefMasstneq(int dof_index);
+	// 03.3.2009 PCH
 	double CalCoefMassPSGLOBAL(int dof_index);
 	void CalCoefLaplace(bool Gravity, int ip = 0);
 	// 10 2008 PCH
 	void CalCoefLaplaceMultiphase(int phase, int ip = 0);
 	void CalCoefLaplace2(bool Gravity, int dof_index);
-         void CalCoefLaplaceTNEQ(int dof_index);
-         void CalCoefLaplacePSGLOBAL(bool Gravity, int dof_index);
-         double CalCoefAdvection();        //SB4200 OK/CMCD
-                                                  //AKS/NB
-         double CalCoefAdvectionTNEQ(int dof_index);
+	void CalCoefLaplaceTNEQ(int dof_index);
+	void CalCoefLaplacePSGLOBAL(bool Gravity, int dof_index);
+	double CalCoefAdvection();        //SB4200 OK/CMCD
+	//AKS/NB
+	double CalCoefAdvectionTNEQ(int dof_index);
 
-    double CalCoefMassTNEQ(int dof_index);
+	double CalCoefMassTNEQ(int dof_index);
 	void CalCoefMassMCF();
 	void CalCoefAdvectionMCF();
 	void CalCoefLaplaceMCF(int ip);
@@ -298,14 +298,14 @@ private:
 
 	double CalCoefStorage();       //SB4200
 	double CalCoefContent();
-         double CalCoefContentTNEQ(int dof_index); //NW
+	double CalCoefContentTNEQ(int dof_index); //NW
 	double CalCoefStrainCouping(const int phase = 0);
 
 	double  CalcCoefDualTransfer();
 	// 27.2.2007 WW
 	double CalCoef_RHS_T_MPhase(int dof_index);
-         double CalCoef_RHS_TNEQ(int dof_index);
-                                                  // 27.2.2007 WW
+	double CalCoef_RHS_TNEQ(int dof_index);
+	// 27.2.2007 WW
 	double CalCoef_RHS_M_MPhase(int dof_index);
 	double CalCoef_RHS_PSGLOBAL(int dof_index);
 	//  NB
@@ -381,7 +381,7 @@ private:
 	void AssembleCapillaryEffect();       // PCH
 	                                      // PCH for debugging
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
-        void add2GlobalMatrixII();    
+	void add2GlobalMatrixII();
 #else
 	void add2GlobalMatrixII(const int block_cols = 2);            //WW. 06.2011
 #endif
@@ -397,26 +397,26 @@ private:
 	// Vector of local node values, e.g. pressure, temperature.
 	// Assume maximium element nodes is 20
 	//double OldMatrix[64]; // For grid adapting
-    double NodalValue[12][40];
+	double NodalValue[12][40];
 	double* NodalVal;
 	double* NodalVal0;                    //?? NodalValueSaturation, NodalValueTemperature; ...
 	double* NodalVal1;
 	double* NodalVal2;
 	double* NodalVal3;
 	double* NodalVal4;
-    double *NodalVal5;
+	double *NodalVal5;
 	double* NodalValC;
 	double* NodalValC1;
 	double* NodalVal_Sat;
 	double* NodalVal_SatNW;
 	double* NodalVal_p2;
 	double* NodalVal_p20;                 //AKS
-         double *NodalVal_t0;                     // for TEMPERATURE1
-         double *NodalVal_t1;                     //AKS
-		 double *NodalVal_t2_0;                   // FOR TEMPERATURE2 previous time step
-		 double *NodalVal_t2_1;                   // for TEMPERATURE2 current time step
-    double *NodalVal_X0;                     // for CONCENTRATION previous time step
-    double *NodalVal_X1;                     // for CONCENTRATION current time step
+	double *NodalVal_t0;                     // for TEMPERATURE1
+	double *NodalVal_t1;                     //AKS
+	double *NodalVal_t2_0;                   // FOR TEMPERATURE2 previous time step
+	double *NodalVal_t2_1;                   // for TEMPERATURE2 current time step
+	double *NodalVal_X0;                     // for CONCENTRATION previous time step
+	double *NodalVal_X1;                     // for CONCENTRATION current time step
 	//
 	double* weight_func;                  //NW
 	void CalcFEM_FCT();                   //NW
@@ -436,12 +436,12 @@ public:
 	void GetEleVelocity(double* vec);
 	Matrix Velocity;
 
-		 // HS Thermal Storage parameters---------------
-		 // Array of parameters on each Gauss point
-		 double *rho_s_prev, *rho_s_curr; 
-		 double *q_R; 
-		 // End of Thermal Storage parameters---------------
-    Matrix TransportFlux;  // Fick or Fourier law  with dispersion      JOD 2014-11-10
+	// HS Thermal Storage parameters---------------
+	// Array of parameters on each Gauss point
+	double *rho_s_prev, *rho_s_curr;
+	double *q_R;
+	// End of Thermal Storage parameters---------------
+	Matrix TransportFlux;  // Fick or Fourier law  with dispersion      JOD 2014-11-10
 	
 
 private:
@@ -453,7 +453,7 @@ private:
 	CRFProcess* pcs;
 	// Data
 	Matrix Velocity_g;
-    // CB _ctx_ CB_merge_0513
+	// CB _ctx_ CB_merge_0513
 	//Matrix _ctx_Gauss;
 };
 }                                                 // end namespace

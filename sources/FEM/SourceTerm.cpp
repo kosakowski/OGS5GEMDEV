@@ -23,7 +23,8 @@ SourceTerm::SourceTerm(const CSourceTerm &st, const std::string &geometry_name)
 		for (size_t i=0; i<dis_nodes.size(); i++) dis_nodes[i] = static_cast<size_t>(st_nodes[i]);
 		this->setDisValues(dis_nodes, st.getDistribedST());
 	}
-	else if (this->getProcessDistributionType() == FiniteElement::DIRECT)
+	else if (this->getProcessDistributionType() == FiniteElement::DIRECT
+			|| this->getProcessDistributionType() == FiniteElement::RECHARGE_DIRECT)
 	{
 		//this->_direct_file_name = st.fname;
 	}

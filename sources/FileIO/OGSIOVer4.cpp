@@ -274,25 +274,87 @@ void readTINFile(const std::string &fname, Surface* sfc,
 		return;
 	}
 
-	size_t id;
-	double x, y, z;
-	while (in)
+	std::size_t id;
+	double p0[3], p1[3], p2[3];
+	std::string line;
+	while (std::getline(in, line).good())
 	{
+		// allow empty lines
+		if (line.empty())
+			continue;
+
+		// parse line
+		std::stringstream input(line);
 		// read id
-		in >> id;
-		// determine size
-		size_t pnt_pos(pnt_vec.size());
+		if (!(input >> id)) {
+			in.close();
+			delete sfc;
+			sfc = NULL;
+			return;
+		}
 		// read first point
-		in >> x >> y >> z;
-		pnt_vec.push_back(new Point(x, y, z));
+		if (!(input >> p0[0] >> p0[1] >> p0[2])) {
+			std::cerr << "Could not read coords of 1st point of triangle \""
+				<< id << "\".\n";
+			errors.push_back (std::string("readTIN error: ") +
+				std::string("Could not read coords of 1st point in triangle ") +
+				number2str(id));
+			in.close();
+			delete sfc;
+			sfc = NULL;
+			return;
+		}
 		// read second point
-		in >> x >> y >> z;
-		pnt_vec.push_back(new Point(x, y, z));
+		if (!(input >> p1[0] >> p1[1] >> p1[2])) {
+			std::cerr << "Could not read coords of 2nd point of triangle \""
+				<< id << "\".\n";
+			errors.push_back (std::string("readTIN error: ") +
+				std::string("Could not read coords of 2nd point in triangle ") +
+				number2str(id));
+			in.close();
+			delete sfc;
+			sfc = NULL;
+			return;
+		}
 		// read third point
-		in >> x >> y >> z;
-		pnt_vec.push_back(new Point(x, y, z));
+		if (!(input >> p2[0] >> p2[1] >> p2[2])) {
+			std::cerr << "Could not read coords of 3rd point of triangle \""
+				<< id << "\".\n";
+			errors.push_back (std::string("readTIN error: ") +
+				std::string("Could not read coords of 3rd point in triangle ") +
+				number2str(id));
+			in.close();
+			delete sfc;
+			sfc = NULL;
+			return;
+		}
+
+		// check area of triangle
+		double const d_eps(std::numeric_limits<double>::epsilon());
+		if (MathLib::calcTriangleArea(p0, p1, p2) < d_eps) {
+			std::cerr << "readTIN: Triangle \"" << id << "\" has zero area.\n";
+			errors.push_back (std::string("readTIN: Triangle ")
+				+ number2str(id) + std::string(" has zero area."));
+			delete sfc;
+			sfc = NULL;
+			return;
+		}
+
+		// determine size pnt_vec to insert the correct ids
+		std::size_t const pnt_pos(pnt_vec.size());
+		pnt_vec.push_back(new GEOLIB::Point(p0));
+		pnt_vec.push_back(new GEOLIB::Point(p1));
+		pnt_vec.push_back(new GEOLIB::Point(p2));
 		// create new Triangle
 		sfc->addTriangle(pnt_pos, pnt_pos + 1, pnt_pos + 2);
+	}
+
+	if (sfc->getNTriangles() == 0) {
+		std::cerr << "readTIN(): No triangle found in file \"" << fname <<
+			"\".\n";
+		errors.push_back ("readTIN error because of no triangle found");
+		delete sfc;
+		sfc = NULL;
 	}
 }
 

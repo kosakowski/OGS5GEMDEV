@@ -103,6 +103,7 @@ CSourceTerm::CSourceTerm() :
    pressureBoundaryCondition = false;
    //  display_mode = false; //OK
    this->TimeInterpolation = 0;                   //BG
+   _isConstrainedST = false;
 }
 
 // KR: Conversion from GUI-ST-object to CSourceTerm
@@ -129,7 +130,8 @@ CSourceTerm::CSourceTerm(const SourceTerm* st)
 			this->DistribedBC.push_back(dis_values[i]);
 		}
 	}
-	else if (this->getProcessDistributionType() == FiniteElement::DIRECT)
+	else if (this->getProcessDistributionType() == FiniteElement::DIRECT
+			|| this->getProcessDistributionType() == FiniteElement::RECHARGE_DIRECT)
 	{
 		// variable "fname" needs to be set, this must be done from outside!
 	}
@@ -431,6 +433,51 @@ std::ios::pos_type CSourceTerm::Read(std::ifstream *st_file,
          }
          continue;
       }
+
+	  if (line_string.find("$CONSTRAINED") != std::string::npos)
+	  {
+		  Constrained temp;
+
+		  _isConstrainedST = true;
+		  in.str(readNonBlankLineFromInputStream(*st_file));
+		  std::string tempst;
+
+		  in >> tempst;	//PROCESS_TYPE associated with PRIMARY_VARIABLE
+		  temp.constrainedProcessType = FiniteElement::convertProcessType(tempst);
+		  if (!(temp.constrainedProcessType == FiniteElement::MASS_TRANSPORT ||
+			  temp.constrainedProcessType == FiniteElement::HEAT_TRANSPORT ||
+			  temp.constrainedProcessType == FiniteElement::LIQUID_FLOW ||
+			  temp.constrainedProcessType == FiniteElement::RICHARDS_FLOW)) {
+			  _isConstrainedST = false;
+			  break;
+		  }
+
+		  in >> tempst;	//PRIMARY_VARIABLE to be constrained
+		  temp.constrainedPrimVar = FiniteElement::convertPrimaryVariable(tempst);
+
+		  in >> temp.constrainedValue;	//Constrained Value
+
+		  in >> tempst;	//Constrain direction (greater/smaller than value)
+		  temp.constrainedDirection = convertConstrainedType(tempst);
+		  temp.constrainedVariable = ConstrainedVariable::INVALID_CONSTRAINED_VARIABLE;
+		  if (!(temp.constrainedDirection == ConstrainedType::SMALLER || temp.constrainedDirection == ConstrainedType::GREATER))
+		  {
+			  std::cout << "No valid constrainedDirection for " << FiniteElement::convertProcessTypeToString(temp.constrainedProcessType)
+				  << " (" << tempst << ")" << std::endl;
+			  _isConstrainedST = false;
+		  }
+
+		  in >> tempst;	//full constrain option 
+		  if (tempst == "COMPLETE_CONSTRAIN")
+		  {
+			  temp._isCompleteConstrained = true;
+		  }
+
+		  if (_isConstrainedST)
+			  this->_constrainedST.push_back(temp);
+		  in.clear();
+	  }
+
    }                                              // end !new_keyword
    return position;
 }
@@ -557,9 +604,16 @@ void CSourceTerm::ReadDistributionType(std::ifstream *st_file)
       in.clear();
    }
    // Soure terms are assign to element nodes directly. 23.02.2009. WW
-   if(dis_type_name.find("DIRECT")!=std::string::npos)
+   if (this->getProcessDistributionType() == FiniteElement::DIRECT)
    {
       dis_type_name = "DIRECT";
+      in >> fname;
+      fname = FilePath+fname;
+      in.clear();
+   }
+   if (this->getProcessDistributionType() == FiniteElement::RECHARGE_DIRECT)
+   {
+      dis_type_name = "RECHARGE_DIRECT";
       in >> fname;
       fname = FilePath+fname;
       in.clear();
@@ -615,6 +669,15 @@ if (this->getProcessDistributionType() == FiniteElement::CLIMATE)
 
 	  delete stations;
    }
+
+
+   if (this->getProcessDistributionType() == FiniteElement::RECHARGE)
+   {
+	   dis_type_name = "RECHARGE";
+	   in >> geo_node_value;
+	   in.clear();
+   }
+
 
 }
 
@@ -894,7 +957,8 @@ void CSourceTerm::Write(std::fstream* st_file)
    *st_file << convertPrimaryVariableToString (getProcessPrimaryVariable()) << "\n";
    //--------------------------------------------------------------------
    //GEO_TYPE
-   if (this->getProcessDistributionType() != FiniteElement::DIRECT)
+   if (this->getProcessDistributionType() != FiniteElement::DIRECT
+		   || this->getProcessDistributionType() != FiniteElement::RECHARGE_DIRECT)
    {
 	   *st_file << " $GEO_TYPE" << "\n";
 	   *st_file << "  ";
@@ -940,8 +1004,9 @@ void CSourceTerm::Write(std::fstream* st_file)
          }
          break;
       case  FiniteElement::DIRECT:
-         *st_file << " " << this->fname << "\n";
-         break;
+      case  FiniteElement::RECHARGE_DIRECT:
+    	  *st_file << " " << this->fname << "\n";
+    	  break;
       default:
          std::cerr << "this distributition type is not handled in CSourceTerm::Write" << "\n";
    }
@@ -1030,6 +1095,7 @@ void CSourceTermGroup::Set(CRFProcess* m_pcs, const int ShiftInNodeVector,
       for (long i = 0; i < no_st; i++)
       {
          CSourceTerm *source_term (st_vector[i]);
+         source_term->setSTVectorGroup(i);
 
          // 07.01.2011. WW
          if(source_term->getProcessDistributionType()==FiniteElement::PRECIPITATION)
@@ -1043,10 +1109,17 @@ void CSourceTermGroup::Set(CRFProcess* m_pcs, const int ShiftInNodeVector,
              if ( cp_vec[source_term->getProcessCompVecIndex()]->getProcess() != m_pcs ) //CB cannot match CONCENTRATION with comp name!!
                  continue;
           //-- 23.02.3009. WW
-         if (source_term->getProcessDistributionType()==FiniteElement::DIRECT || source_term->getProcessDistributionType()==FiniteElement::CLIMATE)
+         if (source_term->getProcessDistributionType()==FiniteElement::DIRECT
+        		 || source_term->getProcessDistributionType()==FiniteElement::CLIMATE)
 		 { //NB For climate ST, the source terms (recharge in this case) will also be assigned directly to surface nodes
            source_term->DirectAssign(ShiftInNodeVector);
            continue;
+         }
+
+         if (source_term->getProcessDistributionType()==FiniteElement::RECHARGE_DIRECT)
+         {
+        	 source_term->DirectAssign(ShiftInNodeVector);
+        	 set = true;
          }
 		 
          //CB cannot match CONCENRATION with comp name!!
@@ -1086,6 +1159,12 @@ void CSourceTermGroup::Set(CRFProcess* m_pcs, const int ShiftInNodeVector,
 			// MSH types //OK4310
 			if(source_term->msh_type_name.compare("NODE")==0)
 				source_term->SetNOD();
+
+
+			if (source_term->getProcessDistributionType()==FiniteElement::RECHARGE
+					|| source_term->getProcessDistributionType()==FiniteElement::RECHARGE_DIRECT)	//MW
+				MshEditor::sortNodesLexicographically(m_pcs->m_msh);
+
          }                                        // end pcs name & pv
       }                                           // end st loop
    }                                              // end msh
@@ -1397,12 +1476,18 @@ std::vector<double>&node_value_vector) const
       }
    }
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
-      long id_limit = 0;
- 
-      if(msh->getOrder())
-	   id_limit = msh->getNumNodesLocal_Q();
-	else  
-       id_limit = msh->getNumNodesLocal();
+   const size_t id_act_l_max = static_cast<size_t>(msh->getNumNodesLocal());
+   const size_t id_act_h_min =  msh->GetNodesNumber(false);
+   const size_t id_act_h_max =  msh->getLargestActiveNodeID_Quadratic();
+
+   struct loc_function
+   {
+      static bool isIDinRange( const size_t n_id, const size_t id_max0, 
+                                   const size_t id_min1,  const size_t id_max1 )
+      {
+	return ( (n_id < id_max0) || (n_id >= id_min1) && (n_id <  id_max1) ) ? true : false;
+      }
+   };
 #endif
 
    for (i = 0; i < (long) msh->edge_vector.size(); i++)
@@ -1429,15 +1514,15 @@ std::vector<double>&node_value_vector) const
             if (Const && (!msh->isAxisymmetry()))
             {
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
-               if(e_nodes[0]->GetIndex()<id_limit)
+              if(loc_function::isIDinRange( e_nodes[0]->GetIndex(), id_act_l_max, id_act_h_min, id_act_h_max))
 #endif
                NVal[G2L[e_nodes[0]->GetIndex()]] += Jac * v1 / 3.0;
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
-               if(e_nodes[1]->GetIndex()<id_limit)
+	      if(loc_function::isIDinRange( e_nodes[1]->GetIndex(), id_act_l_max, id_act_h_min, id_act_h_max))
 #endif
                NVal[G2L[e_nodes[1]->GetIndex()]] += Jac * v1 / 3.0;
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
-               if(e_nodes[2]->GetIndex()<id_limit)
+	      if(loc_function::isIDinRange( e_nodes[2]->GetIndex(), id_act_l_max, id_act_h_min, id_act_h_max))
 #endif
                NVal[G2L[e_nodes[2]->GetIndex()]] += 4.0 * Jac * v1 / 3.0;
 
@@ -1447,7 +1532,7 @@ std::vector<double>&node_value_vector) const
                for (k = 0; k < 3; k++)            // Three nodes
                {
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
-                 if(e_nodes[k]->GetIndex() >= id_limit)
+                 if( !loc_function::isIDinRange(  e_nodes[k]->GetIndex(), id_act_l_max, id_act_h_min, id_act_h_max))
                     continue;
 #endif
                   // Numerical integration
@@ -1484,23 +1569,27 @@ std::vector<double>&node_value_vector) const
                if (Const)
                {
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
-               if(e_nodes[0]->GetIndex()<id_limit)
+	          if(loc_function::isIDinRange( e_nodes[0]->GetIndex(), id_act_l_max,
+                                            id_act_h_min, id_act_h_max))
 #endif
                   NVal[G2L[e_nodes[0]->GetIndex()]] += Jac * v1;
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
-               if(e_nodes[1]->GetIndex()<id_limit)
+	          if(loc_function::isIDinRange( e_nodes[1]->GetIndex(), id_act_l_max,
+                                            id_act_h_min, id_act_h_max))
 #endif
                   NVal[G2L[e_nodes[1]->GetIndex()]] += Jac * v1;
                }
                else
                {
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
-               if(e_nodes[0]->GetIndex()<id_limit)
+	         if(loc_function::isIDinRange( e_nodes[0]->GetIndex(), id_act_l_max, 
+                                            id_act_h_min, id_act_h_max))
 #endif
                   NVal[G2L[e_nodes[0]->GetIndex()]] += Jac * (2.0 * v1
                      + v2) / 3.0;
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
-               if(e_nodes[1]->GetIndex()<id_limit)
+	         if(loc_function::isIDinRange( e_nodes[1]->GetIndex(), id_act_l_max,
+                                                id_act_h_min, id_act_h_max))
 #endif
                   NVal[G2L[e_nodes[1]->GetIndex()]] += Jac * (v1 + 2.0
                      * v2) / 3.0;
@@ -1511,9 +1600,9 @@ std::vector<double>&node_value_vector) const
                for (k = 0; k < 2; k++)            // Three nodes
                {
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
-                 if(e_nodes[k]->GetIndex()>=id_limit)
+                  if( !loc_function::isIDinRange( e_nodes[k]->GetIndex(), id_act_l_max, 
+                                                  id_act_h_min, id_act_h_max) )           
                     continue; 
-
 #endif
                   // Numerical integration
                   for (l = 0; l < 3; l++)         // Gauss points
@@ -1580,7 +1669,9 @@ void CSourceTerm::FaceIntegration(CFEMesh* msh, std::vector<long> const &nodes_o
    double nodesFVal[8];
 
    bool Const = false;
-   if (this->getProcessDistributionType() == FiniteElement::CONSTANT || this->getProcessDistributionType() == FiniteElement::CONSTANT_NEUMANN)
+   if (this->getProcessDistributionType() == FiniteElement::CONSTANT 
+		   || this->getProcessDistributionType() == FiniteElement::CONSTANT_NEUMANN
+		   || this->getProcessDistributionType() == FiniteElement::RECHARGE)	//MW
       //	if (dis_type_name.find("CONSTANT") != std::string::npos)
       Const = true;
    //----------------------------------------------------------------------
@@ -1710,15 +1801,6 @@ void CSourceTerm::FaceIntegration(CFEMesh* msh, std::vector<long> const &nodes_o
       G2L[k] = i;
    }
 
-#if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
-    long id_limit = 0;
- 
-    if(msh->getOrder())
-       id_limit = msh->getNumNodesLocal_Q();
-   else  
-       id_limit = msh->getNumNodesLocal();
-#endif
-
    //----------------------------------------------------------------------
    // NW 15.01.2010
    // 1) search element faces on the surface
@@ -1751,7 +1833,14 @@ void CSourceTerm::FaceIntegration(CFEMesh* msh, std::vector<long> const &nodes_o
          msh->ele_vector[l]->selected += 1;       // remember how many nodes of an element are on the surface
       }
    }
+
    //search elements & face integration
+#if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
+      const size_t id_act_l_max = static_cast<size_t>(msh->getNumNodesLocal());
+      const size_t id_act_h_min = msh-> GetNodesNumber(false);
+      const size_t id_act_h_max = msh->getLargestActiveNodeID_Quadratic();
+#endif
+
    int count;
    double fac = 1.0;
    for (i = 0; i < (long) vec_possible_elements.size(); i++)
@@ -1801,7 +1890,10 @@ void CSourceTerm::FaceIntegration(CFEMesh* msh, std::vector<long> const &nodes_o
             e_node = elem->GetNode(nodesFace[k]);
 
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
-            if(e_node->GetIndex() < id_limit)
+            if(     (e_node->GetIndex() < id_act_l_max) 
+                ||  (    e_node->GetIndex() >= id_act_h_min
+			 &&  e_node->GetIndex() < id_act_h_max)
+             )
 #endif
             NVal[G2L[e_node->GetIndex()]] += fac * nodesFVal[k];
          }
@@ -3006,7 +3098,7 @@ const int ShiftInNodeVector)
       //	if (st->dis_type_name.compare("CRITICALDEPTH") == 0) {
       nod_val->setProcessDistributionType (st->getProcessDistributionType());
       nod_val->node_area = 1.0;
-	  std::cout << "      - Critical depth" << std::endl;
+      std::cout << "      - Critical depth" << std::endl;
    }
 
    if (st->getProcessDistributionType() == FiniteElement::NORMALDEPTH)
@@ -3063,11 +3155,22 @@ const int ShiftInNodeVector)
 		//st->node_value_vectorArea[0] = mmp_vector[group]->geo_area;
 		if (m_msh->isAxisymmetry() && m_msh->GetMaxElementDim() == 1)
 			st->node_value_vectorArea[0] *= m_msh->nod_vector[nod_val->geo_node_number]->X(); //2pi is mulitplicated during the integration process
-
-		st->st_node_ids.push_back(nod_val->geo_node_number);
-
-		
    }
+
+   if (st->getProcessDistributionType()==FiniteElement::RECHARGE)	//MW
+   {
+	   nod_val->setProcessDistributionType (st->getProcessDistributionType());
+   }
+
+   st->st_node_ids.push_back(nod_val->geo_node_number);
+
+   if (st->isConstrainedST())
+   {
+	   st->_constrainedSTNodesIndices.push_back(-1);
+	   for (std::size_t i(0); i < st->getNumberOfConstrainedSTs(); i++)
+		   st->pushBackConstrainedSTNode(i,false);
+   }
+
    //WW        group_vector.push_back(m_node_value);
    //WW        st_group_vector.push_back(st); //OK
    pcs->st_node_value.push_back(nod_val);         //WW
@@ -3146,7 +3249,6 @@ const int ShiftInNodeVector)
  **************************************************************************/
 void CSourceTermGroup::SetPLY(CSourceTerm* st, int ShiftInNodeVector)
 {
-	const bool ply_for_source = true; // 17.05.2013
 	CGLPolyline* old_ply (GEOGetPLYByName(st->geo_name));
 	if (old_ply) {
 		std::vector<long> ply_nod_vector;
@@ -3155,20 +3257,30 @@ void CSourceTermGroup::SetPLY(CSourceTerm* st, int ShiftInNodeVector)
 
 		double min_edge_length (m_msh->getMinEdgeLength());
 		m_msh->setMinEdgeLength (old_ply->epsilon);
-		m_msh->GetNODOnPLY(static_cast<const GEOLIB::Polyline*>(st->getGeoObj()), ply_nod_vector, ply_for_source);
+		m_msh->GetNODOnPLY(static_cast<const GEOLIB::Polyline*>(st->getGeoObj()), ply_nod_vector, true);
 		m_msh->setMinEdgeLength (min_edge_length);
 
 		if (st->isCoupled())
 			SetPolylineNodeVectorConditional(st, ply_nod_vector, ply_nod_vector_cond);
 		
+		SetPolylineNodeValueVector(st, ply_nod_vector, ply_nod_vector_cond, ply_nod_val_vector);
 
 		if (st->distribute_volume_flux)   // 5.3.07 JOD
 			DistributeVolumeFlux(st, ply_nod_vector, ply_nod_val_vector);
+
 		st->st_node_ids.clear();
 		st->st_node_ids.resize(ply_nod_vector.size());
 		st->st_node_ids = ply_nod_vector;
 
-		SetPolylineNodeValueVector(st, ply_nod_vector, ply_nod_vector_cond, ply_nod_val_vector);
+		if (st->isConstrainedST())
+		{
+			for (std::size_t i(0); i < st->st_node_ids.size(); i++)
+			{
+				st->_constrainedSTNodesIndices.push_back(-1);
+				for (std::size_t i(0); i < st->getNumberOfConstrainedSTs(); i++)
+					st->pushBackConstrainedSTNode(i, false);
+			}
+		}
 
 		st->SetNodeValues(ply_nod_vector, ply_nod_vector_cond, ply_nod_val_vector, ShiftInNodeVector);
 	} // end polyline
@@ -3266,6 +3378,20 @@ void CSourceTermGroup::SetSFC(CSourceTerm* m_st, const int ShiftInNodeVector)
 
 	  if (m_st->distribute_volume_flux)   // 5.3.07 JOD
 		  DistributeVolumeFlux(m_st, sfc_nod_vector, sfc_nod_val_vector);
+
+	  m_st->st_node_ids.clear();
+	  m_st->st_node_ids.resize(sfc_nod_vector.size());
+	  m_st->st_node_ids = sfc_nod_vector;
+
+	  if (m_st->isConstrainedST())
+	  {
+		  for (std::size_t i(0); i < m_st->st_node_ids.size(); i++)
+		  {
+			  m_st->_constrainedSTNodesIndices.push_back(-1);
+			  for (std::size_t i(0); i < m_st->getNumberOfConstrainedSTs(); i++)
+				  m_st->pushBackConstrainedSTNode(i, false);
+		  }
+	  }
 
       m_st->SetNodeValues(sfc_nod_vector, sfc_nod_vector_cond,
          sfc_nod_val_vector, ShiftInNodeVector);
@@ -3611,7 +3737,8 @@ void CSourceTermGroup::SetPolylineNodeValueVector(CSourceTerm* st,
 	}
 	if (distype == FiniteElement::CONSTANT_NEUMANN
 			|| distype == FiniteElement::LINEAR_NEUMANN
-			|| distype == FiniteElement::GREEN_AMPT)
+			|| distype == FiniteElement::GREEN_AMPT
+			|| distype==FiniteElement::RECHARGE)	//MW
 	{
 		if (m_msh->GetMaxElementDim() == 1) // 1D  //WW MB
 			st->DomainIntegration(m_msh, ply_nod_vector,
@@ -3653,6 +3780,14 @@ void CSourceTermGroup::SetPolylineNodeValueVector(CSourceTerm* st,
 
 	if (st->isCoupled() && st->node_averaging)
 		AreaAssembly(st, ply_nod_vector_cond, ply_nod_val_vector);
+
+	if (distype==FiniteElement::RECHARGE)	//MW
+	{
+		CRFProcess* m_pcs = PCSGet(pcs_type_name);
+		MshEditor::sortNodesLexicographically(m_pcs->m_msh);
+
+		st->setProcessDistributionType (st->getProcessDistributionType());
+	}
 }
 
 
@@ -3741,9 +3876,11 @@ void CSourceTermGroup::SetSurfaceNodeValueVector(CSourceTerm* st,
    // neumann, Green-Ampt, Philip
    //	if (st->dis_type == 3 || st->dis_type == 4 || st->dis_type == 10
    //				|| st->dis_type == 11) {
-                                                  /*|| st->getProcessDistributionType() == PHILIP */
-   if (st->getProcessDistributionType() == FiniteElement::CONSTANT_NEUMANN || st->getProcessDistributionType() == FiniteElement::LINEAR_NEUMANN
-      || st->getProcessDistributionType() == FiniteElement::GREEN_AMPT)
+   /*|| st->getProcessDistributionType() == PHILIP */
+   if (st->getProcessDistributionType() == FiniteElement::CONSTANT_NEUMANN
+		   || st->getProcessDistributionType() == FiniteElement::LINEAR_NEUMANN
+		   || st->getProcessDistributionType() == FiniteElement::GREEN_AMPT
+		   || st->getProcessDistributionType() == FiniteElement::RECHARGE)
    {
       if (m_msh->GetMaxElementDim() == 2)         // For all meshes with 1-D or 2-D elements
          st->DomainIntegration(m_msh, sfc_nod_vector, sfc_nod_val_vector);
@@ -3788,10 +3925,16 @@ void CSourceTermGroup::DistributeVolumeFlux(CSourceTerm* st, std::vector<long> c
 		std::cout << "GEO_TYPE not supported in CSourceTermGroup::DistributeVolumeFlux()" << "\n";
 
 	for(int i=0; i<(int)nod_val_vector_area.size();i++)
-	   area +=nod_val_vector_area[i];
-     	 
-	for(int i=0; i<(int)nod_val_vector.size();i++)
-       nod_val_vector[i] /= area;
+		area +=nod_val_vector_area[i];
+	if(area>0)
+	{
+		for(int i=0; i<(int)nod_val_vector.size();i++)
+			nod_val_vector[i] /= area;
+	}
+	else
+	{
+		std::cout << "Using the geometric object " << st->geo_name << " does not find any nearby nodes. No ST applied there!" << std::endl;
+	}
 
 }
 
@@ -3873,6 +4016,10 @@ void CSourceTerm::SetNodeValues(const std::vector<long>& nodes, const std::vecto
          m_nod_val->node_area = node_value_vectorArea[i];
       }
 
+      m_nod_val->setSTVectorIndex(i);
+      m_nod_val->setSTVectorGroup(this->getSTVectorGroup());
+      if(st_vector[m_nod_val->getSTVectorGroup()]->isConstrainedST())
+         st_vector[m_nod_val->getSTVectorGroup()]->setConstrainedSTNodesIndex(m_nod_val->geo_node_number, m_nod_val->getSTVectorIndex());
       _pcs->st_node_value.push_back(m_nod_val);   //WW
       _pcs->st_node.push_back(this);              //WW
    }                                              // end nodes

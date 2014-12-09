@@ -39,6 +39,9 @@ public:
 	/// Returns the surface nodes of a layered mesh.
 	static std::vector<GEOLIB::PointWithID*> getSurfaceNodes(const MeshLib::CFEMesh &mesh);
 
+	/// MW: populate sort nodes vector
+	static void sortNodesLexicographically(MeshLib::CFEMesh *mesh);
+
 	/// Returns the 2d-element mesh representing the surface of the given layered mesh.
 	static MeshLib::CFEMesh* getMeshSurface(const MeshLib::CFEMesh &mesh);
 

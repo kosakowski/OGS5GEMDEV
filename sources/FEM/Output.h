@@ -127,7 +127,7 @@ public:
 	void ELEWriteSFC_TEC();               //OK
 	void ELEWriteSFC_TECHeader(std::fstream&); //OK
 	void ELEWriteSFC_TECData(std::fstream&); //OK
-	//void CalcELEFluxes();                 // removed by JOD 
+	void CalcELEFluxes();
 	void ELEWritePLY_TEC();               //OK
 	void ELEWritePLY_TECHeader(std::fstream&); //OK
 	void ELEWritePLY_TECData(std::fstream&); //OK

@@ -1926,4 +1926,3 @@ void SFCAssignColors()
 		m_sfc->AssignColor();
 	}
 }
-

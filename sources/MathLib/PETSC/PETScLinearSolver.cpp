@@ -35,8 +35,8 @@ PETScLinearSolver:: ~PETScLinearSolver()
   if(global_x)
     delete []  global_x;
 
-  PetscPrintf(PETSC_COMM_WORLD,"\n>>Number of Unknows: %d", m_size);
-  PetscPrintf(PETSC_COMM_WORLD,"\n>>Elapsed time in linear solver: %fs", time_elapsed);
+  PetscPrintf(PETSC_COMM_WORLD,"\tNumber of Unknows: %d", m_size);
+  PetscPrintf(PETSC_COMM_WORLD,"\n\tElapsed time in linear solver: %f s\n", time_elapsed);
 }
 
 void PETScLinearSolver::Init(const int *sparse_index)
@@ -143,9 +143,14 @@ void PETScLinearSolver::Config(const PetscReal tol, const PetscInt maxits, const
    sol_type = lsol;
    pc_type = prec_type; 
 
-
    KSPCreate(PETSC_COMM_WORLD,&lsolver);
+
+#if (PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR > 4)
+   KSPSetOperators(lsolver, A, A);
+#else
    KSPSetOperators(lsolver, A, A,DIFFERENT_NONZERO_PATTERN);
+#endif
+
    KSPSetType(lsolver,lsol);
 
    KSPGetPC(lsolver, &prec);
@@ -230,6 +235,12 @@ int PETScLinearSolver::Solver()
    PetscGetTime(&v1);
 #endif
    
+#if (PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR > 4)
+   KSPSetOperators(lsolver, A, A);
+#else
+   KSPSetOperators(lsolver, A, A, DIFFERENT_NONZERO_PATTERN);
+#endif
+
    KSPSolve(lsolver, b, x);
   
    KSPGetConvergedReason(lsolver,&reason); //CHKERRQ(ierr);

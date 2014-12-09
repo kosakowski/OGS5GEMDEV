@@ -481,42 +481,51 @@ using namespace petsc_group;
 using namespace std;
 using namespace MeshLib;
 using namespace FiniteElement;
-/*!
+/*
    Initialize the RHS array of the system of equations with the previous solution.
 
    03.2012. WW
 */
 void CRFProcess::InitializeRHS_with_u0(const bool quad)
 {
-  int j, ish;
+    initializeRHS_with_u0( 0, m_msh->getNumNodesLocal() );
+  
+    if(quad)
+    {
+        initializeRHS_with_u0( m_msh-> GetNodesNumber(false), 
+                  static_cast<int>(m_msh->getLargestActiveNodeID_Quadratic()) );   
+    }
+    
+    eqs_new->AssembleUnkowns_PETSc();
+ }
+
+void CRFProcess::initializeRHS_with_u0(const int  min_id, const int max_id)
+{
   vector<int> ix;
   vector<double> val;
   int nidx1; 
 
-  int  g_nnodes = m_msh->getNumNodesLocal(); //GetNodesNumber(false);
-  if(quad)
-      g_nnodes = m_msh->getNumNodesLocal_Q();
-  const int size = g_nnodes * pcs_number_of_primary_nvals;
+    const int size = (max_id - min_id) * pcs_number_of_primary_nvals;
   ix.resize(size);
   val.resize(size);
 
+    int counter = 0;
   for (int i = 0; i < pcs_number_of_primary_nvals; i++)
      {
        //new time
        nidx1 = GetNodeValueIndex(pcs_primary_function_name[i]) + 1;
-       for (j = 0; j < g_nnodes; j++) 
+       for (int j = min_id; j < max_id; j++) 
 	 {
-	   ish = pcs_number_of_primary_nvals*j + i;
-	   ix[ish] = pcs_number_of_primary_nvals*m_msh->Eqs2Global_NodeIndex[j] + i;
-	   val[ish] = GetNodeValue(j, nidx1);
+          ix[counter] = pcs_number_of_primary_nvals*m_msh->Eqs2Global_NodeIndex[j] + i;
+          val[counter] = GetNodeValue(j, nidx1);
+          counter++;
 	 }
      }
   // Assign u0 to x
   eqs_new->setArrayValues(0, size, &ix[0], &val[0], INSERT_VALUES);
-  eqs_new->AssembleUnkowns_PETSc();
  }
 
-/*!
+/*
     Parallel defintion of this function for DDC by node
 
     WW 03.2012

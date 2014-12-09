@@ -156,6 +156,54 @@ std::vector<GEOLIB::PointWithID*> MshEditor::getSurfaceNodes(const MeshLib::CFEM
 	return surface_pnts;
 }
 
+
+void MshEditor::sortNodesLexicographically(MeshLib::CFEMesh *mesh)
+{
+
+	if(mesh->nodes_are_sorted)
+		return;
+
+	const std::vector<MeshLib::CNode*> &mesh_nodes(mesh->getNodeVector());
+
+	const size_t nNodes (mesh_nodes.size());
+	std::vector<GEOLIB::PointWithID*> nodes;
+	std::vector<size_t> perm;
+	for (size_t j(0); j<nNodes; j++)
+	{
+		nodes.push_back(new GEOLIB::PointWithID(mesh_nodes[j]->getData(), mesh_nodes[j]->GetIndex()));
+		perm.push_back(j);
+	}
+
+	Quicksort<GEOLIB::PointWithID*> (nodes, 0, nodes.size(), perm);
+
+	std::vector<size_t>test;
+	for (size_t j(0); j<nNodes; j++)
+	{
+		mesh->sorted_nodes.push_back(nodes[j]->getID());
+	}
+
+	// get x-y-coordinate intervals
+	const double eps (std::numeric_limits<double>::epsilon());
+	mesh->xy_change.push_back(-1);		//virtual last top node for reference to first bottom node
+	for (size_t k(1); k < nNodes; k++)
+	{
+		const GEOLIB::PointWithID& p0 (*(nodes[k - 1]));
+		const GEOLIB::PointWithID& p1 (*(nodes[k]));
+		if (fabs (p0[0] - p1[0]) > eps || fabs (p0[1] - p1[1]) > eps)
+			mesh->xy_change.push_back(k - 1);
+	}
+	// Add last point
+	mesh->xy_change.push_back(nNodes - 1);
+
+	mesh->nodes_are_sorted=true;
+
+	const std::size_t size(nodes.size());
+	for (std::size_t j(0); j<size; ++j)
+	    delete nodes[j]; 
+
+}
+
+
 MeshLib::CFEMesh* MshEditor::getMeshSurface(const MeshLib::CFEMesh &mesh)
 {
 	std::cout << "Extracting mesh surface..." << "\n";

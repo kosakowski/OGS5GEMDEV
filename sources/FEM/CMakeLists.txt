@@ -5,6 +5,7 @@ set( SOURCES
     StepperBulischStoer.h
 	BoundaryCondition.h
 	break.h
+	Constrained.h
 	conversion_rate.h
 	display.h
 	eos.h

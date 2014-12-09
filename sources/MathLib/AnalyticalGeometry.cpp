@@ -148,6 +148,16 @@ bool lineSegmentsIntersect (const GEOLIB::Polyline* ply,
 	return false;
 }
 
+double calcTriangleArea(GEOLIB::Point const& a,
+	GEOLIB::Point const& b, GEOLIB::Point const& c)
+{
+	double const u[3] = {c[0]-a[0], c[1]-a[1], c[2]-a[2]};
+	double const v[3] = {b[0]-a[0], b[1]-a[1], b[2]-a[2]};
+	double w[3];
+	MathLib::crossProd(u, v, w);
+	return 0.5 * (sqrt(MathLib::scpr(w,w,3)));
+}
+
 bool isPointInTriangle (const double q[3], const double a[3], const double b[3], const double c[3],
 	double eps)
 {

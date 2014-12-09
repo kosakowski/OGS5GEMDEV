@@ -100,7 +100,5 @@ double PITZdata::pitzer_parameters(double T, double P, string param_switch){
 	}
 
 	else return res;
-
-
-
 }
+

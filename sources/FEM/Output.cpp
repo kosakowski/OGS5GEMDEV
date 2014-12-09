@@ -2695,9 +2695,8 @@ void COutput::ELEWriteSFC_TECData(fstream &tec_file)
    CGLPoint is fetched, but the pointer is never used
    07/2010 TF substituted GEOGetPLYByName
    09/2010 TF substituted pcs_type_name
-   11/2014 removed by JOD, replaced by TOTAL_FLUX calculation
 **************************************************************************/
-/*void COutput::CalcELEFluxes()
+void COutput::CalcELEFluxes()
 {
 	double Test[5];
 
@@ -2736,9 +2735,9 @@ void COutput::ELEWriteSFC_TECData(fstream &tec_file)
 			Header[1] = "q_Phase2";
 
 			pcs->CalcELEFluxes(static_cast<const GEOLIB::Polyline*> (getGeoObj()), PhaseFlux);
-			if ((pcs_type == FiniteElement::LIQUID_FLOW) ||  (pcs_type == FiniteElement::GROUNDWATER_FLOW) || (pcs_type == FiniteElement::FLUID_FLOW))
+			if ((pcs_type == FiniteElement::GROUNDWATER_FLOW) || (pcs_type == FiniteElement::FLUID_FLOW))
 			{
-				//ELEWritePLY_TEC();
+				ELEWritePLY_TEC();
 				f_n_sum = PhaseFlux[0];
 				TIMValue_TEC(f_n_sum);
 			}
@@ -2805,7 +2804,6 @@ void COutput::ELEWriteSFC_TECData(fstream &tec_file)
 		for (size_t j = 0; j < fem_msh_vector[i]->ele_vector.size(); j++)
 			fem_msh_vector[i]->ele_vector[j]->MarkingAll(true);
 }
-*/
 
 void COutput::ELEWritePLY_TEC()
 {
@@ -2877,17 +2875,6 @@ void COutput::ELEWritePLY_TECData(fstream &tec_file)
 {
 	//	CRFProcess* pcs = PCSGet(pcs_type_name);
 	CRFProcess* pcs = PCSGet(getProcessType());
-	/*int f_eidx[3];
-	f_eidx[0] = pcs->GetElementValueIndex("FLUX_X");
-	f_eidx[1] = pcs->GetElementValueIndex("FLUX_Y");
-	f_eidx[2] = pcs->GetElementValueIndex("FLUX_Z");
-	for (size_t i = 0; i < 3; i++)
-		if (f_eidx[i] < 0)
-		{
-			cout <<
-			"Fatal error in CRFProcess::CalcELEFluxes(CGLPolyline*m_ply) - abort";
-			abort();
-		}*/
 	int v_eidx[3];
 	CRFProcess* m_pcs_flow = NULL;
 

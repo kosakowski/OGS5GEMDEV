@@ -1355,17 +1355,8 @@ void CFiniteElementVec::GlobalAssembly_Stiffness()
    double *local_vec_asy = NULL;
    petsc_group::PETScLinearSolver *eqs = pcs->eqs_new;
 
-#define n_assmb_petsc_test
-#ifdef assmb_petsc_test
-  char rank_char[10];
-  sprintf(rank_char, "%d", eqs->getMPI_Rank());
-  string fname = FileName + rank_char + "_e_matrix.txt";
-  ofstream os_t(fname.c_str(), ios::app);
-  os_t<<"\n=================================================="<<"\n";
-#endif
-
-  if(act_nodes_h != nnodesHQ)
-    {
+   if(act_nodes_h != nnodesHQ)
+   {
       m_dim = act_nodes_h * dof;
       n_dim = nnodesHQ * dof;
 
@@ -1414,23 +1405,8 @@ void CFiniteElementVec::GlobalAssembly_Stiffness()
               {
                  local_matrix_asy[i*dim_full +j] += loc_dymass[i_full + j]; 
               }
-
-	      //TEST
-#ifdef assmb_petsc_test
-	      os_t<<"("<<local_idx[in]<<") "<<local_matrix_asy[i*dim_full +j]<<" ";
-#endif //#ifdef assmb_petsc_test
-
-	      
 	    }
-	  
-	  //TEST
-#ifdef assmb_petsc_test
-	  os_t<<"\n";
-#endif //#ifdef assmb_petsc_test
-
-	}
-    
-      
+	}      
     }
   else
     {
@@ -1454,62 +1430,10 @@ void CFiniteElementVec::GlobalAssembly_Stiffness()
 	}     
     }
 
-
-
-    //TEST
-#ifdef assmb_petsc_test
-      	{
-      	  os_t<<"\n------------------"<<act_nodesHQ * dof<<"\n";
-       StiffMatrix->Write(os_t);
-       RHS->Write(os_t);
-       
-       os_t<<"Node ID: ";
-       for( i=0; i<nnodesHQ ; i++)
-	 {
-	   os_t<<MeshElement->nodes[i]->GetEquationIndex()<<" ";
-	 }
-       os_t<<"\n";
-       os_t<<"Act. Local ID: ";
-       for( i=0; i<act_nodes_h ; i++)
-	 {
-	   os_t<<local_idx[i]<<" ";
-	 }
-       os_t<<"\n";
-         os_t<<"Act. Global ID:";
-       for(i=0; i<act_nodes_h * dof; i++)
-	 {
-	   os_t<<idxm[i]<<" ";
-	 }
-       os_t<<"\n";
-       	}
-	os_t.close();
-#endif //ifdef assmb_petsc_test
-
    eqs->addMatrixEntries(m_dim, idxm, n_dim, idxn, local_matrix_asy);
    eqs->setArrayValues(1, m_dim, idxm, local_vec_asy);
   //eqs->AssembleRHS_PETSc();
   //eqs->AssembleMatrixPETSc(MAT_FINAL_ASSEMBLY );
-
-
-   /*
-   //TEST OUT
-   //Stiffness->Write();
-   if(pcs->type / 40 != 1) // Not monolithic scheme
-     return;
-
-   if(PressureC)
-   {
-      i = 0;                    // phase
-      if(Flow_Type == 2)        // Multi-phase-flow
-	i = 1;
-      GlobalAssembly_PressureCoupling(PressureC, f2 * biot, i);
-   }
-   // H2: p_g- S_w*p_c
-   if(PressureC_S)
-      GlobalAssembly_PressureCoupling(PressureC_S, -f2 * biot, 0);
-   if(PressureC_S_dp)
-      GlobalAssembly_PressureCoupling(PressureC_S_dp, -f2 * biot, 0);
-   */
 }
 #else
 /***************************************************************************
@@ -4115,16 +4039,15 @@ ElementValue_DM::~ElementValue_DM()
  **************************************************************************/
 double CFiniteElementVec:: CalcStrain_v()
 {
-	int i;
-	for (i = 0; i < ns; i++)
-		dstrain[i] = 0.0;
-	//
-	for(i = 0; i < nnodesHQ; i++)
-		dstrain[i] += pcs->GetNodeValue(nodes[i],Idx_Strain[0]) * shapefctHQ[i];
+	for (int j(0); j<ns; j++) {
+		dstrain[j] = 0.0;
+		for(int i = 0; i < nnodesHQ; i++)
+			dstrain[j] += pcs->GetNodeValue(nodes[i],Idx_Strain[j]) * shapefctHQ[i];
+	}
 	double val = 0;
-	for (i = 0; i < 3; i++)
+	for (int i = 0; i < 3; i++)
 		val += dstrain[i] * dstrain[i];
-	for (i = 3; i < ns; i++)
+	for (int i = 3; i < ns; i++)
 		val += 0.5 * dstrain[i] * dstrain[i];
 
 	return sqrt(2.0 * val / 3.);

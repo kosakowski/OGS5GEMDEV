@@ -89,6 +89,12 @@ public:
 	double multiply_coef;                 //YD
 	double max_time_step;                 //YD
 	double min_time_step;
+	double initial_step_size;
+	IterationType::type adapt_itr_type;
+	size_t last_rejected_timestep;
+	size_t stay_steps_after_rejection;
+
+
 	//
 	//WW double minish; // JOD
 	//WW int sub_steps; // JOD 4.7.10

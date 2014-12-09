@@ -23,9 +23,9 @@ GaussAlgorithm::GaussAlgorithm (Matrix <double> &A) :
 		double t = fabs(_mat(k, k));
 		_perm[k] = k;
 		for (i = k + 1; i < nr; i++)
-			if (fabs(_mat(i,k)) > t)
+			if (std::abs(_mat(i,k)) > t)
 			{
-				t = _mat(i,k);
+				t = std::abs(_mat(i,k));
 				_perm[k] = i;
 			}
 

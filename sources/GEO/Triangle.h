@@ -84,6 +84,11 @@ public:
 	 * @return true, if the point is into the projected triangle
 	 */
 	bool containsPoint2D (const double* pnt) const;
+	void calculateNormal();
+	double const* getNormal() const
+	{
+		return _normal_vector;
+	}
 
 protected:
 	/** a vector of pointers to points */
@@ -92,6 +97,7 @@ protected:
 	size_t _pnt_ids[3];
 	bool _initialized;
 	double _longest_edge;
+	double _normal_vector[3];
 };
 
 void getPlaneCoefficients(Triangle const & tri, double c[3]);

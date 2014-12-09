@@ -7,7 +7,7 @@ SOURCE_LOCATION="$SOURCE_LOCATION/../.."
 while getopts "a:d:m" opt; do
 	case $opt in
 		a)
-			source $SOURCE_LOCATION/scripts/base/architecture_option_win.sh
+			source "$SOURCE_LOCATION/scripts/base/architecture_option_win.sh"
 			;;
 		d)
 			BUILD_LOCATION="$SOURCE_LOCATION/$OPTARG"
@@ -26,9 +26,9 @@ while getopts "a:d:m" opt; do
 	esac
 done
 
-source $SOURCE_LOCATION/scripts/base/check_architecture_option_win.sh
-source $SOURCE_LOCATION/scripts/base/check_and_cleanup_build_directory.sh
-source $SOURCE_LOCATION/scripts/base/configure_compiler.sh
+source "$SOURCE_LOCATION/scripts/base/check_architecture_option_win.sh"
+source "$SOURCE_LOCATION/scripts/base/check_and_cleanup_build_directory.sh"
+source "$SOURCE_LOCATION/scripts/base/configure_compiler.sh"
 
 # Executables will be copied to Release/
 mkdir -p Release
@@ -83,8 +83,8 @@ do
 	mkdir -p $build_dir && cd $build_dir
 
 	# Run CMake
-	cmake -D$config_cmake=ON -DOGS_DONT_USE_QT=ON -DCMAKE_BUILD_TYPE=Release $cmake_args -G "$CMAKE_GENERATOR" $SOURCE_LOCATION
-	cmake -G "$CMAKE_GENERATOR" $SOURCE_LOCATION
+	cmake -D$config_cmake=ON -DOGS_DONT_USE_QT=ON -DCMAKE_BUILD_TYPE=Release $cmake_args -G "$CMAKE_GENERATOR" "$SOURCE_LOCATION"
+	cmake -G "$CMAKE_GENERATOR" "$SOURCE_LOCATION"
 
 	# Build
 	cmake --build . --config Release $BUILD_ARGS

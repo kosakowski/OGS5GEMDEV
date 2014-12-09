@@ -708,7 +708,7 @@ bool CVTK::WriteNodalValue(std::fstream &fin,
 					{
 						fin << m_pcs->GetNodeValue(
 						        msh->nod_vector[j]->GetIndex(), ix) << " ";
-                        if (!isXZplane) {
+                        if (m_pcs->getProcessType()==FiniteElement::FLUID_MOMENTUM || !isXZplane) {
                             fin << m_pcs->GetNodeValue(
                                 msh->nod_vector[j]->GetIndex(), iy) << " ";
                             fin << m_pcs->GetNodeValue(

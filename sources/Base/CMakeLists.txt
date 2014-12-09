@@ -16,6 +16,7 @@ set( HEADERS
 
 set( SOURCES
 	DateTools.cpp
+	FileTools.cpp
 	MemWatch.cpp
 	StringTools.cpp
 	binarySearch.cpp
