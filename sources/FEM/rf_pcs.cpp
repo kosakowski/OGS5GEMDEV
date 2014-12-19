@@ -5463,6 +5463,7 @@ void CRFProcess::AddFCT_CorrectionVector()
 				val = this->m_num->fct_const_alpha * f;
 
 #if defined(USE_PETSC)
+
 			if (i < m_msh->getNumNodesLocal())
 				eqs_new->add_bVectorEntry(i_global, val, ADD_VALUES);
 #else
@@ -5639,11 +5640,14 @@ void CRFProcess::GlobalAssembly()
 #ifdef GEM_REACT
 		if( getProcessType() == FiniteElement::MASS_TRANSPORT && aktueller_zeitschritt > 1)
 		{ // JT->KG. New coupling system.
-			if( _problem->GetCPLMaxIterations() > 1 || // Then there is a coupling on all processes
-			   (this->pcs_is_cpl_overlord && this->m_num->cpl_max_iterations > 1) || // This process (the overlord) controls coupling for another (the underling) process.
-			   (this->pcs_is_cpl_underling && this->cpl_overlord->m_num->cpl_max_iterations > 1)) // This process (the underling) has a coupling with a controlling (the overlord) process
-			{
-				//IncorporateSourceTerms_GEMS();
+		  // KG: the following coupling is not used, as picard iteration for mass transport is not yet implemented...I use an own coupling..sorry
+//			if( _problem->GetCPLMaxIterations() > 1 || // Then there is a coupling on all processes
+//			   (this->pcs_is_cpl_overlord && this->m_num->cpl_max_iterations > 1) || // This process (the overlord) controls coupling for another (the underling) process.
+//			   (this->pcs_is_cpl_underling && this->cpl_overlord->m_num->cpl_max_iterations > 1)) // This process (the underling) has a coupling with a controlling (the overlord) process
+                 // KG44: GEMS spedific coupling!
+		  if (m_vec_GEM->flag_iterative_scheme == 1) // Picard iteration not in the num file..for this in the gem file!
+		        {
+				IncorporateSourceTerms_GEMS();
 			}
 		}
 #endif
@@ -14024,38 +14028,58 @@ CRFProcess* PCSGetMass(size_t component_number)
 #endif
 #endif
 
+/** IncorporateSourceTerms_GEMS KG44 Dez2014
+ * This routine adds chemical rates to RHS for Picard itarion between transport and chemistry (with GEMS)
+ */ 
+
 #ifdef GEM_REACT
 	void CRFProcess::IncorporateSourceTerms_GEMS(void)
 	{
 		// Initialization
-		long it;                  // iterator
 		long N_Nodes;             // Number of Nodes
-		int nDC;                  // Number of mass transport components.
+		int nIC;                  // Number of mass transport components.
 		int i = 0;                // index of the component
-
+		long bc_eqs_index;
+		double value;
 		// Get a vector pointing to the REACT_GEM class
+#if !defined(USE_PETSC)
+	double* eqs_rhs;
+#ifdef NEW_EQS
+	eqs_rhs = eqs_new->b;
+#else
+	eqs_rhs = eqs->b;
+#endif
+#endif
+	
+
+
 		if (m_vec_GEM)
 		{
 			// Get needed informations.----------------------------
 			// Number of Nodes
 			N_Nodes = (long) m_msh->GetNodesNumber(false);
 			// Number of DC
-			nDC = m_vec_GEM->nDC;
+			nIC = m_vec_GEM->nIC;
 			// Identify which PCS it is and its sequence in mcp.
 			i = this->pcs_component_number;
 			// ----------------------------------------------------
 
 			// Loop over all the nodes-----------------------------
-			for ( it = 0; it <  N_Nodes /*Number of Nodes*/; it++ )
+			for ( size_t it = 0; it <  N_Nodes /*Number of Nodes*/; it++ )
 			{
-				// Adding the rate of concentration change to the right hand side of the equation.
-#ifdef NEW_EQS                           //15.12.2008. WW
-				eqs_new->b[it] -= m_vec_GEM->m_xDC_Chem_delta[it * nDC + i] / Tim->time_step_length;
-#elif defined(USE_PETSC)
-				// eqs_new->b[it] -= m_vec_GEM->m_xDC_Chem_delta[it * nDC + i] / Tim->time_step_length;				
+			 value= m_vec_GEM->m_bIC_Chem_delta[it * nIC + i] / Tim->time_step_length; // divison of m_bIC_Chem_delta by time gives a rate for each node
+//			 value= m_vec_GEM->m_bIC_Chem_delta[it * nIC + i]/ Tim->time_step_length; 
+			 
+
+#if defined(USE_PETSC)
+			if (it < m_msh->getNumNodesLocal()) {
+				const size_t i_global = FCT_GLOB_ADDRESS(i);
+				eqs_new->add_bVectorEntry(i_global, value, ADD_VALUES);
+			}
 #else
-				eqs->b[it] -= m_vec_GEM->m_xDC_Chem_delta[it * nDC + i] / Tim->time_step_length;
-#endif
+                        eqs_rhs[it] += value;
+#endif			 
+
 			}
 			// ----------------------------------------------------
 		}

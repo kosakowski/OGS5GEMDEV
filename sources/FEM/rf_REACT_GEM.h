@@ -96,7 +96,7 @@ public:
     // previous time step DC values
     double *m_xDC_pts;                          // previous time step Concentration;
     double *m_xDC_MT_delta;                     // delta C from Mass Transport;
-    double *m_xDC_Chem_delta;                   // delta C from Chemistry;
+    double *m_xDC_Chem_delta, *m_bIC_Chem_delta;                   // delta C from Chemistry;
     // previous time step IC values
     double *m_soluteB_pts, *m_bIC_pts;
     // previous time step kinetic values
@@ -159,8 +159,9 @@ public:
     int initialized_flag;                       //0 - not initialized 1 - initialized
     int flag_iterative_scheme;                  // 0 - sequential non-iterative scheme;
     // 1 - standard iterative scheme;
-    // 2 - symetric iterative scheme;
-    // 3 - strang splitting scheme;
+    int max_gems_iteration_loop;  // maximum number of iterations
+    double  iteration_eps;  // leave iteration if this is achieved
+    
     int heatflag;                               //0-initialized and not heat transport;1-heat_transport;
     int flowflag;                               //0-initialized;1-GROUNDWATER_FLOW;2-LIQUID_FLOW;3-RICHARDS_FLOW;4-FLOW;
     int flag_porosity_change;                   //0-porosity change not coupled into transport; 1=coupled;
@@ -184,6 +185,7 @@ public:
     short GetInitialReactInfoFromMassTransport(int timelevel);
     short GetReactInfoFromMassTransport(int timelevel);
     short SetReactInfoBackMassTransport(int timelevel);
+    short SetReactInfoBackMassTransportPicardIteration(int timelevel);
     void GetReactInfoFromGEM(long in,  TNode* m_Node );
     void SetReactInfoBackGEM(long in,  TNode* m_Node );
     // necessary for reload with gems
@@ -206,12 +208,16 @@ public:
     /// Copy current values into previous time step values
     void CopyCurXDCPre ( void );
     void UpdateXDCChemDelta ( void );
+    void UpdatebICChemDelta ( void );
+    void ResetbICChemDelta ( void );
     void CopyCurBPre ( void );
-    double CalcSoluteBDelta ( long in );
+    double CalcSoluteBDelta ();
+    double CalcSoluteBDeltaNode ( long in );
     double m_diff_gems;
     void StoreOldSolutionAll ( );
     void RestoreOldSolutionAll ( );
     void RestoreOldSolutionNode ( long in );
+    short RestoreOldConcMasstransport_MT ( long node_Index);
     void CopyCurKineticsPre ( void );
     // struff related to charge
     double CalculateCharge (long in,int timelevel); //for a given node number in
