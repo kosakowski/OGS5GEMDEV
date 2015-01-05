@@ -106,7 +106,7 @@ REACT_GEM::REACT_GEM ( void )
 	flag_calculate_boundary_nodes = 0;                        // set to zero if boundary nodes should not change the porosity
 	m_max_failed_nodes = 5; //default number of max allowed nodes to fail
 	m_diff_gems = 0.0;
-
+        calc_limits=1; // default value if no iterative mode
 	gem_nThread = 1; // default number of threads
 	string tinit_path = " ";
 
@@ -121,8 +121,10 @@ REACT_GEM::REACT_GEM ( void )
 
 REACT_GEM::~REACT_GEM ( void )
 {
+
 	if ( initialized_flag > 0 )
 	{
+		delete [] gemThread ; //each mpi task creates gem_nThread workers
 		delete [] m_xDC;
 		delete [] m_gam;
 		delete [] m_xPH;
@@ -172,7 +174,9 @@ REACT_GEM::~REACT_GEM ( void )
 		delete [] m_soluteB;
 		delete [] m_chargeB;
 		delete [] m_chargeB_pre;
-
+		delete [] m_ICNL;
+		delete [] m_DCNL;
+                delete [] m_PHNL;
 
 
 
@@ -194,6 +198,10 @@ REACT_GEM::~REACT_GEM ( void )
 
 		m_flow_pcs = NULL;
 		m_kin.clear();
+                delete  gem_barrier_finish;
+		delete  gem_barrier_start;
+
+	  
 	}
 }
 
@@ -387,18 +395,28 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 		m_mPS = new double [nNodes * nPS];
 		m_bPS = new double [nNodes * nIC * nPS];
 
-		m_ICNL = new char [nIC][MaxICN]; // List of IC names in the system, [nIC]  of MaxICN length
-		m_DCNL = new char [nDC][MaxDCN]; // List of DC names in the system, [nDC] of MaxDCN length
-		m_PHNL = new char [nDC][MaxPHN]; // List of Phase names  [nPH]  of MaxPHN length
+		m_ICNL = new char [nIC] [MaxICN]; // List of IC names in the system, [nIC]  of MaxICN length
+		m_DCNL = new char [nDC] [MaxDCN]; // List of DC names in the system, [nDC] of MaxDCN length
+		m_PHNL = new char [nDC] [MaxPHN]; // List of Phase names  [nPH]  of MaxPHN length
 
-		// now fill the arrays for vtk output
 
-		m_ICNL = dCH->ICNL;
-
-		m_DCNL = dCH->DCNL;
-
-		m_PHNL = dCH->PHNL;
-
+		// now fill the arrays for vtk output...
+		  for( i=0; i< nIC; i++ )
+		  {
+		      std::memcpy( m_ICNL[i],dCH->ICNL[i] , MaxICN );
+		  }
+		  for( i=0; i< nDC; i++ )
+		  {
+		      std::memcpy(m_DCNL[i] , dCH->DCNL[i] , MaxDCN );
+		  }
+		  for( i=0; i< nPH; i++ )
+		  {
+		      std::memcpy( m_PHNL[i], dCH->PHNL[i] , MaxPHN );
+		  }
+		  
+//		       m_ICNL = dCH->ICNL;
+//		       m_DCNL = dCH->DCNL;
+//		       m_PHNL = dCH->PHNL;
 		// ------------------------
 		for ( in = 0; in < nNodes; in++ )
 		{
@@ -533,8 +551,10 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 				                                  Project_path));
 			}
 		}
+		delete m_Node;
 		return 0;                        //successed
 	}
+	delete m_Node;
 	return 1; //something went wrong
 }
 
@@ -548,15 +568,15 @@ short REACT_GEM::Init_RUN(string Project_path)
     double BCValue = 0.0;
     string cstr;
 
-    rwmutex.lock(); // make sure we do not interfere with the threads
-
     TNode* m_Node;
     // DATABR structure for exchange with GEMIPM
     DATACH* dCH;                            //pointer to DATACH
     DATABR* dBR;                            //pointer to DATABR
-
-    // Creating TNode structure accessible trough node pointer
+      // Creating TNode structure accessible trough node pointer
     m_Node = new TNode();
+    rwmutex.lock(); // make sure we do not interfere with the threads
+
+
     // Here we read the files needed as input for initializing GEMIPM2K
     // The easiest way to prepare them is to use GEMS-PSI code (GEM2MT module)
     if ( Load_Init_File ( Project_path, m_Node ) )
@@ -1645,7 +1665,7 @@ short REACT_GEM::RestoreOldConcMasstransport_MT ( long node_Index) //sets concen
 
 		}
 	}
-
+        delete [] charge_str;
 	return 1;
 }
 short REACT_GEM::SetBValue_MT ( long node_Index, int timelevel, double* m_soluteB, double* m_chargeB ) //sets concentrations and charges!
@@ -1703,7 +1723,7 @@ short REACT_GEM::SetBValue_MT ( long node_Index, int timelevel, double* m_solute
 
 		}
 	}
-
+        delete [] charge_str;
 	return 1;
 }
 
@@ -2737,7 +2757,6 @@ double REACT_GEM::CalculateCharge (long in,int timelevel) //for a given node num
     size_t i;
     double charge,dummy,sum_charge, * test_conc, *change, sum_change;
     char* mcomp_name;
-    test_conc= new double [nIC];
     change= new double [nIC];
     // loop over all Processes...identify mass transport process and add stored value for charge
     charge=0.0;
@@ -2760,58 +2779,10 @@ double REACT_GEM::CalculateCharge (long in,int timelevel) //for a given node num
 //    cout << " charge " << charge << " charge/sum_charges "<< charge/sum_charge << " total charge change " << sum_change << " charge/sum_charge " << charge/sum_change<<"\n";
 
 // DEBUG: no correction executed...
+    delete [] change;
+    
     return m_chargeB_pre[in*nIC+nIC-1];
-// now some corrections are tested..but they do not really work...pH is exploding once the corrections are executed....one really needs a good transport solver!
 
-    if (  (fabs(charge)>1.0e-8)  &&   (fabs(charge/sum_charge) > 1.0e-3))
-    {
-// do the charge correction only for dominating total changes more than 1/nIC
-        sum_charge=0.0; //this we need to adjust to the new weighting scheme
-        for (i=0; i<nIC-1; i++)
-        {
-            if (fabs(change[i]) > sum_charge/nIC)
-            {
-                sum_charge += fabs(m_chargeB_pre[in*nIC+i]);
-            }
-        }
-
-
-//EXPERIMENTAL now test a very simple and not mass-conservative method to "correct" for charged solution...
-        for (i=0; i<nIC-1; i++)
-        {
-            // not good...we map the error in Ba and Cl onto O and H which changes strongly pH ....
-            // simple averaging based on concentrations is not good!!!....strongest change in concentration from last to this timestep
-            if (fabs(change[i]) > sum_change/nIC)
-            {
-                if ((fabs(m_chargeB[in*nIC+i]) > 0.0))
-                {
-                    dummy= (charge * fabs(m_chargeB_pre[in*nIC+i])/sum_change); // the charge (weighted by overall charge) we have to add or remove
-                    test_conc[i]=m_soluteB[in*nIC+i]-dummy/(m_porosity[i]*m_chargeB[in*nIC+i]); //
-                }
-                else
-                    test_conc[i]=m_soluteB[in*nIC+i];
-                cout << "DEBUG Charge Correction "<< dummy << " old charge " << m_chargeB_pre[in*nIC+i] << " new charge " << test_conc[i]*(m_porosity[i]*m_chargeB[in*nIC+i]) << " total charge " << charge << " old conc " << m_soluteB[in*nIC+i] << " new conc " << test_conc[i]<< "\n";
-                // charge balance:
-            }
-            else
-            {
-                test_conc[i]=m_soluteB[in*nIC+i];
-            }
-        }
-        charge=0.0;
-        m_chargeB_pre[in*nIC+nIC-1]=0.0;
-        cout << "DEBUG resulting charge: " ;
-        for (i=0; i<nIC-1; i++)
-        {
-            m_soluteB[in*nIC+i]=test_conc[i] ;
-            dummy = (m_chargeB[in*nIC+i] * m_soluteB[in*nIC+i] * m_porosity[in]); //+=(charge/per mol * concentration * porosity
-            m_chargeB_pre[in*nIC+i]=dummy;
-            charge += dummy;
-        }
-        m_chargeB_pre[in*nIC+nIC-1]=charge;  //total charge! overwrite previous values
-    }
-    cout << m_chargeB_pre[in*nIC+nIC-1] << "\n";
-    return m_chargeB_pre[in*nIC+nIC-1];
 }
 
 void REACT_GEM::CalculateChargeFromGEMS (long in, TNode* m_Node)
@@ -4416,7 +4387,7 @@ void REACT_GEM::WriteVTKGEMValues ( fstream &vtk_file )
 
 	for ( j = 0; j < nIC; j++ )
 	{
-		vtk_file << "SCALARS " << m_ICNL[j] << " double 1" << "\n";
+		vtk_file << "SCALARS " << (m_ICNL[j]) << " double 1" << "\n";
 		vtk_file << "LOOKUP_TABLE default" << "\n";
 		//....................................................................
 		for ( k = 0; k < nNodes; k++ )
@@ -4436,7 +4407,7 @@ void REACT_GEM::WriteVTKGEMValues ( fstream &vtk_file )
 	// loop over speciation vector!
 	for ( i = 0; i < nDC; i++ )
 	{
-		vtk_file << "SCALARS " << m_DCNL[i] << " double 1" << "\n";
+		vtk_file << "SCALARS " << (m_DCNL[i]) << " double 1" << "\n";
 		vtk_file << "LOOKUP_TABLE default" << "\n";
 		//....................................................................
 		for ( j = 0; j < nNodes; j++ )
@@ -4853,7 +4824,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
                 REACT_GEM::ConcentrationToMass ( in,1); // I believe this is save for MPI
                 // now we calculate kinetic constraints for GEMS!
 		// for SNA this should be only done once per timestep!
-                REACT_GEM::CalcLimits ( in,t_Node);
+                if (calc_limits) REACT_GEM::CalcLimits ( in,t_Node);
                 //Get data
                 REACT_GEM::SetReactInfoBackGEM ( in,t_Node); // this should be also save for MPI
                 // take values from old B volume for comparison
@@ -5024,6 +4995,10 @@ if (in == 100)
         }
 #endif
     } // end of for loop....
+
+  // here delete memory
+  delete buffer;
+  delete t_Node;
 }
     
 double REACT_GEM::GetTimeOfDayDouble()

@@ -3101,10 +3101,12 @@ if (m_vec_GEM->flag_iterative_scheme == 1) // Picard iteration not in the num fi
 {
   max_gems_iteration_loop=m_vec_GEM->max_gems_iteration_loop;
   m_vec_GEM->ResetbICChemDelta();
+  m_vec_GEM->calc_limits=1;
 }
 else
 {
   max_gems_iteration_loop=1;
+  m_vec_GEM->calc_limits=1;
 }
   
 for (int gems_iteration_loop = 0; gems_iteration_loop < max_gems_iteration_loop; gems_iteration_loop++)
@@ -3230,14 +3232,14 @@ for (int gems_iteration_loop = 0; gems_iteration_loop < max_gems_iteration_loop;
 		 
 		 m_vec_GEM->Run_MainLoop(); // Run GEM to get initial values for coupled step
 		 // calculate difference vector
-		 cout << "GEMS: Picard iteration no " << gems_iteration_loop << " sum of max diff in b vector: " << m_vec_GEM->CalcSoluteBDelta() << " \n"; 
+//		 cout << "GEMS: Picard iteration no " << gems_iteration_loop << " sum of max diff in b vector: " << m_vec_GEM->CalcSoluteBDelta()/(m_vec_GEM->nNodes*m_vec_GEM->nIC) << " \n"; 
  		 // test for finishing loop
-                 if ( m_vec_GEM->CalcSoluteBDelta() <= m_vec_GEM->iteration_eps) break;
+                 if ( m_vec_GEM->CalcSoluteBDelta()/(m_vec_GEM->nNodes*m_vec_GEM->nIC) <= m_vec_GEM->iteration_eps) break;
 	         m_vec_GEM->UpdatebICChemDelta();		 
 		// Restore concentrations for Transport
 		m_vec_GEM->SetReactInfoBackMassTransportPicardIteration(m_time); //this restores only old concentrations
 		// update source terms for transport
-		 
+                  m_vec_GEM->calc_limits=0; // no further calculations for kinetics....first iteration is ok
 		 
 		}
 	}

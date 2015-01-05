@@ -119,6 +119,7 @@ public:
     double CementHydrationKinetics (double oldvalue,  long kin_phasenr, double dt ); // calculates cement hydration kinetics according ot Lothenbach and Wieland (2008=
     int *m_boundary;                            //holds marker for boundary nodes
     double max_kinetic_timestep;               // variable used for limiting time step
+    bool calc_limits;                          // do this for first Picard iteration
 
     // CRFProcess *m_pcs;                          // pointer to the PCS Class.
     CRFProcess *m_flow_pcs;                     // pointer to the flow PCS.
