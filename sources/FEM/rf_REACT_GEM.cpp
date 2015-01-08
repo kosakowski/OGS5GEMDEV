@@ -84,7 +84,7 @@ REACT_GEM::REACT_GEM ( void )
 	idx_water = -1;
 	idx_oxygen = -1;
 	idx_hydrogen = -1;
-
+        flag_concentrations_with_water=0;
 	initialized_flag = 0;
 	heatflag = 0;
 	flowflag = 0;
@@ -170,6 +170,8 @@ REACT_GEM::~REACT_GEM ( void )
 		delete [] m_Node_Volume;
 		delete [] m_gas_volume;
 		delete [] m_fluid_volume;
+		delete [] m_gas_volume_pts;
+		delete [] m_fluid_volume_pts;
 		delete [] m_fluid_density;
 		delete [] m_soluteB;
 		delete [] m_chargeB;
@@ -338,10 +340,12 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 		m_Node_Volume  = new double [nNodes];
 
 		m_fluid_volume  = new double [nNodes];
+		m_fluid_volume_pts  = new double [nNodes];
 
 		m_fluid_density  = new double [nNodes];
 
 		m_gas_volume  = new double [nNodes];
+		m_gas_volume_pts  = new double [nNodes];
 
 		m_porosity_Elem = new double [nElems];
 
@@ -442,8 +446,10 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 			m_porosity[in] = 0.0;
 			m_porosity_initial[in] = 0.0;
 			m_fluid_volume[in] = 0.0;
+			m_fluid_volume_pts[in] = 0.0;
 			m_fluid_density[in] = 1000.0;
 			m_gas_volume[in] = 0.0;
+			m_gas_volume_pts[in] = 0.0;
 
 			m_excess_water[in] = 0.0;
 			m_excess_gas[in] = 0.0;
@@ -1651,16 +1657,14 @@ short REACT_GEM::RestoreOldConcMasstransport_MT ( long node_Index) //sets concen
 					// m_pcs->eqs->b[node_Index] += m_xDC_Chem_delta[node_Index*nDC+i] / dt ;
 
 					m_pcs->SetNodeValue ( node_Index, m_pcs->GetNodeValueIndex ( str ) + 1,
-					                      m_pcs->GetNodeValue(node_Index,m_pcs->GetNodeValueIndex (
-					                              str ) + 0 ));
+//      					                      m_soluteB_pts[node_Index] );
+					                      m_pcs->GetNodeValue(node_Index,m_pcs->GetNodeValueIndex (str ) + 0) );
 
 				else
 
-					m_pcs->SetNodeValue ( node_Index,
-					                      m_pcs->GetNodeValueIndex (
-					                              str ) + 1,
-					                      m_pcs->GetNodeValue(node_Index,m_pcs->GetNodeValueIndex (
-					                              str ) + 0 ));
+					m_pcs->SetNodeValue ( node_Index, m_pcs->GetNodeValueIndex ( str ) + 1,
+//      					                      m_soluteB_pts[node_Index] );
+					                      m_pcs->GetNodeValue(node_Index,m_pcs->GetNodeValueIndex (str ) + 0) );
 					// needs to set charges for iterative scheme?
 
 		}
@@ -2202,392 +2206,410 @@ int REACT_GEM::CalcPorosity ( long in,  TNode* m_Node  )
 
 int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //attention second argument is not timestep. I is a flag that indicates if we deal with failed nodes!!!!...do not get data from GEMS for this nodes
 {
-	// converting the value from moles to the value in mol/m^3 water.
-	long i,j,k,ii;
-	int idx;
-	double gas_volume,fluid_volume;
-	double skal_faktor = 0.0,skal_faktor_gas = 0.0, saturation = 1.0;
-	DATACH* dCH;                            //pointer to DATACH
-	DATABR* dBR;
-	// Getting direct access to DataCH structure in GEMIPM2K memory
-	dCH = m_Node->pCSD();
-	if ( !dCH )
-	{
+    // converting the value from moles to the value in mol/m^3 water.
+    long i,j,k,ii;
+    int idx;
+    double gas_volume,fluid_volume;
+    double skal_faktor = 0.0,skal_faktor_gas = 0.0, saturation = 1.0;
+    DATACH* dCH;                            //pointer to DATACH
+    DATABR* dBR;
+    // Getting direct access to DataCH structure in GEMIPM2K memory
+    dCH = m_Node->pCSD();
+    if ( !dCH )
+    {
 #if defined(USE_PETSC)
-		MPI_Finalize();                   //make sure MPI exits
+        MPI_Finalize();                   //make sure MPI exits
 #endif
-		exit ( 1 );
-	}
-	// Getting direct access to work node DATABR structure which
-	// exchanges data between GEMIPM and FMT parts
-	dBR = m_Node->pCNode();
-	if ( !dBR )
-	{
+        exit ( 1 );
+    }
+    // Getting direct access to work node DATABR structure which
+    // exchanges data between GEMIPM and FMT parts
+    dBR = m_Node->pCNode();
+    if ( !dBR )
+    {
 #if defined(USE_PETSC)
-		MPI_Finalize();                   //make sure MPI exits
+        MPI_Finalize();                   //make sure MPI exits
 #endif
-		exit ( 1 );
-	}
-	// get the fluid volume
-	if ( i_failed )
-	{
-		fluid_volume = m_fluid_volume[in];
-		gas_volume = m_gas_volume[in];
-	}
-	else
-	{
-		fluid_volume = 0.0;
-		gas_volume = 0.0;
-		for ( k = 0; k < dCH->nPHb; k++ )
-		{
-			if ( dCH->ccPH[k] == 'a' )
-				fluid_volume += m_Node->Ph_Volume ( k );
-			if ( dCH->ccPH[k] == 'g' )
-				gas_volume += m_Node->Ph_Volume ( k );
+        exit ( 1 );
+    }
+    // get the fluid volume
+    if ( i_failed )
+    {
+        fluid_volume = m_fluid_volume[in];
+        gas_volume = m_gas_volume[in];
+    }
+    else
+    {
+        fluid_volume = 0.0;
+        gas_volume = 0.0;
+        for ( k = 0; k < dCH->nPHb; k++ )
+        {
+            if ( dCH->ccPH[k] == 'a' )
+                fluid_volume += m_Node->Ph_Volume ( k );
+            if ( dCH->ccPH[k] == 'g' )
+                gas_volume += m_Node->Ph_Volume ( k );
 
-			// * 1.0e-6;    // transform cm3 -> m3 !!
-		}
-		//     cout << " node " << in << " fluid_volume " << fluid_volume << " gas volume " << gas_volume << " total-gas: " << m_Vs[in]-gas_volume << "\n";
-	}
+            // * 1.0e-6;    // transform cm3 -> m3 !!
+        }
+        //     cout << " node " << in << " fluid_volume " << fluid_volume << " gas volume " << gas_volume << " total-gas: " << m_Vs[in]-gas_volume << "\n";
+    }
 
-	if ( ( fluid_volume <= 0.0 ) )
-	{
-		cout << "OGSGEM MassToConcentration: fluid volume negative or zero " <<
-		        fluid_volume  << " node " << in << " " << m_fluid_volume[in] << "\n";
-		m_Node->GEM_write_dbr ( "dbr_for_crash_node_fluid_volume.txt" );
-		cout << " skal factor " << skal_faktor << " excess water volume " <<
-		        m_excess_water[in];
-		m_Node->GEM_print_ipm ( "ipm_for_crash_node_fluid_volume.txt" );
+    if ( ( fluid_volume <= 0.0 ) )
+    {
+        cout << "OGSGEM MassToConcentration: fluid volume negative or zero " <<
+             fluid_volume  << " node " << in << " " << m_fluid_volume[in] << "\n";
+        m_Node->GEM_write_dbr ( "dbr_for_crash_node_fluid_volume.txt" );
+        cout << " skal factor " << skal_faktor << " excess water volume " <<
+             m_excess_water[in];
+        m_Node->GEM_print_ipm ( "ipm_for_crash_node_fluid_volume.txt" );
 
 #if defined(USE_PETSC)
-		MPI_Finalize();                  //make sure MPI exits
+        MPI_Finalize();                  //make sure MPI exits
 #endif
-		exit ( 1 );
-	}
-	if ( ( gas_volume < 0.0 ) )
-	{
-		cout << "OGSGEM MassToConcentration: gas volume negative" << gas_volume  <<
-		        " node " << in << "\n";
+        exit ( 1 );
+    }
+    if ( ( gas_volume < 0.0 ) )
+    {
+        cout << "OGSGEM MassToConcentration: gas volume negative" << gas_volume  <<
+             " node " << in << "\n";
 #if defined(USE_PETSC)
-		MPI_Finalize();                  //make sure MPI exits
+        MPI_Finalize();                  //make sure MPI exits
 #endif
 
-		exit ( 1 );
-	}
+        exit ( 1 );
+    }
 
-	// store volumes for reuse during concentration_to_mass
-	m_fluid_volume[in] = fluid_volume;
-	m_gas_volume[in] = gas_volume;
+    // store volumes for reuse during concentration_to_mass
+    m_fluid_volume[in] = fluid_volume;
+    m_gas_volume[in] = gas_volume;
 
-	// calculate excess water: volume of fluid phase bigger/smaller than porosity;
-	// requires updated porosity (calc porosity before calculation of execc water)
-	CRFProcess* m_pcs = NULL;
-	switch ( flowflag )
-	{
-	case 1:                              // groundwater flow	     cout << " skal factor " << skal_faktor << " excess water volume " << m_excess_water[in] ;
-		m_excess_water[in] = m_fluid_volume[in] - m_porosity[in];
-		skal_faktor = ( m_porosity[in] ) / m_fluid_volume[in]; //scale water to available volume
-		m_fluid_volume[in] = m_porosity[in];
-		break;
-	case 2:                              // liquid flow
-		m_excess_water[in] = m_fluid_volume[in] - m_porosity[in];
-		skal_faktor = ( m_porosity[in] ) / m_fluid_volume[in]; //scale water to available volume
-		m_fluid_volume[in] = m_porosity[in];
-		break;
-	case 3:                              // Richards flow: Saturation is directly calculated from the pressure, therefore add a source-sink term to induce pressure/saturation changes
-		m_pcs = PCSGet ( "RICHARDS_FLOW" );
-		idx = m_pcs->GetNodeValueIndex ( "SATURATION1" );
+    // calculate excess water: volume of fluid phase bigger/smaller than porosity;
+    // requires updated porosity (calc porosity before calculation of execc water)
+    CRFProcess* m_pcs = NULL;
+    switch ( flowflag )
+    {
+    case 1:                              // groundwater flow	     cout << " skal factor " << skal_faktor << " excess water volume " << m_excess_water[in] ;
+        m_excess_water[in] = m_fluid_volume[in] - m_porosity[in];
+        skal_faktor = ( m_porosity[in] ) / m_fluid_volume[in]; //scale water to available volume
+        m_fluid_volume[in] = m_porosity[in];
+        break;
+    case 2:                              // liquid flow
+        m_excess_water[in] = m_fluid_volume[in] - m_porosity[in];
+        skal_faktor = ( m_porosity[in] ) / m_fluid_volume[in]; //scale water to available volume
+        m_fluid_volume[in] = m_porosity[in];
+        break;
+    case 3:                              // Richards flow: Saturation is directly calculated from the pressure, therefore add a source-sink term to induce pressure/saturation changes
+        m_pcs = PCSGet ( "RICHARDS_FLOW" );
+        idx = m_pcs->GetNodeValueIndex ( "SATURATION1" );
 
-		if (  m_fluid_volume[in] > m_porosity[in] ) // fluid volume exceeds available pore space
-		{
-			m_excess_water[in] =  m_fluid_volume[in] - m_porosity[in];
-			skal_faktor =  m_porosity[in] / m_fluid_volume[in]; //mol amount of water in first phase
-			m_fluid_volume[in] = m_porosity[in];
-			m_pcs->SetNodeValue ( in, idx, 1.0); // instead change saturation accordingly;
-			//    cout << " skal factor " << skal_faktor << " excess water volume " << m_excess_water[in] ;
-		}
-		else
-		{
-			m_excess_water[in] = m_fluid_volume[in] - m_porosity[in] *
-			                     m_pcs->GetNodeValue ( in,idx + 1);
-			skal_faktor = m_porosity[in] *
-			              m_pcs->GetNodeValue ( in,idx + 1) / m_fluid_volume[in]; //KG44 18.10.2012  is this really correct??
-			m_fluid_volume[in] = m_porosity[in] * m_pcs->GetNodeValue ( in,idx + 1);
+        if (  m_fluid_volume[in] > m_porosity[in] ) // fluid volume exceeds available pore space
+        {
+            m_excess_water[in] =  m_fluid_volume[in] - m_porosity[in];
+            skal_faktor =  m_porosity[in] / m_fluid_volume[in]; //mol amount of water in first phase
+            m_fluid_volume[in] = m_porosity[in];
+            m_pcs->SetNodeValue ( in, idx, 1.0); // instead change saturation accordingly;
+            //    cout << " skal factor " << skal_faktor << " excess water volume " << m_excess_water[in] ;
+        }
+        else
+        {
+            m_excess_water[in] = m_fluid_volume[in] - m_porosity[in] *
+                                 m_pcs->GetNodeValue ( in,idx + 1);
+            skal_faktor = m_porosity[in] *
+                          m_pcs->GetNodeValue ( in,idx + 1) / m_fluid_volume[in]; //KG44 18.10.2012  is this really correct??
+            m_fluid_volume[in] = m_porosity[in] * m_pcs->GetNodeValue ( in,idx + 1);
 
 //	     m_pcs->SetNodeValue ( in, idx, m_fluid_volume[in] / m_porosity[in]); // instead change saturation accordingly; this is done always.
-		}
-		//  m_excess_gas[in] = m_gas_volume[in]- m_porosity[in]* ( 1.0 - m_pcs->GetNodeValue ( in,idx+1 ) ); // in contrast to fluid this is not really strongly coupled ...we calculate the stuff but do not couple it to gas flow (yet)
-		//  skal_faktor_gas= ( m_porosity[in]* ( 1.0-m_pcs->GetNodeValue ( in,idx+1 ) ) ) /m_gas_volume[in];
-		//  m_gas_volume[in] = m_porosity[in]* ( 1-m_pcs->GetNodeValue ( in,idx+1 ) );
+        }
+        //  m_excess_gas[in] = m_gas_volume[in]- m_porosity[in]* ( 1.0 - m_pcs->GetNodeValue ( in,idx+1 ) ); // in contrast to fluid this is not really strongly coupled ...we calculate the stuff but do not couple it to gas flow (yet)
+        //  skal_faktor_gas= ( m_porosity[in]* ( 1.0-m_pcs->GetNodeValue ( in,idx+1 ) ) ) /m_gas_volume[in];
+        //  m_gas_volume[in] = m_porosity[in]* ( 1-m_pcs->GetNodeValue ( in,idx+1 ) );
 
-		break;
-	case 4:                              // multiphase flow...works with case 1 ...pressure saturation scheme
-		m_pcs = PCSGet ( "MULTI_PHASE_FLOW" );
-		idx = m_pcs->GetNodeValueIndex ( "SATURATION0" );
-		m_excess_water[in] = m_fluid_volume[in] - m_porosity[in] * m_pcs->GetNodeValue ( in,
-		                                                                                 idx +
-		                                                                                 1 );
-		m_excess_gas[in] = m_gas_volume[in] - m_porosity[in] *
-		                   ( 1.0 - m_pcs->GetNodeValue ( in,idx + 1 ) );
-		if ( m_fluid_volume[in] > 0.0 )
-			m_xDC[in * nDC +
-			      idx_water] *=
-			        m_pcs->GetNodeValue ( in,idx +
-			                              1 ) * m_porosity[in] / m_fluid_volume[in];
-		else
-			m_xDC[in * nDC + idx_water] = 0.0;
+        break;
+    case 4:                              // multiphase flow...works with case 1 ...pressure saturation scheme
+        m_pcs = PCSGet ( "MULTI_PHASE_FLOW" );
+        idx = m_pcs->GetNodeValueIndex ( "SATURATION0" );
+        m_excess_water[in] = m_fluid_volume[in] - m_porosity[in] * m_pcs->GetNodeValue ( in,
+                             idx +
+                             1 );
+        m_excess_gas[in] = m_gas_volume[in] - m_porosity[in] *
+                           ( 1.0 - m_pcs->GetNodeValue ( in,idx + 1 ) );
+        if ( m_fluid_volume[in] > 0.0 )
+            m_xDC[in * nDC +
+                  idx_water] *=
+                      m_pcs->GetNodeValue ( in,idx +
+                                            1 ) * m_porosity[in] / m_fluid_volume[in];
+        else
+            m_xDC[in * nDC + idx_water] = 0.0;
 
-		break;
-	default:
+        break;
+    default:
 #if defined(USE_PETSC)
-		if ( myrank == 0 /*should be set to root*/ )
+        if ( myrank == 0 /*should be set to root*/ )
 #endif
-		cout << "Error: Not implemented for the flow in GEM case!!!" << "\n";
-		break;
-	}
+            cout << "Error: Not implemented for the flow in GEM case!!!" << "\n";
+        break;
+    }
 #if defined(USE_PETSC)
-	//	if ( fabs ( m_excess_water_buff[in] ) >= 0.01 ) cout << "node "<< in <<" m_excess_water" << m_excess_water_buff[in] <<"\n";
-	//	if ( fabs ( m_excess_gas_buff[in] ) >= 0.01 ) cout << "node "<< in <<" m_excess_gas" << m_excess_water_buff[in] <<"\n";
+    //	if ( fabs ( m_excess_water_buff[in] ) >= 0.01 ) cout << "node "<< in <<" m_excess_water" << m_excess_water_buff[in] <<"\n";
+    //	if ( fabs ( m_excess_gas_buff[in] ) >= 0.01 ) cout << "node "<< in <<" m_excess_gas" << m_excess_water_buff[in] <<"\n";
 #else
-	//	if ( fabs ( m_excess_water[in] ) >= 0.01 ) cout << "node "<< in <<" m_excess_water " << m_excess_water[in] <<"\n";
-	//	if ( fabs ( m_excess_gas[in] ) >= 0.01 ) cout << "node "<< in <<" m_excess_gas " << m_excess_water[in] <<"\n";
+    //	if ( fabs ( m_excess_water[in] ) >= 0.01 ) cout << "node "<< in <<" m_excess_water " << m_excess_water[in] <<"\n";
+    //	if ( fabs ( m_excess_gas[in] ) >= 0.01 ) cout << "node "<< in <<" m_excess_gas " << m_excess_water[in] <<"\n";
 #endif
-	// if positive, then source, otherwise sink.
-	// change amount of fluid .... at the moment only water!!!!!!
+    // if positive, then source, otherwise sink.
+    // change amount of fluid .... at the moment only water!!!!!!
 
-	// if ( fabs ( m_excess_water[in] ) >= 1.e-10 ) cout << "node "<< in <<"m_excess_water" << m_excess_water[in] <<"\n";
-	// do we need to scale this accoring to the node volume?..I think so: it is done while transering this to GEMS
-	if ( flowflag < 3 )
-	{
-		for ( j = 0; j < nIC; j++ )
-		{
-			i = in * nIC + j;
-			ii = in * nPS * nIC + 0 * nIC + j; // corresponding index of first phase (fluid) for m_bPS
-			m_bIC[i] -= m_bPS[ii];        // B vector without solute
-			if ( flag_coupling_hydrology )
-				m_bPS[ii] *= skal_faktor; // completely newly scaled first phase ...only for coupling with hydraulics
-			else
-			{ // this is necessary for not coupling with hydrology, but porosity change or water is used by gems....
-				if ( idx_hydrogen == j )
-					m_bPS[ii] *= skal_faktor;
-				if ( idx_oxygen == j )
-					m_bPS[ii] *= skal_faktor;
-			}
-		}
-		// for ( j=0 ; j <= idx_water; j++ )
-		j = idx_water;
-		{
-			i = in * nDC + j;
-			m_xDC[i] *= skal_faktor;     //newly scaled xDC including water /excluding rest
-		}
+    // if ( fabs ( m_excess_water[in] ) >= 1.e-10 ) cout << "node "<< in <<"m_excess_water" << m_excess_water[in] <<"\n";
+    // do we need to scale this accoring to the node volume?..I think so: it is done while transering this to GEMS
+    if ( flowflag < 3 )
+    {
+        for ( j = 0; j < nIC; j++ )
+        {
+            i = in * nIC + j;
+            ii = in * nPS * nIC + 0 * nIC + j; // corresponding index of first phase (fluid) for m_bPS
+            m_bIC[i] -= m_bPS[ii];        // B vector without solute
+//			if ( flag_coupling_hydrology )
+            m_bPS[ii] *= skal_faktor; // completely newly scaled first phase ...
+//			else
+//			{ // this is necessary for not coupling with hydrology, but porosity change or water is used by gems....
+//				if ( idx_hydrogen == j )
+//					m_bPS[ii] *= skal_faktor;
+//				if ( idx_oxygen == j )
+//					m_bPS[ii] *= skal_faktor;
+//			  m_bPS[ii] *= skal_faktor; // completely newly scaled first phase ...only for coupling with hydraulics
+//			}
+        }
+        for ( j=0 ; j <= idx_water; j++ )
+//		j = idx_water;
+        {
+            i = in * nDC + j;
+            m_xDC[i] *= skal_faktor;     //newly scaled xDC including water /excluding rest
+        }
 
-		// here we do not need to account for different flow processes ....
-		//****************************************************************************************
-		if ( flag_transport_b == 1 )
-			for ( j = 0; j < nIC; j++ )
-			{
-				i = in * nIC + j;
-				ii = in * nPS * nIC + 0 * nIC + j; // corresponding index of first phase (fluid) for m_bPS
+        // here we do not need to account for different flow processes ....
+        //****************************************************************************************
+        if ( flag_transport_b == 1 )
+            for ( j = 0; j < nIC; j++ )
+            {
+                i = in * nIC + j;
+                ii = in * nPS * nIC + 0 * nIC + j; // corresponding index of first phase (fluid) for m_bPS
 
-				// correct for water and transform bPS into concentrations
-				//carrier for zero(first phase)  is normally water!
-				if ( idx_hydrogen == j )
-					m_soluteB[i] = m_bPS[ii] -
-					               ( 2.0 * m_xDC[in * nDC + idx_water] );
-				else if ( idx_oxygen == j )
-					m_soluteB[i] = m_bPS[ii] - m_xDC[in * nDC + idx_water];
-				else
-				  m_soluteB[i] = m_bPS[ii];
+                // correct for water and transform bPS into concentrations
+                //carrier for zero(first phase)  is normally water!
+                if (flag_concentrations_with_water)
+                {
+                    m_soluteB[i] = m_bPS[ii];
+                }
+                else
+                {
+                    if ( idx_hydrogen == j )
+                        m_soluteB[i] = m_bPS[ii] -
+                                       ( 2.0 * m_xDC[in * nDC + idx_water] );
+                    else if ( idx_oxygen == j )
+                        m_soluteB[i] = m_bPS[ii] - m_xDC[in * nDC + idx_water];
+                    else
+                        m_soluteB[i] = m_bPS[ii];
+                }
 
-				m_soluteB[i] /= m_fluid_volume[in]; // now these are the concentrations
-			}
+                m_soluteB[i] /= m_fluid_volume[in]; // now these are the concentrations
+            }
 
-	} // flowflag < 3 is finished
-	else if ( flowflag == 3 ) // richards flow ....no corrections in gas phase for Richards flow!
-	{
-		for ( j = 0; j < nIC; j++ )
-		{
-			i = in * nIC + j;
-			ii = in * nPS * nIC + 0 * nIC + j; // corresponding index of first phase (fluid) for m_bPS
-			m_bIC[i] -= ( m_bPS[ii]);      // B vector without solute
-			if ( flag_coupling_hydrology ) // in any case this accounts only for fully saturated conditions
+    } // flowflag < 3 is finished
+    else if ( flowflag == 3 ) // richards flow ....no corrections in gas phase for Richards flow!
+    {
+        for ( j = 0; j < nIC; j++ )
+        {
+            i = in * nIC + j;
+            ii = in * nPS * nIC + 0 * nIC + j; // corresponding index of first phase (fluid) for m_bPS
+            m_bIC[i] -= ( m_bPS[ii]);      // B vector without solute
+            if ( flag_coupling_hydrology ) // in any case this accounts only for fully saturated conditions
 
-				m_bPS[ii] *= skal_faktor; // completely newly scaled first phase ...only for coupling with hydraulics
-			else
-			{ // this is necessary for not coupling with hydrology, but porosity change or water is used by gems....
-				if ( idx_hydrogen == j )
-					m_bPS[ii] *= skal_faktor;
-				if ( idx_oxygen == j )
-					m_bPS[ii] *= skal_faktor;
-			}
-		}
-		// for ( j=0 ; j <= idx_water; j++ )
-		j = idx_water;
-		{
-			i = in * nDC + j;
-			m_xDC[i] *= skal_faktor;     //newly scaled xDC for water
-		}
+                m_bPS[ii] *= skal_faktor; // completely newly scaled first phase ...only for coupling with hydraulics
+            else
+            {
+                m_bPS[ii] *= skal_faktor; // completely newly scaled first phase ...only for coupling with hydraulics
+                // this is necessary for not coupling with hydrology, but porosity change or water is used by gems....
+//				if ( idx_hydrogen == j )
+//					m_bPS[ii] *= skal_faktor;
+//				if ( idx_oxygen == j )
+//					m_bPS[ii] *= skal_faktor;
+            }
+        }
+        for ( j=0 ; j <= idx_water; j++ )
+//		j = idx_water;
+        {
+            i = in * nDC + j;
+            m_xDC[i] *= skal_faktor;     //newly scaled xDC for water
+        }
 
-		// here we do not need to account for different flow processes .... as long as we work only with one wetting phase (water!!!) ...for liqid CO2 we have to change something ....
-		//****************************************************************************************
-		if ( flag_transport_b == 1 )
-			for ( j = 0; j < nIC; j++ )
-			{
-				i = in * nIC + j;
-				ii = in * nPS * nIC + 0 * nIC + j; // corresponding index of first phase (fluid) for m_bPS
-				// correct for water and transform bPS into concentrations
-				//carrier for zero(first phase)  is normally water!
+        // here we do not need to account for different flow processes .... as long as we work only with one wetting phase (water!!!) ...for liqid CO2 we have to change something ....
+        //****************************************************************************************
+        if ( flag_transport_b == 1 )
+            for ( j = 0; j < nIC; j++ )
+            {
+                i = in * nIC + j;
+                ii = in * nPS * nIC + 0 * nIC + j; // corresponding index of first phase (fluid) for m_bPS
+                // correct for water and transform bPS into concentrations
+                //carrier for zero(first phase)  is normally water!
+                if (flag_concentrations_with_water)
+                {
+                    m_soluteB[i] = m_bPS[ii];
+                }
+                else
+                {
+                    if ( idx_hydrogen == j )
+                        m_soluteB[i] = m_bPS[ii] -
+                                       ( 2.0 * m_xDC[in * nDC + idx_water] );
+                    else if ( idx_oxygen == j )
+                        m_soluteB[i] = m_bPS[ii] - m_xDC[in * nDC + idx_water];
+                    else
+                        m_soluteB[i] = m_bPS[ii];
+                }
+                m_soluteB[i] /= m_fluid_volume[in]; // now these are the concentrations
+            }
 
-				if ( idx_hydrogen == j )
-					m_soluteB[i] = m_bPS[ii] -
-					               ( 2.0 * m_xDC[in * nDC + idx_water] );
-				else if ( idx_oxygen == j )
-					m_soluteB[i] = m_bPS[ii] - m_xDC[in * nDC + idx_water];
-				else
-				  m_soluteB[i] = m_bPS[ii];
-
-				m_soluteB[i] /= m_fluid_volume[in]; // now these are the concentrations
-			}
-
-	}
-	return 1;
+    }
+    return 1;
 }
 
 int REACT_GEM::ConcentrationToMass ( long l /*idx of node*/, int i_timestep )
 {
-	// converting the value from mol/m^3 water to moles.
-	long i,j,ii;
-	double water_volume = 0.0, scale_factor = 1.0;
-	int idx;
-	string ErrorOut;
+    // converting the value from mol/m^3 water to moles.
+    long i,j,ii;
+    double water_volume = 0.0, scale_factor = 1.0;
+    int idx;
+    string ErrorOut;
 
-	//	cout <<"water volume " << water_volume << "\n";
-	// I think here it has to be different than in MassToConcentration module, as after hydraulics, the volume is limited to porosity
-	// As we work with an unit volume of "one", it should be save to directly take porosity as volume....
-	// of course we have to differenciate between the different flow models
-	CRFProcess* m_pcs = NULL;
-	switch ( flowflag )
-	{
-	case 1:                                 // groundwater flow
-		water_volume = m_fluid_volume[l]; // kg44: reuse stored fluid volume from last timestep!
-		break;
-	case 2:                                 // liquid flow
-		water_volume = m_fluid_volume[l];
-		break;
-	case 3:                                 // Richards flow
-		m_pcs = PCSGet ( "RICHARDS_FLOW" );
-		idx = m_pcs->GetNodeValueIndex ( "SATURATION1" );
-		scale_factor = m_porosity[l] * m_pcs->GetNodeValue ( l,idx + i_timestep ); //current volume of water phase after hydraulic step
-		water_volume = m_fluid_volume[l]; // old volume of water phase after last GEMS step
-		scale_factor /= water_volume; // 1: same volume <1 decrease in water volume >1 incresing volume
-		m_fluid_volume[l] = water_volume; // update fluid volume
-		// cout << "conctomass " << m_fluid_volume[l] << " " << scale_factor <<" " ;
-		break;
-	case 4:                                 // multiphase flow...works with case 1 ...pressure saturation scheme
-		m_pcs = PCSGet ( "MULTI_PHASE_FLOW" );
-		idx = m_pcs->GetNodeValueIndex ( "SATURATION0" );
-		water_volume = m_porosity[l] * m_pcs->GetNodeValue ( l,idx + i_timestep );
-		break;
-	default:
+    //	cout <<"water volume " << water_volume << "\n";
+    // I think here it has to be different than in MassToConcentration module, as after hydraulics, the volume is limited to porosity
+    // As we work with an unit volume of "one", it should be save to directly take porosity as volume....
+    // of course we have to differenciate between the different flow models
+    CRFProcess* m_pcs = NULL;
+    switch ( flowflag )
+    {
+    case 1:                                 // groundwater flow
+        water_volume = m_fluid_volume[l]; // kg44: reuse stored fluid volume from last timestep!
+        break;
+    case 2:                                 // liquid flow
+        water_volume = m_fluid_volume[l];
+        break;
+    case 3:                                 // Richards flow
+        m_pcs = PCSGet ( "RICHARDS_FLOW" );
+        idx = m_pcs->GetNodeValueIndex ( "SATURATION1" );
+        scale_factor = m_porosity[l] * m_pcs->GetNodeValue ( l,idx + i_timestep ); //current volume of water phase after hydraulic step
+        water_volume = m_fluid_volume[l]; // old volume of water phase after last GEMS step
+        scale_factor /= water_volume; // 1: same volume <1 decrease in water volume >1 incresing volume
+        m_fluid_volume[l] = water_volume; // update fluid volume
+        // cout << "conctomass " << m_fluid_volume[l] << " " << scale_factor <<" " ;
+        break;
+    case 4:                                 // multiphase flow...works with case 1 ...pressure saturation scheme
+        m_pcs = PCSGet ( "MULTI_PHASE_FLOW" );
+        idx = m_pcs->GetNodeValueIndex ( "SATURATION0" );
+        water_volume = m_porosity[l] * m_pcs->GetNodeValue ( l,idx + i_timestep );
+        break;
+    default:
 #if defined(USE_PETSC)
-		if ( myrank == 0 /*should be set to root*/ )
-#endif 
-		cout << "Error: Not implemented for the flow in GEM case!!!" << "\n";
-		break;
-	}
+        if ( myrank == 0 /*should be set to root*/ )
+#endif
+            cout << "Error: Not implemented for the flow in GEM case!!!" << "\n";
+        break;
+    }
 
-	if ( ( water_volume < min_possible_porosity ) || ( water_volume > 1.0 ) )
-	{
-		cout << "conctomass water volume " << water_volume << " at node: " << l << "\n";
+    if ( ( water_volume < min_possible_porosity ) || ( water_volume > 1.0 ) )
+    {
+        cout << "conctomass water volume " << water_volume << " at node: " << l << "\n";
 #if defined(USE_PETSC)
-		MPI_Finalize();                     //make sure MPI exits
+        MPI_Finalize();                     //make sure MPI exits
 #endif
 
-		exit ( 1 );
-	}
+        exit ( 1 );
+    }
 
-	if ( flowflag < 3 ) // groundwater flow or fluid flow
+    if ( flowflag < 3 ) // groundwater flow or fluid flow
 
-		for ( j = 0; j < nIC; j++ )
-		{
-			i = l * nIC + j;
+        for ( j = 0; j < nIC; j++ )
+        {
+            i = l * nIC + j;
 
-			// also check if xDC values is negative
-			if ( m_soluteB[i] < 0.0 )
-				// make sure it is greater/eq zero and take value from last timestep ---> second argument is zero!
-				m_soluteB[i] = fabs ( GetDCValueSpecies_MT ( l, 0, ( int ) j ) );
-			m_soluteB[i] *= water_volume;
+            // also check if xDC values is negative
+            if ( m_soluteB[i] < 0.0 )
+                // make sure it is greater/eq zero and take value from last timestep ---> second argument is zero!
+                m_soluteB[i] = fabs ( GetDCValueSpecies_MT ( l, 0, ( int ) j ) );
+            m_soluteB[i] *= water_volume;
 
-			//carrier for zero(first phase)  is normally water!
+            //carrier for zero(first phase)  is normally water!
 
-			if ( idx_hydrogen == j )
-				m_soluteB[i] += ( 2.0 * m_xDC[l * nDC + idx_water] );
-			else if ( idx_oxygen == j )
-				m_soluteB[i] +=  m_xDC[l * nDC + idx_water];
+            if (!flag_concentrations_with_water)
+            {
+                if ( idx_hydrogen == j )
+                    m_soluteB[i] += ( 2.0 * m_xDC[l * nDC + idx_water] );
+                else if ( idx_oxygen == j )
+                    m_soluteB[i] +=  m_xDC[l * nDC + idx_water];
+            }
+            m_bIC[i] += m_soluteB[i];    //updated B vector for GEMS
+            // here we check again if the vector if negative or smaller than a minimum amount...if yes we add some stuff....
+            // adding 10-9 Mol/m^3 should be save, as this corresponds aprox to 10-12 Mol/l ..accuracy is in any case not better than 1e-12 - 1e-14 for a system of 1kg...
+            if ( m_bIC[i] <= 1.0e-14 )
+                m_bIC[i] = 1e-14;
+            //                        cout <<  " i " << i << " " << m_bIC[i] << "\n";
+        }
+    else if ( flowflag == 3 ) // Richards flow
+    {
+        for ( j = 0; j < nIC; j++ )
+        {
+            i = l * nIC + j;
+            ii = l * nPS * nIC + 0 * nIC + j; // corresponding index of first phase (fluid) for m_bPS
+            // cout <<  " i " << i << " " << m_soluteB[i] << " " <<m_bPS[ii] << " scale factor " << scale_factor << "\n";
 
-			m_bIC[i] += m_soluteB[i];    //updated B vector for GEMS
-			// here we check again if the vector if negative or smaller than a minimum amount...if yes we add some stuff....
-			// adding 10-9 Mol/m^3 should be save, as this corresponds aprox to 10-12 Mol/l ..accuracy is in any case not better than 1e-12 - 1e-14 for a system of 1kg...
-			if ( m_bIC[i] <= 1.0e-14 )
-				m_bIC[i] = 1e-14;
-			//                        cout <<  " i " << i << " " << m_bIC[i] << "\n";
-		}
-	else if ( flowflag == 3 ) // Richards flow
-	{
-		for ( j = 0; j < nIC; j++ )
-		{
-			i = l * nIC + j;
-			ii = l * nPS * nIC + 0 * nIC + j; // corresponding index of first phase (fluid) for m_bPS
-			// cout <<  " i " << i << " " << m_soluteB[i] << " " <<m_bPS[ii] << " scale factor " << scale_factor << "\n";
-
-			// test for NaN!! ---seems necessary as nan run through the system
-			//  this part is for debug reasons....
-			if ( !(  m_soluteB[i] <= 1.0 ) && !(  m_soluteB[i] > 1.0 ) )
-			{
-				cout << " m_soluteB[i] " <<  m_soluteB[i] << " is NaN " << " i " <<
-				        i << " stop calculations " << "\n";
+            // test for NaN!! ---seems necessary as nan run through the system
+            //  this part is for debug reasons....
+            if ( !(  m_soluteB[i] <= 1.0 ) && !(  m_soluteB[i] > 1.0 ) )
+            {
+                cout << " m_soluteB[i] " <<  m_soluteB[i] << " is NaN " << " i " <<
+                     i << " stop calculations " << "\n";
 #if defined(USE_PETSC)
-				MPI_Finalize();           //make sure MPI exits
+                MPI_Finalize();           //make sure MPI exits
 #endif
-				exit ( 1 );
-			}
-			// also check if xDC values is negative
-			if ( m_soluteB[i] < 0.0 )
-				// make sure it is greater/eq zero and take value from last timestep ---> second argument is zero!
-				m_soluteB[i] = fabs ( GetDCValueSpecies_MT ( l, 0, ( int ) j ) );
-			m_soluteB[i] *= water_volume * scale_factor; //match solutes with old fluid volume and account for hydraulic changes
-			//carrier for zero(first phase)  is normally water!
-
-			if ( idx_hydrogen == j )
-				m_soluteB[i] += ( 2.0 * m_xDC[l * nDC + idx_water] ) * scale_factor;
-			//match to volume after hydraulic step
-			else if ( idx_oxygen == j )
-				m_soluteB[i] +=  m_xDC[l * nDC + idx_water] * scale_factor;
-
+                exit ( 1 );
+            }
+            // also check if xDC values is negative
+            if ( m_soluteB[i] < 0.0 )
+                // make sure it is greater/eq zero and take value from last timestep ---> second argument is zero!
+                m_soluteB[i] = fabs ( GetDCValueSpecies_MT ( l, 0, ( int ) j ) );
+            m_soluteB[i] *= water_volume * scale_factor; //match solutes with old fluid volume and account for hydraulic changes
+            //carrier for zero(first phase)  is normally water!
+            if (!flag_concentrations_with_water)
+            {
+            if ( idx_hydrogen == j )
+                m_soluteB[i] += ( 2.0 * m_xDC[l * nDC + idx_water] ) * scale_factor;
+            //match to volume after hydraulic step
+            else if ( idx_oxygen == j )
+                m_soluteB[i] +=  m_xDC[l * nDC + idx_water] * scale_factor;
+	    }
 //            m_bIC[i]+= ( m_soluteB[i]+m_bPS[ii] );                //updated B vector for GEMS ....no correction in gas phase for Richards flow!
-			m_bIC[i] += ( m_soluteB[i]);   //updated B vector for GEMS ....no correction in gas phase for Richards flow!
+            m_bIC[i] += ( m_soluteB[i]);   //updated B vector for GEMS ....no correction in gas phase for Richards flow!
 
-			// here we check again if the vector if negative or smaller than a minimum amount...if yes we add some stuff....
-			// adding 10-9 Mol/m^3 should be save, as this corresponds aprox to 10-12 Mol/l ..accuracy is in any case not better than 1e-12 - 1e-14 for a system of 1kg...
-			if ( m_bIC[i] <= 1.0e-14 )
-				m_bIC[i] = 1e-14;
-		}
-	}
+            // here we check again if the vector if negative or smaller than a minimum amount...if yes we add some stuff....
+            // adding 10-9 Mol/m^3 should be save, as this corresponds aprox to 10-12 Mol/l ..accuracy is in any case not better than 1e-12 - 1e-14 for a system of 1kg...
+            if ( m_bIC[i] <= 1.0e-14 )
+                m_bIC[i] = 1e-14;
+        }
+    }
 // DEBUG!!!!!!!!!
-/*
-	for ( j = 0; i < nIC-1; j++ )
-		{
-		  	i = l * nIC + j;
-				// here we check again if the vector if negative or smaller than a minimum amount...if yes we add some stuff....
-			// adding 10-9 Mol/m^3 should be save, as this corresponds aprox to 10-12 Mol/l ..accuracy is in any case not better than 1e-12 - 1e-14 for a system of 1kg...
-			if ( m_bIC[i] <= 1.0e-14 )
-			{
-			        cout << "\n DEBUG, failed  ERROR in MASS! exiting: j, m_bIC[j]"<< j << " " << m_bIC[j]<<"\n";
-				exit(1);
-			}
-		}
-*/		
-	return 1;
+    /*
+    	for ( j = 0; i < nIC-1; j++ )
+    		{
+    		  	i = l * nIC + j;
+    				// here we check again if the vector if negative or smaller than a minimum amount...if yes we add some stuff....
+    			// adding 10-9 Mol/m^3 should be save, as this corresponds aprox to 10-12 Mol/l ..accuracy is in any case not better than 1e-12 - 1e-14 for a system of 1kg...
+    			if ( m_bIC[i] <= 1.0e-14 )
+    			{
+    			        cout << "\n DEBUG, failed  ERROR in MASS! exiting: j, m_bIC[j]"<< j << " " << m_bIC[j]<<"\n";
+    				exit(1);
+    			}
+    		}
+    */
+    return 1;
 }
 
 //kg44 31.01.2014  the following functions were inserted by Haibing in order to implement an iterative two step approach
@@ -2686,6 +2708,15 @@ double REACT_GEM::CalcSoluteBDeltaNode ( long in )
 	return dummy;
 }
 
+void REACT_GEM::StoreOldConcentrationsAll ( )
+{
+	long i;
+	for ( i = 0; i < nNodes * nIC ; i++ ) 
+	{
+		m_soluteB_pts[i] = m_soluteB[i];
+	}
+}
+
 void REACT_GEM::StoreOldSolutionAll ( )
 {
 	long i;
@@ -2705,13 +2736,18 @@ void REACT_GEM::StoreOldSolutionAll ( )
 		mol_phase_pts[i] = mol_phase[i];
 	for ( i = 0; i < nNodes * nPH; i++ )
 		dmdt_pts[i] = dmdt[i];
-
+	for ( i = 0; i < nNodes ; i++ )
+		m_fluid_volume_pts[i]=m_fluid_volume[i];
+	for ( i = 0; i < nNodes ; i++ )
+		m_gas_volume_pts[i]=m_gas_volume[i];
 }
 
 
-void REACT_GEM::RestoreOldSolutionNode ( long in ) 
+void REACT_GEM::RestoreOldSolutionNode ( long in ) // for gems failed on node!
 {
 	long i;
+	m_fluid_volume[in]=m_fluid_volume_pts[in];
+	m_gas_volume[in]=m_gas_volume_pts[in];	
 	for ( i = 0; i < nIC - 1; i++ )      // nIC-1 as last IC is charge 
 	{
 		m_soluteB[in * nIC + i] = m_soluteB_pts[in * nIC + i];
@@ -2730,14 +2766,14 @@ void REACT_GEM::RestoreOldSolutionNode ( long in )
 		dmdt[in * nPH + i] = dmdt_pts[in * nPH + i];
 }
 
-void REACT_GEM::RestoreOldSolutionAll ( ) 
+void REACT_GEM::RestoreOldSolutionAll ( ) // for Picard iterations
 {
 	long i;
-	for ( i = 0; i < nNodes * nIC ; i++ )      // nIC-1 as last IC is charge 
-	{
-		m_soluteB[i] = m_soluteB_pts[i];
-		m_bIC[i] = m_bIC_pts[i];
-	}
+//	for ( i = 0; i < nNodes * nIC ; i++ )      // nIC-1 as last IC is charge 
+//	{
+//		m_soluteB[i] = m_soluteB_pts[i];
+//		m_bIC[i] = m_bIC_pts[i];  //KG44 what is the problem here? does not work!!!
+//	}
 	for ( i = 0; i < nNodes * nDC; i++ )
 		m_xDC[i] = m_xDC_pts[i];
 // now comes the stuff for kinetics	
@@ -2749,6 +2785,10 @@ void REACT_GEM::RestoreOldSolutionAll ( )
 		mol_phase[i] = mol_phase_pts[i];
 	for ( i = 0; i < nNodes *nPH; i++ )
 		dmdt[i] = dmdt_pts[i];
+	for ( i = 0; i < nNodes; i++ )
+		m_fluid_volume[i]=m_fluid_volume_pts[i]; //ipmortant also for concentrations!!!!-> scaling factor for concs!
+	for ( i = 0; i < nNodes; i++ )
+		m_gas_volume[i]=m_gas_volume_pts[i];
 }
 
 double REACT_GEM::CalculateCharge (long in,int timelevel) //for a given node number ..data from OGS!
@@ -3022,7 +3062,7 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
 			continue;
 		}
 		// ......................................................
-		/// Key word "$GEM_CALCULATE_BOUNDARY_NODES": By setting this to "1" it is possible to switch on GEMS calculations at boundary nodes (e.g. kinetically controlled porosity change at boundary nodes). This normally requires the definition of time dependent concentration values via time curves (see documentation of .bc files how to do this). ..................
+		/// Key word "$CALCULATE_BOUNDARY_NODES": By setting this to "1" it is possible to switch on GEMS calculations at boundary nodes (e.g. kinetically controlled porosity change at boundary nodes). This normally requires the definition of time dependent concentration values via time curves (see documentation of .bc files how to do this). ..................
 		if ( line_string.find ( "$CALCULATE_BOUNDARY_NODES" ) != string::npos )
 		{
 			// subkeyword found
@@ -3032,6 +3072,15 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
 			continue;
 		}
 		// ......................................................
+		/// Key word "$CONCENTRATIONS_WITH_WATER": By setting this to "1" it is possible to switch on GEMS calculations that include the solvent itself as transported substance (in H and O). Please do not forget to adjust the boundary conditions to include also water in the H and O concentrations.
+		if ( line_string.find ( "$CONCENTRATIONS_WITH_WATER" ) != string::npos )
+		{
+			// subkeyword found
+			in.str ( GetLineFromFile1 ( gem_file ) );
+			in >> flag_concentrations_with_water;
+			in.clear();
+			continue;
+		}		// ......................................................
 		// ......................................................
 		/// Key word "$TEMPERATURE_GEM": with this keyword it is possible to change the overall temperature of the  system (default 298.15 K).........................
 		if ( line_string.find ( "$TEMPERATURE_GEM" ) != string::npos )
@@ -4620,7 +4669,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 
         // Order GEM to run
         tdBR->NodeStatusCH = NEED_GEM_AIA;
-        m_NodeStatusCH[in] = t_Node->GEM_run ( true );
+        m_NodeStatusCH[in] = t_Node->GEM_run ( false );
         // t_Node->GEM_write_dbr ( "dbr_init1a.txt" );
         // t_Node->GEM_print_ipm ( "ipm_init1a.txt" );
         REACT_GEM::GetReactInfoFromGEM ( in, t_Node); // test case..get the data even if GEMS failed
@@ -4706,7 +4755,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
         // Order GEM to run
         tdBR->NodeStatusCH = NEED_GEM_AIA;
 
-        m_NodeStatusCH[in] = t_Node->GEM_run ( true );
+        m_NodeStatusCH[in] = t_Node->GEM_run ( false );
 
         if ( ( m_NodeStatusCH[in] == ERR_GEM_AIA || m_NodeStatusCH[in] == ERR_GEM_SIA ) )
         {
@@ -4831,8 +4880,8 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
                 oldvolume = m_Vs[in];
 
                 // Order GEM to run
-                tdBR->NodeStatusCH = NEED_GEM_SIA; // first try without simplex using old solution
-                m_NodeStatusCH[in] = t_Node->GEM_run ( true );
+                tdBR->NodeStatusCH = NEED_GEM_AIA; // first try without simplex using old solution
+                m_NodeStatusCH[in] = t_Node->GEM_run ( false );
 
                 if ( !( m_NodeStatusCH[in] == OK_GEM_AIA || m_NodeStatusCH[in] == OK_GEM_SIA  )  ||
                         ( ( ( abs ( oldvolume - tdBR->Vs ) / oldvolume ) > 0.1 ) &&
@@ -4876,8 +4925,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
                     // test for bad GEMS and for volume changes bigger than 10% ...maximum 5 failed nodes per process.....
 
                     if (
-                        !( m_NodeStatusCH[in] == OK_GEM_AIA || m_NodeStatusCH[in] ==
-                           OK_GEM_SIA) ||
+                        !( m_NodeStatusCH[in] == OK_GEM_AIA || m_NodeStatusCH[in] == BAD_GEM_AIA) ||
                         ( ( ( abs ( oldvolume - tdBR->Vs ) / oldvolume ) > 0.1 ) &&
                           ( flowflag != 3 ) )                                   // not for Richards flow
                     )

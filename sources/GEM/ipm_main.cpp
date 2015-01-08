@@ -838,15 +838,14 @@ long int TMulti::MassBalanceRefinement( long int WhereCalledFrom )
 
       LM = StepSizeEstimate( true ); // Estimation of the MBR() iteration step size LM
 
-      if( LM < 1e-10 ) // kg44 why is this here hardcoded? try to set this to a minimum value !
+      if( LM < 1e-6 )
       {  // Experimental
-	LM=1.0e-10;
-//          iRet = 3;
-//          char buf[320];
-//          sprintf( buf, "(MBR(%ld)): Too small LM step size - cannot converge (check Pa_DG?)",
-//                    WhereCalledFrom );
-//          setErrorMessage( 3, "E03IPM: Mass Balance Refinement", buf );
-//          break;
+          iRet = 3;
+          char buf[320];
+          sprintf( buf, "(MBR(%ld)): Too small LM step size - cannot converge (check Pa_DG?)",
+                    WhereCalledFrom );
+          setErrorMessage( 3, "E03IPM: Mass Balance Refinement", buf );
+          break;
        }
       if( LM > 1.)
          LM = 1.;
@@ -1395,6 +1394,7 @@ long int TMulti::MakeAndSolveSystemOfLinearEquations( long int N, bool initAppr 
               BB[ii] += pm.F[jj] * a(jj,ii) * pm.W[jj];
            }
     }
+
 #ifndef PGf90
   Array2D<double> A( N, N, AA );
   Array1D<double> B( N, BB );
@@ -1405,11 +1405,9 @@ long int TMulti::MakeAndSolveSystemOfLinearEquations( long int N, bool initAppr 
   for( kk = 0; kk < N; kk++)
    for( ii = 0; ii < N; ii++ )
       A[kk][ii] = (*(AA+(ii)+(kk)*N));
-  
    for( ii = 0; ii < N; ii++ )
      B[ii] = BB[ii];
 #endif
-   
 // From here on, the NIST TNT Jama/C++ linear algebra package is used
 //    (credit: http://math.nist.gov/tnt/download.html)
 // this routine constructs the Cholesky decomposition, A = L x LT .
@@ -1430,26 +1428,20 @@ long int TMulti::MakeAndSolveSystemOfLinearEquations( long int N, bool initAppr 
 // The primary use of the LU decomposition is in the solution
 // of square systems of simultaneous linear equations.
 // This will fail if isNonsingular() returns false.
-   if( lu.isNonsingular() )
-   {
-    B = lu.solve( B );
-   }
-   else  //for case of singularities we can use SVD decomposition
-   {   
-     // unfortunately SVD in jama does not provide the solve method....to bad...one would need to manually program linear equation solving with svd
-      return 1; // Singular matrix - we return what came out of singular value decomposition
-   }
-  }
+   if( !lu.isNonsingular() )
+     return 1; // Singular matrix - too bad! No solution ...
 
+  B = lu.solve( B );
+  }
 
 if( initAppr )
 {
-   for(int ii = 0; ii < N; ii++ )
-     pm.Uefd[ii] = B[ii];
+   for( ii = 0; ii < N; ii++ )
+     pm.Uefd[ii] = B[(int)ii];
 }
 else {
-  for( int ii = 0; ii < N; ii++ )
-     pm.U[ii] = B[ii];
+  for( ii = 0; ii < N; ii++ )
+     pm.U[ii] = B[(int)ii];
 }
   return 0;
 }

@@ -71,7 +71,7 @@ public:
     double  *m_porosity_initial, *m_volumes_initial;
 
     /// this we need for porosity coupling to groundwater flow & multiphase flow
-    double *m_fluid_volume, *m_gas_volume;
+    double *m_fluid_volume, *m_gas_volume, *m_fluid_volume_pts, *m_gas_volume_pts;
 
     /// take the fluid density from GEMS for density driven flow
     double *m_fluid_density;
@@ -162,6 +162,7 @@ public:
     // 1 - standard iterative scheme;
     int max_gems_iteration_loop;  // maximum number of iterations
     double  iteration_eps;  // leave iteration if this is achieved
+    bool flag_concentrations_with_water; // 1 use water itself also in concentrations for H and O ...0: water is substracted from O and H concentrations (only dissolved species are transported)
     
     int heatflag;                               //0-initialized and not heat transport;1-heat_transport;
     int flowflag;                               //0-initialized;1-GROUNDWATER_FLOW;2-LIQUID_FLOW;3-RICHARDS_FLOW;4-FLOW;
@@ -217,6 +218,7 @@ public:
     double m_diff_gems;
     void StoreOldSolutionAll ( );
     void RestoreOldSolutionAll ( );
+    void StoreOldConcentrationsAll();
     void RestoreOldSolutionNode ( long in );
     short RestoreOldConcMasstransport_MT ( long node_Index);
     void CopyCurKineticsPre ( void );
