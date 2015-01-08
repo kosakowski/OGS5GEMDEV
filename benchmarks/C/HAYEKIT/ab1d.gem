@@ -14,6 +14,8 @@ GeoSys-MMP  Material Medium Properties ------------------------------------
     1.0
   $FLAG_COUPLING_HYDROLOGY
     0    ; 0-not coupled;1=coupled;
+  $SCALE_WATER_FOR_HAYEKIT
+   1    ; special for this benchmark....
   $TEMPERATURE_GEM
     298.15       ; temperature for GEMS in degree Celsius
   $TRANSPORT_B

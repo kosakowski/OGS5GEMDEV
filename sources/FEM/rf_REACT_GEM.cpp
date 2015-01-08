@@ -85,6 +85,7 @@ REACT_GEM::REACT_GEM ( void )
 	idx_oxygen = -1;
 	idx_hydrogen = -1;
         flag_concentrations_with_water=0;
+	flag_scale_water_volume_for_hayekit=0; //default!
 	initialized_flag = 0;
 	heatflag = 0;
 	flowflag = 0;
@@ -2368,9 +2369,9 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
             i = in * nIC + j;
             ii = in * nPS * nIC + 0 * nIC + j; // corresponding index of first phase (fluid) for m_bPS
             m_bIC[i] -= m_bPS[ii];        // B vector without solute
-	if ( flag_coupling_hydrology )
-            m_bPS[ii] *= skal_faktor; // completely newly scaled first phase ...
-			else
+	if ( !flag_scale_water_volume_for_hayekit)
+            m_bPS[ii] *= skal_faktor; // completely newly scaled first phase ...this is default!
+	else
 			{ // this is necessary for not coupling with hydrology, but porosity change or water is used by gems....
 				if ( idx_hydrogen == j )
 					m_bPS[ii] *= skal_faktor;
@@ -2379,16 +2380,15 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
 //			  m_bPS[ii] *= skal_faktor; // completely newly scaled first phase ...only for coupling with hydraulics
 			}
         }
-	if ( flag_coupling_hydrology )
+	if ( !flag_scale_water_volume_for_hayekit )
 	{
         for ( j=0 ; j <= idx_water; j++ )
-//		j = idx_water;
         {
             i = in * nDC + j;
             m_xDC[i] *= skal_faktor;     //newly scaled xDC including water /excluding rest
         }
 	}
-	else
+	else  // special case for hayekit
 	{
 		j = idx_water;
         {
@@ -3083,6 +3083,15 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
 			continue;
 		}
 		// ......................................................
+		/// Key word "$SCALE_WATER_FOR_HAYEKIT": should be set to 1 if Hayekit example (analytical solution for porosity change by reactions) is calculated. For GEMS the volume of the water phase is scaled by removing H2O, but not the amount of solutes.
+		if ( line_string.find ( "$SCALE_WATER_FOR_HAYEKIT" ) != string::npos )
+		{
+			// subkeyword found
+			in.str ( GetLineFromFile1 ( gem_file ) );
+			in >> flag_scale_water_volume_for_hayekit;
+			in.clear();
+			continue;
+		}				// ......................................................
 		/// Key word "$CONCENTRATIONS_WITH_WATER": By setting this to "1" it is possible to switch on GEMS calculations that include the solvent itself as transported substance (in H and O). Please do not forget to adjust the boundary conditions to include also water in the H and O concentrations.
 		if ( line_string.find ( "$CONCENTRATIONS_WITH_WATER" ) != string::npos )
 		{
@@ -3091,7 +3100,8 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
 			in >> flag_concentrations_with_water;
 			in.clear();
 			continue;
-		}		// ......................................................
+		}		
+		// ......................................................
 		// ......................................................
 		/// Key word "$TEMPERATURE_GEM": with this keyword it is possible to change the overall temperature of the  system (default 298.15 K).........................
 		if ( line_string.find ( "$TEMPERATURE_GEM" ) != string::npos )
