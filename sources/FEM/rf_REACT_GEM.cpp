@@ -4881,9 +4881,9 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 
                 // Order GEM to run
                 tdBR->NodeStatusCH = NEED_GEM_AIA; // first try without simplex using old solution
-                m_NodeStatusCH[in] = t_Node->GEM_run ( false );
+                m_NodeStatusCH[in] = t_Node->GEM_run ( true );
 
-                if ( !( m_NodeStatusCH[in] == OK_GEM_AIA || m_NodeStatusCH[in] == OK_GEM_SIA  )  ||
+                if ( !( m_NodeStatusCH[in] == OK_GEM_AIA  )  ||
                         ( ( ( abs ( oldvolume - tdBR->Vs ) / oldvolume ) > 0.1 ) &&
                           ( flowflag != 3 ) ))                               // not for Richards flow  // ups...failed..try again with changed kinetics
                 {
