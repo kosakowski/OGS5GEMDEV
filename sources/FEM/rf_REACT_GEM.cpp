@@ -2368,24 +2368,35 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
             i = in * nIC + j;
             ii = in * nPS * nIC + 0 * nIC + j; // corresponding index of first phase (fluid) for m_bPS
             m_bIC[i] -= m_bPS[ii];        // B vector without solute
-//			if ( flag_coupling_hydrology )
+	if ( flag_coupling_hydrology )
             m_bPS[ii] *= skal_faktor; // completely newly scaled first phase ...
-//			else
-//			{ // this is necessary for not coupling with hydrology, but porosity change or water is used by gems....
-//				if ( idx_hydrogen == j )
-//					m_bPS[ii] *= skal_faktor;
-//				if ( idx_oxygen == j )
-//					m_bPS[ii] *= skal_faktor;
+			else
+			{ // this is necessary for not coupling with hydrology, but porosity change or water is used by gems....
+				if ( idx_hydrogen == j )
+					m_bPS[ii] *= skal_faktor;
+				if ( idx_oxygen == j )
+					m_bPS[ii] *= skal_faktor;
 //			  m_bPS[ii] *= skal_faktor; // completely newly scaled first phase ...only for coupling with hydraulics
-//			}
+			}
         }
+	if ( flag_coupling_hydrology )
+	{
         for ( j=0 ; j <= idx_water; j++ )
 //		j = idx_water;
         {
             i = in * nDC + j;
             m_xDC[i] *= skal_faktor;     //newly scaled xDC including water /excluding rest
         }
-
+	}
+	else
+	{
+		j = idx_water;
+        {
+            i = in * nDC + j;
+            m_xDC[i] *= skal_faktor;     //newly scaled xDC including water /excluding rest
+        }
+	  
+	}
         // here we do not need to account for different flow processes ....
         //****************************************************************************************
         if ( flag_transport_b == 1 )
