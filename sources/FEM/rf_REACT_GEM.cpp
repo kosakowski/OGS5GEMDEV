@@ -2426,7 +2426,7 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
                     else
                         m_soluteB[i] = m_bPS[ii];
                 }
-                m_soluteB[i] += m_soluteB_corr[i]; // corrected for substracted negative concentrations
+       //         m_soluteB[i] += m_soluteB_corr[i]; // corrected for substracted negative concentrations
                 m_soluteB[i] /= m_fluid_volume[in]; // now these are the concentrations
             }
 
@@ -2481,7 +2481,7 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
                     else
                         m_soluteB[i] = m_bPS[ii];
                 }
-                m_soluteB[i] += m_soluteB_corr[i]; // corrected for substracted negative concentrations
+            //    m_soluteB[i] += m_soluteB_corr[i]; // corrected for substracted negative concentrations
                 m_soluteB[i] /= m_fluid_volume[in]; // now these are the concentrations
             }
 
