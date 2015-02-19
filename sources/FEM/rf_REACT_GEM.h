@@ -89,7 +89,7 @@ public:
     double  *m_porosity_Elem;
 
     /// data for transport of IC
-    double *m_soluteB;
+    double *m_soluteB, *m_soluteB_corr;
     /// data for charge
     double *m_chargeB, *m_chargeB_pre;
     

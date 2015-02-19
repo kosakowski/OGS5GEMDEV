@@ -175,6 +175,7 @@ REACT_GEM::~REACT_GEM ( void )
 		delete [] m_fluid_volume_pts;
 		delete [] m_fluid_density;
 		delete [] m_soluteB;
+		delete [] m_soluteB_corr;		
 		delete [] m_chargeB;
 		delete [] m_chargeB_pre;
 		delete [] m_ICNL;
@@ -351,6 +352,8 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 		m_porosity_Elem = new double [nElems];
 
 		m_soluteB = new double [nNodes * nIC];
+		m_soluteB_corr = new double [nNodes * nIC];
+		
 		m_chargeB = new double [nNodes * nIC];
 		m_chargeB_pre = new double [nNodes * nIC];
 
@@ -464,6 +467,8 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 				m_bIC_Chem_delta [ in * nIC + ii ] = 0.0;
 
 				m_soluteB[in * nIC + ii ] = 0.0;
+				m_soluteB_corr[in * nIC + ii ] = 0.0;
+				
 				m_chargeB[in * nIC + ii ] = 0.0;				
 				m_chargeB_pre[in * nIC + ii ] = 0.0;				
 				m_soluteB_pts[in * nIC + ii ] = 0.0;
@@ -1061,9 +1066,9 @@ void REACT_GEM::SetReactInfoBackGEM ( long in,  TNode* m_Node )
 
 	//  for (i=0;i<nIC;i++) cout << m_bIC[in*nIC+i] << "\n";
 
-	if ( flag_transport_b == 1 ) //here we insert the actual B vector
+//	if ( flag_transport_b == 1 ) //here we insert the actual B vector
 	// set charge to zero
-	m_bIC[in*nIC+nIC-1] = 0.0;
+//	m_bIC[in*nIC+nIC-1] = 0.0;
 
 		m_Node->GEM_from_MT ( m_NodeHandle[in],
 		                      m_NodeStatusCH[in],
@@ -2421,7 +2426,7 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
                     else
                         m_soluteB[i] = m_bPS[ii];
                 }
-
+                m_soluteB[i] += m_soluteB_corr[i]; // corrected for substracted negative concentrations
                 m_soluteB[i] /= m_fluid_volume[in]; // now these are the concentrations
             }
 
@@ -2476,6 +2481,7 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
                     else
                         m_soluteB[i] = m_bPS[ii];
                 }
+                m_soluteB[i] += m_soluteB_corr[i]; // corrected for substracted negative concentrations
                 m_soluteB[i] /= m_fluid_volume[in]; // now these are the concentrations
             }
 
@@ -2542,11 +2548,16 @@ int REACT_GEM::ConcentrationToMass ( long l /*idx of node*/, int i_timestep )
         {
             i = l * nIC + j;
 
-            // also check if xDC values is negative
-            if ( m_soluteB[i] < 0.0 )
-                // make sure it is greater/eq zero and take value from last timestep ---> second argument is zero!
-                m_soluteB[i] = fabs ( GetDCValueSpecies_MT ( l, 0, ( int ) j ) );
             m_soluteB[i] *= water_volume;
+            // also check if xDC values is negative
+	    m_soluteB_corr[i]=0.0;
+            if ( (m_soluteB[i] < 0.0) && (j != nIC-1))
+	    {
+	      m_soluteB_corr[i]=m_soluteB[i]-1.0e-16; //store amounts for later correction
+	      m_soluteB[i]=1.0e-16;
+	    }
+                // make sure it is greater/eq zero and take value from last timestep ---> second argument is zero!
+         //       m_soluteB[i] = fabs ( GetDCValueSpecies_MT ( l, 0, ( int ) j ) );
 
             //carrier for zero(first phase)  is normally water!
 
@@ -2560,8 +2571,8 @@ int REACT_GEM::ConcentrationToMass ( long l /*idx of node*/, int i_timestep )
             m_bIC[i] += m_soluteB[i];    //updated B vector for GEMS
             // here we check again if the vector if negative or smaller than a minimum amount...if yes we add some stuff....
             // adding 10-9 Mol/m^3 should be save, as this corresponds aprox to 10-12 Mol/l ..accuracy is in any case not better than 1e-12 - 1e-14 for a system of 1kg...
-            if ( m_bIC[i] <= 1.0e-14 )
-                m_bIC[i] = 1e-14;
+            if ( (m_bIC[i] <= 0.0) && (j != nIC-1))
+                m_bIC[i] = 1e-16;
             //                        cout <<  " i " << i << " " << m_bIC[i] << "\n";
         }
     else if ( flowflag == 3 ) // Richards flow
@@ -2584,10 +2595,17 @@ int REACT_GEM::ConcentrationToMass ( long l /*idx of node*/, int i_timestep )
                 exit ( 1 );
             }
             // also check if xDC values is negative
-            if ( m_soluteB[i] < 0.0 )
+      //       if ( (m_soluteB[i] < 0.0) && (j != nIC-1))
                 // make sure it is greater/eq zero and take value from last timestep ---> second argument is zero!
-                m_soluteB[i] = fabs ( GetDCValueSpecies_MT ( l, 0, ( int ) j ) );
+      //          m_soluteB[i] = fabs ( GetDCValueSpecies_MT ( l, 0, ( int ) j ) );
             m_soluteB[i] *= water_volume * scale_factor; //match solutes with old fluid volume and account for hydraulic changes
+	    m_soluteB_corr[i]=0.0;
+            if ( (m_soluteB[i] < 0.0) && (j != nIC-1))
+	    {
+	      m_soluteB_corr[i]=m_soluteB[i]-1.0e-16; //store amounts for later correction
+	      m_soluteB[i]=1.0e-16;
+	    }
+            
             //carrier for zero(first phase)  is normally water!
             if (!flag_concentrations_with_water)
             {
@@ -2602,10 +2620,12 @@ int REACT_GEM::ConcentrationToMass ( long l /*idx of node*/, int i_timestep )
 
             // here we check again if the vector if negative or smaller than a minimum amount...if yes we add some stuff....
             // adding 10-9 Mol/m^3 should be save, as this corresponds aprox to 10-12 Mol/l ..accuracy is in any case not better than 1e-12 - 1e-14 for a system of 1kg...
-            if ( m_bIC[i] <= 1.0e-14 )
-                m_bIC[i] = 1e-14;
+            if ( (m_bIC[i] <= 0.0) && (j != nIC-1))
+                m_bIC[i] = 1e-16;
         }
     }
+    // test charge
+    m_bIC[l*nIC+nIC-1] = m_chargeB_pre[l*nIC+nIC-1];
 // DEBUG!!!!!!!!!
     /*
     	for ( j = 0; i < nIC-1; j++ )
