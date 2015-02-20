@@ -2860,7 +2860,8 @@ double REACT_GEM::CalculateCharge (long in,int timelevel) //for a given node num
 void REACT_GEM::CalculateChargeFromGEMS (long in, TNode* m_Node)
 {
     long i,j;
-    double mycharge[nIC], total;
+    double *mycharge, total;
+	mycharge = new double[nIC];
     DATACH* dCH;                            //pointer to DATACH
     DATABR* dBR;
     // Getting direct access to DataCH structure in GEMIPM2K memory
@@ -2912,6 +2913,7 @@ void REACT_GEM::CalculateChargeFromGEMS (long in, TNode* m_Node)
     }
 //    cout << mycharge[nIC-1] << "\n";
     //finished
+	delete mycharge;
     return ;
 }
 
