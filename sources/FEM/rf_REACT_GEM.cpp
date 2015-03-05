@@ -1808,7 +1808,7 @@ int REACT_GEM::SetSourceSink_MT ( long in, double time_step_size /*in sec*/ )
 		break;
 	case 3:                           // Richards flow  
 		m_st.index_node = in;
-		m_st.water_st_value  = m_excess_water[in] / time_step_size;
+		m_st.water_st_value  =  m_excess_water[in] / time_step_size;
 		// normalize with node volume
 		m_st.water_st_value *= m_Node_Volume[in];
 		m_flow_pcs->Water_ST_vec.push_back ( m_st );
@@ -2313,18 +2313,21 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
             m_excess_water[in] =  m_fluid_volume[in] - m_porosity[in];
             skal_faktor =  m_porosity[in] / m_fluid_volume[in]; //mol amount of water in first phase
             m_fluid_volume[in] = m_porosity[in];
-            m_pcs->SetNodeValue ( in, idx, 1.0); // instead change saturation accordingly;
+	    // not good to do it here, but we keep it for testing
+ //           if (flag_coupling_hydrology) m_pcs->SetNodeValue ( in, idx, 1.0); // instead change saturation accordingly;
             //    cout << " skal factor " << skal_faktor << " excess water volume " << m_excess_water[in] ;
         }
         else
         {
-            m_excess_water[in] = m_fluid_volume[in] - m_porosity[in] *
+           m_excess_water[in] = m_fluid_volume[in] - m_porosity[in] *
                                  m_pcs->GetNodeValue ( in,idx + 1);
+	   // m_excess_water[in]=0.0; // as we change the saturation we do not have to set source/sink
+           // skal_faktor=1.0;
             skal_faktor = m_porosity[in] *
                           m_pcs->GetNodeValue ( in,idx + 1) / m_fluid_volume[in]; //KG44 18.10.2012  is this really correct??
             m_fluid_volume[in] = m_porosity[in] * m_pcs->GetNodeValue ( in,idx + 1);
-
-//	     m_pcs->SetNodeValue ( in, idx, m_fluid_volume[in] / m_porosity[in]); // instead change saturation accordingly; this is done always.
+              // not good to do it here, but we keeip it for testing
+//	    if (flag_coupling_hydrology) m_pcs->SetNodeValue ( in, idx, m_fluid_volume[in] / m_porosity[in]); // instead change saturation accordingly; this is done always.
         }
         //  m_excess_gas[in] = m_gas_volume[in]- m_porosity[in]* ( 1.0 - m_pcs->GetNodeValue ( in,idx+1 ) ); // in contrast to fluid this is not really strongly coupled ...we calculate the stuff but do not couple it to gas flow (yet)
         //  skal_faktor_gas= ( m_porosity[in]* ( 1.0-m_pcs->GetNodeValue ( in,idx+1 ) ) ) /m_gas_volume[in];
@@ -2367,7 +2370,7 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
 
     // if ( fabs ( m_excess_water[in] ) >= 1.e-10 ) cout << "node "<< in <<"m_excess_water" << m_excess_water[in] <<"\n";
     // do we need to scale this accoring to the node volume?..I think so: it is done while transering this to GEMS
-    if ( flowflag < 3 )
+    if ( flowflag <= 3 )  // Includes Richards flow!!!!!
     {
         for ( j = 0; j < nIC; j++ )
         {
@@ -2378,11 +2381,11 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
             m_bPS[ii] *= skal_faktor; // completely newly scaled first phase ...this is default!
 	else
 			{ // this is necessary for not coupling with hydrology, but porosity change or water is used by gems....
-				if ( idx_hydrogen == j )
-					m_bPS[ii] *= skal_faktor;
-				if ( idx_oxygen == j )
-					m_bPS[ii] *= skal_faktor;
-//			  m_bPS[ii] *= skal_faktor; // completely newly scaled first phase ...only for coupling with hydraulics
+//				if ( idx_hydrogen == j )
+//					m_bPS[ii] *= skal_faktor;
+//				if ( idx_oxygen == j )
+//					m_bPS[ii] *= skal_faktor;
+			  m_bPS[ii] *= skal_faktor; // completely newly scaled first phase ...only for coupling with hydraulics
 			}
         }
 	if ( !flag_scale_water_volume_for_hayekit )
@@ -2431,6 +2434,7 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
             }
 
     } // flowflag < 3 is finished
+/*    
     else if ( flowflag == 3 ) // richards flow ....no corrections in gas phase for Richards flow!
     {
         for ( j = 0; j < nIC; j++ )
@@ -2486,6 +2490,7 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
             }
 
     }
+*/
     return 1;
 }
 
@@ -2506,17 +2511,18 @@ int REACT_GEM::ConcentrationToMass ( long l /*idx of node*/, int i_timestep )
     {
     case 1:                                 // groundwater flow
         water_volume = m_fluid_volume[l]; // kg44: reuse stored fluid volume from last timestep!
+        scale_factor=1.0;
         break;
     case 2:                                 // liquid flow
         water_volume = m_fluid_volume[l];
+        scale_factor=1.0;
         break;
     case 3:                                 // Richards flow
         m_pcs = PCSGet ( "RICHARDS_FLOW" );
         idx = m_pcs->GetNodeValueIndex ( "SATURATION1" );
-        scale_factor = m_porosity[l] * m_pcs->GetNodeValue ( l,idx + i_timestep ); //current volume of water phase after hydraulic step
-        water_volume = m_fluid_volume[l]; // old volume of water phase after last GEMS step
-        scale_factor /= water_volume; // 1: same volume <1 decrease in water volume >1 incresing volume
-        m_fluid_volume[l] = water_volume; // update fluid volume
+        water_volume = m_porosity[l] * m_pcs->GetNodeValue ( l,idx + i_timestep ); //current volume of water phase after hydraulic step
+        scale_factor = water_volume/m_fluid_volume[l]; // 1: same volume <1 decrease in water volume >1 increasing volume since last time step due to saturation change!
+//        m_fluid_volume[l] = water_volume; // update fluid volume
         // cout << "conctomass " << m_fluid_volume[l] << " " << scale_factor <<" " ;
         break;
     case 4:                                 // multiphase flow...works with case 1 ...pressure saturation scheme
@@ -2542,13 +2548,13 @@ int REACT_GEM::ConcentrationToMass ( long l /*idx of node*/, int i_timestep )
         exit ( 1 );
     }
 
-    if ( flowflag < 3 ) // groundwater flow or fluid flow
+    if ( flowflag <= 3 ) // groundwater flow or fluid flow
 
         for ( j = 0; j < nIC; j++ )
         {
             i = l * nIC + j;
 
-            m_soluteB[i] *= water_volume;
+            m_soluteB[i] *= water_volume;  // old volumes for groundwater_flow and liquid_flow..."new volume" for Richards flow
             // also check if xDC values is negative
 	    m_soluteB_corr[i]=0.0;
             if ( (m_soluteB[i] < 0.0) && (j != nIC-1))
@@ -2561,21 +2567,22 @@ int REACT_GEM::ConcentrationToMass ( long l /*idx of node*/, int i_timestep )
 
             //carrier for zero(first phase)  is normally water!
 
-            if (!flag_concentrations_with_water)
+            if (!flag_concentrations_with_water) // here we also correct for change in volume due to flow!
             {
                 if ( idx_hydrogen == j )
-                    m_soluteB[i] += ( 2.0 * m_xDC[l * nDC + idx_water] );
+                    m_soluteB[i] += ( 2.0 * m_xDC[l * nDC + idx_water] * scale_factor);
                 else if ( idx_oxygen == j )
-                    m_soluteB[i] +=  m_xDC[l * nDC + idx_water];
+                    m_soluteB[i] +=  (m_xDC[l * nDC + idx_water] * scale_factor) ;
             }
-            m_bIC[i] += m_soluteB[i];    //updated B vector for GEMS
+            m_bIC[i] += m_soluteB[i];    //updated B vector for GEMS ..already scaled to new volume
             // here we check again if the vector if negative or smaller than a minimum amount...if yes we add some stuff....
             // adding 10-9 Mol/m^3 should be save, as this corresponds aprox to 10-12 Mol/l ..accuracy is in any case not better than 1e-12 - 1e-14 for a system of 1kg...
             if ( (m_bIC[i] <= 0.0) && (j != nIC-1))
                 m_bIC[i] = 1e-16;
             //                        cout <<  " i " << i << " " << m_bIC[i] << "\n";
         }
-    else if ( flowflag == 3 ) // Richards flow
+/*
+        else if ( flowflag == 3 ) // Richards flow
     {
         for ( j = 0; j < nIC; j++ )
         {
@@ -2624,7 +2631,8 @@ int REACT_GEM::ConcentrationToMass ( long l /*idx of node*/, int i_timestep )
                 m_bIC[i] = 1e-16;
         }
     }
-    // test charge 
+  */
+  // test charge 
     m_bIC[l*nIC+nIC-1] = 0.0;
     // m_bIC[l*nIC+nIC-1] = m_chargeB_pre[l*nIC+nIC-1];
 // DEBUG!!!!!!!!!
@@ -3353,7 +3361,7 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
                 }
 
                 for ( j = 0; j < d_kin.ss_endmembers; j++ )
-                    in >> d_kin.ss_scaling[j];
+                    in >> d_kin.endmember_species[j] >> d_kin.ss_scaling[j];
 		 for ( j = 0; j < d_kin.ss_endmembers; j++ ) cout << " endmembers " << d_kin.ss_scaling[j] << "\n";
             }
             in.clear();
@@ -3453,6 +3461,7 @@ int REACT_GEM::CalcReactionRate ( long in, double temp,  TNode* m_Node )
 						// loop over all components of the phase
 						omega_phase[in * nPH + k] += m_Node->DC_a ( j );
 
+//						mol_phase[in * nPH + k] +=( m_xDC[in * nDC + j] );
 						mol_phase[in * nPH + k] +=( m_xDC[in * nDC + j] * m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter] );
 //						cout << "Debug kin omega phase "<< omega_phase[in*nPH+k] << " fraction component " << omega_components[in*nDC+j] << "  mol component " <<  m_xDC[in * nDC + j] << "  mol phase " << mol_phase[in*nPH+k] << "\n"; // debug
 					}
@@ -3740,9 +3749,11 @@ int REACT_GEM::CalcLimitsInitial ( long in, TNode* m_Node)
 
 int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,TNode* m_Node)
 {
-    double dummy, omega_dummy;  // dummy value and amount we need
-    long k,j;
-
+    int idx=0, iomega_max;
+    const char* species;
+    double dummy, dummy2,omega_dummy, omega_max, charge_phase;  // dummy value and amount we need
+    long i, k,j;
+    double *dm_endmember, dm_sum, dm_abssum, dll_sum, dul_sum,checksum; //change of mass for endmember in given time intervall, sum of changes for endmember in given time intervall
     // kinetic_model==5 dissolution+precipitation for solid solutions
     // kinetic_model==7 dissolution only for solid solutions
     DATACH* dCH;                            //pointer to DATACH
@@ -3757,86 +3768,241 @@ int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,TNode* m_Node)
     dBR = m_Node->pCNode();
     if ( !dBR )
         return 0;
-    
+
     k = m_kin[ii].phase_number;
+
+    dm_endmember = new double[dCH->nDCinPH[k]]; //create vector for holding endmember amounts ...
+
 //    cout << " kinetics mole phase " << ii << " "  << mol_phase[in * nPH + k]<< "\n";
+    dm_sum=0.0;
+    dul_sum=0.0;
+    dll_sum=0.0;
+    dm_abssum=0.0;
+    checksum=0.0;
+    omega_max=0.0;
+    charge_phase=0.0;
 
-    for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )
+    // First we adjust the stoichiometric composition and we do this only if the phase "exists"
+    if (mol_phase[in * nPH + k] > 1.0e-12)   // do stoichiometric adjestments/equilibration only if phase is greater than a very small amount
     {
-          
-       // cout << "Kin debug " << in << " mol amount species " << m_xDC[in*nDC+j] << " saturation phase " << omega_phase[in*nPH+k] << " saturation species " << omega_components[in*nDC+j] << " mol fraction now " << (m_xDC[in*nDC+j]/mol_phase[in*nPH+k] )<< " ";
-        // surface complexation species are not kinetically controlled -- 0 is old way...X is new way in DCH files
-        if ( ( dCH->ccDC[j]  == '0' ) || ( dCH->ccDC[j]  == 'X' ) || ( dCH->ccDC[j]  == 'Y' ) || ( dCH->ccDC[j]  == 'Z' ) )
+        for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + 	dCH->nDCinPH[k]; j++ )  // mol_phase includes corrections for valence of endmembers! in order to get
         {
-            m_dll[in * nDC + j] = 0.0; // set to zero
-            m_dul[in * nDC + j] = 1.0e+10; // very high number
+            charge_phase +=m_xDC[in * nDC + j];
         }
-        else
-        {
-            //  cout << m_kin[ii].kinetic_model << "\n";
-            // if (in == 281)  cout << "Kin debug SS mol phase " << mol_phase[in*nPH+k] << " dmdt " << dmdt[in*nPH+k]*dt << " omega comp " <<omega_components[in*nDC+j] <<" omega phase " << omega_phase[in*nPH+k]<< "\n";
-            dummy =( dmdt[in * nPH + k] * dt ) * omega_components[in * nDC + j] / omega_phase[in * nPH + k]; // sum of omega_components is equal omega_phase..therefore the weights add up to one!
-	 //  cout << " dummy " << dummy << "\n";
-            if ( (m_kin[ii].kinetic_model == 5) ||  (m_kin[ii].kinetic_model == 7)) // only for Solid solution models: rescale to change of endmember in case of Vanselow convenction or similar
-                dummy /= m_kin[ii].ss_scaling[j -m_kin[ii].dc_counter];
 
-	    // endmember specific saturation
-	    omega_dummy= (omega_components[in * nDC + j]) / (  m_xDC[in * nDC + j] * m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter] / mol_phase[in * nPH + k] ); //end_member solubility fraction divided by mass fraction...>1 : pec...<1 diss
-	    if ( !( omega_dummy <= 1.0 ) && !( omega_dummy > 1.0 ) ) //test for NaN
+        for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + 	dCH->nDCinPH[k]; j++ )
+        {
+            i=j-m_kin[ii].dc_counter; // counts from zero to dCH->nDCinPH[k]
+            species = m_kin[ii].endmember_species[i].c_str();
+            // loop over all the names in the list
+            idx = m_Node->DC_name_to_xCH ( species );
+            // surface complexation species are not kinetically controlled -- 0 is old way...X is new way in DCH files
+            if ( ( dCH->ccDC[j]  == '0' ) || ( dCH->ccDC[j]  == 'X' ) || ( dCH->ccDC[j]  == 'Y' ) || ( dCH->ccDC[j]  == 'Z' ) )
             {
-                // no change!
-		omega_dummy=1.0;
+                m_dll[in * nDC + j] = 0.0; // set to zero
+                m_dul[in * nDC + j] = 1.0e+10; // very high number
             }
-	//    cout << " dummy " << dummy << " omega_dummy " << omega_dummy << "\n";
-            
-            if ( !( dummy <= 1.0 ) && !( dummy > 1.0 ) ) //test for NaN
+            else
             {
-                // no change!
-                m_dul[in * nDC + j] = m_xDC[in * nDC + j];
-                m_dll[in * nDC + j] = m_xDC[in * nDC + j];
+                dm_endmember[i]= 1.0 - (omega_components[in * nDC + j] / omega_phase[in*nPH+k]) / (  m_xDC[in * nDC + j]  / charge_phase) ; // This gives stoichometric disequilibrium for phase...
+                if ( !( dm_endmember[i] <= 1.0 ) && !( dm_endmember[i] > 1.0 ) ) //test for NaN
+                {
+                    // no change!
+                    dm_endmember[i]=0.0;
+                }
+                if ( ( dm_endmember[i] > 1.0e10 )  ) //test for inf
+                {
+                    // no change!
+                    dm_endmember[i]=0.0;
+                }
+                if ( ( dm_endmember[i] < -1.0e10 )  ) //test for -inf
+                {
+                    // no change!
+                    dm_endmember[i]=0.0;
+                }
             }
-            else if (  omega_dummy < 1.0) // This is the dissolution case
+
+            dm_endmember[i] /= m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter]; // scale to endmember-core , as we would like to keep the "endmember = clay"or total charge constant!
+
+            dm_sum += dm_endmember[i];
+            dm_abssum += abs(dm_endmember[i]);
+            if (omega_max < (dm_endmember[i]) )//test for max stoichiometric saturation -> strongest tendency to form -> strongest uptake from solution
             {
-                m_dul[in * nDC + j] = m_xDC[in * nDC + j];
-                m_dll[in * nDC + j] = m_xDC[in * nDC + j]-fabs(dummy);
-		if ( m_dll[in * nDC + j] < 0.0)  m_dll[in * nDC + j]=0;
+                omega_max = dm_endmember[i];
+                iomega_max=i;
+                dummy =  m_xDC[in * nDC + idx];   // * m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter]; // species amount for which the equilibrium of the endmember is defined! ...later transformed to scaling coefficient (defines
+//	  we need to scale dummy !!!!
             }
-            else // This is the precipitation case
+        }
+
+        if ( !( dummy <= 1.0 ) && !( dummy > 1.0 ) ) //test for NaN
+        {
+            // no change!
+            dummy=0.0;
+        }
+        if ( ( dummy > 1.0e10 )  ) //test for inf
+        {
+            // no change!
+            dummy=0.0;
+        }
+        if ( ( dummy < -1.0e10 )  ) //test for -inf
+        {
+            // no change!
+            dummy=0.0;
+        }
+
+        for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )
+        {
+            i=j-m_kin[ii].dc_counter; // counts from zero to dCH->nDCinPH[k]
+
+//          dm_endmember[i] *= abs(dm_sum/dm_abssum); //distribute inaccuracy evenly on end_members to keep total mol/exchange capacity of the phase constant
+            dm_endmember[i] -= ( dm_sum * m_xDC[in * nDC + j] * m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter] / mol_phase[in * nPH + k] ) ;
+            dm_endmember[i] *= dummy;  // scale to maximum amount of endmember ion in solution
+
+            if (((m_xDC[in * nDC + j]+(dm_endmember[i])) < 0.0) &&  (dummy2 > abs(m_xDC[in * nDC + j]/(dm_endmember[i]))))
             {
-                m_dll[in * nDC + j] = m_xDC[in * nDC + j];
-                m_dul[in * nDC + j] = m_xDC[in * nDC + j] + fabs(dummy);
+                //  cout << "\n GEMS DEBUG: Kinetic solid solutions., node, phase, dul , dummy2 " << in << " " << k << " " << (m_xDC[in * nDC + j]+dm_endmember[i]) << " " << abs(m_xDC[in * nDC + j]/dm_endmember[i]) <<"\n";
+                if (abs(dm_endmember[i] < 1e-16))
+                {
+                    dummy2=0.0;
+                }
+                else
+                {
+                    dummy2 = abs((m_xDC[in * nDC + j])/(dm_endmember[i]));
+                }
+
+            }
+            // cout << " omega_phase " << omega_phase[in*nPH+k]   << " omega_endmember " << omega_components[in * nDC + j] <<" endmember " << dm_endmember[i] << " dummy " << dummy << "\n";
+        }
+
+
+        for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )
+        {
+            i=j-m_kin[ii].dc_counter; // counts from zero to dCH->nDCinPH[k]
+            dm_endmember[i] *= dummy2;  // scale to maximum amount of endmember ion in solution
+            // surface complexation species are not kinetically controlled -- 0 is old way...X is new way in DCH files
+            if ( ( dCH->ccDC[j]  == '0' ) || ( dCH->ccDC[j]  == 'X' ) || ( dCH->ccDC[j]  == 'Y' ) || ( dCH->ccDC[j]  == 'Z' ) )
+            {
+                m_dll[in * nDC + j] = 0.0; // set to zero
+                m_dul[in * nDC + j] = 1.0e+10; // very high number
+            }
+            else
+            {
+                checksum += dm_endmember[i];
+                m_dll[in * nDC + j] = m_xDC[in * nDC + j]+dm_endmember[i];
+                m_dul[in * nDC + j] = m_xDC[in * nDC + j]+dm_endmember[i];
+                dll_sum += m_dul[in * nDC + j]*m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter];
+                dul_sum += m_dul[in * nDC + j]*m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter];
+            }
+        }
+
+        // check
+//    if ((abs(dll_sum - mol_phase[in * nPH + k]) > 1.e-15) || (abs(dul_sum - mol_phase[in * nPH + k]) > 1.e-15))
+//    {
+//        rwmutex.lock();
+//        cout << "\n GEMS DEBUG: Kinetic solid solutions., mol_endmember, checksum(sum of endmember change) " << in << " " << k << " " << mol_phase[in * nPH + k] << " " << checksum<<"\n";
+//        rwmutex.unlock();
+//    }
+    }
+
+    // in a second pass we superpose the constraints to a kinetically controlled dissolution/precipitation! ..for boths...kinetically controlled etc..
+    if (mol_phase[in * nPH + k] > 1.0e-12)   // do stoichiometric adjestments/equilibration only if phase is greater than small amount, otherwise just add some constraints!
+    {
+
+        for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + 	dCH->nDCinPH[k]; j++ )
+        {
+            i=j-m_kin[ii].dc_counter; // counts from zero to dCH->nDCinPH[k]
+
+            // surface complexation species are not kinetically controlled -- 0 is old way...X is new way in DCH files
+            if ( ( dCH->ccDC[j]  == '0' ) || ( dCH->ccDC[j]  == 'X' ) || ( dCH->ccDC[j]  == 'Y' ) || ( dCH->ccDC[j]  == 'Z' ) )
+            {
+                m_dll[in * nDC + j] = 0.0; // set to zero
+                m_dul[in * nDC + j] = 1.0e+10; // very high number
+            }
+            else
+            {
+                dm_endmember[i] = ( dmdt[in * nPH + k] * dt ) * (  m_xDC[in * nDC + j] * m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter] / mol_phase[in * nPH + k] ); // sum of omega_components is equal omega_phase..therefore the weights add up to one!
+
+                if ( !( dm_endmember[i] <= 1.0 ) && !( dm_endmember[i] > 1.0 ) ) //test for NaN
+                {
+                    // no change!
+                    dm_endmember[i]=0.0;
+                }
+                if ( ( dm_endmember[i] > 1.0e16 )  ) //test for inf
+                {
+                    // no change!
+                    dm_endmember[i]=0.0;
+                }
+                if ( ( dm_endmember[i] < -1.0e16 )  ) //test for -inf
+                {
+                    // no change!
+                    dm_endmember[i]=0.0;
+                }
+
+                omega_dummy= omega_phase[in * nPH + k] ; //end_member solubility fraction divided by mass fraction...>1 : pec...<1 diss
+                if ( !( omega_dummy <= 1.0 ) && !( omega_dummy > 1.0 ) ) //test for NaN
+                {
+                    // no change!
+                    omega_dummy=1.0;
+                }
+                else if ( omega_dummy > 1.0) //test for NaN
+                {
+                    m_dul[in * nDC + j] += dm_endmember[i];
+                }
+                else if (  omega_dummy < 1.0) // This is the dissolution case
+                {
+                    m_dll[in * nDC + j] += dm_endmember[i];
+                }
+                else
+                {
+                    // do nothing
+                }
             }
         }
     }
- /*
- // this is the initial guess...debug part for checking how far we are off!
-        double sum_dul, sum_dll, mass_goal;
-        sum_dul=0.0; sum_dll=0.0;
-    
-    for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )
+    else // case phase does not "exist"
     {
-        //     cout << "Kin debug " << in << " mol amount species " << m_xDC[in*nDC+j] << " saturation phase " << omega_phase[in*nPH+k] << " saturation species" << omega_components[in*nDC+j] << " mol fraction now" << (m_xDC[in*nDC+j]/mol_phase[in*nPH+k] )<< "\n";
-        // surface complexation species are not kinetically controlled -- 0 is old way...X is new way in DCH files
-        if ( !( dCH->ccDC[j]  == '0' ) &&
-                !( dCH->ccDC[j]  == 'X' ) &&
-                !( dCH->ccDC[j]  == 'Y' ) &&
-                !( dCH->ccDC[j]  == 'Z' ) )
+        if (omega_phase[in * nPH + k] > 1.0)
         {
-            // we need this later for solid solutions....
-         //   omega_components[in * nDC + j] = m_Node->DC_a ( j );
-            // loop over all components of the phase
-	    sum_dll += (m_dll[in * nDC + j] * m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter]);
-            sum_dul += (m_dul[in * nDC + j] * m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter]);
-            // if (in == 282) cout << "Debug kin omega phase "<< omega_phase[in*nPH+k] <<"m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter] "<< m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter] << "j - m_kin[ii].dc_counter"<< j - m_kin[ii].dc_counter << " fraction component " << omega_components[in*nDC+j] << "  mol component " <<  m_xDC[in * nDC + j] << "  mol phase " << mol_phase[in*nPH+k] << "\n"; // debug
+            for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + 	dCH->nDCinPH[k]; j++ )
+            {
+                i=j-m_kin[ii].dc_counter; // counts from zero to dCH->nDCinPH[k]
+
+                // surface complexation species are not kinetically controlled -- 0 is old way...X is new way in DCH files
+                if ( ( dCH->ccDC[j]  == '0' ) || ( dCH->ccDC[j]  == 'X' ) || ( dCH->ccDC[j]  == 'Y' ) || ( dCH->ccDC[j]  == 'Z' ) )
+                {
+                    m_dll[in * nDC + j] = 0.0; // set to zero
+                    m_dul[in * nDC + j] = 1.0e+10; // very high number
+                }
+                else
+                {
+                    m_dll[in * nDC + j] = 0.0; // set to zero
+                    m_dul[in * nDC + j] = 1.0e-6; // small number to allow initial amount to precipitate!
+                }
+            }
+        }
+        else if (omega_phase[in * nPH + k] <=1.0)
+        {
+            // do nothing as only very small amount exists and the phase should dissolve in any case
         }
     }
-            mass_goal = mol_phase[in * nPH + k] + dmdt[in * nPH + k] * dt ;
-    // scale the limits such that total mass for upper resp lower limits are preserved!
-    // as we do this not within GEMS we might run either into trouble with GEMS convergence or with rates... 
-        
-//    cout << "DEBUG limits_solid_solution: mass_goal/dll " << mass_goal/sum_dll << " sumdll " << sum_dll ;
-//    cout << " mass_goal/dul " << mass_goal/sum_dul << " sumdul " << sum_dul << "\n";
-	    */
+
+
+    // check for problems
+    for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + 	dCH->nDCinPH[k]; j++ )
+    {
+
+        if  (m_dll[in * nDC + j] < 0.0)
+        {
+            m_dll[in * nDC + j] =0.0 ;
+        }
+        if  (m_dul[in * nDC + j] < m_dll[in * nDC + j])
+        {
+            m_dul[in * nDC + j] = m_dll[in * nDC + j];
+        }
+    }
+
+    delete [] dm_endmember;
     return 1;
 
 }
@@ -4922,7 +5088,30 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
                 REACT_GEM::SetReactInfoBackGEM ( in,t_Node); // this should be also save for MPI
                 // take values from old B volume for comparison
                 oldvolume = m_Vs[in];
+		
+                if (in == -1) 
+		{
+                        rwmutex.lock();
+                        string rank_str;
+                        rank_str = "0";
 
+                        int rank=0;
+#if defined(USE_PETSC)
+                        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+                        stringstream ss (stringstream::in | stringstream::out);
+                        ss.clear();
+                        ss.str("");
+                        ss << rank << "_node-"<<in<<"_time-"<< aktueller_zeitschritt;
+                        rank_str = ss.str();
+                        ss.clear();
+                        // write out a separate time stamp into file
+                        string m_file_namet = "before_gems_dbr_domain-" + rank_str + ".dat";
+
+                        t_Node->GEM_write_dbr ( m_file_namet.c_str() );
+                        rwmutex.unlock();
+
+		}
                 // Order GEM to run
                 tdBR->NodeStatusCH = NEED_GEM_AIA; // first try without simplex using old solution
                 m_NodeStatusCH[in] = t_Node->GEM_run ( true );
@@ -4948,7 +5137,8 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 //#endif
                     // change a bit the kinetic constraints -> make the system less stiff
 // change the constraints only a little bit
-                    for ( j = 0; j < nDC; j++ )
+/*
+		  for ( j = 0; j < nDC; j++ )
                     {
 
                         m_dll[in * nDC +
@@ -4958,6 +5148,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
                         m_dul[in * nDC +
                               j] = 1.00 * m_dul[in * nDC + j] + 1.0e-6; // make bigger
                     }
+*/                    
                     REACT_GEM::SetReactInfoBackGEM ( in, t_Node); // needs to be done to for update dll dul
 
                     // run GEMS again
@@ -5000,6 +5191,26 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
                                  "nodes failed this timestep, check chemical system!"
                                  << "\n";
                             rwmutex.unlock();
+                      rwmutex.lock();
+                        string rank_str;
+                        rank_str = "0";
+
+                        int rank=0;
+#if defined(USE_PETSC)
+                        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+                        stringstream ss (stringstream::in | stringstream::out);
+                        ss.clear();
+                        ss.str("");
+                        ss << rank << "_node-"<<in<<"_time-"<< aktueller_zeitschritt;
+                        rank_str = ss.str();
+                        ss.clear();
+                        // write out a separate time stamp into file
+                        string m_file_namet = "after_gems_dbr_domain-" + rank_str + ".dat";
+
+                        t_Node->GEM_write_dbr ( m_file_namet.c_str() );
+                        rwmutex.unlock();
+			    
 #if defined(USE_PETSC)
                             MPI_Finalize(); //make sure MPI exits
 #endif
@@ -5016,6 +5227,30 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
                     node_fail=0;
                 }
 
+                if (in == -1) 
+		{
+                        rwmutex.lock();
+                        string rank_str;
+                        rank_str = "0";
+
+                        int rank=0;
+#if defined(USE_PETSC)
+                        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+                        stringstream ss (stringstream::in | stringstream::out);
+                        ss.clear();
+                        ss.str("");
+                        ss << rank << "_node-"<<in<<"_time-"<< aktueller_zeitschritt;
+                        rank_str = ss.str();
+                        ss.clear();
+                        // write out a separate time stamp into file
+                        string m_file_namet = "after_gems_dbr_domain-" + rank_str + ".dat";
+
+                        t_Node->GEM_write_dbr ( m_file_namet.c_str() );
+                        rwmutex.unlock();
+
+		}
+                
 
                 if ( node_fail == 1 ) // do not take the new solution from gems
                 {

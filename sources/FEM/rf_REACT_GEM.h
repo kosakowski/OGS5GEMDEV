@@ -326,7 +326,6 @@ public:
         int kinetic_model;                       // only 1 = GEMS implemented right now
         int n_activities;                        // number of species for activities
         string active_species[10];               // name for species ...maximum 10 names
-
         /**	this vector holds the kinetic material parameters
         *      0,1,2  double E_acid,E_neutral,E_base; // activation energies
         *      3-5  double k_acid, k_neutral,k_base; // dissolution/precipitation rate constants
@@ -339,6 +338,7 @@ public:
         double surface_area[10];
         int ss_endmembers; // special model for solid solutions...only read for kinetic model == 5
         double *ss_scaling; // special model for solid solutions...only read for kinetic model == 5
+        string endmember_species[10]; // species for cation exchange with endmembers( maximum  10 endmembers) same order as endmembers
     } Kinetic_GEMS;
     vector<Kinetic_GEMS> m_kin;
 
