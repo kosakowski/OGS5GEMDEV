@@ -3830,7 +3830,7 @@ int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,TNode* m_Node)
             {
                 omega_max = dm_endmember[i];
                 iomega_max=i;
-                dummy =  m_xDC[in * nDC + idx];   // * m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter]; // species amount for which the equilibrium of the endmember is defined! ...later transformed to scaling coefficient (defines
+                dummy =  m_xDC[in * nDC + idx]* 0.5;   // * m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter]; // species amount for which the equilibrium of the endmember is defined! ...later transformed to scaling coefficient (defines
 //	  we need to scale dummy !!!!
             }
         }
@@ -3879,7 +3879,7 @@ int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,TNode* m_Node)
         for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )
         {
             i=j-m_kin[ii].dc_counter; // counts from zero to dCH->nDCinPH[k]
-            dm_endmember[i] *= dummy2;  // scale to maximum amount of endmember ion in solution
+            dm_endmember[i] *= dummy2*0.5;  // scale to 1/2 times the endmember in order to avoid zero endmember 
             // surface complexation species are not kinetically controlled -- 0 is old way...X is new way in DCH files
             if ( ( dCH->ccDC[j]  == '0' ) || ( dCH->ccDC[j]  == 'X' ) || ( dCH->ccDC[j]  == 'Y' ) || ( dCH->ccDC[j]  == 'Z' ) )
             {
