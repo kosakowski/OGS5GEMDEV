@@ -1095,6 +1095,9 @@ void CSourceTermGroup::Set(CRFProcess* m_pcs, const int ShiftInNodeVector,
       for (long i = 0; i < no_st; i++)
       {
          CSourceTerm *source_term (st_vector[i]);
+         if(m_pcs->getProcessType() != source_term->getProcessType() )
+            continue;
+
          source_term->setSTVectorGroup(i);
 
          // 07.01.2011. WW
