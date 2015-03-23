@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: node.h 769 2012-12-10 12:54:34Z kulik $
+// $Id: node.h 927 2014-02-27 09:25:04Z dmitrieva $
 /// \file node.h
 /// Declaration of TNode class that implements a simple C/C++ interface
 /// between GEMS3K and another code.
@@ -74,7 +74,8 @@ extern const double bar_to_Pa,
 /// the TNodearray class.
 class TNode
 {
-  gstring dbr_file_name;  ///< place for the *dbr. I/O file name
+    gstring dbr_file_name;  ///< place for the *dbr. I/O file name
+    gstring ipmlog_file_name;  ///< full name of the ipmlog file
 
 protected:
    MULTI* pmm;  ///< \protected Pointer to GEM IPM work data structure (ms_multi.h)
@@ -860,6 +861,17 @@ void GEM_set_MT(
     /// Writes work node (DATABR structure) to a text VTK file
     virtual void databr_to_vtk( fstream& ff, const char*name, double time, long int  cycle,
                               long int nFilds, long int (*Flds)[2]);
+
+    /// Get full name of the ipmlog file
+    const gstring& ipmLogFile() const {
+        return ipmlog_file_name;
+    }
+
+    /// Set full name of the ipmlog file
+    void setipmLogFile(const gstring& logFile) {
+        ipmlog_file_name = logFile;
+    }
+
 
 };
 

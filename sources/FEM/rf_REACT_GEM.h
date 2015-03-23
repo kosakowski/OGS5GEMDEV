@@ -245,7 +245,7 @@ public:
     int Findhydrogen_bIC ( TNode* m_Node);
     int Findoxygen_bIC ( TNode* m_Node);
     //kg44 11/2008 for kinetics
-    int CalcReactionRate ( long node, double temp ,  TNode* m_Node );
+    int CalcReactionRate ( long node,  TNode* m_Node );
     double SurfaceAreaPh ( long kin_phasenr,long in ,  TNode* m_Node );
 
     // concentration related

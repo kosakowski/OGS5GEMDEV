@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: io_arrays.cpp 776 2012-12-16 18:46:33Z dmitrieva $
+// $Id: io_arrays.cpp 952 2014-03-27 15:31:16Z dmitrieva $
 //
 /// \file io_arrays.cpp
 /// Implementation of service functions for writing/reading arrays in files
@@ -503,6 +503,8 @@ void TPrintArrays::writeArray( const char *name, short* arr,
 void  TReadArrays::skipSpace()
 {
   char input;
+  if( ff.eof() )
+       return;
   ff.get( input );
   while( input == '#' || input == ' ' ||
         input == '\n' || input == '\t')
