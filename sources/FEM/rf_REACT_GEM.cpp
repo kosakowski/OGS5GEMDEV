@@ -4143,9 +4143,12 @@ int REACT_GEM::CalcLimits ( long in, TNode* m_Node)
                     }
                     else  //default kinetics
                     {
-                        // if (in == 281)  cout << "Kin debug SS mol phase " << mol_phase[in*nPH+k] << " dmdt " << dmdt[in*nPH+k]*dt << " omega comp " <<omega_components[in*nDC+j] <<" omega phase " << omega_phase[in*nPH+k]<< "\n";
-                        dummy =( mol_phase[in * nPH + k] + dmdt[in * nPH + k] * dt ) * omega_components[in * nDC + j] / omega_phase[in * nPH + k];
-                        if ( (m_kin[ii].kinetic_model == 5) ||  (m_kin[ii].kinetic_model == 7)) // only for Solid solution models: rescale to change of endmember in case of Vanselow convenction or similar
+		      // scaling with omega is necessary for solid_solutions? ...not good for normal single component phases
+//                        dummy =( mol_phase[in * nPH + k] + dmdt[in * nPH + k] * dt ) * omega_components[in * nDC + j] / omega_phase[in * nPH + k];
+                        dummy =( mol_phase[in * nPH + k] + dmdt[in * nPH + k] * dt ) ;
+//                        if (in == 5)  cout << " dummy "<< dummy << " Kin debug mol phase " << mol_phase[in*nPH+k] << " dmdt " << dmdt[in*nPH+k]*dt << " omega comp " <<omega_components[in*nDC+j] <<" omega phase " << omega_phase[in*nPH+k]<< "\n";
+
+			if ( (m_kin[ii].kinetic_model == 5) ||  (m_kin[ii].kinetic_model == 7)) // only for Solid solution models: rescale to change of endmember in case of Vanselow convenction or similar
                             dummy /= m_kin[ii].ss_scaling[j -m_kin[ii].dc_counter];
                         if (dummy > 1.0e10)
                             dummy = 1.0e10;
@@ -5147,33 +5150,9 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
                 // take values from old B volume for comparison
                 oldvolume = m_Vs[in];
 		
-                if (in == -1) 
-		{
-                        rwmutex.lock();
-                        string rank_str;
-                        rank_str = "0";
-
-                        int rank=0;
-#if defined(USE_PETSC)
-                        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
-                        stringstream ss (stringstream::in | stringstream::out);
-                        ss.clear();
-                        ss.str("");
-                        ss << rank << "_node-"<<in<<"_time-"<< aktueller_zeitschritt;
-                        rank_str = ss.str();
-                        ss.clear();
-                        // write out a separate time stamp into file
-                        string m_file_namet = "before_gems_dbr_domain-" + rank_str + ".dat";
-
-                        t_Node->GEM_write_dbr ( m_file_namet.c_str() );
-                        rwmutex.unlock();
-
-		}
                 // Order GEM to run
                 tdBR->NodeStatusCH = NEED_GEM_AIA; // first try without simplex using old solution
                 m_NodeStatusCH[in] = t_Node->GEM_run ( true );
-
                 if ( !( m_NodeStatusCH[in] == OK_GEM_AIA  )  ||
                         ( ( ( abs ( oldvolume - tdBR->Vs ) / oldvolume ) > 0.1 ) &&
                           ( flowflag != 3 ) ))                               // not for Richards flow  // ups...failed..try again with changed kinetics
