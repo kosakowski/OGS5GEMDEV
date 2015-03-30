@@ -3589,7 +3589,7 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
 			// terms for each case
 			rra =
 			        exp ( -1.0 * m_kin[ii].kinetic_parameters[0] / R *
-			              ( 1.0 / m_T[in] + 1.0 /
+			              ( 1.0 / m_T[in] - 1.0 /
 			                298.15 ) ) * aa *
 			        pow ( ( 1.0 -
 			                pow ( omega_phase[in * nPH + k],
@@ -3598,7 +3598,7 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
 
 			rrn =
 			        exp ( -1.0 * m_kin[ii].kinetic_parameters[1] / R *
-			              ( 1.0 /  m_T[in] + 1.0 /
+			              ( 1.0 /  m_T[in] - 1.0 /
 			                298.15 ) ) * ab *
 			        pow ( ( 1.0 -
 			                pow ( omega_phase[in * nPH + k],
@@ -3607,7 +3607,7 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
 
 			rrb =
 			        exp ( -1.0 * m_kin[ii].kinetic_parameters[2] / R *
-			              ( 1.0 /  m_T[in] + 1.0 /
+			              ( 1.0 /  m_T[in] - 1.0 /
 			                298.15 ) ) * ac *
 			        pow ( ( 1.0 -
 			                pow ( omega_phase[in * nPH + k],
