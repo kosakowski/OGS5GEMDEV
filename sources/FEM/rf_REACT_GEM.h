@@ -100,7 +100,7 @@ public:
     // previous time step IC values
     double *m_soluteB_pts, *m_bIC_pts;
     // previous time step kinetic values
-    double *dmdt_pts;                               // old kinetically controlled rates
+    double *dmdt_pts, *m_dul_pts, *m_dll_pts;                              // old kinetically controlled rates
     double *mol_phase_pts, *omega_phase_pts, *omega_components_pts; // old saturation indices and mole amounts in phase
     
     
@@ -113,14 +113,15 @@ public:
     double *mol_phase, *mol_phase_initial, *omega_phase,*omega_components;
 
     double *dmdt;                               // kinetically controlled rates
-    int CalcLimits ( long in, TNode* m_Node);
+    int CalcLimits ( long in, int flag_equilibration, TNode* m_Node);
     int CalcLimitsInitial ( long in, TNode* m_Node);
-    int CalcLimitsSolidSolution ( long in, long ii,TNode* m_Node);
+    int CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration ,TNode* m_Node);
     double CementHydrationKinetics (double oldvalue,  long kin_phasenr, double dt ); // calculates cement hydration kinetics according ot Lothenbach and Wieland (2008=
     int *m_boundary;                            //holds marker for boundary nodes
     double max_kinetic_timestep;               // variable used for limiting time step
     bool calc_limits;                          // do this for first Picard iteration
-
+    int CheckConstraints ( long in,TNode* m_Node);
+    
     // CRFProcess *m_pcs;                          // pointer to the PCS Class.
     CRFProcess *m_flow_pcs;                     // pointer to the flow PCS.
 
