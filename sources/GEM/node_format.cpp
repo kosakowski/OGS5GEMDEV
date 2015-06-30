@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------
-// $Id: node_format.cpp 776 2012-12-16 18:46:33Z dmitrieva $
+// $Id: node_format.cpp 1069 2015-06-29 11:46:27Z kulik $
 //
 /// \file node_format.cpp
 /// Interface for writing/reading DBR and DCH I/O files of GEMS3K
@@ -48,7 +48,7 @@ extern const char* _GEMIPM_version_stamp;
 // the text of the comment for this data object, optionally written into the
 // text-format output DBR or DCH file.
 //
-outField DataBR_fields[f_lga+1/*58*/] =  {
+outField DataBR_fields[f_lga+1/*60*/] =  {
   { "NodeHandle",  0, 0, 1, "# NodeHandle: Node identification handle"},
   { "NodeTypeHY",  0, 0, 1, "# NodeTypeHY:  Node type code (hydraulic), not used on TNode level; see typedef NODETYPE" },
   { "NodeTypeMT",  0, 0, 1, "# NodeTypeMT:  Node type (mass transport), not used on TNode level; see typedef NODETYPE" },
@@ -90,7 +90,7 @@ outField DataBR_fields[f_lga+1/*58*/] =  {
   { "hDv",  0, 0, 1, "# hDv: Hydraulic vertical dispersivity, m2/s (mass transport)" },
   { "nto",  0, 0, 1, "# nto: Tortuosity factor, dimensionless (mass transport)" },
 //#endif
- // dynamic arrays (52-38=14)
+ // dynamic arrays (53-38=15)
   { "bIC",  1, 0, nICbi, "# bIC: Bulk composition of reactive subsystem (main GEM input), moles of ICs [nICb]" },
   { "rMB",  0, 0, nICbi, "\n# rMB: Mass balance residuals, moles (GEM output) [nICb]" },
   { "uIC",  0, 0, nICbi, "\n# uIC: Chemical potentials of ICs in equilibrium (dual solution), J/(RT) (GEM output) [nICb]" },
@@ -105,6 +105,9 @@ outField DataBR_fields[f_lga+1/*58*/] =  {
   { "bPS",  0, 0, nPSbnICbi, "\n\n# bPS: Bulk elemental compositions of multicomponent phases, moles (GEM output) [nPSb*nICb]"},
   { "xPA",  0, 0, nPSbi, "\n# xPA: Amount of carrier (sorbent or solvent) in multicomponent phases, moles (GEM output) [nPSb]" },
   { "bSP",  0, 0, nICbi, "\n# bSP: Output bulk composition of the equilibrium solid part of the system, moles " },
+    { "amru",  0, 0, nPSbi, "\n# amru: Upper AMRs on amounts of multi-component phases (mol) [nPSb]  " },
+    { "amrl",  0, 0, nPSbi, "\n# amrl: Lower AMRs on amounts of multi-component phases (mol) [nPSb]" },
+  { "omPH",  0, 0, nPHbi, "\n# omPH: stability (saturation) indices of phases in log10 scale, can change in GEM [nPHb] " },
 
 // only for VTK format output
     { "mPH",  0, 0, nPHbi, "# mPH: Masses of phases in equilibrium, kg [nPHb]" },
@@ -174,7 +177,7 @@ void TNode::databr_to_text_file( fstream& ff, bool with_comments, bool brief_mod
 // ErrorIf( !ff.good() , "DataCH.out", "Fileopen error");
   bool _comment = with_comments;
 
-  TPrintArrays  prar(f_bSP+1/*52*/, DataBR_fields, ff);
+  TPrintArrays  prar(f_omph+1/*55*/, DataBR_fields, ff);
 
    if( _comment )
    {
@@ -283,6 +286,9 @@ void TNode::databr_to_text_file( fstream& ff, bool with_comments, bool brief_mod
   prar.writeArray(  f_vPS,  CNode->vPS, CSD->nPSb, -1L,_comment, brief_mode );
   prar.writeArray(  f_mPS,  CNode->mPS, CSD->nPSb, -1L,_comment, brief_mode );
   prar.writeArray(  f_xPA,  CNode->xPA, CSD->nPSb, -1L,_comment, brief_mode );
+  prar.writeArray(  f_amru,  CNode->amru, CSD->nPSb, -1L,_comment, brief_mode );
+  prar.writeArray(  f_amrl,  CNode->amrl, CSD->nPSb, -1L,_comment, brief_mode );
+  prar.writeArray(  f_omph,  CNode->omPH, CSD->nPHb, -1L,_comment, brief_mode );
 
   if(!brief_mode || prar.getAlws( f_bPS ))
   {  if( _comment )
@@ -311,7 +317,7 @@ void TNode::databr_from_text_file( fstream& ff )
 
  // mem_set( &CNode->Tm, 0, 19*sizeof(double));
  databr_reset( CNode );
- TReadArrays  rdar(f_bSP+1/*52*/, DataBR_fields, ff);
+ TReadArrays  rdar(f_omph+1/*55*/, DataBR_fields, ff);
  long int nfild = rdar.findNext();
  while( nfild >=0 )
  {
@@ -457,6 +463,12 @@ void TNode::databr_from_text_file( fstream& ff )
     case f_xPA: rdar.readArray( "xPA",  CNode->xPA, CSD->nPSb );
             break;
     case f_bSP: rdar.readArray( "bSP",  CNode->bSP, CSD->nICb );
+           break;
+   case f_amru: rdar.readArray( "amru",  CNode->amru, CSD->nPSb );
+           break;
+   case f_amrl: rdar.readArray( "arml",  CNode->amrl, CSD->nPSb );
+           break;
+   case f_omph: rdar.readArray( "omPH",  CNode->omPH, CSD->nPSb );
            break;
    }
    nfild = rdar.findNext();
@@ -1108,6 +1120,8 @@ void TNode::databr_to_file( GemDataStream& ff )
    ff.writeArray( CNode->mPS, CSD->nPSb );
    ff.writeArray( CNode->bPS, CSD->nPSb*CSD->nICb );
    ff.writeArray( CNode->xPA, CSD->nPSb );
+   ff.writeArray( CNode->amru, CSD->nPSb );
+   ff.writeArray( CNode->amrl, CSD->nPSb );
 //   datach_to_text_file();
 //   databr_to_text_file();
 }
@@ -1146,6 +1160,8 @@ void TNode::databr_from_file( GemDataStream& ff )
    ff.readArray( CNode->mPS, CSD->nPSb );
    ff.readArray( CNode->bPS, CSD->nPSb*CSD->nICb );
    ff.readArray( CNode->xPA, CSD->nPSb );
+   ff.readArray( CNode->amru, CSD->nPSb );
+   ff.readArray( CNode->amrl, CSD->nPSb );
 }
 
 // Allocates DataBR structure
@@ -1191,6 +1207,7 @@ void TNode::databr_realloc()
     CNode->aPH = 0;
 
  CNode->xPH = new double[CSD->nPHb];
+ CNode->omPH = new double[CSD->nPHb];
 
  for(  k=0; k<CSD->nPHb; k++ )
    CNode->xPH[k] = 0.0;       // default assignment
@@ -1199,6 +1216,8 @@ void TNode::databr_realloc()
  CNode->mPS = new double[CSD->nPSb];
  CNode->bPS = new double[CSD->nPSb*CSD->nICb];
  CNode->xPA = new double[CSD->nPSb];
+ CNode->amru = new double[CSD->nPSb];
+ CNode->amrl = new double[CSD->nPSb];
 
  for(  k=0; k<CSD->nPSb; k++ )
  {
@@ -1207,6 +1226,8 @@ void TNode::databr_realloc()
      CNode->xPA[k] = 0.0;
      for(  j=0; j<CSD->nICb; j++ )
         CNode->bPS[k*CSD->nICb+j] = 0.0;
+     CNode->amru[k] = 0.0;
+     CNode->amrl[k] = 0.0;
  }
 }
 
@@ -1275,6 +1296,14 @@ DATABR * TNode::databr_free( DATABR *CNode_ )
  { delete[] CNode_->bSP;
    CNode_->bSP = 0;
  }
+ if( CNode_->amru )
+  { delete[] CNode_->amru;
+    CNode_->amru = 0;
+  }
+ if( CNode_->amrl )
+  { delete[] CNode_->amrl;
+    CNode_->amrl = 0;
+  }
  delete CNode_;
  return NULL;
 }
@@ -1348,6 +1377,8 @@ void TNode::databr_reset( DATABR *CNode, long int level )
    CNode->bPS = 0;
    CNode->xPA = 0;
    CNode->bSP = 0;
+   CNode->amru = 0;
+   CNode->amrl = 0;
 }
 
 // set default values(zeros) for DATACH structure
@@ -1516,8 +1547,14 @@ void TNode::databr_element_to_vtk( fstream& ff, DATABR *CNode_, long int nfild, 
            break;
    case f_xPA: prar.writeValue(   CNode_->xPA[ndx] );
            break;
-   case f_bSP: prar.writeValue(   CNode_->bSP[ndx] );
-          break;
+  case f_bSP: prar.writeValue(   CNode_->bSP[ndx] );
+         break;
+  case f_amru: prar.writeValue(   CNode_->amru[ndx] );
+         break;
+  case f_amrl: prar.writeValue(   CNode_->amrl[ndx] );
+         break;
+  case f_omph: prar.writeValue(   CNode_->omPH[ndx] );
+         break;
    // CNode_ must be pointer to a work node data bridge structure CNode
   case f_mPH: prar.writeValue(   Ph_Mass(ndx) );
          break;

@@ -28,6 +28,7 @@ set ( SOURCES
 	io_arrays.cpp
 	ipm_chemical2.cpp
 	ipm_chemical3.cpp
+	ipm_chemical4.cpp	
 	ipm_chemical.cpp
 	ipm_main.cpp
 	ipm_simplex.cpp

@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: s_fgl2.cpp 724 2012-10-02 14:25:25Z kulik $
+// $Id: s_solmod.cpp 724 2012-10-02 14:25:25Z kulik $
 //
 /// \file s_solmod.cpp
 /// Implementation of the TSolMod base class
@@ -45,6 +45,22 @@ TSolMod::TSolMod( SolutionData *sd ):
         NPcoef(sd->NPcoefs), MaxOrd(sd->MaxOrder),  NP_DC(sd->NPperDC), /*NPTP_DC(NPTPperDC),*/
         NSub(sd->NSublat), NMoi(sd->NMoiet), R_CONST(8.31451), Tk(sd->T_k), Pbar(sd->P_bar)
 {
+//   NlPh = sd->NlPhs;
+//    NlPc = sd->NlPhC;
+    NDQFpc = sd->NDQFpDC;
+//    NrcPpc = sd->NrcPpDC;
+//   lPhcf = sd->lPhc;
+    DQFcf = sd->DQFc;  // read-only
+//    rcpcf = sd->rcpc;  // read-only
+//    if(rcpcf == NULL) NrcPpc = 0;
+    //PhLin = sd->arPhLin;
+//    PhLin = new long int[NlPh][2];
+//    for (long int i=0; i<NlPh; i++)
+//    {
+//        PhLin[i][0] = sd->arPhLin[2*i];
+//        PhLin[i][1] = sd->arPhLin[2*i+1];
+//    }
+    //aSitFj = sd->arSitFj;
     // pointer assignments
     aIPx = sd->arIPx;   // Direct access to index list and parameter coeff arrays!
     aIPc = sd->arIPc;
@@ -59,14 +75,17 @@ TSolMod::TSolMod( SolutionData *sd ):
     phVOL = sd->aphVOL;
     aVol = sd->arVol;
     lnGamma = sd->arlnGam;
-    lnGamConf = new double[NComp];
-    lnGamRecip = new double[NComp];
-    lnGamEx = new double[NComp];  // Work arrays for lnGamma components - should we zero off?
+    lnGamConf = sd->arlnCnft;  // new double[NComp];
+    lnGamRecip = sd->arlnRcpt; // new double[NComp];
+    lnGamEx = sd->arlnExet;    // new double[NComp];
+    lnGamDQF = sd->arlnDQFt;   // new double[NComp];
+   // Arrays for lnGamma components - should we zero off?
     for (long int i=0; i<NComp; i++)
     {
        lnGamConf[i] = 0.0;
        lnGamRecip[i] = 0.0;
        lnGamEx[i] = 0.0;
+       lnGamDQF[i] = 0.0;
     }
     // initialize phase properties
     Gex = 0.0; Hex = 0.0; Sex = 0.0; CPex = 0.0; Vex = 0.0; Aex = 0.0; Uex = 0.0;
@@ -84,7 +103,7 @@ TSolMod::TSolMod( long int NSpecies, char Mod_Code,  double T_k, double P_bar ):
         NPcoef(0), MaxOrd(0),  NP_DC(0), /*NPTP_DC(NPTPperDC),*/
         NSub(0), NMoi(0), R_CONST(8.31451), Tk(T_k), Pbar(P_bar)
 {
-    // pointer assignments
+    // pointer assignments (blocked direct access)
     aIPx = 0;   // Direct access to index list and parameter coeff arrays!
     aIPc = 0;
     aIP = 0;
@@ -98,15 +117,10 @@ TSolMod::TSolMod( long int NSpecies, char Mod_Code,  double T_k, double P_bar ):
     phVOL = 0;
     aVol = 0;
     lnGamma = 0;
-    lnGamConf = new double[NComp];
-    lnGamRecip = new double[NComp];
-    lnGamEx = new double[NComp];  // Work arrays for lnGamma components - should we zero off?
-    for (long int i=0; i<NComp; i++)
-    {
-       lnGamConf[i] = 0.0;
-       lnGamRecip[i] = 0.0;
-       lnGamEx[i] = 0.0;
-    }
+    lnGamConf = 0;
+    lnGamRecip = 0;
+    lnGamEx = 0;
+
     // initialize phase properties
     Gex = 0.0; Hex = 0.0; Sex = 0.0; CPex = 0.0; Vex = 0.0; Aex = 0.0; Uex = 0.0;
     Gid = 0.0; Hid = 0.0; Sid = 0.0; CPid = 0.0; Vid = 0.0; Aid = 0.0; Uid = 0.0;
@@ -128,9 +142,9 @@ TSolMod::~TSolMod()
    if( aIP )        // Bugfix 07.12.2010 DK
       delete[] aIP;
 
-   delete[] lnGamConf;
-   delete[] lnGamRecip;
-   delete[] lnGamEx;
+//   delete[] lnGamConf;
+//   delete[] lnGamRecip;
+//   delete[] lnGamEx;
    free_multisite();
 }
 
@@ -178,7 +192,8 @@ long int TSolMod::init_multisite()
         for( s=0; s<NSub; s++)
            for( m=0; m<NMoi; m++)
            {  // extracting multiplicity numbers
-              mn[j][s][m] = aMoiSN[k]; k++;
+              mn[j][s][m] = aMoiSN[k];
+              k++;
            }
     // calculation of total site multiplicity numbers
     double mnsj;
@@ -277,7 +292,6 @@ void TSolMod::GetPhaseName( const char *PhName )
 	 PhaseName[MAXPHASENAME] = 0;
 }
 
-
 /// Calculation of configurational terms for the ideal mixing (c) DK, TW Nov. 2010
 /// Based upon the formalism of Price (1985)
 /// Returns 0 if calculated o.k., or 1 if this is not a multi-site model
@@ -294,7 +308,6 @@ long int TSolMod::IdealMixing()
 
     double mnsxj, lnaconj;
     // calculation of site fractions
-
     for( s=0; s<NSub; s++)
     {
         for( m=0; m<NMoi; m++)
@@ -367,14 +380,4 @@ double TSolMod::ideal_conf_entropy()
     return Sicnf;
 }
 
-
-
-
 //--------------------- End of s_solmod.cpp ----------------------------------------
-
-
-
-
-
-
-

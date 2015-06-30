@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: num_methods.cpp 724 2012-10-02 14:25:25Z kulik $
+// $Id: num_methods.cpp 771 2012-12-13 13:07:43Z kulik $
 //
 /// \file num_methods.cpp
 /// C/C++ implementation of some numerical methods (Lagrange interpolation)

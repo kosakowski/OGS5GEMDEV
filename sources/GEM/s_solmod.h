@@ -1,11 +1,11 @@
 //-------------------------------------------------------------------
-// $Id: s_fgl.h 725 2012-10-02 15:43:37Z kulik $
+// $Id: s_solmod.h 725 2012-10-02 15:43:37Z kulik $
 //
 /// \file s_solmod.h
 /// Declarations of TSolMod and derived classes implementing built-in models
 /// of mixing in fluid, liquid, aqueous and solid-solution phases
 
-// Copyright (C) 2003-2012  T.Wagner, D.Kulik, S.Dmitrieva, F.Hingerl, S.Churakov
+// Copyright (C) 2003-2014  T.Wagner, D.Kulik, S.Dmitrieva, F.Hingerl, S.Churakov
 // <GEMS Development Team, mailto:gems2.support@psi.ch>
 //
 // This file is part of the GEMS3K code for thermodynamic modelling
@@ -43,7 +43,8 @@ enum fluid_mix_rules {  /// codes for mixing rules in EoS models (see m_phase.h)
     MR_KW1_ = 'K',
     MR_PITZ5_ = '5',
     MR_PITZ6_ = '6',
-    MR_PITZ8_ = '8'
+    MR_PITZ8_ = '8',
+    MR_B_RCPT_ = 'R'
 };
 
 enum dc_class_codes {  /// codes for fluid types in EoS models (see v_mod.h)
@@ -82,20 +83,41 @@ struct SolutionData {
     long int NPperDC;   ///< Number of parameters per species (DC)
     long int NSublat;   ///< number of sublattices nS
     long int NMoiet;    ///< number of moieties nM
+
+//    long int NlPhs;     ///< new: Number of linked phases
+//    long int NlPhC;     ///< new: Number of linked phase parameter coefficient per link (default 0)
+    long int NDQFpDC;   ///< new: Number of DQF parameters per species (end member)
+//    long int NrcPpDC;   ///< new: Number of reciprocal parameters per species (end member)
+
     char Mod_Code;      ///< Code of the mixing model
     char Mix_Code;      ///< Code for specific EoS mixing rule
     char *DC_Codes;     ///< DC class codes for species -> NSpecies
     char (*TP_Code)[6]; ///< Codes for TP correction methods for species ->NSpecies
     long int *arIPx;    ///< Pointer to list of indexes of non-zero interaction parameters
+
+//    long int *arPhLin;  ///< new: indexes of linked phase and link type codes [NlPhs*2] read-only
+
     double *arIPc;      ///< Table of interaction parameter coefficients
     double *arDCc;      ///< End-member properties coefficients
     double *arMoiSN;    ///< End member moiety- site multiplicity number tables -> NSpecies x NSublat x NMoiet
     double *arSitFr;    ///< Tables of sublattice site fractions for moieties -> NSublat x NMoiet
- // TBD   double *arSitFj; ///< Table of end member sublattice activity coefficients -> NSpecies x NSublat
-    double *arGEX;      ///< Reciprocal energies, Darken terms, pure fugacities -> NSpecies
+    double *arSitFj;    ///< new: Table of end member sublattice activity coefficients -> NSpecies x NSublat
+    double *arGEX;      ///< Pure-species fugacities, G0 increment terms  -> NSpecies
+
+//    double *lPhc;  ///< new: array of phase link parameters -> NlPhs x NlPhC (read-only)
+    double *DQFc;  ///< new: array of DQF parameters for DCs in phases ->  NSpecies x NDQFpDC; (read-only)
+//    double *rcpc;  ///< new: array of reciprocal parameters for DCs in phases -> NSpecies x NrcPpDC; (read-only)
+
     double *arPparc;    ///< Partial pressures -> NSpecies
     double *arWx;       ///< Species (end member) mole fractions ->NSpecies
-    double *arlnGam;    ///< Output: activity coefficients of species (end members)
+    double *arlnGam;    ///< Output: activity coefficients of species (end members)   
+
+    // Detailed output on terms of partial end-member properties, allocated in MULTI
+    double *arlnDQFt; ///< new: DQF terms adding to overall activity coefficients [Ls_]
+    double *arlnRcpt; ///< new: reciprocal terms adding to overall activity coefficients [Ls_]
+    double *arlnExet; ///< new: excess energy terms adding to overall activity coefficients [Ls_]
+    double *arlnCnft; ///< new: configurational terms adding to overall activity [Ls_]
+
     double *arVol;      ///< molar volumes of end-members (species) cm3/mol ->NSpecies
     double *aphVOL;     ///< phase volumes, cm3/mol (now obsolete) !!!!!!! check usage!
     double T_k;         ///< Temperature, K (initial)
@@ -119,8 +141,15 @@ class TSolMod
         long int NP_DC;    ///< Number of coeffs per one DC in the phase (columns in aDCc)
         long int NSub;     ///< number of sublattices nS
         long int NMoi;     ///< number of moieties nM
-//        long int NPTP_DC;  ///< Number of properties per one DC at T,P of interest (columns in aDC)  !!!! Move to CG EOS subclass
-        long int *aIPx;    ///< Pointer to list of indexes of non-zero interaction parameters
+
+//   long int NlPh;     ///< new: Number of linked phases
+//   long int NlPc;     ///< new: Number of linked phase parameter coefficient per link (default 0)
+   long int NDQFpc;   ///< new: Number of DQF parameters per species (end member), 0 or 4
+//   long int NrcPpc;   ///< new: Number of reciprocal parameters per species (end member)
+
+        //        long int NPTP_DC;  // Number of properties per one DC at T,P of interest (columns in aDC)  !!!! Move to CG EOS subclass
+                long int *aIPx;    // Pointer to list of indexes of non-zero interaction parameters
+//   long int (*PhLin)[2];  ///< new: indexes of linked phase and link type codes [NlPhs][2] read-only
 
         double R_CONST; ///< R constant
         double Tk;    	///< Temperature, K
@@ -129,12 +158,18 @@ class TSolMod
         double *aIPc;   ///< Table of interaction parameter coefficients
         double *aIP;    ///< Vector of interaction parameters corrected to T,P of interest
         double *aDCc;   ///< End-member properties coefficients
-        double *aGEX;   ///< Reciprocal energies, Darken terms, pure fugacities of DC (corrected to TP)
+        double *aGEX;   ///< Reciprocal energies, DQF terms, pure fugacities of DC (corrected to TP)
         double *aPparc;  ///< Output partial pressures (activities, fugacities) -> NComp
         double **aDC;   ///< Table of corrected end member properties at T,P of interest  !!!!!! Move to GC EOS subclass!
         double *aMoiSN; ///< End member moiety- site multiplicity number tables -> NComp x NSub x NMoi
         double *aSitFR; ///< Table of sublattice site fractions for moieties -> NSub x NMoi
-// TBD        double *aSitFj; ///< Table of site activity coefficients [NComp][NSub]
+
+//    double *lPhcf;  ///< new: array of phase link parameters -> NlPh x NlPc (read-only)
+    double *DQFcf;  ///< new: array of DQF parameters for DCs in phases ->  NComp x NDQFpc; (read-only)
+                    ///< x_DQF[j]: mole fraction at transition; a, b, c - coefficients of T,P correction
+                    ///< according to the equation aGEX[j] = A + B*T + C*P (so far only binary Margules)
+//    double *rcpcf;  ///< new: array of reciprocal parameters for DCs in phases -> NComp x NrcPpc; (read-only)
+
         double *x;      ///< Pointer to mole fractions of end members (provided)
         double *aVol;   ///< molar volumes of species (end members)
         double *phVOL;  ///< phase volume, cm3/mol (now obsolete) !!!!!!!!!!!! Check usage!
@@ -147,13 +182,14 @@ class TSolMod
         double Gid, Hid, Sid, CPid, Vid, Aid, Uid;   ///< molar ideal mixing properties
         double Gdq, Hdq, Sdq, CPdq, Vdq, Adq, Udq;   ///< molar Darken quadratic terms
         double Grs, Hrs, Srs, CPrs, Vrs, Ars, Urs;   ///< molar residual functions (fluids)
-        double *lnGamConf, *lnGamRecip, *lnGamEx;    ///< Work arrays for lnGamma components
+        double *lnGamConf, *lnGamRecip, *lnGamEx, *lnGamDQF;    ///< Work pointers for lnGamma components
         double *lnGamma;   ///< Pointer to ln activity coefficients of end members (check that it is collected from three above arrays)
 
         double **y;       ///< table of moiety site fractions [NSub][NMoi]
         double ***mn;     ///< array of end member moiety-site multiplicity numbers [NComp][NSub][NMoi]
         double *mns;      ///< array of total site multiplicities [NSub]
    double **fjs;     ///< array of site activity coefficients [NComp][NSub]
+   double *aSitFj; ///< new: pointer to return table of site activity coefficients NComp x NSub
 
         // functions for calculation of configurational term for multisite ideal mixing
         void alloc_multisite();
@@ -170,14 +206,10 @@ class TSolMod
         public:
 
         /// Generic constructor
-                TSolMod( SolutionData *sd );
-                    // TSolMod( long int NSpecies, long int NParams, long int NPcoefs, long int MaxOrder,
-                        // long int NPperDC, long int NPTPperDC, char Mod_Code, char Mix_Code,
-                        // long int* arIPx, double* arIPc, double* arDCc, double *arWx,
-                        // double *arlnGam, double *aphVOL, double T_k, double P_bar );
+        TSolMod( SolutionData *sd );
 
          /// Generic constructor for DComp/DCthermo
-                TSolMod( long int NSpecies,  char Mod_Code,  double T_k, double P_bar );
+        TSolMod( long int NSpecies,  char Mod_Code,  double T_k, double P_bar );
 
         /// Destructor
 		virtual ~TSolMod();
@@ -210,16 +242,13 @@ class TSolMod
         /// Set new system state
 		long int UpdatePT ( double T_k, double P_bar );
 
-                // bool testSizes( long int NSpecies, long int NParams, long int NPcoefs,
-                    // long int MaxOrder, long int NPperDC, char Mod_Code, char Mix_Code );
-
-                bool testSizes( SolutionData *sd );
+        bool testSizes( SolutionData *sd );
 
         /// Getting phase name
 		void GetPhaseName( const char *PhName );
 
 		
-		// return pointer to activity coefficients
+        // copy activity coefficients into provided array lngamma
 		inline void Get_lnGamma( double* lngamma )		
 		{ 
 			for( int i=0; i<NComp; i++ )
@@ -1097,22 +1126,45 @@ class TWilson: public TSolMod
 class TBerman: public TSolMod
 {
         private:
+                long int NrcR;   ///< max. possible number of reciprocal reactions (allocated)
+                long int Nrc;    ///< number of reciprocal reactions (actual)
+                long int *NmoS;  ///< number of different moieties (in end members) on each sublattice
+            long int ***XrcM;  ///< Table of indexes of end members, sublattices and moieties involved in
+                               ///< reciprocal reactions [NrecR][4][2], two left and two right side.
+                               ///< for each of 4 reaction components: j, mark, // s1, m1, s2, m2.
 
-                double *Wu;
-                double *Ws;
-                double *Wv;
-                double *Wpt;   ///< Interaction coeffs at P-T
+                double *Wu;    ///< Interaction parameter coefficients a
+                double *Ws;    ///< Interaction parameter coefficients b (f(T))
+                double *Wv;    ///< Interaction parameter coefficients c (f(P))
+                double *Wpt;   ///< Interaction parameters corrected at P-T of interest
             double **fjs;      ///< array of site activity coefficients for end members [NComp][NSub]
 
-                double *Grec;  ///< standard molar reciprocal energies (constant)
+                double *Grc;  ///< standard molar reciprocal energies (constant)
                 double *oGf;   ///< molar Gibbs energies of end-member compounds
                 double *G0f;   ///< standard molar Gibbs energies of end members (constant)
-
+            double *DGrc; ///< molar effects of reciprocal reactions [NrecR]
+            double *pyp;  ///< Products of site fractions for end members (CEF mod.) [NComp]
+//            double *pyn;  // Products of site fractions for sites not in the end member [NComp]
                 void alloc_internal();
                 void free_internal();
-            long int ExcessPart();     ///< Arrays for ideal conf part must exist in base TSolMod instance
-
-                long int ReciprocalPart();   ///< TBD
+                long int choose( const long int n, const long int k );
+                bool CheckThisReciprocalReaction( const long int r, const long int j, long int *xm );
+                long int CollectReciprocalReactions2( void );
+//                long int CollectReciprocalReactions3( void );
+                long int FindIdenticalSublatticeRow(const long int si, const long int ji, const long jp,
+                                                    const long int jb, const long int je );
+                                              //      long int &nsx, long int *sx, long int *mx );
+                long int ExcessPart();
+                               ///< Arrays for ideal conf part must exist in base TSolMod instance
+                double PYproduct( const long int j );
+                long int em_which(const long int s, const long int m , const long int jb, const long int je);
+                long int em_howmany( long int s, long int m );
+                double ysigma( const long int j, const long int s );
+                double KronDelta( const long int j, const long int s, const long int m );
+                double dGref_dysigma(const long int l, const long int s, const long int ex_j );
+                double dGref_dysm( const long int s, const long m, const long int ex_j );
+                double RefFrameTerm( const long int j, double G_ref );
+                long int ReciprocalPart();   ///< Calculation of reciprocal contributions to activity coefficients
 
         public:
 
@@ -1121,6 +1173,74 @@ class TBerman: public TSolMod
 
                 /// Destructor
                 ~TBerman();
+
+                /// Calculates T,P corrected interaction parameters
+                long int PTparam();
+
+                /// Calculates activity coefficients
+                long int MixMod();
+
+                /// Calculates excess properties
+                long int ExcessProp( double *Zex );
+
+                /// Calculates ideal mixing properties
+                long int IdealProp( double *Zid );
+
+};
+
+
+// -------------------------------------------------------------------------------------
+/// CEF (Calphad) model for multi-component sublattice solid solutions with reciprocal terms
+/// References: Sundman & Agren (1981); Lucas et al. (2006); Hillert (1998).
+/// (c) DK/SN since August 2014 (still to change the excess Gibbs energy terms).
+class TCEFmod: public TSolMod
+{
+        private:
+                long int *NmoS;  ///< number of different moieties (in end members) on each sublattic
+
+                double *Wu;    ///< Interaction parameter coefficients a
+                double *Ws;    ///< Interaction parameter coefficients b (f(T))
+                double *Wc;    ///< Interaction parameter coefficients b (f(TlnT))
+                double *Wv;    ///< Interaction parameter coefficients c (f(P))
+                double *Wpt;   ///< Interaction parameters corrected at P-T of interest
+                double **fjs;      ///< array of site activity coefficients for end members [NComp][NSub]
+
+                double *Grc;  ///< standard molar reciprocal energies (constant)
+                double *oGf;   ///< molar Gibbs energies of end-member compounds
+                double *G0f;   ///< standard molar Gibbs energies of end members (constant)
+                double *pyp;  ///< Products of site fractions for end members (CEF mod.) [NComp]
+//            double *pyn;  // Products of site fractions for sites not in the end member [NComp]
+                void alloc_internal();
+                void free_internal();
+                long int ExcessPart();
+                               ///< Arrays for ideal conf part must exist in base TSolMod instance
+                double PYproduct( const long int j );
+                long int em_which(const long int s, const long int m , const long int jb, const long int je);
+                long int em_howmany( long int s, long int m );
+                double ysm( const long int j, const long int s );
+                double KronDelta( const long int j, const long int s, const long int m );
+                double dGref_dysigma(const long int l, const long int s );
+                double dGref_dysm(const long int s, const long m );
+                double dGm_dysm(const long int s, const long m ); // added by Nichenko
+                double RefFrameTerm( const long int j, double G_ref );
+                long int ReciprocalPart();   ///< Calculation of reciprocal contributions to activity coefficients
+
+                long int IdealMixing(); // NSergii: added by Nichenko to rewrite the ideal part contribution
+                long int CalcSiteFractions(); // NSergii:
+                double dGrefdnNum(const long int i); // NSergii:
+                double dGidmixdnNum(const long int i); // NSergii:
+                double dGexcdnNum(const long int i); // NSergii:
+                double Gmix(); // NSergii:
+                double Gexc();
+                double Gref();
+                double Gidmix();
+        public:
+
+                /// Constructor
+                TCEFmod( SolutionData *sd, double *G0 );
+
+                /// Destructor
+                ~TCEFmod();
 
                 /// Calculates T,P corrected interaction parameters
                 long int PTparam();
@@ -1425,6 +1545,176 @@ class TEUNIQUAC: public TSolMod
 		long int IdealProp( double *Zid );
 
 		void Euniquac_test_out( const char *path );
+
+};
+
+// -------------------------------------------------------------------------------------
+// ELVIS activity model for aqueous electrolyte solutions
+// (c) FFH Aug 2011
+
+class TELVIS: public TSolMod
+{
+        private:
+                // data objects copied from MULTI
+                double *z;   							// species charges
+                double *m;   							// species molalities
+                double *RhoW;  							// water density properties
+                double *EpsW;  							// water dielectrical properties
+                double aDH;								// averaged ion size term in DH term
+                double A, dAdT, d2AdT2, dAdP;  			// A term of DH equation (and derivatives)
+                double B, dBdT, d2BdT2, dBdP;  			// B term of DH equation (and derivatives)
+
+                double **beta0;
+                double **beta1;
+                double **alpha;
+
+                double **coord;         // coordinaiton number parameter
+
+                double **RA;
+                double **RC;
+                double **QA;
+                double **QC;
+
+                double CN;
+
+#ifdef ELVIS_SPEED
+#define ELVIS_NCOMP 10
+                // internal work objects
+                double R[ELVIS_NCOMP];
+                double Q[ELVIS_NCOMP];
+                double Phi[ELVIS_NCOMP];
+                double Theta[ELVIS_NCOMP];
+
+                double EffRad[ELVIS_NCOMP];
+
+                double dRdP[ELVIS_NCOMP];
+                double dRdT[ELVIS_NCOMP];
+                double d2RdT2[ELVIS_NCOMP];
+                double dQdP[ELVIS_NCOMP];
+                double dQdT[ELVIS_NCOMP];
+                double d2QdT2[ELVIS_NCOMP];
+
+                double WEps[ELVIS_NCOMP][ELVIS_NCOMP];
+                double U[ELVIS_NCOMP][ELVIS_NCOMP];
+                double dU[ELVIS_NCOMP][ELVIS_NCOMP];
+                double d2U[ELVIS_NCOMP][ELVIS_NCOMP];
+                double Psi[ELVIS_NCOMP][ELVIS_NCOMP];
+                double dPsi[ELVIS_NCOMP][ELVIS_NCOMP];
+                double d2Psi[ELVIS_NCOMP][ELVIS_NCOMP];
+                double TR[ELVIS_NCOMP][4];
+
+                double U[ELVIS_NCOMP][ELVIS_NCOMP];
+                double dUdP[ELVIS_NCOMP][ELVIS_NCOMP];
+                double dUdT[ELVIS_NCOMP][ELVIS_NCOMP];
+                double d2UdT2[ELVIS_NCOMP][ELVIS_NCOMP];
+
+                double ELVIS_lnGam_DH[ELVIS_NCOMP];
+                double ELVIS_lnGam_Born[ELVIS_NCOMP];
+                double ELVIS_OsmCoeff_DH[ELVIS_NCOMP];
+                double ELVIS_lnGam_UNIQUAC[ELVIS_NCOMP];
+
+#endif
+
+#ifndef ELVIS_SPEED
+                // internal work objects
+                double *R;   							// volume parameter
+                double *Q;   							// surface parameter
+                double *Phi;
+                double *Theta;
+                double *EffRad; 						// effective ionic radii
+                double **U;   							// interaction energies
+                double **dU;   							// first derivative
+                double **d2U;   						// second derivative
+                double **Psi;
+                double **dPsi;
+                double **d2Psi;
+                double **TR; 							// TR interpolation parameter array
+                double **WEps;							// indices for electrolyte specific permittivity calculation
+
+                double* dRdP;
+                double* dRdT;
+                double* d2RdT2;
+                double* dQdP;
+                double* dQdT;
+                double* d2QdT2;
+
+                double** dUdP;
+                double** dUdT;
+                double** d2UdT2;
+
+                double* ELVIS_lnGam_DH;
+                double* ELVIS_lnGam_Born;
+                double* ELVIS_OsmCoeff_DH;
+                double* ELVIS_lnGam_UNIQUAC;
+#endif
+
+                double IS;  							// ionic strength
+                double molT;  							// total molality of aqueous species (except water solvent)
+                double molZ;  							// total molality of charged species
+
+
+                // objects needed for debugging output
+                double gammaDH[200];
+                double gammaBorn[200];
+                double gammaQUAC[200];
+                double gammaC[200];
+                double gammaR[200];
+
+                // internal functions
+                void alloc_internal();
+                void free_internal();
+
+                long int IonicStrength();
+
+                // activity coefficient contributions
+                void ELVIS_DH(double* ELVIS_lnGam_DH, double* ELVIS_OsmCoeff_DH);
+                void ELVIS_Born(double* ELVIS_lnGam_Born);
+                void ELVIS_UNIQUAC(double* ELVIS_lnGam_UNIQUAC);
+
+                // Osmotic coefficient
+                double Int_OsmCoeff();
+                void molfrac_update();
+                double FinDiff( double m_j, int j  ); 	// Finite Difference of lnGam of electrolyte 'j' with respect to its molality 'm[j]';
+                double CalcWaterAct();
+
+                // Apparent molar volume
+//                double FinDiffVol( double m_j, void* params ); 					// Finite differences of mean lnGam with respect to pressure
+
+                double trapzd( const double lower_bound, const double upper_bound, int& n, long int& species, int select ); 	// from Numerical Recipes in C, 2nd Ed.
+                double qsimp( const double lower_bound, const double upper_bound, long int& species, int select ); 			// from Numerical Recipes in C, 2nd Ed.
+
+
+        public:
+                // Constructor
+                TELVIS( SolutionData *sd, double *arM, double *arZ, double *dW, double *eW );
+
+                // Destructor
+                ~TELVIS();
+
+                // calculates T,P corrected interaction parameters
+                long int PTparam();
+
+                // calculates activity coefficients and osmotic coefficient by
+                // numerical Integration of Bjerrum Relation
+                long int MixMod();
+                long int CalcAct();
+
+                // Compute apparent molar volume of electrolyte
+                double App_molar_volume();
+
+                // calculates excess properties
+                long int ExcessProp( double *Zex );
+
+                // calculates ideal mixing properties
+                long int IdealProp( double *Zid );
+
+                // plot debug results
+                void TELVIS_test_out( const char *path, const double M ) const;
+
+                // ELVIS_FIT: get lnGamma array
+                void get_lnGamma( std::vector<double>& ln_gamma );
+
+                double FinDiffVol( double m_j, int j ); 					// Finite differences of mean lnGam with respect to pressure
 
 };
 
@@ -1920,13 +2210,15 @@ class TMargules: public TSolMod
 // -------------------------------------------------------------------------------------
 /// Binary Margules (subregular) model for solid solutions.
 /// References: Anderson and Crerar (1993); Anderson (2006)
-/// (c) TW/DK June 2009
+/// (c) TW/DK June 2009, DQF part added by DK on April 5, 2015
 class TSubregular: public TSolMod
 {
 	private:
 
 		double WU12, WS12, WV12, WG12;
 		double WU21, WS21, WV21, WG21;
+        double DQFX1, DQFG1, DQFS1, DQFV1, DQF1;
+        double DQFX2, DQFG2, DQFS2, DQFV2, DQF2;
 
 	public:
 

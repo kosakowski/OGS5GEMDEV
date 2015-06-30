@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: ipm_main.cpp 927 2014-02-27 09:25:04Z dmitrieva $
+// $Id: ipm_main.cpp 1030 2015-03-23 10:16:21Z dmitrieva $
 //
 /// \file ipm_main.cpp
 /// Implementation of parts of the Interior Points Method (IPM) module
@@ -53,6 +53,7 @@ using namespace JAMA;
 void TMulti::GibbsEnergyMinimization()
 {
   bool IAstatus;
+  int KMretCode;
   Reset_uDD( 0L, uDDtrace); // Experimental - added 06.05.2011 KD
 
 // fstream f_log(node->ipmLogFile().c_str(), ios::out|ios::app );
@@ -626,12 +627,11 @@ to_text_file( "MultiDumpA.txt" );   // Debugging
         // Calculation of mass-balance residuals and DC concentrations in phases
         MassBalanceResiduals( pm.N, pm.L, pm.A, pm.X, pm.B, pm.C);
         CalculateConcentrations( pm.X, pm.XF, pm.XFA );  // also ln activities (DualTh)
-
 #ifndef IPMGEMPLUGIN
-        if( pa->p.PC == 1 )
-            KarpovsPhaseStabilityCriteria( );  // calculation of Karpov phase stability criteria
-        else if( pa->p.PC >= 2 )
-            StabilityIndexes(); // calculation of new phase stability indexes
+//20/03/2015        if( pa->p.PC == 1 )
+//20/03/2015            KarpovsPhaseStabilityCriteria( );  // calculation of Karpov phase stability criteria
+//20/03/2015         else if( pa->p.PC >= 2 )
+//20/03/2015             StabilityIndexes(); // calculation of new phase stability indexes
 #ifndef Use_mt_mode
    pVisor->Update(false);
 #endif
@@ -764,7 +764,7 @@ long int TMulti::MassBalanceRefinement( long int WhereCalledFrom )
     {  // Experimental
         char buf[320];
         sprintf( buf, "(EFD(%ld)) Invalid initial Lagrange multiplier for metastability-constrained DC %16s ",
-                 WhereCalledFrom, pm.SM[jK] );
+                 WhereCalledFrom, gstring( pm.SM[jK], 0,  MAXDCNAME ).c_str() );
                 setErrorMessage( 17, "E17IPM: Mass Balance Refinement: ", buf);
       	return 5;
     }
@@ -838,7 +838,7 @@ long int TMulti::MassBalanceRefinement( long int WhereCalledFrom )
 
       LM = StepSizeEstimate( true ); // Estimation of the MBR() iteration step size LM
 
-      if( LM < 1e-6 )
+      if( LM < 1e-6 ) //SD 1e-6 was
       {  // Experimental
           iRet = 3;
           char buf[320];

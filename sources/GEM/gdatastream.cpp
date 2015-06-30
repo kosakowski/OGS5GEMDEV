@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: gdatastream.cpp 757 2012-11-05 16:23:50Z kosakowski $
+// $Id: gdatastream.cpp 771 2012-12-13 13:07:43Z kulik $
 //
 /// \file gdatastream.cpp
 /// Implementation of stream binary file operations extended for endianness

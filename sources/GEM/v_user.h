@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: v_user.h 724 2012-10-02 14:25:25Z kulik $
+// $Id: v_user.h 771 2012-12-13 13:07:43Z kulik $
 /// \file v_user.h
 /// Declaration of platform-specific utility functions and classes
 //

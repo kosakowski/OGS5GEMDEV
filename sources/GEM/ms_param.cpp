@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: ms_param.cpp 787 2012-12-19 16:48:08Z dmitrieva $
+// $Id: ms_param.cpp 874 2013-10-07 13:04:32Z kulik $
 /// \file ms_param.cpp
 /// Implementation  of default settings for the Interior Points Method
 /// (IPM) module for convex programming Gibbs energy minimization
@@ -216,6 +216,10 @@ void TMulti::CheckMtparam()
   load = true;
 }
 
+void TMulti::set_load (bool what)  // DM 20.05.2013
+{
+load = what;
+}
 //-------------------------------------------------------------------------
 // internal functions
 

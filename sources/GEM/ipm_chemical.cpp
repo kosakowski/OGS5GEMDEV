@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: ipm_chemical.cpp 742 2012-10-17 16:01:21Z kulik $
+// $Id: ipm_chemical.cpp 771 2012-12-13 13:07:43Z kulik $
 //
 /// \file ipm_chemical.cpp
 /// Implementation of chemistry-specific functions (concentrations,

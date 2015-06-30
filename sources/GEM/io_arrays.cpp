@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: io_arrays.cpp 952 2014-03-27 15:31:16Z dmitrieva $
+// $Id: io_arrays.cpp 954 2014-03-31 07:05:57Z ext_miron_d $
 //
 /// \file io_arrays.cpp
 /// Implementation of service functions for writing/reading arrays in files
@@ -136,6 +136,23 @@ long int TRWArrays::findFld( const char *Name )
      }
   }
 
+ void TPrintArrays::writeField(long f_num, gstring value, bool with_comments, bool brief_mode  )
+ {
+     if(!brief_mode || getAlws( f_num ))
+     { if( with_comments && flds[f_num].comment.length()>1 )
+            ff <<  endl <<  flds[f_num].comment.c_str();
+         ff << endl << "<" << flds[f_num].name.c_str() << ">  ";
+
+ #ifdef IPMGEMPLUGIN // 24/08/2010
+     strip(value);
+ #else
+     value.strip();
+ #endif
+     ff  << "\'" << value.c_str() << "\'" /*<< " "*/; // commented out (space after text conflicts with gemsfit2 read-in) DM 16.07.2013
+   }
+ }
+
+
  void TPrintArrays::writeArray( long f_num,  double* arr,
                  long int size, long int l_size, bool with_comments, bool brief_mode )
  {
@@ -173,8 +190,15 @@ long int TRWArrays::findFld( const char *Name )
      if(!brief_mode || getAlws(f_num ))
      { if( with_comments )
             ff <<  endl << flds[f_num].comment.c_str();
-        writeArray( flds[f_num].name.c_str(),  arr,size, l_size);
+        writeArrayS( flds[f_num].name.c_str(),  arr,size, l_size);
      }
+ }
+
+
+ void TPrintArrays::writeArrayS( const char *name, char* arr,
+         long int size, long int arr_siz )
+ {
+    writeArray( name,  arr,size, arr_siz);
  }
 
 /// If the first parameter is given as NULL then the char array
@@ -297,6 +321,31 @@ void TPrintArrays::writeArray( const char *name,  double* arr,
     { jj=0;  ff << endl;}
     writeValue(arr[ii]);
  }
+}
+
+void TPrintArrays::writeArray( long f_num,  vector<double> arr, long int l_size,
+                               bool with_comments, bool brief_mode )
+{
+
+    long int jj;
+    if(!brief_mode || getAlws(f_num ))
+    {
+       if( with_comments )
+           ff <<  endl << flds[f_num].comment.c_str();
+
+      int sz = 40;
+      if( l_size > 0 )
+       sz = l_size;
+
+      ff << endl << "<" << flds[f_num].name.c_str() << ">" << endl;
+      jj=0;
+      for( size_t ii=0; ii<arr.size(); ii++, jj++  )
+      {
+         if(jj == sz)
+         { jj=0;  ff << endl;}
+         writeValue(arr[ii]);
+      }
+    }
 }
 
 void TPrintArrays::writeArray( const char *name, long* arr, long int size, long int l_size  )
@@ -499,6 +548,45 @@ void TPrintArrays::writeArray( const char *name, short* arr,
       }
  }
 
+ long int TReadArrays::readFormatValue(double& val, gstring& format)
+ {
+   char input;
+   format = "";
+   long int type = ft_Value;
+
+   skipSpace();
+
+   if( ff.eof() )
+     return ft_Internal;
+
+   ff.get( input );
+   switch( input )
+   {
+     case CHAR_EMPTY: val = DOUBLE_EMPTY;
+                    return type;
+     case '<': ff.putback(input);
+                 return ft_Internal;
+     case 'F': type = ft_F;
+             if(!readFormat( format ))
+              ff >> val;
+             break;
+   case 'L': type = ft_L;
+             if(!readFormat( format ))
+               ff >> val;
+             break;
+   case 'R': type = ft_R;
+             if(!readFormat( format ))
+               ff >> val;
+             break;
+   default:
+       {   ff.putback(input);
+           ff >> val;
+           break;
+       }
+   }
+  return type;
+ }
+
 // skip  ' ',  '\n', '\t' and comments (from '#' to end of line)
 void  TReadArrays::skipSpace()
 {
@@ -518,6 +606,41 @@ void  TReadArrays::skipSpace()
    ff.get( input );
   }
  ff.putback(input);
+// cout << ff << endl; // comented out DM 03.05.2013
+}
+
+// Read format string
+bool  TReadArrays::readFormat( gstring& format )
+{
+  char input;
+  format = "";
+  long int count1=0;  // counters of {}
+  long int count2=0;  // counters of []
+
+  skipSpace();
+  ff.get( input );
+  if( input != '{' && input != '[')
+  {
+      ff.putback(input);
+      return false;  // no format string (only value)
+  }
+  do
+  {
+      format += input;
+      if( input == '{')
+       count1++;
+      if( input == '}')
+       count1--;
+      if( input == '[')
+       count2++;
+      if( input == ']')
+       count2--;
+      ff.get( input );
+      if( input == '\0' || ff.eof() )
+        break;
+  } while( count1 != 0 || count2 !=0 );
+
+  return true;
 }
 
 void TReadArrays::reset()
@@ -595,6 +718,44 @@ void TReadArrays::readNext( const char* label)
 
 }
 
+long int TReadArrays::findNextNotAll()
+{
+ char bufx[200];
+ char input;
+
+ skipSpace();
+
+ if( ff.eof() )
+   return -3;
+
+again:
+
+ ff >> bufx;
+
+ if( !( memcmp( "END_DIM", bufx+1, 7 )) )
+  return -2;
+
+ long int ii = findFld( bufx+1 );
+ if(  ii < 0 )
+ {
+    do{
+        ff.get( input );
+        if( input == '#' )
+        { ff.putback(input);
+          skipSpace();
+        }
+      }while( input != '<' && input != '\0' && !ff.eof());
+      if( input == '\0' || ff.eof() )
+        return -3;
+      ff.putback(input);
+      goto again;
+  }
+
+ flds[ii].readed = 1;
+ //cout << flds[ii].name << endl;
+ return ii;
+}
+
 void TReadArrays::readArray( const char* name, short* arr, long int size )
 {
  setCurrentArray( name, size);
@@ -639,12 +800,32 @@ void TReadArrays::readArray( const char* name, double* arr, long int size )
     readValue(arr[ii]);
 }
 
+void TReadArrays::readFormatArray( const char* name, double* arr,
+    long int size, vector<IOJFormat>& vFormats )
+{
+ gstring format;
+ long int type;
+
+ setCurrentArray( name, size);
+ // vFormats.clear();
+
+ //ff << setprecision(15);
+ for( long int ii=0; ii<size; ii++  )
+ {
+     type = readFormatValue(arr[ii], format);
+     if(type > ft_Value && type< ft_Internal )
+     {    vFormats.push_back( IOJFormat(type, ii, format));
+     }
+ }
+}
+
 void TReadArrays::readArray( const char* name, char* arr, long int size, long int el_size )
 {
  char ch;
  char buf[200];
 
  setCurrentArray( name, size);
+
  for( long int ii=0; ii<size; ii++  )
  {
    skipSpace();
@@ -655,6 +836,35 @@ void TReadArrays::readArray( const char* name, char* arr, long int size, long in
    copyValues( arr +(ii*el_size), buf, el_size );
  }
 
+}
+
+void TReadArrays::readArray( const char* name, vector<double> arr )
+{
+  int retSimb= 0; // next field is only value
+  double value;
+  gstring str;
+
+  setCurrentArray( name, 0);
+ //ff << setprecision(15);
+
+  do{
+       retSimb = readFormatValue(value, str);
+       if( retSimb == ft_Value )
+        arr.push_back( value );
+  } while(retSimb == ft_Value );
+}
+
+// DM corrected added gstring& arr instead of gstring arr 18.04.2013
+void TReadArrays::readArray( const char* name, gstring& arr, long int el_size )
+{
+ char ch;
+ char buf[10000]; // DM changed form 400 to be able to read long character sections like DataSelect
+
+ setCurrentArray( name, 1);
+ skipSpace();
+ ff.get(ch);
+ ff.getline( buf, el_size+1, '\'');
+ arr = buf;
 }
 
 gstring TReadArrays::testRead()

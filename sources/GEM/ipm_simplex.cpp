@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: ipm_simplex.cpp 756 2012-11-05 13:59:16Z kosakowski $
+// $Id: ipm_simplex.cpp 1011 2015-01-25 15:09:58Z kulik $
 //
 /// \file ipm_simplex.cpp
 /// Implementation of parts of the Interior Points Method (IPM) algorithm
@@ -511,6 +511,7 @@ double TMulti::CalculateEquilibriumState( long int typeMin, long int& NumIterFIA
  // const char *key;
   double ScFact=1.;
 
+  long int KMretCode = 0;
 //#ifndef IPMGEMPLUGIN
 //  key = rt[RT_SYSEQ].UnpackKey();
 //#else
@@ -524,13 +525,36 @@ double TMulti::CalculateEquilibriumState( long int typeMin, long int& NumIterFIA
   pm.t_elap_sec = 0.0;
   pm.ITF = pm.ITG = 0;
 
+ // New: Run of TKinMet class library
+// cout << "kMM: " << pm.pKMM << "  ITau: " << pm.ITau << "  kTau: " << pm.kTau << "  kdT: " << pm.kdT << endl;
+  if( pm.pKMM < 2 )
+  {
+    if( pm.ITau < 0 || pm.pKMM != 1 )
+    {
+        KMretCode = CalculateKinMet( LINK_TP_MODE ); // Re-create TKinMet class instances
+        pm.ITau = 0; pm.pKMM = 1;
+        KMretCode = CalculateKinMet( LINK_IN_MODE ); // Initial state calculation of rates
+    }
+//    if( pm.ITau == 0 )
+//    {
+//        KMretCode = CalculateKinMet( LINK_IN_MODE ); // Initial state calculation of rates
+//    }
+    else if( pm.ITau >= 0 ) {
+        KMretCode = CalculateKinMet( LINK_PP_MODE ); // Calculation of rates and metast.constraints at time step
+    }
+//  switch(KMretCode)
+//  {
+//        case 0L:
+//
+//  }
 //  to_text_file( "MultiDump1.txt" );   // Debugging
+  }
 
-if( paTProfil->p.DG > 1e-5 )
-{
-   ScFact = SystemTotalMolesIC();
-   ScaleSystemToInternal( ScFact );
-}
+    if( paTProfil->p.DG > 1e-5 )
+    {
+        ScFact = SystemTotalMolesIC();
+        ScaleSystemToInternal( ScFact );
+    }
 
 try{
        switch( pm.tMin )
@@ -585,7 +609,6 @@ try{
 
   if( paTProfil->p.DG > 1e-5 )
        RescaleSystemFromInternal(  ScFact );
-
 //  to_text_file( "MultiDump3.txt" );   // Debugging
 
   NumIterFIA = pm.ITF;
@@ -830,6 +853,13 @@ void TMulti::InitalizeGEM_IPM_Data( ) // Reset internal data formerly MultiInit(
 
 //cout << "newInterval = " << newInterval << " pm.pTPD = " << pm.pTPD << endl;
 
+ // New: TKinMet stuff
+ if( pm.pKMM <= 0 )
+ {
+    KinMetModLoad();  // Call point to loading parameters for kinetic models
+    pm.pKMM = 1;
+ }
+
 //#else
 //
    //TProfil::pm->CheckMtparam(); //test load thermodynamic data before
@@ -921,7 +951,8 @@ void TMulti::MultiConstInit() // from MultiRemake
 
   //  ???????
   pm.FX = 7777777.;
-  pm.pH = pm.Eh = pm.pe = 0.0;
+  if( pm.pH < -15. || pm.pH > 16.  )   // Check for trash in pH - bugfix 19.06.2013
+      pm.pH = pm.Eh = pm.pe = 0.0;
   pm.YMET = 0;                      // always 0.0 ????
   pm.PCI = 1.0;
   pm.FitVar[4] = 1.0;
@@ -929,7 +960,7 @@ void TMulti::MultiConstInit() // from MultiRemake
 #ifndef IPMGEMPLUGIN
   pm.PZ = 0; // IPM default
 //  pm.FitVar[0] = pa->aqPar[0]; // setting T,P dependent b_gamma parameters
-  pm.pH = pm.Eh = pm.pe = 0.0;
+//  pm.pH = pm.Eh = pm.pe = 0.0;
 #else
   pm.PZ = pa->p.DW;  // in IPM
 //  pm.FitVar[0] = 0.0640000030398369;
@@ -971,15 +1002,23 @@ void TMulti::GEM_IPM_Init()
 //     if( pm.pULR && pm.PLIM )
 //          Set_DC_limits(  DC_LIM_INIT );
 
+//#ifndef IPMGEMPLUGIN
+// New: TKinMet stuff
+//  if( pmp->pKMM <= 0 )
+//  {
+//     KinMetModLoad();  // Call point to loading parameters for kinetic models
+//     pmp->pKMM = 1;
+//  }
+//#endif
+
     if( pm.FIs && AllPhasesPure == false )   /// line must be tested !pm.FIs
     {
 #ifndef IPMGEMPLUGIN
-//????? problematic point
        if( pm.pIPN <=0 )  // mixing models finalized in any case (AIA or SIA)
        {
              // not done if these models are already present in MULTI !
            pm.PD = TProfil::pm->pa.p.PD;
-           SolModLoad();   // Call point to loading scripts for mixing models
+           SolModLoad();   // Call point to loading scripts and parameters for mixing models
        }
        pm.pIPN = 1;
 #endif
@@ -1027,6 +1066,17 @@ void TMulti::GEM_IPM_Init()
     }
 #endif
 }
+
+void TMulti::Access_GEM_IMP_init()
+{
+    GEM_IPM_Init();
+}
+
+TSolMod * TMulti::pTSolMod (int xPH){
+    return this->phSolMod[xPH];
+}
+
+
 
 /// Load Thermodynamic Data from DATACH to MULTI using Lagrangian Interpolator
 //

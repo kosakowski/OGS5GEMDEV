@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: ms_multi.h 756 2012-11-05 13:59:16Z kosakowski $
+// $Id: ms_multi.h 1023 2015-03-04 21:21:49Z kulik $
 //
 /// \file ms_multi.h
 /// Declaration of TMulti class, configuration, and related functions
@@ -8,7 +8,7 @@
 /// \struct MULTI ms_multi.h
 /// Contains chemical thermodynamic work data for GEM IPM-3 algorithm
 //
-// Copyright (c) 1995-2012 S.Dmytriyeva, D.Kulik, T.Wagner
+// Copyright (c) 1995-2013 S.Dmytriyeva, D.Kulik, T.Wagner
 // <GEMS Development Team, mailto:gems2.support@psi.ch>
 //
 // This file is part of the GEMS3K code for thermodynamic modelling
@@ -46,9 +46,11 @@ typedef int (tget_ndx)( int nI, int nO, int Xplace );
 #include "datach.h"
 
 #endif
-
+// TSolMod header
 #include "s_solmod.h"
-// #include "s_sorpmod.h"
+// new: TsorpMod and TKinMet
+#include "s_sorpmod.h"
+#include "s_kinmet.h"
 
 typedef struct
 {  // MULTI is base structure to Project (local values)
@@ -79,17 +81,18 @@ typedef struct
     PD,      ///< PD - mode of calling CalculateActivityCoefficients() { 0 1 2 3 4 }
     PV,      ///< Flag for the volume balance constraint (on Vol IC) - for indifferent equilibria at P_Sat { 0 1 }
     PLIM,    ///< PU - flag of activation of DC/phase restrictions { 0 1 }
-    Ec,    ///< CalculateActivityCoefficients() return code: 0 (OK) or 1 (error)
-    K2,    ///< Number of IPM loops performed ( >1 up to 6 because of PSSC() )
-    PZ,    ///< Indicator of PSSC() status (since r1594): 0 untouched, 1 phase(s) inserted
-           ///< 2 insertion done after 5 major IPM loops
-    pNP,   ///< Mode of FIA selection: 0-automatic-LP AIA, 1-smart SIA, -1-user's choice
-    pESU,  ///< Unpack old eqstate from EQSTAT record?  0-no 1-yes
-    pIPN,  ///< State of IPN-arrays:  0-create; 1-available; -1 remake
-    pBAL,  ///< State of reloading CSD:  1- BAL only; 0-whole CSD
-    tMin,  ///< Type of thermodynamic potential to minimize
-    pTPD,  ///< State of reloading thermod data: 0-all  -1-full from database   1-new system 2-no
-    pULR,  ///< Start recalc kinetic constraints (0-do not, 1-do )internal
+    Ec,     ///< CalculateActivityCoefficients() return code: 0 (OK) or 1 (error)
+    K2,     ///< Number of IPM loops performed ( >1 up to 6 because of PSSC() )
+    PZ,     ///< Indicator of PSSC() status (since r1594): 0 untouched, 1 phase(s) inserted
+            ///< 2 insertion done after 5 major IPM loops
+    pNP,    ///< Mode of FIA selection: 0-automatic-LP AIA, 1-smart SIA, -1-user's choice
+    pESU,   ///< Unpack old eqstate from EQSTAT record?  0-no 1-yes
+    pIPN,   ///< State of IPN-arrays:  0-create; 1-available; -1 remake
+    pBAL,   ///< State of reloading CSD:  1- BAL only; 0-whole CSD
+    tMin,   ///< Type of thermodynamic potential to minimize
+    pTPD,   ///< State of reloading thermod data: 0-all  -1-full from database   1-new system 2-no
+    pULR,   ///< Start recalc kinetic constraints (0-do not, 1-do )internal
+pKMM, ///< new: State of KinMet arrays: 0-create; 1-available; -1 remake
     ITaia,  ///< Number of IPM iterations completed in AIA mode (renamed from pRR1)
     FIat,   ///< max. number of surface site types
     MK,     ///< IPM return code: 0 - continue;  1 - converged
@@ -97,8 +100,8 @@ typedef struct
     is,     ///< is - index of IC for IPN equations ( CalculateActivityCoefficients() )
     js,     ///< js - index of DC for IPN equations ( CalculateActivityCoefficients() )
     next,   ///< for IPN equations (is it really necessary? TW please check!
-    sitNcat,    ///< Can be re-used
-    sitNan      /// Can be re-used
+    sitNcat,    //< Can be re-used
+    sitNan      // Can be re-used
     ;
   double
     TC,  	///< Temperature T, min. (0,2000 C)
@@ -123,6 +126,10 @@ typedef struct
     CpXc,  ///< reserved
     CvX_,  ///< reserved
     CvXc,  ///< reserved
+  // TKinMet stuff
+  kTau,  ///< current time, s (kinetics)
+  kdT,   ///< current time step, s (kinetics)
+
     TMols,      ///< Input total moles in b vector before rescaling
     SMols,      ///< Standart total moles (upscaled) {1000}
     MBX,        ///< Total mass of the system, kg
@@ -158,23 +165,67 @@ double
   epsWg[5];  ///< Diel. constant of steam for Tc,Pc
 
   long int
-    *L1,    ///< l_a vector - number of DCs included into each phase [Fi]
-    *LsMod, ///< Number of interaction parameters. Max parameter order (cols in IPx),
+  *L1,    ///< l_a vector - number of DCs included into each phase [Fi]
+  // TSolMod stuff
+  *LsMod, ///< Number of interaction parameters. Max parameter order (cols in IPx),
             ///< and number of coefficients per parameter in PMc table [3*FIs]
-    *LsMdc, ///<  for multi-site models: [3*FIs] - number of nonid. params per component; number of sublattices nS; number of moieties nM.
+   *LsMdc, ///<  for multi-site models: [3*FIs] - number of nonid. params per component;
+           /// number of sublattices nS; number of moieties nM
+ *LsMdc2, ///<  new: [3*FIs] - number of DQF coeffs; reciprocal coeffs per end member;
+          /// reserved
     *IPx,   ///< Collected indexation table for interaction parameters of non-ideal solutions
             ///< ->LsMod[k,0] x LsMod[k,1]   over FIs
     *mui,   ///< IC indices in RMULTS IC list [N]
     *muk,   ///< Phase indices in RMULTS phase list [FI]
-    *muj;   ///< DC indices in RMULTS DC list [L]
+    *muj,   ///< DC indices in RMULTS DC list [L]
+
+  *LsPhl,  ///< new: Number of phase links; number of link parameters; [Fi][2]
+  (*PhLin)[2];  ///< new: indexes of linked phases and link type codes (sum 2*LsPhl[k][0] over Fi)
+
+  /* TSolMod !! arrays and counters to be added (for mixed-solvent electrolyte phase) TW
+
+  ncsolv, /// TW new: number of solvent parameter coefficients (columns in solvc array)
+  nsolv,  /// TW new: number of solvent interaction parameters (rows in solvc array)
+  *ixsolv, /// new: array of indexes of solvent interaction parameters [nsolv*2]
+  *solvc, /// TW new: array of solvent interaction parameters [ncsolv*nsolv]
+
+  ncdiel, /// TW new: number of dielectric constant coefficients (colums in dielc array)
+  ndiel,  /// TW new: number of dielectric constant parameters (rows in dielc array)
+  *ixdiel /// new: array of indexes of dielectric interaction parameters [ndiel*2]
+  *dielc, /// TW new: array of dielectric constant parameters [ncdiel*ndiel]
+
+  ndh,    /// TW new: number of generic DH coefficients (rows in dhc array)
+  *dhc,   /// TW new: array of generic DH parameters [ndh]
+  */
+
+  // TSorpMod stuff
+  long int
+  *LsESmo, ///< new: number of EIL model layers; EIL params per layer; CD coefs per DC; reserved  [Fis][4]
+  *LsISmo, ///< new: number of surface sites; isotherm coeffs per site; isotherm coeffs per DC; max.denticity of DC [Fis][4]
+  *xSMd;   ///< new: denticity of surface species per surface site (site allocation) (-> L1[k]*LsISmo[k][3]] )
   long int  (*SATX)[4]; ///< Setup of surface sites and species (will be applied separately within each sorption phase) [Lads]
-             // link indexes to surface type [XL_ST]; sorbent em [XL_EM]; surf.site [XL-SI] and EDL plane [XL_SP]
+             /// link indexes to surface type [XL_ST]; sorbent em [XL_EM]; surf.site [XL-SI] and EDL plane [XL_SP]
+  // TKinMet stuff
+  long int
+  *LsKin,  ///< new: number of parallel reactions nPRk[k]; number of species in activity products nSkr[k];
+           /// number of parameter coeffs in parallel reaction term nrpC[k]; number of parameters
+           /// per species in activity products naptC[k]; nAscC number of parameter coefficients in As correction;
+           /// nFaces[k] number of (separately considered) crystal faces or surface patches ( 1 to 4 ) [Fi][6]
+  *LsUpt,  ///< new: number of uptake kinetics model parameters (coefficients) numpC[k];
+          /// number of IC element indexes for end members = L1[k]    [Fis][2]
+  *xSKrC,  ///< new: Collected array of aq/gas/sorption species indexes used in activity products (-> += LsKin[k][1])
+  (*ocPRkC)[2], ///< new: Collected array of operation codes for kinetic parallel reaction terms (-> += LsKin[k][0])
+                /// and indexes of faces (surface patches)
+*xICuC;  ///< new: Collected array of IC species indexes used in partition (fractionation) coefficients  ->L1[k]   TBD
   double
+   // TSolMod stuff
     *PMc,    ///< Collected interaction parameter coefficients for the (built-in) non-ideal mixing models -> LsMod[k,0] x LsMod[k,2]
     *DMc,    ///< Non-ideality coefficients f(TPX) for DC -> L1[k] x LsMdc[k][0]
     *MoiSN,  ///< End member moiety- site multiplicity number tables ->  L1[k] x LsMdc[k][1] x LsMdc[k][2]
     *SitFr,  ///< Tables of sublattice site fractions for moieties -> LsMdc[k][1] x LsMdc[k][2]
-    *A,      ///< DC stoichiometry matrix A composed of a_ji [0:N-1][0:L-1]
+
+  // Stoichiometry basis
+    *A,   ///< DC stoichiometry matrix A composed of a_ji [0:N-1][0:L-1]
     *Awt,    ///< IC atomic (molar) mass, g/mole [0:N-1]
 
  // Reconsider usage
@@ -184,7 +235,6 @@ double
      *HYM,    ///< reserved
      *ENT,    ///< reserved no object
 
- // Convert H0, A0, U0, S0, Cp0 to double
      *H0,     ///< DC pmolar enthalpies, reserved [L]
      *A0,     ///< DC molar Helmholtz energies, reserved [L]
      *U0,     ///< DC molar internal energies, reserved [L]
@@ -193,15 +243,34 @@ double
      *Cv0,    ///< DC molar Cv, reserved [L]
 
     *VL,      ///< ln mole fraction of end members in phases-solutions
+  // Old sorption stuff
     *Xcond,   ///< conductivity of phase carrier, sm/m2   [0:FI-1], reserved
     *Xeps,    ///< diel.permeability of phase carrier (solvent) [0:FI-1], reserved
     *Aalp,    ///< Full vector of specific surface areas of phases (m2/g) [0:FI-1]
     *Sigw,    ///< Specific surface free energy for phase-water interface (J/m2)   [0:FI-1]
-    *Sigg  	/// Specific surface free energy for phase-gas interface (J/m2) (not yet used)  [0:FI-1], reserved
-    ;
+    *Sigg,  	///< Specific surface free energy for phase-gas interface (J/m2) (not yet used)  [0:FI-1], reserved
+  // TSolMod stuff
+  *lPhc,  ///< new: Collected array of phase link parameters (sum(LsPhl[k][1] over Fi)
+  *DQFc,  ///< new: Collected array of DQF parameters for DCs in phases -> L1[k] x LsMdc2[k][0]
+//  *rcpc,  ///< new: Collected array of reciprocal parameters for DCs in phases -> L1[k] x LsMdc2[k][1]
 
-
-//  Data for surface comlexation and sorption models (new variant [Kulik,2006])
+  // TSorpMod & TKinMet stuff
+  *SorMc, ///< new: Phase-related kinetics and sorption model parameters: [Fis][16]
+          ///< in the same order as from Asur until fRes2 in TPhase
+  // TSorpMod stuff
+  *EImc,  ///< new: Collected EIL model coefficients k -> += LsESmo[k][0]*LsESmo[k][1]
+  *mCDc,  ///< new: Collected CD EIL model coefficients per DC k -> += L1[k]*LsESmo[k][2]
+  *IsoPc, ///< new: Collected isotherm coefficients per DC k -> += L1[k]*LsISmo[k][2];
+  *IsoSc, ///< new: Collected isotherm coeffs per site k -> += LsISmo[k][0]*LsISmo[k][1];
+  // TKinMet stuff
+  *feSArC, ///< new: Collected array of fractions of surface area related to parallel reactions k-> += LsKin[k][0]
+  *rpConC,  ///< new: Collected array of kinetic rate constants k-> += LsKin[k][0]*LsKin[k][2];
+  *apConC,  ///< new:!! Collected array of parameters per species involved in activity product terms
+          ///  k-> += LsKin[k][0]*LsKin[k][1]*LsKin[k][3];
+  *AscpC,   /// new: parameter coefficients of equation for correction of specific surface area k-> += LsKin[k][4]
+  *UMpcC  ///< new: Collected array of uptake model coefficients k-> += L1[k]*LsUpt[k][0];
+      ;
+  //  Data for old surface comlexation and sorption models (new variant [Kulik,2006])
   double  (*Xr0h0)[2];   ///< mean r & h of particles (- pores), nm  [0:FI-1][2], reserved
   double  (*Nfsp)[MST];  ///< Fractions of the sorbent specific surface area allocated to surface types  [FIs][FIat]
   double  (*MASDT)[MST]; ///< Total maximum site  density per surface type (mkmol/g)  [FIs][FIat]
@@ -217,7 +286,6 @@ double
   double  (*MASDJ)[DFCN];  ///< Parameters of surface species in surface complexation models [Lads][DFCN]
                            // Contents defined in the enum below this structure
 // Other data
-
   double
     *XFs,    ///< Current quantities of phases X_a at IPM iterations [0:FI-1]
     *Falps,  ///< Current Karpov criteria of phase stability  F_a [0:FI-1]
@@ -228,14 +296,23 @@ double
     *DUL,     ///< VG Vector of upper kinetic restrictions to x_j, moles [L]
     *DLL,     ///< NG Vector of lower kinetic restrictions to x_j, moles [L]
     *fDQF,    ///< Increments to molar G0 values of DCs from pure gas fugacities or DQF terms, normalized [L]
-    *PUL,  ///< Vector of upper restrictions to phases amounts X_a (reserved)[FIs]
-    *PLL,  ///< Vector of lower restrictions to phases amounts X_a (reserved)[FIs]
+// TKinMet stuff (old DODs, new contents )
+    *PUL,  ///< Vector of upper restrictions to multicomponent phases amounts [FIs]
+    *PLL,  ///< Vector of lower restrictions to multicomponent phases amounts [FIs]
+*PfFact, /// new: phase surface area - volume shape factor (taken from TKinMet or set from TNode) [FI]
+*PrT,    /// new: Total MWR rate (mol/s) for phases - TKinMet output [FI]
+*PkT,    /// new: Total specific MWR rate (mol/m2/s) for phases - TKinMet output [FI]
+*PvT,    /// new: Total one-dimensional MWR surface propagation velocity (m/s) - TKinMet output [FI]
+//  potentially can be extended to all solution phases?
+*emRd,   /// new: output Rd values (partition coefficients) for end members (in uptake kinetics model) [Ls]
+*emDf,   /// new: output Df values (fractionation coeffs.) for end members (in uptake kinetics model) [Ls]
+//
     *YOF,     ///< Surface free energy parameter for phases (J/g) (to accomodate for variable phase composition) [FI]
     *Vol,     ///< DC molar volumes, cm3/mol [L]
     *MM,      ///< DC molar masses, g/mol [L]
     *Pparc,   ///< Partial pressures or fugacities of pure DC, bar (Pc by default) [0:L-1]
     *Y_m,     ///< Molalities of aqueous species and sorbates [0:Ls-1]
-    *Y_la,    ///< log activity of DC in multi-component phases (mju-mji0) [0:Ls-1]
+    *Y_la,    ///< log activity of DC in multi-component phases (mju-mji0) [0:L-1]
     *Y_w,     ///< Mass concentrations of DC in multi-component phases,%(ppm)[Ls]
     *Gamma,   ///< DC activity coefficients in molal or other phase-specific scale [0:L-1]
     *lnGmf,   ///< ln of initial DC activity coefficients for correcting G0 [0:L-1]
@@ -249,6 +326,18 @@ double
     *lnGam,   ///< ln of DC activity coefficients in unified (mole-fraction) scale [0:L-1]
     *lnGmo;   ///< Copy of lnGam from previous IPM iteration (reserved)
   double  (*lnSAC)[4]; ///< former lnSAT ln surface activity coeff and Coulomb's term  [Lads][4]
+
+  // TSolMod stuff (detailed output on partial energies of mixing)
+  double *lnDQFt; ///< new: DQF terms adding to overall activity coefficients [Ls_]
+  double *lnRcpt; ///< new: reciprocal terms adding to overall activity coefficients [Ls_]
+  double *lnExet; ///< new: excess energy terms adding to overall activity coefficients [Ls_]
+  double *lnCnft; ///< new: configurational terms adding to overall activity [Ls_]
+  // TSorpMod stuff
+  double *lnScalT;  ///< new: Surface/volume scaling activity correction terms [Ls_]
+  double *lnSACT;   ///< new: ln isotherm-specific SACT for surface species [Ls_]
+  double *lnGammF;  ///< new: Frumkin or BET non-electrostatic activity coefficients [Ls_]
+  double *CTerms;   ///< new: Coulombic terms (electrostatic activity coefficients) [Ls_]
+
   double  *B,  ///< Input bulk chem. compos. of the system - b vector, moles of IC[N]
     *U,  ///< IC chemical potentials u_i (mole/mole) - dual IPM solution [N]
     *U_r,  ///< IC chemical potentials u_i (J/mole) [0:N-1]
@@ -272,7 +361,7 @@ double
          (*APh)[MIXPHPROPS],     ///< Helmholtz energy properties for mixed phases [FIs]
          (*UPh)[MIXPHPROPS];     ///< Internal energy properties for mixed phases [FIs]
 
-// EDL models (data for electrostatic activity coefficients)
+// old sorption models - EDL models (data for electrostatic activity coefficients)
    double (*XetaA)[MST]; ///< Total EDL charge on A (0) EDL plane, moles [FIs][FIat]
    double (*XetaB)[MST]; ///< Total charge of surface species on B (1) EDL plane, moles[FIs][FIat]
    double (*XetaD)[MST]; ///< Total charge of surface species on D (2) EDL plane, moles[FIs][FIat]
@@ -292,11 +381,13 @@ double
     *W,   ///< Weight multipliers for DC (incl restrictions) in IPM [L]
     *Fx,  ///< Dual DC chemical potentials defined via u_i and a_ji [L]
     *Wx,  ///< Mole fractions Wx of DC in multi-component phases [L]
-    *F,   ///<Primal DC chemical potentials defined via g0_j, Wx_j and lnGam_j[L]
+    *F,   /// <Primal DC chemical potentials defined via g0_j, Wx_j and lnGam_j[L]
     *F0;  ///< Excess Gibbs energies for (metastable) DC, mole/mole [L]
+// Old sorption models
    double (*D)[MST];  ///< Reserved; new work array for calc. surface act.coeff.
 // Name lists
-  char  (*sMod)[6];   ///< Codes for built-in mixing models of multicomponent phases [FIs]
+  char (*sMod)[8];   ///< new: Codes for built-in mixing models of multicomponent phases [FIs]
+  char (*kMod)[6];  ///< new: Codes for built-in kinetic models [Fi]
   char  (*dcMod)[6];   ///< Codes for PT corrections for dependent component data [L]
   char  (*SB)[MAXICNAME+MAXSYMB]; ///< List of IC names in the system [N]
   char  (*SB1)[MAXICNAME]; ///< List of IC names in the system [N]
@@ -319,11 +410,15 @@ double
   char  (*SCM)[MST]; ///< Classifier of built-in electrostatic models applied to surface types in sorption phases [FIs][FIat]
   char  *SATT,  ///< Classifier of applied SACT equations (isotherm corrections) [Lads]
     *DCCW;  ///< internal DC class codes [L]
+  // TSorpMod stuff
+  char *IsoCt; ///< new: Collected isotherm and SATC codes for surface site types k -> += 2*LsISmo[k][0]
 
 //  SolutionData *asd; ///< Array of data structures to pass info to TSolMod [FIs]
 
   long int ITF,       ///< Number of completed IA EFD iterations
-         ITG;         ///< Number of completed GEM IPM iterations
+         ITG,         ///< Number of completed GEM IPM iterations
+         ITau,    /// new: Time iteration for TKinMet class calculations
+         IRes1;
   clock_t t_start, t_end;
   double t_elap_sec;  ///< work variables for determining IPM calculation time
 #ifdef IPMGEMPLUGIN
@@ -422,6 +517,8 @@ class TMulti
                             int car_l[], int car_c, int Cjs );
     void sm_text_analyze( int nph, int Type, int JB, int JE, int jb, int je );
     void SolModLoad();
+// new TKinMet stuff
+void KinMetModLoad();
     bool CompressPhaseIpxt( int kPH );
     gstring PressSolMod( int nP );
     char *ExtractEG( char *Etext, int jp, int *EGlen, int Nes );
@@ -429,6 +526,9 @@ class TMulti
     int find_dcnum( char *name, int jb, int je, int LNmode, char *stmt  );
     int find_phnum( char *name, int LNmode );
     int find_acnum( char *name, int LNmode );
+    int find_phnum_multi( const char *name);
+    int find_dcnum_multi( const char *name);
+    int find_icnum_multi( const char *name);
     const char* GetHtml();
 
 #else
@@ -440,11 +540,23 @@ class TMulti
 protected:
 
    long int sizeFIs;     ///< current size of phSolMod
-   TSolMod* (*phSolMod); ///< size current FIs -   number of multicomponent phases
+   TSolMod* (*phSolMod); ///< size current FIs - number of multicomponent phases
 
    void Alloc_TSolMod( long int newFIs );
    void Free_TSolMod();
 
+   // new - allocation of TsorpMod and TKinMet
+   long int sizeFIa;       ///< current size of phSorpMod
+   TSorpMod* (*phSorpMod); ///< size current FIa - number of adsorption phases
+
+   void Alloc_TSorpMod( long int newFIa );
+   void Free_TSorpMod();
+
+   long int sizeFI;      ///< current size of phKinMet
+   TKinMet* (*phKinMet); ///< size current FI -   number of phases
+
+   void Alloc_TKinMet( long int newFI );
+   void Free_TKinMet();
 
 // Added for implementation of divergence detection in dual solution 06.05.2011 DK
    long int nNu;  ///< number of ICs in the system
@@ -467,10 +579,6 @@ protected:
    char PSigm_; ///< Flag for using (+) or ignoring (-) specific surface free energies
 
 #endif
-
-// Internal functions for SCMs
-   void getLsModsum( long int& LsModSum, long int& LsIPxSum );
-   void getLsMdcsum( long int& LsMdcSum,long int& LsMsnSum,long int& LsSitSum );
 
    void setErrorMessage( long int num, const char *code, const char * msg);
    void addErrorMessage( const char * msg);
@@ -521,7 +629,8 @@ protected:
 // Built-in activity coefficient models
 // Generic solution model calls
     void SolModCreate( long int jb, long int jmb, long int jsb, long int jpb, long int jdb,
-                       long int k, long int ipb, char ModCode, char MixCode );
+                       long int k, long int ipb, char ModCode, char MixCode,
+                       /* long int jphl, long int jlphc, */ long int jdqfc, long int jrcpc );
     void SolModParPT( long int k, char ModCode );
     void SolModActCoeff( long int k, char ModCode );
     void SolModExcessProp( long int k, char ModCode );
@@ -533,6 +642,24 @@ protected:
     // void IdealGas( long int jb, long int k, double *Zid );
     // void IdealOneSite( long int jb, long int k, double *Zid );
     // void IdealMultiSite( long int jb, long int k, double *Zid );
+
+// New stuff for TKinMet class implementation
+long int CalculateKinMet( long int LinkMode  );
+void KM_Create(long int jb, long int k, long int kc, long int kp, long int kf,
+            long int ka, long int ks, long int kd, long ku, long ki, const char *kmod,
+            long jphl, long jlphc );
+void KM_ParPT( long int k, const char *kMod );
+void KM_InitTime( long int k, const char *kMod );
+void KM_UpdateTime( long int k, const char *kMod );
+void KM_UpdateFSA(long jb, long int k, const char *kMod );
+void KM_ReturnFSA(long int k, const char *kMod );
+void KM_CalcRates( long int k, const char *kMod );
+void KM_InitRates( long int k, const char *kMod );
+void KM_CalcSplit( long int jb, long int k, const char *kMod );
+void KM_InitSplit( long int jb, long int k, const char *kMod );
+void KM_CalcUptake( long int jb, long int k, const char *kMod );
+void KM_InitUptake( long int jb, long int k, const char *kMod );
+void KM_SetAMRs( long int jb, long int k, const char *kMod );
 
 // ipm_main.cpp - numerical part of GEM IPM-2
     void GEM_IPM( long int rLoop );
@@ -623,7 +750,7 @@ public:
     void unpackData();
 
     void MultiKeyInit( const char*key );
-    void EqstatExpand( const char *key,  bool calcActivityModels = true );
+    void EqstatExpand( const char *key,  bool calcActivityModels, bool calcKineticModels );
     void ET_translate( int nOet, int nOpex, int JB, int JE, int jb, int je,
      tget_ndx *get_ndx = 0 );
     void getNamesList( int nO, TCStringArray& lst );
@@ -653,6 +780,10 @@ public:
 
      sizeFIs = 0;
      phSolMod = 0;
+     sizeFIa = 0;
+     phSorpMod = 0;
+     sizeFI = 0;
+     phKinMet = 0;
 
      pmp->Guns = 0;
      pmp->Vuns = 0;
@@ -671,6 +802,8 @@ public:
 
     void CheckMtparam(); // Test load thermodynamic data before
 
+    void set_load (bool what); // DM 20.05.2013 - Ensures the re-reading of the system properties into GEM IMP data structure
+
 #endif
 
     MULTI* GetPM()
@@ -682,7 +815,11 @@ public:
     const char* GetName() const
     {  return "Multi";  }
 
-   //connection to mass transport
+    // Internal functions for SCMs
+//       void getLsModsum( long int& LsModSum, long int& LsIPxSum );
+//       void getLsMdcsum( long int& LsMdcSum,long int& LsMsnSum,long int& LsSitSum );
+
+    //connection to mass transport
     void to_file( GemDataStream& ff );
     void to_text_file( const char *path, bool append=false  );
     void from_file( GemDataStream& ff );
@@ -690,12 +827,35 @@ public:
     		bool with_comments = true, bool brief_mode = false );
     void from_text_file_gemipm( const char *path,  DATACH  *dCH );
 
+    // New functions for TSolMod, TKinMet and TSorpMod parameter arrays
+       void getLsModsum( long int& LsModSum, long int& LsIPxSum );
+       void getLsMdcsum( long int& LsMdcSum,long int& LsMsnSum,long int& LsSitSum );
+       /// Get dimensions from LsPhl array
+       void getLsPhlsum( long int& PhLinSum,long int& lPhcSum );
+       /// Get dimensions from LsMdc2 array
+       void getLsMdc2sum( long int& DQFcSum,long int& rcpcSum );
+       /// Get dimensions from LsISmo array
+       void getLsISmosum( long int& IsoCtSum,long int& IsoScSum, long int& IsoPcSum,long int& xSMdSum );
+       /// Get dimensions from LsESmo array
+       void getLsESmosum( long int& EImcSum,long int& mCDcSum );
+       /// Get dimensions from LsKin array
+       void getLsKinsum( long int& xSKrCSum,long int& ocPRkC_feSArC_Sum,
+                         long int& rpConCSum,long int& apConCSum, long int& AscpCSum );
+       /// Get dimensions from LsUpot array
+       void getLsUptsum(long int& UMpcSum, long int& xICuCSum);
+
     // EXTERNAL FUNCTIONS
     // MultiCalc
     void Alloc_internal();
-    double CalculateEquilibriumState( long int typeMin, long int& NumIterFIA, long int& NumIterIPM );
+double CalculateEquilibriumState( long int typeMin, long int& NumIterFIA, long int& NumIterIPM );
     void InitalizeGEM_IPM_Data();
     void DC_LoadThermodynamicData( TNode* aNa = 0 );
+    //DM 25.02.2014
+    void Access_GEM_IMP_init();
+    int get_sizeFIs () {return sizeFIs;}
+    // acces for node class
+    TSolMod * pTSolMod (int xPH);
+
 
     long int CheckMassBalanceResiduals(double *Y );
     double ConvertGj_toUniformStandardState( double g0, long int j, long int k );
@@ -753,7 +913,11 @@ typedef enum {  // Field index into outField structure
   f_pa_DFYr,  f_pa_DFYh,  f_pa_DFYc,  f_pa_DFYs,  f_pa_DW,
   f_pa_DT,  f_pa_GAS,  f_pa_DG,  f_pa_DNS,  f_pa_IEPS,
   f_pKin,  f_pa_DKIN,  f_mui,  f_muk,  f_muj,
-  f_pa_PLLG,  f_tMin,  f_dcMod
+  f_pa_PLLG,  f_tMin,  f_dcMod,
+//new
+    f_kMod, f_LsKin, f_LsUpt, f_xICuC, f_PfFact,
+    f_LsESmo, f_LsISmo, f_SorMc, f_LsMdc2, f_LsPhl
+
 } MULTI_DYNAMIC_FIELDS;
 
 
