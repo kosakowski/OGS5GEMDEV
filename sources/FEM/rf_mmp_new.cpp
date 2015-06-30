@@ -35,6 +35,11 @@ extern double gravity_constant;
 // MSHLib
 //#include "msh_lib.h"
 #include "pcs_dm.h"  //WX
+// GEMS kg44
+#ifdef GEM_REACT
+#include "rf_REACT_GEM.h"
+#endif
+
 using namespace std;
 
 // MAT-MP data base lists
@@ -4473,11 +4478,32 @@ double* CMediumProperties::PermeabilityTensor(long index)
 			// save old permeability
 			pcs_tmp->SetElementValue( index, idx_k, k_new  );
 
+#ifdef GEM_REACT
+		        MeshLib::CElem* m_Elem;
+                        m_Elem =  m_pcs->m_msh->ele_vector[index];
+			// calculate new permeability as harmonic mean over all node based permeabilities
+			int count_nodes = m_Elem->GetNodesNumber ( false );
+                        double permeability_average = 0.0;
+                        double dummy,dummy0,pdummy;
+                        for (size_t ii = 0; ii < count_nodes; ii++) //calculate harmonic mean of node based diffusion coefficients
+                        {
+                        // then get the values from nodes
+                           dummy = m_vec_GEM->REACT_GEM::GetNodePorosityValue(m_Elem->GetNodeIndex ( ii )); //current node based prosity
+                           dummy0 = m_vec_GEM->REACT_GEM::GetNodePorosityValueInitial(m_Elem->GetNodeIndex ( ii )); //initial node based porosity
+			   pdummy = CMediumProperties::KozenyCarman( KC_permeability_initial,
+			                                                    dummy0,
+			                                                    dummy );
+                           permeability_average += 1.0 / pdummy;
+
+                        }
+                        k_new =  count_nodes / permeability_average; // This is now harmonic mean of node diffusion coefficients			
+#else			
+
 			// calculate new permeability
 			k_new = CMediumProperties::KozenyCarman( KC_permeability_initial,
 			                                         KC_porosity_initial,
 			                                         n_new );
-
+#endif
 			// save new permeability
 			pcs_tmp->SetElementValue( index, idx_k + 1, k_new   );
 
@@ -4514,11 +4540,32 @@ double* CMediumProperties::PermeabilityTensor(long index)
 			// save old permeability
 			pcs_tmp->SetElementValue( index, idx_k, k_new  );
 
+#ifdef GEM_REACT
+		        MeshLib::CElem* m_Elem;
+                        m_Elem =  m_pcs->m_msh->ele_vector[index];
+			// calculate new permeability as harmonic mean over all node based permeabilities
+			int count_nodes = m_Elem->GetNodesNumber ( false );
+                        double permeability_average = 0.0;
+                        double dummy,dummy0,pdummy;
+                        for (size_t ii = 0; ii < count_nodes; ii++) //calculate harmonic mean of node based diffusion coefficients
+                        {
+                        // then get the values from nodes
+                           dummy = m_vec_GEM->REACT_GEM::GetNodePorosityValue(m_Elem->GetNodeIndex ( ii ));
+                           dummy0 = m_vec_GEM->REACT_GEM::GetNodePorosityValueInitial(m_Elem->GetNodeIndex ( ii ));
+			   pdummy = CMediumProperties::KozenyCarman_normalized( KC_permeability_initial,
+			                                                    dummy0,
+			                                                    dummy );
+                           permeability_average += 1.0 / pdummy;
+
+                        }
+                        k_new =  count_nodes / permeability_average; // This is now harmonic mean of node diffusion coefficients			
+#else			
+			
 			// calculate new permeability
 			k_new = CMediumProperties::KozenyCarman_normalized( KC_permeability_initial,
 			                                                    KC_porosity_initial,
 			                                                    n_new );
-
+#endif
 			// save new permeability
 			pcs_tmp->SetElementValue( index, idx_k + 1, k_new   );
 
