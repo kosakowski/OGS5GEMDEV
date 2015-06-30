@@ -12309,54 +12309,6 @@ void CFiniteElementStd::PrintTheSetOfElementMatrices(std::string mark)
 	}
 }
 
-/*! Control Volume Finite Element Method for solving Advection Dispersion Equation
- * I simply follow the description in:
- * Voller, V. R. (2009). Basic Control Volume Finite Element Methods for Fluids and Solids. Co-Published with Indian Institute of Science (IISc), Bangalore, India. doi:10.1142/7027
- * 
- * Triangles only!
- * The implementation is not optimized for speed and might violate all programming rules...it is for testing the approach!
- * Test implementation: KG44 Dec 2014
- */
-
-void CFiniteElementStd::AssembleEquationCVFEM_ADE(){
-  	int i,j;
-	double pcs_time_step, dt_inverse;
-	
-	// here we insert the declarations for temporary storage of data according to Voller, 2009...section 5.6
-
-	double** amat; // temporary storage for the global matrix a
-	amat = (double**) Malloc(nnodes * sizeof(double));
-	for (int i = 0; i < nnodes; i++)
-	{
-		amat[i] = (double*) Malloc(nnodes * sizeof(double));
-	}
-	// fill amat with zeros
-	for (int i = 0; i < nnodes; i++)
-		for (int j = 0; j < nnodes; j++)
-		{
-			amat[i][j] = 0;
-		}
-
-		
-	// we get info on time stepping: Theta = 1 is implicit and theta=0 is explicit
-	double theta = pcs->m_num->ls_theta;  //OK
-
-
-	
-	// JT2012: Get the time step of this process! Now dt can be independently controlled
-	pcs_time_step = pcs->Tim->time_step_length;
-	dt_inverse = 1.0/pcs_time_step; // (also, no need to check minimum. It is handeled in Tim.
-
-	/// loop over all nodes in the mesh	  
-	for(i = 0; i < nnodes; i++)
-	{
-	  
-	  
-	}
-// free memory!
-  free(amat);
-}
-
 
 //CB _ctx_ CB_merge_0513
 /*void CFiniteElementStd::Set_ctx_(long ele_index, double val, int gaussp, int i_dim){ 

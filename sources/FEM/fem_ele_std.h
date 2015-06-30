@@ -169,8 +169,6 @@ public:
 	                               double** amatij,
 	                               double* sumjac);
 	void CalcOverlandUpwindedCoefficients(double** amat, double* ckwr, double axx, double ayy);
-	//CVFEM for ADE mass transport: KG44 Dec 2014 
-	void AssembleEquationCVFEM_ADE();
 	//CB added by CB: 090507
 	void UpwindAlphaMass(double* alpha);
 	//CB added by CB: 090507
