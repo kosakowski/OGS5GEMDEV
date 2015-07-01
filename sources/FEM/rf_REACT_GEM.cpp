@@ -2436,7 +2436,7 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
                     else
                         m_soluteB[i] = m_bPS[ii];
                 }
-                m_soluteB[i] += m_soluteB_corr[i]; // corrected for substracted negative concentrations
+//better not..might cause problems at the moment                m_soluteB[i] += m_soluteB_corr[i]; // corrected for substracted negative concentrations 
                 m_soluteB[i] /= m_fluid_volume[in]; // now these are the concentrations
             }
 
@@ -2566,8 +2566,8 @@ int REACT_GEM::ConcentrationToMass ( long l /*idx of node*/, int i_timestep )
 	    m_soluteB_corr[i]=0.0;
             if ( (m_soluteB[i] < 0.0) && (j != nIC-1))
 	    {
-	      m_soluteB_corr[i]=m_soluteB[i]-1.0e-16; //store amounts for later correction
-	      m_soluteB[i]=1.0e-16;
+	      m_soluteB_corr[i]=m_soluteB[i]; //store amounts for later correction
+	      m_soluteB[i]=fabs(m_soluteB_corr[i]);
 	    }
                 // make sure it is greater/eq zero and take value from last timestep ---> second argument is zero!
          //       m_soluteB[i] = fabs ( GetDCValueSpecies_MT ( l, 0, ( int ) j ) );
@@ -3556,15 +3556,15 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
 			}
 			if ( m_kin[ii].kinetic_model == 6 ) // in the next part we try to scale surface area accoridng to spherical particles
 			{
-				if ( omega_phase[in * nPH + k] < 1.0 ) // this is the dissolution case
+				if ( omega_phase[in * nPH + k] < 1.001 ) // this is the dissolution case
 
 					sa *= pow ( mol_phase[in*nPH+k] / mol_phase_initial[in*nPH+k], 0.66666666667 );
 
-				else if ( omega_phase[in * nPH + k] >= 1.0 ) // this is the precipitation case
+				else if ( omega_phase[in * nPH + k] >= 0.999 ) // this is the precipitation case
 
+					sa *= pow ( mol_phase[in*nPH+k] / mol_phase_initial[in*nPH+k], 0.66666666667 );
 
-					sa = 0.0;
-
+					// sa = 0.0;
 			}
 
 			aa = 1.0;
@@ -4134,12 +4134,7 @@ int REACT_GEM::CalcLimits ( long in, int flag_equilibration,double deltat, TNode
     if ( !dBR )
         return 0;
     
-    for ( j = 0; j < nDC; j++ )
-    {
-        m_dll_pts[in * nDC + j] = m_dll[in * nDC + j];          
-        m_dul_pts[in * nDC + j] = m_dul[in * nDC + j];       
-    }
-    
+
     if (flag_equilibration ==1) //for calculation of solid solution inside Picard iteration
     {
     
@@ -5253,7 +5248,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
                         MPI_Finalize(); //make sure MPI exits
 #endif
                         exit ( 1 );
-                    }        // we do not tolerate more than three failed nodes -> something wrong with chemistry/time step?
+                    }        // we do not tolerate too many failed nodes -> something wrong with chemistry/time step?
 
                     RestoreOldSolutionNode ( in );
                     GetBValue_MT ( in, 1, m_soluteB + in * nIC );
@@ -5261,16 +5256,17 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
                 }
                 else   // restore old solution and no update on kinetic parameters, porosity and fluid/gas properties
                 {
-
+/*  this I moved to the calchem		 
                     // this is if gem run is ok
                     REACT_GEM::GetReactInfoFromGEM ( in, t_Node); //from here on we have buffer values if GEMS_MPI is defined
-                    // CALC kintetic constrains
-                    REACT_GEM::CalcReactionRate ( in,t_Node); // check for kinetics is done in the subroutine for each species separately....CHECK: is this safe for SNA!!!!!?
-
                     // calculate the chemical porosity
                     if ( flag_porosity_change == 1 )
                         REACT_GEM::CalcPorosity ( in,t_Node);
+                      // CALC kintetic constrains
+                    REACT_GEM::CalcReactionRate ( in,t_Node); // check for kinetics is done in the subroutine for each species separately....CHECK: is this safe for SNA!!!!!?
 
+ 
+*/
                     // Convert to concentration  ..
                     REACT_GEM::MassToConcentration ( in, 0,t_Node);
                     // now calculate charge
@@ -5404,8 +5400,8 @@ void REACT_GEM::SynchronizeData(double* data)   //pass pointer to the vector we 
 
 int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
 {
-    int node_fail;
-    double oldvolume;
+    int j,node_fail, ii, iisplit;
+    double oldvolume, dtchem;
 
     DATACH* dCH;                            //pointer to DATACH
     DATABR* dBR;
@@ -5419,8 +5415,6 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
     dBR = m_Node->pCNode();
     if ( !dBR )
         return 0;
-
-
 
 
     // now we calculate kinetic constraints for GEMS!
@@ -5443,96 +5437,87 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
             ( ( ( abs ( oldvolume - dBR->Vs ) / oldvolume ) > 0.1 ) &&
               ( flowflag != 3 ) ))                               // not for Richards flow  // ups...failed..try again with changed kinetics
     {
-//#if !defined(USE_MPI_GEMS) && !defined(USE_PETSC)
-//					rwmutex.lock(); //KG44 try to avoid mutual exclusion at least in the parallel version, as this might slow down execution
-//					cout <<
-//					        "Error: Main Loop failed when running GEM on Node #"
-//					     << in << "." << " Returned Error Code: " << m_NodeStatusCH[in] << "\n";
-//					cout << " or GEM weird result at node " << in <<
-//					        " volume " <<  tdBR->Vs << " old volume " <<
-//					oldvolume;
-//					cout <<
-//					        " repeat calculations and change kinetic constraintsby 0.1%"
-//					     << "\n";
-//					rwmutex.unlock();
-//#endif
-        // change a bit the kinetic constraints -> make the system less stiff
-        // change the constraints only a little bit
-        // this is obviously dangerous for iterations as this can accumulate
-        // but experince shows, that for the case of a BAD_GEM_AIA solution this might help, as otherwise due to mass balance errors we get errors with kinetcs
-
-//		  for ( j = 0; j < nDC; j++ )
-//                    {
-//                        m_dll[in * nDC +j] = 1.0 * m_dll[in * nDC + j] - 1.0e-6; // make smaller
-//                        if ( m_dll[in * nDC + j] < 0.0 ) m_dll[in * nDC + j] = 0.0;
-//                        m_dul[in * nDC +j] = 1.00 * m_dul[in * nDC + j] + 1.0e-6; // make bigger
-//                    }
-
-        REACT_GEM::SetReactInfoBackGEM ( in, m_Node); // needs to be done to for update dll dul
-
-        // run GEMS again
-
-        dBR->NodeStatusCH = NEED_GEM_AIA;
-        m_NodeStatusCH[in] = m_Node->GEM_run ( true );
-
-
-        // test for bad GEMS and for volume changes bigger than 10% ...maximum 5 failed nodes per process.....
-
-        if (
-            !( m_NodeStatusCH[in] == OK_GEM_AIA ||  ( ( abs ( oldvolume - dBR->Vs ) / oldvolume ) > 0.1 ) &&
-              ( flowflag != 3 ) ))                                   // not for Richards flow
+        // set smaller time step
+        iisplit=5;
+        dtchem=dt/(double) iisplit;
+        // restore old constraints
+        for ( j = 0; j < nDC; j++ )
         {
+            m_dll[in * nDC + j] = m_dll_pts[in * nDC + j];
+            m_dul[in * nDC + j] = m_dul_pts[in * nDC + j];
+        }
+
+        for (ii=0; ii<iisplit; ii++)
+        {
+
+            // now we calculate kinetic constraints for GEMS!
+            // for SNA this should be only done once per timestep!
+            if (calc_limits)
+                REACT_GEM::CalcLimits ( in,0, dtchem,m_Node);
+            else if (calc_limits==0 && flag_iterative_scheme)
+                REACT_GEM::CalcLimits ( in,1,dtchem,m_Node);
+
+            //Get data
+            REACT_GEM::SetReactInfoBackGEM ( in,m_Node); // this should be also save for MPI
+            // take values from old B volume for comparison
+            oldvolume = m_Vs[in];
+            //check constraints
+            REACT_GEM::CheckConstraints(in,m_Node);
+
+            dBR->NodeStatusCH = NEED_GEM_AIA;
+            m_NodeStatusCH[in] = m_Node->GEM_run ( true );
+
+
+            // test for bad GEMS and for volume changes bigger than 10% ...maximum 5 failed nodes per process.....
+
+            if (
+                !( m_NodeStatusCH[in] == OK_GEM_AIA ||  ( ( abs ( oldvolume - dBR->Vs ) / oldvolume ) > 0.1 ) &&
+                   ( flowflag != 3 ) ))                                   // not for Richards flow
+            {
 //#if !defined(USE_MPI_GEMS) && !defined(USE_PETSC)
-            rwmutex.lock();
-            cout <<
-                 "Error: second attempt for main Loop failed when running GEM on Node #"
-                 <<
-                 in << "." << " Returned Error Code: " <<
-                 m_NodeStatusCH[in];
-            cout << " or GEM weird result at node " << in <<
-                 " volume " <<  dBR->Vs << " old volume " <<
-                 oldvolume;
-            cout << " continue with last good solution for this node" <<
-                 "\n";
+                rwmutex.lock();
+                cout <<
+                     "Error: main Loop Kin-Chem loop " << ii << " failed when running GEM on Node #"
+                     << in << "." << " Returned Error Code: " <<
+                     m_NodeStatusCH[in];
+                cout << " or GEM weird result at node " << in <<
+                     " volume " <<  dBR->Vs << " old volume " <<
+                     oldvolume;
+                cout << " continue with last good solution for this node" <<
+                     "\n";
 //                    t_Node->GEM_write_dbr ( "dbr_for_crash_node_fail.txt" );
 //                    t_Node->GEM_print_ipm ( "ipm_for_crash_node_fail.txt" );
-            rwmutex.unlock();
+                rwmutex.unlock();
 //#endif
-            // exit ( 1 );
-            node_fail = 1;
-        }               // end loop if initial gems run fails
-        else
-        {
-            node_fail=0;
-        }
+                // exit ( 1 );
+                node_fail = 1; //node failed and do nothing....
+            }               // end gems run fails
+            else
+            {
+                node_fail=0; // ok
+                //Get data
+                REACT_GEM::GetReactInfoFromGEM ( in,m_Node); // this should be also save for MPI
+                // calculate the chemical porosity
+                if ( m_flow_pcs->GetRestartFlag() < 2 )
+                    REACT_GEM::CalcPorosity ( in, m_Node);                         //during init it should be always done, except for restart !!!
+
+                REACT_GEM::CalcReactionRate ( in, m_Node); //moved it after porosity calculation because of chrunchflow kinetics (model 4)!
+            }
+
+
+
+        } // end loop kintetics/gems
     }
     else
     {
-        node_fail=0;
-    }
+        node_fail=0; // ok
+        //Get data
+        REACT_GEM::GetReactInfoFromGEM ( in,m_Node); // this should be also save for MPI
+        // calculate the chemical porosity
+        if ( m_flow_pcs->GetRestartFlag() < 2 )
+            REACT_GEM::CalcPorosity ( in, m_Node);                         //during init it should be always done, except for restart !!!
 
-    if (in == -1)
-    {
-        rwmutex.lock();
-        string rank_str;
-        rank_str = "0";
-
-        int rank=0;
-#if defined(USE_PETSC)
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
-        stringstream ss (stringstream::in | stringstream::out);
-        ss.clear();
-        ss.str("");
-        ss << rank << "_node-"<<in<<"_time-"<< aktueller_zeitschritt;
-        rank_str = ss.str();
-        ss.clear();
-        // write out a separate time stamp into file
-        string m_file_namet = "after_gems_dbr_domain-" + rank_str + ".dat";
-
-        m_Node->GEM_write_dbr ( m_file_namet.c_str() );
-        rwmutex.unlock();
-
+        REACT_GEM::CalcReactionRate ( in, m_Node); //moved it after porosity calculation because of chrunchflow kinetics (model 4)!
     }
 
     return node_fail;
