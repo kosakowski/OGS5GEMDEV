@@ -6503,6 +6503,8 @@ double CMediumProperties::KozenyCarman(double k0, double n0, double n)
    Programing:
    11/2008 HS Implementation
    last modification:
+   COMMENT KG44: This seems not to work properly! maybe because of the fastpow call?
+                 I replacd the call to this function by a call to KozenyCarmanNew!
 **************************************************************************/
 double CMediumProperties::KozenyCarman_normalized(double k0, double n0, double n)
 {
