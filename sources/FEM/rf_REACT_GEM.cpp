@@ -2064,14 +2064,14 @@ void REACT_GEM::ConvPorosityNodeValue2Elem ( int i_timestep )
 				sum_weights += weight;
 
 				// this is arithmetric mean
-				m_porosity_Elem[i] += m_porosity[idx_Node] / number_of_nodes;
+				 m_porosity_Elem[i] += m_porosity[idx_Node] / number_of_nodes;
 				// here we use harmonic mean, as porosity is used for permeability/diffusivity changes....flux in the element is strongly influenced by the minimum values
 				// cout << " porosity " << idx_Node <<" "<<m_porosity[idx_Node] << "\n";
 				// m_porosity_Elem[i] += 1.0/m_porosity[idx_Node] ; // this is for harmonic mean
 			}
 			//	cout << " Porosity: Element "<< i << " " <<m_porosity_Elem[i] << "\n";
 
-			//m_porosity_Elem[i] = (double) number_of_nodes / m_porosity_Elem[i];
+			// m_porosity_Elem[i] = (double) number_of_nodes / m_porosity_Elem[i];
 
 			// upper limit of porosity
 			if ( m_porosity_Elem[i] >= max_possible_porosity )
@@ -3474,7 +3474,7 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
 
 			if ( m_kin[ii].kinetic_model == 5 || m_kin[ii].kinetic_model == 7) // special treatment of solid solution phases with e.g. vanselow convention
 			{
-			  	omega_phase[in * nPH + k] =  m_Node->Ph_SatInd(k); // m_Node->DC_a ( j ); // omega_components[in * nDC + j];     //m_Node->DC_a ( j );
+//			  	omega_phase[in * nPH + k] =  m_Node->Ph_SatInd(k); // m_Node->DC_a ( j ); // omega_components[in * nDC + j];     //m_Node->DC_a ( j );
 				for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )
 					// do not include surface complexation species!
 					if ( !( dCH->ccDC[j]  == '0' ) &&
@@ -3483,12 +3483,12 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
 					     !( dCH->ccDC[j]  == 'Z' ) )
 					{
 						// we need this later for solid solutions....
-						omega_components[in * nDC + j] = m_Node->Get_aDC ( j ,true);;  // m_Node->DC_a ( j );// m_Node->Get_aDC ( j, true );     
+						omega_components[in * nDC + j] = m_Node->DC_a ( j );// m_Node->Get_aDC ( j, true );     
 // TESTING: here I insert a cutoff for very high values
 // if oversaturation is very high it does not matter if it is 1e300 or 1e10
                                                  if (omega_components[in * nDC + j] > 1.e12) omega_components[in * nDC + j]=1.0e12; 
 						// loop over all components of the phase
-
+                                                omega_phase[in * nPH + k] +=   omega_components[in * nDC + j];     //m_Node->DC_a ( j );
 //						mol_phase[in * nPH + k] +=( m_xDC[in * nDC + j] );
 						mol_phase[in * nPH + k] +=( m_xDC[in * nDC + j] * m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter] );
 					//	cout << " j " << j << " DC_a " << m_Node->DC_a ( j ) << "  " << pow(10,m_Node->DC_a (j)) << " ph_satindex " << m_Node->Ph_SatInd(k)<< " Debug kin omega phase "<< omega_phase[in*nPH+k] << " fraction component " << omega_components[in*nDC+j]/omega_phase[in*nPH+k] << "  mol component " <<  m_xDC[in * nDC + j] << "  mol phase " << mol_phase[in*nPH+k] << " volume " << m_Node->Ph_Volume ( k )<< "\n"; // debug					  
@@ -4140,7 +4140,7 @@ int REACT_GEM::CalcLimits ( long in, int flag_equilibration, TNode* m_Node)
         m_dul_pts[in * nDC + j] = m_dul[in * nDC + j];       
     }
     
-    if (flag_equilibration ==1)
+    if (flag_equilibration ==1) //for calculation of solid solution inside Picard iteration
     {
     
     // kinetic_model==1 dissolution+precipitation kinetics
@@ -4178,9 +4178,7 @@ int REACT_GEM::CalcLimits ( long in, int flag_equilibration, TNode* m_Node)
     {
         k = m_kin[ii].phase_number;
         // cout << " kinetics phase " << ii << " "  << m_kin[ii].kinetic_model << "\n";
-        if ( m_kin[ii].kinetic_model == 33 || (m_kin[ii].kinetic_model > 0 && m_kin[ii].kinetic_model < 8) ) // do it only if kinetic model is defined take model
-	  
-	  if ((m_kin[ii].kinetic_model == 5) || (m_kin[ii].kinetic_model == 5))
+	  if ((m_kin[ii].kinetic_model == 5) || (m_kin[ii].kinetic_model == 7))
 	  {
 	    CalcLimitsSolidSolution(in,ii,0,m_Node); // we pass "0" for flag_equilibration, as here we also calculate phase kinetics
 	  }
@@ -4217,14 +4215,11 @@ int REACT_GEM::CalcLimits ( long in, int flag_equilibration, TNode* m_Node)
                     }
                     else  //default kinetics
                     {
-		      // scaling with omega is necessary for solid_solutions? ...not good for normal single component phases
-//                        dummy =( mol_phase[in * nPH + k] + dmdt[in * nPH + k] * dt ) * omega_components[in * nDC + j] / omega_phase[in * nPH + k];
-                        dummy =( mol_phase[in * nPH + k] + dmdt[in * nPH + k] * dt ) ;
+		      // scaling with omega is necessary for solid_solutions? 
+                        dummy =( mol_phase[in * nPH + k] + dmdt[in * nPH + k] * dt ) * omega_components[in * nDC + j] / omega_phase[in * nPH + k];
 //                        if (in == 5)  cout << " dummy "<< dummy << " Kin debug mol phase " << mol_phase[in*nPH+k] << " dmdt " << dmdt[in*nPH+k]*dt << " omega comp " <<omega_components[in*nDC+j] <<" omega phase " << omega_phase[in*nPH+k]<< "\n";
 
-			if ( (m_kin[ii].kinetic_model == 5) ||  (m_kin[ii].kinetic_model == 7)) // only for Solid solution models: rescale to change of endmember in case of Vanselow convenction or similar
-                            dummy /= m_kin[ii].ss_scaling[j -m_kin[ii].dc_counter];
-                        if (dummy > 1.0e10)
+                      if (dummy > 1.0e10)
                             dummy = 1.0e10;
                         if (dummy < 0.0)
                             dummy = 0.0;
@@ -4254,14 +4249,14 @@ int REACT_GEM::CalcLimits ( long in, int flag_equilibration, TNode* m_Node)
                             ( m_dul[in * nDC + j] > m_xDC[in * nDC + j] ) )
 		    {
                         m_dul[in*nDC+j]= m_xDC[in*nDC+j];
-		        // m_dll[in*nDC+j]= 0.0;
+		        m_dll[in*nDC+j]= 0.0;
 		      
 		    }
                     if ( ( m_kin[ii].kinetic_model == 3 ) &&
                             ( m_dll[in * nDC + j] < m_xDC[in * nDC + j] ) )
 		    {
                         m_dll[in * nDC + j] = m_xDC[in * nDC + j]; // m_dll[in*nDC+j]= m_xDC[in*nDC+j];
-			// m_dul[in*nDC+j]= 1.0e6;
+			m_dul[in*nDC+j]= 1.0e6;
 		    }
                     if ( ( m_xDC[in * nDC + j] < 1.0e-6 ) &&
                             ( omega_phase[in * nPH + k] >= 1.0001 ) &&
@@ -4270,17 +4265,17 @@ int REACT_GEM::CalcLimits ( long in, int flag_equilibration, TNode* m_Node)
                         m_dul[in * nDC + j] = 1.0e-6; // allow some kind of precipitation...based on saturation index for component value...here we set 10-6 mol per m^3 ..which is maybe 10-10 per litre ...?
                         m_dll[in * nDC + j] = 0.0;
                     }
-                    if ( m_dll[in * nDC + j] > m_dul[in * nDC + j] )
-                        m_dll[in * nDC + j] = m_dul[in * nDC + j];    // dll should be always lower than dul
-                    // no negative masses allowed
-                    if ( m_dll[in * nDC + j] < 0.0 )
-                        m_dll[in * nDC + j] = 0.0;
                     // no negative masses allowed..give some freedom
                     if ( m_dul[in * nDC + j] <= 0.0 )
                     {
                         m_dul[in * nDC + j] = 1.0e-6;
                         m_dll[in * nDC + j] = 0.0;
                     }
+                    if ( m_dll[in * nDC + j] > m_dul[in * nDC + j] )
+                        m_dll[in * nDC + j] = m_dul[in * nDC + j];    // dll should be always lower than dul
+                    // no negative masses allowed
+                    if ( m_dll[in * nDC + j] < 0.0 )
+                        m_dll[in * nDC + j] = 0.0;
                 }
                 // cout << "Kin debug for component no. " << j << " at node " << in << " m_xDC "  <<  m_xDC[in*nDC+j] << " m_dll, mdul " << m_dll[in*nDC+j] << " " << m_dul[in*nDC+j] << " diff " << m_dul[in*nDC+j]- m_dll[in*nDC+j] << "\n";
                 //            if ((fabs((m_dul[in*nDC+j]- m_dll[in*nDC+j]))>0.0)) cout << "Kinetics for component no. " << j << " at node " << in << " m_xDC "  <<  m_xDC[in*nDC+j] << " m_dll, mdul " << m_dll[in*nDC+j] << " " << m_dul[in*nDC+j] << " diff " << m_dul[in*nDC+j]- m_dll[in*nDC+j] << "\n"; // give some debug output for kinetics
@@ -5253,19 +5248,20 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 //					rwmutex.unlock();
 //#endif
                     // change a bit the kinetic constraints -> make the system less stiff
-// change the constraints only a little bit
-/*
+                   // change the constraints only a little bit
+                   // this is obviously dangerous for iterations as this can accumulate
+		   // but experince shows, that for the case of a BAD_GEM_AIA solution this might help, as otherwise due to mass balance errors we get errors with kinetcs
+		  
 		  for ( j = 0; j < nDC; j++ )
                     {
-
-                        m_dll[in * nDC +
-                              j] = 1.0 * m_dll[in * nDC + j] - 1.0e-6; // make smaller
+//                        m_dll[in * nDC +
+//                              j] = 1.0 * m_dll[in * nDC + j] - 1.0e-6; // make smaller
                         if ( m_dll[in * nDC + j] < 0.0 )
                             m_dll[in * nDC + j] = 0.0;
                         m_dul[in * nDC +
                               j] = 1.00 * m_dul[in * nDC + j] + 1.0e-6; // make bigger
                     }
-*/                    
+                    
                     REACT_GEM::SetReactInfoBackGEM ( in, t_Node); // needs to be done to for update dll dul
 
                     // run GEMS again

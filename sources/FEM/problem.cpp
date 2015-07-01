@@ -3219,8 +3219,8 @@ for (int gems_iteration_loop = 0; gems_iteration_loop < max_gems_iteration_loop;
 		if (m_vec_GEM->flag_iterative_scheme == 0)  //SNIA standard...
 		{
 		  // move data from transport to GEMS data structures
-		  m_vec_GEM->GetReactInfoFromMassTransport(m_time); // get concentrations, pressure and temperature values
 		  m_vec_GEM->StoreOldSolutionAll(); // we need this also here in order to switch back to old values in case a node fails during gems calculations	we do this AFTER getreactinfofrommasstransport, as this restores the value after transport step..otherwise concentrations on failed nodes remain constant in time (last value for good solution)
+		  m_vec_GEM->GetReactInfoFromMassTransport(m_time); // get concentrations, pressure and temperature values
 		  m_vec_GEM->Run_MainLoop(); // Run GEM
 		}
 		else if (m_vec_GEM->flag_iterative_scheme == 1)
