@@ -113,7 +113,7 @@ public:
     double *mol_phase, *mol_phase_initial, *omega_phase,*omega_components;
 
     double *dmdt;                               // kinetically controlled rates
-    int CalcLimits ( long in, int flag_equilibration, TNode* m_Node);
+    int CalcLimits ( long in, int flag_equilibration, double deltat, TNode* m_Node);
     int CalcLimitsInitial ( long in, TNode* m_Node);
     int CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration ,TNode* m_Node);
     double CementHydrationKinetics (double oldvalue,  long kin_phasenr, double dt ); // calculates cement hydration kinetics according ot Lothenbach and Wieland (2008=
@@ -121,6 +121,8 @@ public:
     double max_kinetic_timestep;               // variable used for limiting time step
     bool calc_limits;                          // do this for first Picard iteration
     int CheckConstraints ( long in,TNode* m_Node);
+    
+    int SolveChemistry(long in, TNode* m_Node); // extra time loop for chemistry & kinetics
     
     // CRFProcess *m_pcs;                          // pointer to the PCS Class.
     CRFProcess *m_flow_pcs;                     // pointer to the flow PCS.

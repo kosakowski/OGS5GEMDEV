@@ -4117,7 +4117,7 @@ int REACT_GEM::CheckConstraints ( long in,TNode* m_Node)
  * flag_equilibration: 0 (normal behaviour), 1 (only equilibration of solid solutions for cation exchange)
  * m_node: pointer to GEMS data structures
  */
-int REACT_GEM::CalcLimits ( long in, int flag_equilibration, TNode* m_Node)
+int REACT_GEM::CalcLimits ( long in, int flag_equilibration,double deltat, TNode* m_Node)
 {
     double dummy, alpha_t;  // dummy value and degree of hydration for cementhydration kinetics
     long ii,k,j;
@@ -4207,7 +4207,7 @@ int REACT_GEM::CalcLimits ( long in, int flag_equilibration, TNode* m_Node)
 			    dummy=m_kin[ii].kinetic_parameters[7];
                             dummy = 1.0 - m_dll[in * nDC + j] / m_kin[ii].kinetic_parameters[7] ; //zero is no hydration (initial)...1 is completely hydrated!
                             // get new value
-                            alpha_t = CementHydrationKinetics(dummy, ii, dt);
+                            alpha_t = CementHydrationKinetics(dummy, ii, deltat);
                          // if (in == 200) cout << "CementHydrationKinetics: old" << dummy << " new " << alpha_t <<"\n";
                         }
                         m_dll[in * nDC + j] = m_kin[ii].kinetic_parameters[7] * (1.0 - alpha_t);
@@ -4216,7 +4216,7 @@ int REACT_GEM::CalcLimits ( long in, int flag_equilibration, TNode* m_Node)
                     else  //default kinetics
                     {
 		      // scaling with omega is necessary for solid_solutions? 
-                        dummy =( mol_phase[in * nPH + k] + dmdt[in * nPH + k] * dt ) * omega_components[in * nDC + j] / omega_phase[in * nPH + k];
+                        dummy =( mol_phase[in * nPH + k] + dmdt[in * nPH + k] * deltat ) * omega_components[in * nDC + j] / omega_phase[in * nPH + k];
 //                        if (in == 5)  cout << " dummy "<< dummy << " Kin debug mol phase " << mol_phase[in*nPH+k] << " dmdt " << dmdt[in*nPH+k]*dt << " omega comp " <<omega_components[in*nDC+j] <<" omega phase " << omega_phase[in*nPH+k]<< "\n";
 
                       if (dummy > 1.0e10)
@@ -5212,156 +5212,49 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
                 REACT_GEM::CalculateCharge(in,1); // fill for current timelevel                
 		// Convert from concentration
                 REACT_GEM::ConcentrationToMass ( in,1); // I believe this is save for MPI
-                // now we calculate kinetic constraints for GEMS!
-		// for SNA this should be only done once per timestep!
-                if (calc_limits) 
-		  REACT_GEM::CalcLimits ( in,0, t_Node);
-		else if (calc_limits==0 && flag_iterative_scheme)
-		  REACT_GEM::CalcLimits ( in,1,t_Node);
-		
-                //Get data
-                REACT_GEM::SetReactInfoBackGEM ( in,t_Node); // this should be also save for MPI
-                // take values from old B volume for comparison
-                oldvolume = m_Vs[in];
-                //check constraints
-		REACT_GEM::CheckConstraints(in,t_Node);
-                // Order GEM to run
-                tdBR->NodeStatusCH = NEED_GEM_AIA; // first try without simplex using old solution
-                m_NodeStatusCH[in] = t_Node->GEM_run ( false );
-                if ( !( m_NodeStatusCH[in] == OK_GEM_AIA  )  ||
-                        ( ( ( abs ( oldvolume - tdBR->Vs ) / oldvolume ) > 0.1 ) &&
-                          ( flowflag != 3 ) ))                               // not for Richards flow  // ups...failed..try again with changed kinetics
-                {
-//#if !defined(USE_MPI_GEMS) && !defined(USE_PETSC)
-//					rwmutex.lock(); //KG44 try to avoid mutual exclusion at least in the parallel version, as this might slow down execution
-//					cout <<
-//					        "Error: Main Loop failed when running GEM on Node #"
-//					     << in << "." << " Returned Error Code: " << m_NodeStatusCH[in] << "\n";
-//					cout << " or GEM weird result at node " << in <<
-//					        " volume " <<  tdBR->Vs << " old volume " <<
-//					oldvolume;
-//					cout <<
-//					        " repeat calculations and change kinetic constraintsby 0.1%"
-//					     << "\n";
-//					rwmutex.unlock();
-//#endif
-                    // change a bit the kinetic constraints -> make the system less stiff
-                   // change the constraints only a little bit
-                   // this is obviously dangerous for iterations as this can accumulate
-		   // but experince shows, that for the case of a BAD_GEM_AIA solution this might help, as otherwise due to mass balance errors we get errors with kinetcs
-		  
-//		  for ( j = 0; j < nDC; j++ )
-//                    {
-//                        m_dll[in * nDC +j] = 1.0 * m_dll[in * nDC + j] - 1.0e-6; // make smaller
-//                        if ( m_dll[in * nDC + j] < 0.0 ) m_dll[in * nDC + j] = 0.0;
-//                        m_dul[in * nDC +j] = 1.00 * m_dul[in * nDC + j] + 1.0e-6; // make bigger
-//                    }
-                    
-                    REACT_GEM::SetReactInfoBackGEM ( in, t_Node); // needs to be done to for update dll dul
 
-                    // run GEMS again
-
-                    tdBR->NodeStatusCH = NEED_GEM_AIA;
-                    m_NodeStatusCH[in] = t_Node->GEM_run ( true );
-
-
-                    // test for bad GEMS and for volume changes bigger than 10% ...maximum 5 failed nodes per process.....
-
-                    if (
-                        !( m_NodeStatusCH[in] == OK_GEM_AIA || m_NodeStatusCH[in] == OK_GEM_AIA) ||
-                        ( ( ( abs ( oldvolume - tdBR->Vs ) / oldvolume ) > 0.1 ) &&
-                          ( flowflag != 3 ) )                                   // not for Richards flow
-                    )
-                    {
-//#if !defined(USE_MPI_GEMS) && !defined(USE_PETSC)
-                        rwmutex.lock();
-                        cout <<
-                             "Error: second attempt for main Loop failed when running GEM on Node #"
-                             <<
-                             in << "." << " Returned Error Code: " <<
-                             m_NodeStatusCH[in];
-                        cout << " or GEM weird result at node " << in <<
-                             " volume " <<  tdBR->Vs << " old volume " <<
-                             oldvolume;
-                        cout << " continue with last good solution for this node" <<
-                             "\n";
-//                    t_Node->GEM_write_dbr ( "dbr_for_crash_node_fail.txt" );
-//                    t_Node->GEM_print_ipm ( "ipm_for_crash_node_fail.txt" );
-                        rwmutex.unlock();
-//#endif
-                        // exit ( 1 );
-                        node_fail = 1;
-                        repeated_fail += 1;
-                        if ( repeated_fail > m_max_failed_nodes )
-                        {
-                            rwmutex.lock();
-                            cout << "GEFMS: " << repeated_fail <<
-                                 "nodes failed this timestep, check chemical system!"
-                                 << "\n";
-                            rwmutex.unlock();
-                      rwmutex.lock();
-                        string rank_str;
-                        rank_str = "0";
-
-                        int rank=0;
-#if defined(USE_PETSC)
-                        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
-                        stringstream ss (stringstream::in | stringstream::out);
-                        ss.clear();
-                        ss.str("");
-                        ss << rank << "_node-"<<in<<"_time-"<< aktueller_zeitschritt;
-                        rank_str = ss.str();
-                        ss.clear();
-                        // write out a separate time stamp into file
-                        string m_file_namet = "after_gems_dbr_domain-" + rank_str + ".dat";
-
-                        t_Node->GEM_write_dbr ( m_file_namet.c_str() );
-                        rwmutex.unlock();
-			    
-#if defined(USE_PETSC)
-                            MPI_Finalize(); //make sure MPI exits
-#endif
-                            exit ( 1 );
-                        }        // we do not tolerate more than three failed nodes -> something wrong with chemistry/time step?
-                    }               // end loop if initial gems run fails
-                    else
-                    {
-                        node_fail=0;
-                    }
-                }
-                else
-                {
-                    node_fail=0;
-                }
-
-                if (in == -1) 
-		{
-                        rwmutex.lock();
-                        string rank_str;
-                        rank_str = "0";
-
-                        int rank=0;
-#if defined(USE_PETSC)
-                        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
-                        stringstream ss (stringstream::in | stringstream::out);
-                        ss.clear();
-                        ss.str("");
-                        ss << rank << "_node-"<<in<<"_time-"<< aktueller_zeitschritt;
-                        rank_str = ss.str();
-                        ss.clear();
-                        // write out a separate time stamp into file
-                        string m_file_namet = "after_gems_dbr_domain-" + rank_str + ".dat";
-
-                        t_Node->GEM_write_dbr ( m_file_namet.c_str() );
-                        rwmutex.unlock();
-
-		}
-                
+		// here we make an inner time loop for each node in an extra subfunction
+		// this is especially usefull for reaction kinetics
+		// this is a preliminary thing in order to avoid failing nodes due to large time steps....
+                 node_fail = REACT_GEM::SolveChemistry(in,t_Node);		
+		                
 
                 if ( node_fail == 1 ) // do not take the new solution from gems
                 {
+                    repeated_fail += 1;
+                    if ( repeated_fail > m_max_failed_nodes )
+                    {
+                        rwmutex.lock();
+                        cout << "GEFMS: " << repeated_fail <<
+                             "nodes failed this timestep, check chemical system!"
+                             << "\n";
+                        rwmutex.unlock();
+                        rwmutex.lock();
+                        string rank_str;
+                        rank_str = "0";
+
+                        int rank=0;
+#if defined(USE_PETSC)
+                        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+                        stringstream ss (stringstream::in | stringstream::out);
+                        ss.clear();
+                        ss.str("");
+                        ss << rank << "_node-"<<in<<"_time-"<< aktueller_zeitschritt;
+                        rank_str = ss.str();
+                        ss.clear();
+                        // write out a separate time stamp into file
+                        string m_file_namet = "after_gems_dbr_domain-" + rank_str + ".dat";
+
+                        t_Node->GEM_write_dbr ( m_file_namet.c_str() );
+                        rwmutex.unlock();
+
+#if defined(USE_PETSC)
+                        MPI_Finalize(); //make sure MPI exits
+#endif
+                        exit ( 1 );
+                    }        // we do not tolerate more than three failed nodes -> something wrong with chemistry/time step?
+
                     RestoreOldSolutionNode ( in );
                     GetBValue_MT ( in, 1, m_soluteB + in * nIC );
                     node_fail = 0;
@@ -5380,18 +5273,18 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 
                     // Convert to concentration  ..
                     REACT_GEM::MassToConcentration ( in, 0,t_Node);
-		    // now calculate charge
+                    // now calculate charge
                     REACT_GEM::CalculateChargeFromGEMS ( in, t_Node);
-/* DEBUG
-if (in == 100) 
-{
-	    for (j=0;j<nIC;j++) cout << "pre charge for node " << in<< " " << m_chargeB_pre[in*nIC+j] << "\n";
-	    for (j=0;j<nIC-1;j++) cout << "charge for node " << in<< " " << m_chargeB[in*nIC+j]*m_soluteB[in*nIC+j]*m_porosity[in] << "\n";
-	    double total=0.0;
-	    for (j=0;j<nIC-1;j++) total+= m_chargeB[in*nIC+j]*m_soluteB[in*nIC+j]*m_porosity[in];
-	    cout << "total charge for node " << in<< " " << total << "\n";
-}
-*/
+                    /* DEBUG
+                    if (in == 100)
+                    {
+                    	    for (j=0;j<nIC;j++) cout << "pre charge for node " << in<< " " << m_chargeB_pre[in*nIC+j] << "\n";
+                    	    for (j=0;j<nIC-1;j++) cout << "charge for node " << in<< " " << m_chargeB[in*nIC+j]*m_soluteB[in*nIC+j]*m_porosity[in] << "\n";
+                    	    double total=0.0;
+                    	    for (j=0;j<nIC-1;j++) total+= m_chargeB[in*nIC+j]*m_soluteB[in*nIC+j]*m_porosity[in];
+                    	    cout << "total charge for node " << in<< " " << total << "\n";
+                    }
+                    */
                     // calculate density of fluid phase, which is normally the first phase
                     m_fluid_density[in] = m_mPS[in * nPS + 0] / m_vPS[in * nPS + 0 ];
                 }
@@ -5503,5 +5396,146 @@ void REACT_GEM::SynchronizeData(double* data)   //pass pointer to the vector we 
 }
 
 #endif
+
+/** SolveChemistry: here we set up an extra time loop in order to make kinetics and gems more robust
+ * GEMS tend to fail due to MassBalance if time step for kinetics is too bigger
+ * therefore an algorithm is implemented which refines the time step in case gems fails
+ */
+
+int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
+{
+    int node_fail;
+    double oldvolume;
+
+    DATACH* dCH;                            //pointer to DATACH
+    DATABR* dBR;
+    // Getting direct access to DataCH structure in GEMIPM2K memory
+    dCH = m_Node->pCSD();
+    if ( !dCH )
+        return 0;
+
+    // Getting direct access to work node DATABR structure which
+    // exchanges data between GEMIPM and FMT parts
+    dBR = m_Node->pCNode();
+    if ( !dBR )
+        return 0;
+
+
+
+
+    // now we calculate kinetic constraints for GEMS!
+    // for SNA this should be only done once per timestep!
+    if (calc_limits)
+        REACT_GEM::CalcLimits ( in,0, dt,m_Node);
+    else if (calc_limits==0 && flag_iterative_scheme)
+        REACT_GEM::CalcLimits ( in,1,dt,m_Node);
+
+    //Get data
+    REACT_GEM::SetReactInfoBackGEM ( in,m_Node); // this should be also save for MPI
+    // take values from old B volume for comparison
+    oldvolume = m_Vs[in];
+    //check constraints
+    REACT_GEM::CheckConstraints(in,m_Node);
+    // Order GEM to run
+    dBR->NodeStatusCH = NEED_GEM_AIA; // first try without simplex using old solution
+    m_NodeStatusCH[in] = m_Node->GEM_run ( false );
+    if ( !( m_NodeStatusCH[in] == OK_GEM_AIA  )  ||
+            ( ( ( abs ( oldvolume - dBR->Vs ) / oldvolume ) > 0.1 ) &&
+              ( flowflag != 3 ) ))                               // not for Richards flow  // ups...failed..try again with changed kinetics
+    {
+//#if !defined(USE_MPI_GEMS) && !defined(USE_PETSC)
+//					rwmutex.lock(); //KG44 try to avoid mutual exclusion at least in the parallel version, as this might slow down execution
+//					cout <<
+//					        "Error: Main Loop failed when running GEM on Node #"
+//					     << in << "." << " Returned Error Code: " << m_NodeStatusCH[in] << "\n";
+//					cout << " or GEM weird result at node " << in <<
+//					        " volume " <<  tdBR->Vs << " old volume " <<
+//					oldvolume;
+//					cout <<
+//					        " repeat calculations and change kinetic constraintsby 0.1%"
+//					     << "\n";
+//					rwmutex.unlock();
+//#endif
+        // change a bit the kinetic constraints -> make the system less stiff
+        // change the constraints only a little bit
+        // this is obviously dangerous for iterations as this can accumulate
+        // but experince shows, that for the case of a BAD_GEM_AIA solution this might help, as otherwise due to mass balance errors we get errors with kinetcs
+
+//		  for ( j = 0; j < nDC; j++ )
+//                    {
+//                        m_dll[in * nDC +j] = 1.0 * m_dll[in * nDC + j] - 1.0e-6; // make smaller
+//                        if ( m_dll[in * nDC + j] < 0.0 ) m_dll[in * nDC + j] = 0.0;
+//                        m_dul[in * nDC +j] = 1.00 * m_dul[in * nDC + j] + 1.0e-6; // make bigger
+//                    }
+
+        REACT_GEM::SetReactInfoBackGEM ( in, m_Node); // needs to be done to for update dll dul
+
+        // run GEMS again
+
+        dBR->NodeStatusCH = NEED_GEM_AIA;
+        m_NodeStatusCH[in] = m_Node->GEM_run ( true );
+
+
+        // test for bad GEMS and for volume changes bigger than 10% ...maximum 5 failed nodes per process.....
+
+        if (
+            !( m_NodeStatusCH[in] == OK_GEM_AIA ||  ( ( abs ( oldvolume - dBR->Vs ) / oldvolume ) > 0.1 ) &&
+              ( flowflag != 3 ) ))                                   // not for Richards flow
+        {
+//#if !defined(USE_MPI_GEMS) && !defined(USE_PETSC)
+            rwmutex.lock();
+            cout <<
+                 "Error: second attempt for main Loop failed when running GEM on Node #"
+                 <<
+                 in << "." << " Returned Error Code: " <<
+                 m_NodeStatusCH[in];
+            cout << " or GEM weird result at node " << in <<
+                 " volume " <<  dBR->Vs << " old volume " <<
+                 oldvolume;
+            cout << " continue with last good solution for this node" <<
+                 "\n";
+//                    t_Node->GEM_write_dbr ( "dbr_for_crash_node_fail.txt" );
+//                    t_Node->GEM_print_ipm ( "ipm_for_crash_node_fail.txt" );
+            rwmutex.unlock();
+//#endif
+            // exit ( 1 );
+            node_fail = 1;
+        }               // end loop if initial gems run fails
+        else
+        {
+            node_fail=0;
+        }
+    }
+    else
+    {
+        node_fail=0;
+    }
+
+    if (in == -1)
+    {
+        rwmutex.lock();
+        string rank_str;
+        rank_str = "0";
+
+        int rank=0;
+#if defined(USE_PETSC)
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+        stringstream ss (stringstream::in | stringstream::out);
+        ss.clear();
+        ss.str("");
+        ss << rank << "_node-"<<in<<"_time-"<< aktueller_zeitschritt;
+        rank_str = ss.str();
+        ss.clear();
+        // write out a separate time stamp into file
+        string m_file_namet = "after_gems_dbr_domain-" + rank_str + ".dat";
+
+        m_Node->GEM_write_dbr ( m_file_namet.c_str() );
+        rwmutex.unlock();
+
+    }
+
+    return node_fail;
+}
 
 #endif
