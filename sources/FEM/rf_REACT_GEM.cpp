@@ -5227,7 +5227,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 		REACT_GEM::CheckConstraints(in,t_Node);
                 // Order GEM to run
                 tdBR->NodeStatusCH = NEED_GEM_AIA; // first try without simplex using old solution
-                m_NodeStatusCH[in] = t_Node->GEM_run ( true );
+                m_NodeStatusCH[in] = t_Node->GEM_run ( false );
                 if ( !( m_NodeStatusCH[in] == OK_GEM_AIA  )  ||
                         ( ( ( abs ( oldvolume - tdBR->Vs ) / oldvolume ) > 0.1 ) &&
                           ( flowflag != 3 ) ))                               // not for Richards flow  // ups...failed..try again with changed kinetics
@@ -5236,9 +5236,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 //					rwmutex.lock(); //KG44 try to avoid mutual exclusion at least in the parallel version, as this might slow down execution
 //					cout <<
 //					        "Error: Main Loop failed when running GEM on Node #"
-//					     <<
-//					        in << "." << " Returned Error Code: " <<
-//					m_NodeStatusCH[in];
+//					     << in << "." << " Returned Error Code: " << m_NodeStatusCH[in] << "\n";
 //					cout << " or GEM weird result at node " << in <<
 //					        " volume " <<  tdBR->Vs << " old volume " <<
 //					oldvolume;
@@ -5252,28 +5250,25 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
                    // this is obviously dangerous for iterations as this can accumulate
 		   // but experince shows, that for the case of a BAD_GEM_AIA solution this might help, as otherwise due to mass balance errors we get errors with kinetcs
 		  
-		  for ( j = 0; j < nDC; j++ )
-                    {
-//                        m_dll[in * nDC +
-//                              j] = 1.0 * m_dll[in * nDC + j] - 1.0e-6; // make smaller
-                        if ( m_dll[in * nDC + j] < 0.0 )
-                            m_dll[in * nDC + j] = 0.0;
-                        m_dul[in * nDC +
-                              j] = 1.00 * m_dul[in * nDC + j] + 1.0e-6; // make bigger
-                    }
+//		  for ( j = 0; j < nDC; j++ )
+//                    {
+//                        m_dll[in * nDC +j] = 1.0 * m_dll[in * nDC + j] - 1.0e-6; // make smaller
+//                        if ( m_dll[in * nDC + j] < 0.0 ) m_dll[in * nDC + j] = 0.0;
+//                        m_dul[in * nDC +j] = 1.00 * m_dul[in * nDC + j] + 1.0e-6; // make bigger
+//                    }
                     
                     REACT_GEM::SetReactInfoBackGEM ( in, t_Node); // needs to be done to for update dll dul
 
                     // run GEMS again
 
                     tdBR->NodeStatusCH = NEED_GEM_AIA;
-                    m_NodeStatusCH[in] = t_Node->GEM_run ( false );
+                    m_NodeStatusCH[in] = t_Node->GEM_run ( true );
 
 
                     // test for bad GEMS and for volume changes bigger than 10% ...maximum 5 failed nodes per process.....
 
                     if (
-                        !( m_NodeStatusCH[in] == OK_GEM_AIA || m_NodeStatusCH[in] == BAD_GEM_AIA) ||
+                        !( m_NodeStatusCH[in] == OK_GEM_AIA || m_NodeStatusCH[in] == OK_GEM_AIA) ||
                         ( ( ( abs ( oldvolume - tdBR->Vs ) / oldvolume ) > 0.1 ) &&
                           ( flowflag != 3 ) )                                   // not for Richards flow
                     )
@@ -5281,7 +5276,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 //#if !defined(USE_MPI_GEMS) && !defined(USE_PETSC)
                         rwmutex.lock();
                         cout <<
-                             "Error: Main Loop failed when running GEM on Node #"
+                             "Error: second attempt for main Loop failed when running GEM on Node #"
                              <<
                              in << "." << " Returned Error Code: " <<
                              m_NodeStatusCH[in];
