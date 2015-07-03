@@ -70,8 +70,8 @@ public:
     /// this is used for kinetic law number 4 and other lasws depending on initial amounts of stuff
     double  *m_porosity_initial, *m_volumes_initial;
 
-    /// this we need for porosity coupling to groundwater flow & multiphase flow
-    double *m_fluid_volume, *m_gas_volume, *m_fluid_volume_pts, *m_gas_volume_pts;
+    /// this we need for porosity coupling to groundwater flow & multiphase flow (_pre: old solution, _pi: previous picard iteration)
+    double *m_fluid_volume, *m_gas_volume, *m_fluid_volume_pts, *m_gas_volume_pts,  *m_fluid_volume_pi, *m_gas_volume_pi;
 
     /// take the fluid density from GEMS for density driven flow
     double *m_fluid_density;
@@ -93,15 +93,15 @@ public:
     /// data for charge
     double *m_chargeB, *m_chargeB_pre;
     
-    // previous time step DC values
-    double *m_xDC_pts;                          // previous time step Concentration;
+    // previous time step DC values (_pre: old solution, _pi: previous picard iteration)
+    double *m_xDC_pts, *m_xDC_pi;                          // previous time step Concentration;
     double *m_xDC_MT_delta;                     // delta C from Mass Transport;
     double *m_xDC_Chem_delta, *m_bIC_Chem_delta;                   // delta C from Chemistry;
-    // previous time step IC values
-    double *m_soluteB_pts, *m_bIC_pts;
-    // previous time step kinetic values
-    double *dmdt_pts, *m_dul_pts, *m_dll_pts;                              // old kinetically controlled rates
-    double *mol_phase_pts, *omega_phase_pts, *omega_components_pts; // old saturation indices and mole amounts in phase
+    // previous time step IC values (_pre: old solution, _pi: previous picard iteration)
+    double *m_soluteB_pts, *m_bIC_pts, *m_soluteB_pi, *m_bIC_pi;
+    // previous time step kinetic values (_pre: old solution, _pi: previous picard iteration)
+    double *dmdt_pts, *m_dul_pts, *m_dll_pts, *dmdt_pi, *m_dul_pi, *m_dll_pi;                              // old kinetically controlled rates
+    double *mol_phase_pts, *omega_phase_pts, *omega_components_pts, *mol_phase_pi, *omega_phase_pi, *omega_components_pi; // old saturation indices and mole amounts in phase
     
     
     double *m_excess_water;                     // excess water in m3/s for each node;
@@ -211,6 +211,8 @@ public:
 
     int IsThisPointBCIfYesStoreValue ( long index, CRFProcess* m_pcs, double& value );/// taken from rf_REACT_BRNS
 
+    /// repeated_fail used to indicated failed nodes duting Picard iteration..bad style to use it like this..but most convenient 
+    double repeated_fail;
     /// Copy current values into previous time step values
     void CopyCurXDCPre ( void );
     void UpdateXDCChemDelta ( void );
@@ -218,10 +220,13 @@ public:
     void ResetbICChemDelta ( void );
     void CopyCurBPre ( void );
     double CalcSoluteBDelta ();
+    double CalcMaxSoluteBDelta ();
     double CalcSoluteBDeltaNode ( long in );
     double m_diff_gems;
+    void StoredSolutionAllPicardIteration ( );
     void StoreOldSolutionAll ( );
     void RestoreOldSolutionAll ( );
+    void RestoreSolutionAllPicardIteration ( );
     void StoreOldConcentrationsAll();
     void RestoreOldSolutionNode ( long in );
     short RestoreOldConcMasstransport_MT ( long node_Index);

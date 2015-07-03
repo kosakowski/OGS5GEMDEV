@@ -139,6 +139,8 @@ REACT_GEM::~REACT_GEM ( void )
 		delete []m_dll;
 		delete []m_dul_pts;
 		delete []m_dll_pts;
+		delete []m_dul_pi;
+		delete []m_dll_pi;
 		delete []m_uIC;
 		delete []m_bIC;
 		delete []m_bIC_dummy;
@@ -147,6 +149,9 @@ REACT_GEM::~REACT_GEM ( void )
 		delete []m_xDC_pts;
 		delete []m_soluteB_pts;
 		delete []m_bIC_pts;
+		delete []m_xDC_pi;
+		delete []m_soluteB_pi;
+		delete []m_bIC_pi;
 		delete []m_xDC_MT_delta;
 		delete []m_xDC_Chem_delta;
 		delete []m_NodeHandle;
@@ -175,6 +180,8 @@ REACT_GEM::~REACT_GEM ( void )
 		delete [] m_fluid_volume;
 		delete [] m_gas_volume_pts;
 		delete [] m_fluid_volume_pts;
+		delete [] m_gas_volume_pi;
+		delete [] m_fluid_volume_pi;
 		delete [] m_fluid_density;
 		delete [] m_soluteB;
 		delete [] m_soluteB_corr;		
@@ -201,6 +208,10 @@ REACT_GEM::~REACT_GEM ( void )
 		delete [] mol_phase_pts;           // this we need for kinetics
 		delete [] omega_components_pts;    // this we need for kinetics
 		delete [] dmdt_pts;
+		delete [] omega_phase_pi;         // this we need for kinetics
+		delete [] mol_phase_pi;           // this we need for kinetics
+		delete [] omega_components_pi;    // this we need for kinetics
+		delete [] dmdt_pi;
 
 		m_flow_pcs = NULL;
 		m_kin.clear();
@@ -345,11 +356,13 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 
 		m_fluid_volume  = new double [nNodes];
 		m_fluid_volume_pts  = new double [nNodes];
+		m_fluid_volume_pi  = new double [nNodes];
 
 		m_fluid_density  = new double [nNodes];
 
 		m_gas_volume  = new double [nNodes];
 		m_gas_volume_pts  = new double [nNodes];
+		m_gas_volume_pi  = new double [nNodes];
 
 		m_porosity_Elem = new double [nElems];
 
@@ -368,6 +381,8 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 		m_dll = new double [nNodes * nDC];
 		m_dul_pts = new double [nNodes * nDC];
 		m_dll_pts = new double [nNodes * nDC];
+		m_dul_pi = new double [nNodes * nDC];
+		m_dll_pi = new double [nNodes * nDC];
 
 		m_xDC = new double [nNodes * nDC];
 
@@ -382,17 +397,24 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 
 		omega_phase = new double [nNodes * nPH];
 		omega_phase_pts = new double [nNodes * nPH];
+		omega_phase_pi = new double [nNodes * nPH];
 		mol_phase = new double [nNodes * nPH];
 		mol_phase_pts = new double [nNodes * nPH];
+		mol_phase_pi = new double [nNodes * nPH];
 		mol_phase_initial = new double [nNodes * nPH];		
 		dmdt       = new double [nNodes * nPH];
 		dmdt_pts       = new double [nNodes * nPH];
+		dmdt_pi       = new double [nNodes * nPH];
 		omega_components = new double [nNodes * nDC];
 		omega_components_pts = new double [nNodes * nDC];
+		omega_components_pi = new double [nNodes * nDC];
 
 		m_xDC_pts = new double [nNodes * nDC];
 		m_soluteB_pts = new double [nNodes * nIC];
 		m_bIC_pts = new double [nNodes * nIC];
+		m_xDC_pi = new double [nNodes * nDC];
+		m_soluteB_pi = new double [nNodes * nIC];
+		m_bIC_pi = new double [nNodes * nIC];
 		m_xDC_MT_delta = new double [nNodes * nDC];
 		m_xDC_Chem_delta =  new double [nNodes * nDC];
 
@@ -455,9 +477,11 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 			m_porosity_initial[in] = 0.0;
 			m_fluid_volume[in] = 0.0;
 			m_fluid_volume_pts[in] = 0.0;
+			m_fluid_volume_pi[in] = 0.0;
 			m_fluid_density[in] = 1000.0;
 			m_gas_volume[in] = 0.0;
 			m_gas_volume_pts[in] = 0.0;
+			m_gas_volume_pi[in] = 0.0;
 
 			m_excess_water[in] = 0.0;
 			m_excess_gas[in] = 0.0;
@@ -477,6 +501,8 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 				m_chargeB_pre[in * nIC + ii ] = 0.0;				
 				m_soluteB_pts[in * nIC + ii ] = 0.0;
 				m_bIC_pts[in * nIC + ii ] = 0.0;
+				m_soluteB_pi[in * nIC + ii ] = 0.0;
+				m_bIC_pi[in * nIC + ii ] = 0.0;
 				m_rMB[in * nIC + ii ] = 0.0;
 				m_uIC[in * nIC + ii ] = 0.0;
 			}
@@ -489,8 +515,11 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 				m_dll[in * nDC + ii ] = 0.0; // zero is ok
 				m_dul_pts[in * nDC + ii ] = m_dul[in * nDC + ii ]; // this should be a large number, because after scaling to 1kg in Gems it should be 1.e+6
 				m_dll_pts[in * nDC + ii ] = m_dll[in * nDC + ii ]; // zero is ok
+				m_dul_pi[in * nDC + ii ] = m_dul[in * nDC + ii ]; // this should be a large number, because after scaling to 1kg in Gems it should be 1.e+6
+				m_dll_pi[in * nDC + ii ] = m_dll[in * nDC + ii ]; // zero is ok
 				
 				m_xDC_pts[in * nDC + ii ] = 0.0;
+				m_xDC_pi[in * nDC + ii ] = 0.0;
 				m_xDC_MT_delta[in * nDC + ii ] = 0.0;
 				m_xDC_Chem_delta[in * nDC + ii ] = 0.0;
 				omega_components[in * nDC + ii ] = 0.0;
@@ -503,12 +532,15 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 
 				omega_phase[in * nPH + ii ] = 0.0;
 				omega_phase_pts[in * nPH + ii ] = 0.0;
+				omega_phase_pi[in * nPH + ii ] = 0.0;
 				mol_phase[in * nPH + ii ] = 0.0;
 				mol_phase_pts[in * nPH + ii ] = 0.0;
+				mol_phase_pi[in * nPH + ii ] = 0.0;
 				mol_phase_initial[in * nPH + ii ] = 0.0;
 
 				dmdt[in * nPH + ii ] = 0.0;
 				dmdt_pts[in * nPH + ii ] = 0.0;
+				dmdt_pi[in * nPH + ii ] = 0.0;
 				m_volumes_initial[in * nPH + ii ] = 0.0;
 			}
 
@@ -2740,6 +2772,19 @@ double REACT_GEM::CalcSoluteBDelta ()
   return dummy;
 }
 
+double REACT_GEM::CalcMaxSoluteBDelta ()
+{
+  long i;
+  double dummy=0.0, maxdummy=0.0;
+  for ( i = 0; i < nNodes; i++ )
+    {
+      dummy=fabs(CalcSoluteBDeltaNode(i));
+      if (maxdummy < dummy) maxdummy=dummy;
+    }
+  return maxdummy;
+}
+
+
 double REACT_GEM::CalcSoluteBDeltaNode ( long in )
 {
 	long i;
@@ -2794,6 +2839,37 @@ void REACT_GEM::StoreOldSolutionAll ( )
           }
 }
 
+void REACT_GEM::StoredSolutionAllPicardIteration ( )
+{
+	long i;
+	for ( i = 0; i < nNodes * nIC ; i++ ) 
+	{
+		m_soluteB_pi[i] = m_soluteB[i];
+		m_bIC_pi[i] = m_bIC[i];
+	}
+	for ( i = 0; i < nNodes * nDC; i++ )
+		m_xDC_pi[i] = m_xDC[i];
+// now comes the stuff for kinetics	
+	for ( i = 0; i < nNodes * nDC; i++ )
+		omega_components_pi[i] = omega_components[i];
+	for ( i = 0; i < nNodes * nPH; i++ )
+		omega_phase_pi[i] = omega_phase[i];
+	for ( i = 0; i < nNodes * nPH; i++ )
+		mol_phase_pi[i] = mol_phase[i];
+	for ( i = 0; i < nNodes * nPH; i++ )
+		dmdt_pi[i] = dmdt[i];
+	for ( i = 0; i < nNodes ; i++ )
+		m_fluid_volume_pi[i]=m_fluid_volume[i];
+	for ( i = 0; i < nNodes ; i++ )
+		m_gas_volume_pi[i]=m_gas_volume[i];
+//	for ( i = 0; i < nNodes*nDC; i++ )
+//           {
+//             m_dll_pi[i] = m_dll[i];          // set to zero
+//             m_dul_pi[i] = m_dul[i];       // very high number
+//          }
+}
+
+
 
 void REACT_GEM::RestoreOldSolutionNode ( long in ) // for gems failed on node!
 {
@@ -2816,11 +2892,11 @@ void REACT_GEM::RestoreOldSolutionNode ( long in ) // for gems failed on node!
 		mol_phase[in * nPH + i] = mol_phase_pts[in * nPH + i];
 	for ( i = 0; i < nPH; i++ )
 		dmdt[in * nPH + i] = dmdt_pts[in * nPH + i];
-	for ( i = 0; i < nDC; i++ )
-           {
-             m_dll[i] = m_dll_pts[in*nDC+i];          // set to zero
-             m_dul[i] = m_dul_pts[in*nDC+i];       // very high number
-          }
+//	for ( i = 0; i < nDC; i++ )
+//           {
+//             m_dll[i] = m_dll_pts[in*nDC+i];          // set to zero
+//             m_dul[i] = m_dul_pts[in*nDC+i];       // very high number
+//          }
 
 }
 
@@ -2854,6 +2930,38 @@ void REACT_GEM::RestoreOldSolutionAll ( ) // for Picard iterations
           }
 
 }
+
+void REACT_GEM::RestoreSolutionAllPicardIteration ( ) // for Picard iterations
+{
+	long i;
+//	for ( i = 0; i < nNodes * nIC ; i++ )      // nIC-1 as last IC is charge 
+//	{
+//		m_soluteB[i] = m_soluteB_pts[i];
+//		m_bIC[i] = m_bIC_pts[i];  //KG44 what is the problem here? does not work!!!
+//	}
+	for ( i = 0; i < nNodes * nDC; i++ )
+		m_xDC[i] = m_xDC_pi[i];
+// now comes the stuff for kinetics	
+	for ( i = 0; i < nNodes *nDC; i++ )
+		omega_components[i] = omega_components_pi[i];
+	for ( i = 0; i < nNodes *nPH; i++ )
+		omega_phase[i] = omega_phase_pi[i];
+	for ( i = 0; i < nNodes *nPH; i++ )
+		mol_phase[i] = mol_phase_pi[i];
+	for ( i = 0; i < nNodes *nPH; i++ )
+		dmdt[i] = dmdt_pi[i];
+	for ( i = 0; i < nNodes; i++ )
+		m_fluid_volume[i]=m_fluid_volume_pi[i]; //ipmortant also for concentrations!!!!-> scaling factor for concs!
+	for ( i = 0; i < nNodes; i++ )
+		m_gas_volume[i]=m_gas_volume_pi[i];
+	for ( i = 0; i < nNodes*nDC; i++ )
+           {
+             m_dll[i] = m_dll_pi[i];          // set to zero
+             m_dul[i] = m_dul_pi[i];       // very high number
+          }
+
+}
+
 
 double REACT_GEM::CalculateCharge (long in,int timelevel) //for a given node number ..data from OGS!
 {
@@ -3273,6 +3381,14 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
 		 */
         if ( line_string.find ( "$KINETIC_GEM" ) != string::npos )
         {
+	    if (flag_iterative_scheme) 
+	    {
+	      cout << "ABORT: GEMS Picard iterations do not yet work with kinetics!\n"; 
+	      #if defined(USE_PETSC)
+              MPI_Finalize(); //make sure MPI exits
+#endif
+              exit ( 1 );
+	    }
             in.str ( GetLineFromFile1 ( gem_file ) );
             in >> d_kin.phase_name >> d_kin.kinetic_model;
             if ( d_kin.kinetic_model >= 1 && d_kin.kinetic_model < 8 ) // this is lasaga kinetics with formulas according to plandri
@@ -3562,9 +3678,9 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
 
 				else if ( omega_phase[in * nPH + k] >= 0.999 ) // this is the precipitation case
 
-					sa *= pow ( mol_phase[in*nPH+k] / mol_phase_initial[in*nPH+k], 0.66666666667 );
+//					sa *= pow ( mol_phase[in*nPH+k] / mol_phase_initial[in*nPH+k], 0.66666666667 );
 
-					// sa = 0.0;
+					sa = 0.0;
 			}
 
 			aa = 1.0;
@@ -4084,7 +4200,10 @@ int REACT_GEM::CheckConstraints ( long in,TNode* m_Node)
       {
 	if (dll_check[ii] > m_bIC[in*nIC+ii]) 
 	{
+	  rwmutex.lock();
 	  cout << "DEBUG: lower CheckConstraints failed: node, "<< in << " IC number, " <<ii<< " dll, " << dll_check[ii] << " dul, " << dul_check[ii] << " bIC, " << m_bIC[in*nIC+ii] << " diff " << m_bIC[in*nIC+ii]-dll_check[ii] << "\n";
+          rwmutex.unlock();
+
 	  //	if (dul_check[ii] >= m_bIC[ii]) cout << "DEBUG: upper CheckConstraints failed: node, IC number, dll, dul, bIC, diff"<< in << " " <<ii<< " " << dll_check[ii] << " " << dul_check[ii] << " " << m_bIC[ii] << " " << m_bIC[ii]-dul_check[ii] << "\n";
 	  iret=0;
 //	  cout << " Experimental fix by changing dll \n";
@@ -4211,28 +4330,31 @@ int REACT_GEM::CalcLimits ( long in, int flag_equilibration,double deltat, TNode
                     else  //default kinetics
                     {
 		      // scaling with omega is necessary for solid_solutions? 
-                        dummy =( mol_phase[in * nPH + k] + dmdt[in * nPH + k] * deltat ) * omega_components[in * nDC + j] / omega_phase[in * nPH + k];
+//                        dummy =( mol_phase[in * nPH + k] + dmdt[in * nPH + k] * deltat ) * omega_components[in * nDC + j] / omega_phase[in * nPH + k];
+                        dummy =( dmdt[in * nPH + k] * deltat ) * omega_components[in * nDC + j] / omega_phase[in * nPH + k];
 //                        if (in == 5)  cout << " dummy "<< dummy << " Kin debug mol phase " << mol_phase[in*nPH+k] << " dmdt " << dmdt[in*nPH+k]*dt << " omega comp " <<omega_components[in*nDC+j] <<" omega phase " << omega_phase[in*nPH+k]<< "\n";
 
                       if (dummy > 1.0e10)
                             dummy = 1.0e10;
-                        if (dummy < 0.0)
-                            dummy = 0.0;
+//                        if (dummy < 0.0)
+//                            dummy = 0.0;
                         if ( !( dummy <= 1.0 ) && !( dummy > 1.0 ) )
                         {
                             // no change!
-                            m_dul[in * nDC + j] = m_xDC[in * nDC + j];
-                            m_dll[in * nDC + j] = m_xDC[in * nDC + j];
+//                            m_dul[in * nDC + j] = m_xDC[in * nDC + j];
+//                            m_dll[in * nDC + j] = m_xDC[in * nDC + j];
                         }
-                        else if ( m_xDC[in * nDC + j] > dummy ) // This is the dissolution case
+                        else if ( dummy <0.0) // This is the dissolution case
                         {
                             m_dul[in * nDC + j] = m_xDC[in * nDC + j];
-                            m_dll[in * nDC + j] = dummy;
+                            m_dll[in * nDC + j] += dummy;
+//                            m_dul[in * nDC + j] = dummy;
                         }
-                        else // This is the precipitation case
+                        else if (dummy > 0.0) // This is the precipitation case
                         {
                             m_dll[in * nDC + j] = m_xDC[in * nDC + j];
-                            m_dul[in * nDC + j] = dummy;
+//                            m_dll[in * nDC + j] = dummy;
+                            m_dul[in * nDC + j] += dummy;
                         }
                     }
 		} //end else for kinetics not SS
@@ -4866,7 +4988,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 {
     nNodes = GetNodeNumber_MT();
     nElems = GetElemNumber_MT();
-    long j,in,node_fail = 0, repeated_fail = 0, kinetic_loop_counter;
+    long j,in,node_fail = 0,  kinetic_loop_counter;
     double oldvolume;
 
     // collection of time data for rough performance analysis
@@ -5422,8 +5544,8 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
     // for SNA this should be only done once per timestep!
     if (calc_limits)
         REACT_GEM::CalcLimits ( in,0, dt,m_Node);
-    else if (calc_limits==0 && flag_iterative_scheme)
-        REACT_GEM::CalcLimits ( in,1,dt,m_Node);
+//    else if (calc_limits==0 && flag_iterative_scheme)
+//        REACT_GEM::CalcLimits ( in,1,dt,m_Node);
 
     //Get data
     REACT_GEM::SetReactInfoBackGEM ( in,m_Node); // this should be also save for MPI
@@ -5438,7 +5560,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
             ( ( ( abs ( oldvolume - dBR->Vs ) / oldvolume ) > 0.1 ) &&
               ( flowflag != 3 ) ))                               // not for Richards flow  // ups...failed..try again with changed kinetics
     {
-        if (flag_iterative_scheme == 1) return 1;
+      if (flag_iterative_scheme == 1) return 1;
         // set smaller time step
         iisplit=5;
         dtchem=dt/(double) iisplit;
@@ -5456,8 +5578,8 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
             // for SNA this should be only done once per timestep!
             if (calc_limits)
                 REACT_GEM::CalcLimits ( in,0, dtchem,m_Node);
-            else if (calc_limits==0 && flag_iterative_scheme)
-                REACT_GEM::CalcLimits ( in,1,dtchem,m_Node);
+//            else if (calc_limits==0 && flag_iterative_scheme)
+//                REACT_GEM::CalcLimits ( in,1,dtchem,m_Node);
 
             //Get data
             REACT_GEM::SetReactInfoBackGEM ( in,m_Node); // this should be also save for MPI

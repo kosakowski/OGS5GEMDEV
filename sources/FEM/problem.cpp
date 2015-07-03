@@ -3179,28 +3179,43 @@ inline double Problem::MassTrasport()
                 m_vec_GEM->GetReactInfoFromMassTransport(m_time); // get concentrations, pressure and temperature values
                 // the following stores all kinds of stuff..including kinetics etc....AND also concentrations ->b_soluteB_pts
                 if (gems_iteration_loop==0) m_vec_GEM->StoreOldSolutionAll(); // we need this also here in order to switch back to old values in case a node fails during gems calculations
+		m_vec_GEM->StoredSolutionAllPicardIteration();
                 m_vec_GEM->Run_MainLoop(); // Run GEM to get initial values for coupled step
                 // calculate difference vector
-                cout << "GEMS: Picard iteration no " << gems_iteration_loop << " sum of max diff in b vector: " << m_vec_GEM->CalcSoluteBDelta()/(m_vec_GEM->nNodes*m_vec_GEM->nIC) << " \n";
+//                cout << "GEMS: Picard iteration no " << gems_iteration_loop << " sum of max diff in b vector: " << m_vec_GEM->CalcSoluteBDelta()/(m_vec_GEM->nNodes*m_vec_GEM->nIC) << " \n";
+                cout << "GEMS: Picard iteration no " << gems_iteration_loop << " sum of max diff in b vector: " << minimum_error << " current " << m_vec_GEM->CalcMaxSoluteBDelta() << " \n";
                 // test for finishing loop
 		if (gems_iteration_loop==0) 
 		{
-		  minimum_error=m_vec_GEM->CalcSoluteBDelta()/(m_vec_GEM->nNodes*m_vec_GEM->nIC);
+//		  minimum_error=m_vec_GEM->CalcSoluteBDelta()/(m_vec_GEM->nNodes*m_vec_GEM->nIC);
+		  minimum_error=m_vec_GEM->CalcMaxSoluteBDelta();
+
 		}
-		else{
-		  if ((minimum_error) > m_vec_GEM->CalcSoluteBDelta()/(m_vec_GEM->nNodes*m_vec_GEM->nIC))  minimum_error=m_vec_GEM->CalcSoluteBDelta()/(m_vec_GEM->nNodes*m_vec_GEM->nIC) ;
-		  else break;
+		else if (m_vec_GEM->repeated_fail ==0)
+		{
+//		  if ((minimum_error) > m_vec_GEM->CalcSoluteBDelta()/(m_vec_GEM->nNodes*m_vec_GEM->nIC))  minimum_error=m_vec_GEM->CalcSoluteBDelta()/(m_vec_GEM->nNodes*m_vec_GEM->nIC) ;
+		  if ((minimum_error) > fabs(m_vec_GEM->CalcMaxSoluteBDelta()))  minimum_error=fabs(m_vec_GEM->CalcMaxSoluteBDelta()) ;
+		  else 
+		    // error gets bigger and we should take not the last solution, but the second last solution ..test case...do one more iteration and try to force the system into better solution
+		  {
+		    m_vec_GEM->RestoreSolutionAllPicardIteration(); // does not restore dul and dll
+		    break;
+		  }
 		}
-                if ( m_vec_GEM->CalcSoluteBDelta()/(m_vec_GEM->nNodes*m_vec_GEM->nIC) <= m_vec_GEM->iteration_eps) break;
-                if (gems_iteration_loop+1 < max_gems_iteration_loop)
+                if ( minimum_error <= m_vec_GEM->iteration_eps) break;
+                if (gems_iteration_loop+1 < max_gems_iteration_loop) // increase counter and check for maximum iterations
                 {
                     m_vec_GEM->UpdatebICChemDelta();
                     // Restore concentrations for Transport
                     m_vec_GEM->SetReactInfoBackMassTransportPicardIteration(m_time); //this restores only old concentrations to mass transport!
-                    m_vec_GEM->RestoreOldSolutionAll();
+                    m_vec_GEM->RestoreOldSolutionAll(); //does not restore dul and dll
                     // update source terms for transport
-                    m_vec_GEM->calc_limits=0; // no further calculations for kinetics....first iteration is ok
+                    m_vec_GEM->calc_limits=0; // as the upper and lower limits are resetted in RestoreOldSolutionAll, one has to recalculate kinetic bounds!
                 }
+                else
+		{
+		  break;
+		}
 
             }
         }
@@ -3252,7 +3267,7 @@ inline double Problem::MassTrasport()
 			int nidx0 = m_pcs->GetNodeValueIndex("CONCENTRATION1",0);
 			CRFProcess *local_richards_flow = PCSGet("PRESSURE1",true);
 			if (local_richards_flow != NULL)
-			{
+			{http://www.presseportal.de/blaulicht/pm/110970/3063173
 				int nidx1 = local_richards_flow->GetNodeValueIndex("PRESSURE1",0);
 				for (int j=0; j<m_pcs->m_msh->GetNodesNumber(false);j++)
 				{
