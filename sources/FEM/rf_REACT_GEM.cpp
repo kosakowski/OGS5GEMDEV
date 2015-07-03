@@ -2705,7 +2705,7 @@ void REACT_GEM::UpdatebICChemDelta ( void )
 	for ( inod = 0; inod < nNodes; inod++ )
 	{
  	   for ( i = 0; i < nIC; i++ )
-		m_bIC_Chem_delta[inod*nIC + i] += (m_soluteB[inod*nIC + i] - m_soluteB_pts[inod*nIC + i])*m_porosity[inod]*GetNodeAdjacentVolume(inod) ;
+		m_bIC_Chem_delta[inod*nIC + i] = (m_soluteB[inod*nIC + i] - m_soluteB_pts[inod*nIC + i])*m_porosity[inod]*m_Node_Volume[inod] ;
 	}
 }
 
@@ -4087,7 +4087,7 @@ int REACT_GEM::CheckConstraints ( long in,TNode* m_Node)
 	  cout << "DEBUG: lower CheckConstraints failed: node, "<< in << " IC number, " <<ii<< " dll, " << dll_check[ii] << " dul, " << dul_check[ii] << " bIC, " << m_bIC[in*nIC+ii] << " diff " << m_bIC[in*nIC+ii]-dll_check[ii] << "\n";
 	  //	if (dul_check[ii] >= m_bIC[ii]) cout << "DEBUG: upper CheckConstraints failed: node, IC number, dll, dul, bIC, diff"<< in << " " <<ii<< " " << dll_check[ii] << " " << dul_check[ii] << " " << m_bIC[ii] << " " << m_bIC[ii]-dul_check[ii] << "\n";
 	  iret=0;
-//	  cout << " Experimental fix by adding mass \n";
+//	  cout << " Experimental fix by changing dll \n";
 //	  m_bIC[in*nIC+ii]+=1.1*abs(m_bIC[in*nIC+ii]-dll_check[ii]); // not good...seems to make things much worse!
         }
       }
@@ -5251,12 +5251,13 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
                     }        // we do not tolerate too many failed nodes -> something wrong with chemistry/time step?
 
                     RestoreOldSolutionNode ( in );
-                    GetBValue_MT ( in, 1, m_soluteB + in * nIC );
-                    node_fail = 0;
+                    GetBValue_MT ( in, 1, m_soluteB + in * nIC ); // This saves current concentrations into m_soluteB....after each time step m_soluteB is copied to the concentrations used for the next time step for mass transport equations
+                    for (int jj=0;jj<nIC;jj++) if (m_soluteB[in*nIC+jj] < 0.0) m_soluteB[in*nIC+jj]=fabs(m_soluteB[in*nIC+jj]); 
+		    node_fail = 0;
                 }
                 else   // restore old solution and no update on kinetic parameters, porosity and fluid/gas properties
                 {
-/*  this I moved to the calchem		 
+/*  this I moved to the solvechemistry as it has to be done also inside the chemistry-kinetics loop		 
                     // this is if gem run is ok
                     REACT_GEM::GetReactInfoFromGEM ( in, t_Node); //from here on we have buffer values if GEMS_MPI is defined
                     // calculate the chemical porosity
@@ -5437,6 +5438,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
             ( ( ( abs ( oldvolume - dBR->Vs ) / oldvolume ) > 0.1 ) &&
               ( flowflag != 3 ) ))                               // not for Richards flow  // ups...failed..try again with changed kinetics
     {
+        if (flag_iterative_scheme == 1) return 1;
         // set smaller time step
         iisplit=5;
         dtchem=dt/(double) iisplit;

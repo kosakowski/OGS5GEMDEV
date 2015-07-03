@@ -5638,7 +5638,8 @@ void CRFProcess::GlobalAssembly()
 		//MXDumpGLS("rf_pcs1.txt",1,eqs->b,eqs->x); //abort();
 
 #ifdef GEM_REACT
-		if( getProcessType() == FiniteElement::MASS_TRANSPORT && aktueller_zeitschritt > 1)
+                // this is the serial version...domain decomposition would need special version...
+		if( getProcessType() == FiniteElement::MASS_TRANSPORT && aktueller_zeitschritt > 0)
 		{ // JT->KG. New coupling system.
 		  // KG: the following coupling is not used, as picard iteration for mass transport is not yet implemented...I use an own coupling..sorry
 //			if( _problem->GetCPLMaxIterations() > 1 || // Then there is a coupling on all processes
@@ -5650,6 +5651,7 @@ void CRFProcess::GlobalAssembly()
 				IncorporateSourceTerms_GEMS();
 			}
 		}
+
 #endif
 #if !defined(USE_PETSC) && !defined(NEW_EQS) // && !defined(other parallel libs)//03~04.3012. WW
 		//#ifndef NEW_EQS                             //WW. 07.11.2008
@@ -14078,6 +14080,7 @@ CRFProcess* PCSGetMass(size_t component_number)
 			}
 #else
                         eqs_rhs[it] += value;
+//			if (it==1) cout << "DEBUG: eqs_rhs[1], value added " << eqs_rhs[it] << " " << value << "\n";
 #endif			 
 
 			}

@@ -3072,6 +3072,155 @@ inline double Problem::HeatTransport()
 	return error;
 }
 
+#ifdef GEM_REACT
+
+
+/*-------------------------------------------------------------------------
+   GeoSys - Function: MassTrasport
+   Task: Similate heat transport
+   Return: error
+   Programming:
+   07/2008 WW Extract from LOPTimeLoop_PCS();
+   Modification:
+   12.2008 WW Immigrtate the new functionalities  from loop_pcs.cpp
+   -------------------------------------------------------------------------*/
+inline double Problem::MassTrasport()
+{
+    double error = 1.0e+8;
+    double minimum_error;
+    bool capvec = false;
+    bool prqvec = false;
+    int  max_gems_iteration_loop;
+    CRFProcess* m_pcs = total_processes[11];
+    //
+    if(!m_pcs->selected)
+        return error;             //12.12.2008 WW
+    //ClockTimeVec[0]->StartTime(); // CB time, remove if flow time is stopped
+
+//KG44 for testing purposes I plug in a picard iteration between transport and GEMS
+    int m_time = 1;           // 0-previous time step results; 1-current time step results
+
+    if (m_vec_GEM->flag_iterative_scheme == 1) // Picard iteration not in the num file..for this in the gem file!
+    {
+        max_gems_iteration_loop=m_vec_GEM->max_gems_iteration_loop;
+        m_vec_GEM->ResetbICChemDelta();
+        m_vec_GEM->calc_limits=1;
+    }
+    else
+    {
+        max_gems_iteration_loop=1;
+        m_vec_GEM->calc_limits=1;
+    }
+
+    for (int gems_iteration_loop = 0; gems_iteration_loop < max_gems_iteration_loop; gems_iteration_loop++)
+    {
+        for(int i = 0; i < (int)transport_processes.size(); i++)
+        {
+            m_pcs = transport_processes[i]; //18.08.2008 WW
+            //Component Mobile ?
+
+            //MW reduce CONCENTRATION1 to non-negative values above water table for stability for Sugio approach with RICHARDS
+            if (mmp_vector[0]->permeability_saturation_model[0] == 10)
+            {
+                int nidx0 = m_pcs->GetNodeValueIndex("CONCENTRATION1",0);
+                CRFProcess *local_richards_flow = PCSGet("PRESSURE1",true);
+                if (local_richards_flow != NULL)
+                {
+                    int nidx1 = local_richards_flow->GetNodeValueIndex("PRESSURE1",0);
+                    for (int j=0; j<m_pcs->m_msh->GetNodesNumber(false); j++)
+                    {
+                        double local_conc = m_pcs->GetNodeValue(j,nidx0+1);
+                        double local_pressure = local_richards_flow->GetNodeValue(j,nidx1+1);
+                        if (local_pressure < 0 && local_conc < 0)
+                            m_pcs->SetNodeValue(j,nidx0+1,0);
+                    }
+                }
+            }
+
+            if(CPGetMobil(m_pcs->GetProcessComponentNumber()) > 0)
+                error = m_pcs->ExecuteNonLinear(loop_process_number);  //NW. ExecuteNonLinear() is called to use the adaptive time step scheme
+
+            int component = m_pcs->pcs_component_number;
+            CompProperties* m_cp = cp_vec[component];
+
+            if (m_cp->OutputMassOfComponentInModel == 1) {			// 05/2012 BG
+                if (singlephaseflow_process.size() >= 0)
+                    OutputMassOfComponentInModel(singlephaseflow_process, m_pcs);
+                else
+                    OutputMassOfComponentInModel(multiphase_processes, m_pcs);
+            }
+        }
+
+        // Calculate Chemical reactions, after convergence of flow and transport
+        // Move inside iteration loop if couplingwith transport is implemented SB:todo
+        //SB:todo move into Execute Reactions	  if((aktueller_zeitschritt % 1) == 0)
+        //REACT *rc = NULL; //OK
+        //rc = REACT_vec[0]; //OK
+        //				if(rc->flag_pqc) rc->ExecuteReactions();
+        //				delete rc;
+
+        if (m_vec_GEM->initialized_flag == 1) //when it was initialized.
+        {
+
+            // Check if the Sequential Iterative Scheme needs to be intergrated
+            // if (m_pcs->m_num->cpl_max_iterations > 1)
+            //	m_vec_GEM->flag_iterative_scheme = 0;  // set to standard iterative scheme as SIA is not implemented
+
+            if (m_vec_GEM->flag_iterative_scheme == 0)  //SNIA standard...
+            {
+                m_vec_GEM->GetReactInfoFromMassTransport(m_time); // get concentrations, pressure and temperature values
+                // move data from transport to GEMS data structures
+                m_vec_GEM->StoreOldSolutionAll(); // we need this also here in order to switch back to old values in case a node fails during gems calculations	we do this AFTER getreactinfofrommasstransport, as this restores the value after transport step..otherwise concentrations on failed nodes remain constant in time (last value for good solution)
+                m_vec_GEM->Run_MainLoop(); // Run GEM
+            }
+            else if (m_vec_GEM->flag_iterative_scheme == 1)
+            {
+                // Get info from MT
+                m_vec_GEM->GetReactInfoFromMassTransport(m_time); // get concentrations, pressure and temperature values
+                // the following stores all kinds of stuff..including kinetics etc....AND also concentrations ->b_soluteB_pts
+                if (gems_iteration_loop==0) m_vec_GEM->StoreOldSolutionAll(); // we need this also here in order to switch back to old values in case a node fails during gems calculations
+                m_vec_GEM->Run_MainLoop(); // Run GEM to get initial values for coupled step
+                // calculate difference vector
+                cout << "GEMS: Picard iteration no " << gems_iteration_loop << " sum of max diff in b vector: " << m_vec_GEM->CalcSoluteBDelta()/(m_vec_GEM->nNodes*m_vec_GEM->nIC) << " \n";
+                // test for finishing loop
+		if (gems_iteration_loop==0) 
+		{
+		  minimum_error=m_vec_GEM->CalcSoluteBDelta()/(m_vec_GEM->nNodes*m_vec_GEM->nIC);
+		}
+		else{
+		  if ((minimum_error) > m_vec_GEM->CalcSoluteBDelta()/(m_vec_GEM->nNodes*m_vec_GEM->nIC))  minimum_error=m_vec_GEM->CalcSoluteBDelta()/(m_vec_GEM->nNodes*m_vec_GEM->nIC) ;
+		  else break;
+		}
+                if ( m_vec_GEM->CalcSoluteBDelta()/(m_vec_GEM->nNodes*m_vec_GEM->nIC) <= m_vec_GEM->iteration_eps) break;
+                if (gems_iteration_loop+1 < max_gems_iteration_loop)
+                {
+                    m_vec_GEM->UpdatebICChemDelta();
+                    // Restore concentrations for Transport
+                    m_vec_GEM->SetReactInfoBackMassTransportPicardIteration(m_time); //this restores only old concentrations to mass transport!
+                    m_vec_GEM->RestoreOldSolutionAll();
+                    // update source terms for transport
+                    m_vec_GEM->calc_limits=0; // no further calculations for kinetics....first iteration is ok
+                }
+
+            }
+        }
+
+//KG44 for testing purposes I plug in a picard iteration between transport and GEMS
+
+        // Set info in MT
+        m_vec_GEM->SetReactInfoBackMassTransport(m_time); //this includes, concentrations, source sink terms for fluid and the element porosities, as well as changed boundary conditions
+
+    } // here the picard loop is finished
+
+
+    // if(KinReactData_vector.size() > 0)  //12.12.2008 WW
+    ClockTimeVec[0]->StopTime("EquiReact"); // CB time
+
+    return error;
+}
+
+#else
+
 /*-------------------------------------------------------------------------
    GeoSys - Function: MassTrasport
    Task: Similate heat transport
@@ -3086,32 +3235,11 @@ inline double Problem::MassTrasport()
 	double error = 1.0e+8;
     bool capvec = false;
     bool prqvec = false;
-    int  max_gems_iteration_loop;
 	CRFProcess* m_pcs = total_processes[11];
 	//
 	if(!m_pcs->selected)
 		return error;             //12.12.2008 WW
    //ClockTimeVec[0]->StartTime(); // CB time, remove if flow time is stopped
-
-//KG44 for testing purposes I plug in a picard iteration between transport and GEMS   
-#ifdef GEM_REACT
-	int m_time = 1;           // 0-previous time step results; 1-current time step results
-
-if (m_vec_GEM->flag_iterative_scheme == 1) // Picard iteration not in the num file..for this in the gem file!
-{
-  max_gems_iteration_loop=m_vec_GEM->max_gems_iteration_loop;
-  m_vec_GEM->ResetbICChemDelta();
-  m_vec_GEM->calc_limits=1;
-}
-else
-{
-  max_gems_iteration_loop=1;
-  m_vec_GEM->calc_limits=1;
-}
-  
-for (int gems_iteration_loop = 0; gems_iteration_loop < max_gems_iteration_loop; gems_iteration_loop++)
-{
-#endif
 
 	for(int i = 0; i < (int)transport_processes.size(); i++)
 	{
@@ -3206,59 +3334,6 @@ for (int gems_iteration_loop = 0; gems_iteration_loop < max_gems_iteration_loop;
 		//REACT_CAP_vec[0]->ConvertIC2BC();
 		}
 
-
-#ifdef GEM_REACT
-	else                                  // WW moved these pare of curly braces inside  ifdef GEM_REACT
-	if (m_vec_GEM->initialized_flag == 1) //when it was initialized.
-	{
-
-		// Check if the Sequential Iterative Scheme needs to be intergrated
-		// if (m_pcs->m_num->cpl_max_iterations > 1)
-		//	m_vec_GEM->flag_iterative_scheme = 0;  // set to standard iterative scheme as SIA is not implemented
-		
-		if (m_vec_GEM->flag_iterative_scheme == 0)  //SNIA standard...
-		{
-		  m_vec_GEM->GetReactInfoFromMassTransport(m_time); // get concentrations, pressure and temperature values
-		  // move data from transport to GEMS data structures
-		  m_vec_GEM->StoreOldSolutionAll(); // we need this also here in order to switch back to old values in case a node fails during gems calculations	we do this AFTER getreactinfofrommasstransport, as this restores the value after transport step..otherwise concentrations on failed nodes remain constant in time (last value for good solution)
-		  m_vec_GEM->Run_MainLoop(); // Run GEM
-		}
-		else if (m_vec_GEM->flag_iterative_scheme == 1)
-		{
-		// Get info from MT
- 		 m_vec_GEM->GetReactInfoFromMassTransport(m_time); // get concentrations, pressure and temperature values
-		  // the following stores all kinds of stuff..including kinetics etc....AND also concentrations ->b_soluteB_pts
-                 if (gems_iteration_loop==0) m_vec_GEM->StoreOldSolutionAll(); // we need this also here in order to switch back to old values in case a node fails during gems calculations 
-		 m_vec_GEM->StoreOldConcentrationsAll();
-		 m_vec_GEM->Run_MainLoop(); // Run GEM to get initial values for coupled step
-		 // calculate difference vector
-		 cout << "GEMS: Picard iteration no " << gems_iteration_loop << " sum of max diff in b vector: " << m_vec_GEM->CalcSoluteBDelta()/(m_vec_GEM->nNodes*m_vec_GEM->nIC) << " \n"; 
- 		 // test for finishing loop
-                 if ( m_vec_GEM->CalcSoluteBDelta()/(m_vec_GEM->nNodes*m_vec_GEM->nIC) <= m_vec_GEM->iteration_eps) break;
-		 if (gems_iteration_loop+1 < max_gems_iteration_loop)
-		 {
-		   m_vec_GEM->UpdatebICChemDelta();		 
-		   // Restore concentrations for Transport   
-	 	   m_vec_GEM->SetReactInfoBackMassTransportPicardIteration(m_time); //this restores only old concentrations to mass transport!
-		   m_vec_GEM->RestoreOldSolutionAll();		 
-		   // update source terms for transport
-                   m_vec_GEM->calc_limits=0; // no further calculations for kinetics....first iteration is ok
-		 }
-		 
-		}
-	}
-#endif                                         // GEM_REACT
-
-#ifdef GEM_REACT
-//KG44 for testing purposes I plug in a picard iteration between transport and GEMS   
-		 
-	 // Set info in MT
-         m_vec_GEM->SetReactInfoBackMassTransport(m_time); //this includes, concentrations, source sink terms for fluid and the element porosities, as well as changed boundary conditions
-  
-} // here the picard loop is finished 
-#endif    // GEM_REACT ...for picard iteration loop testing
-
-
 #ifdef CHEMAPP
 	if(Eqlink_vec.size() > 0)
 		Eqlink_vec[0]->ExecuteEQLINK();
@@ -3273,6 +3348,7 @@ for (int gems_iteration_loop = 0; gems_iteration_loop < max_gems_iteration_loop;
 
 	return error;
 }
+#endif
 
 /*-------------------------------------------------------------------------
    GeoSys - Function: FluidMomentum()
