@@ -5564,11 +5564,11 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
         // set smaller time step
         iisplit=5;
         dtchem=dt/(double) iisplit;
-        // restore old constraints
+        // restore old constraints and give a lot more freedom..special version!!!!
         for ( j = 0; j < nDC; j++ )
         {
-            m_dll[in * nDC + j] = m_dll_pts[in * nDC + j];
-            m_dul[in * nDC + j] = m_dul_pts[in * nDC + j];
+            m_dll[in * nDC + j] = m_dll[in * nDC + j]*0.9999;
+            m_dul[in * nDC + j] = m_dul[in * nDC + j]*1.0001;
         }
 
         for (ii=0; ii<iisplit; ii++)
@@ -5576,8 +5576,8 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
 
             // now we calculate kinetic constraints for GEMS!
             // for SNA this should be only done once per timestep!
-            if (calc_limits)
-                REACT_GEM::CalcLimits ( in,0, dtchem,m_Node);
+//            if (calc_limits)
+//                REACT_GEM::CalcLimits ( in,0, dtchem,m_Node);
 //            else if (calc_limits==0 && flag_iterative_scheme)
 //                REACT_GEM::CalcLimits ( in,1,dtchem,m_Node);
 
