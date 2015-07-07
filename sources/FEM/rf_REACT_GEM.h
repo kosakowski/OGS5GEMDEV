@@ -121,6 +121,7 @@ public:
     double max_kinetic_timestep;               // variable used for limiting time step
     bool calc_limits;                          // do this for first Picard iteration
     int CheckConstraints ( long in,TNode* m_Node);
+    double MaxDtKinetics(long int,  TNode* m_Node); // function to calculate max timestep in case of kinetics for a node 
     
     int SolveChemistry(long in, TNode* m_Node); // extra time loop for chemistry & kinetics
     
