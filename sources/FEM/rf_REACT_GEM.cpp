@@ -3847,7 +3847,7 @@ double REACT_GEM::MaxDtKinetics(long in, TNode *m_Node)
     }
 
 //  DEBUG
-cout << "DEBUG kinetics: node , default time step dt, min kinetic time step " << in << " " << dt << " " << mxdt << "\n";
+//cout << "DEBUG kinetics: node , default time step dt, min kinetic time step " << in << " " << dt << " " << mxdt << "\n";
         return mxdt;
 }
 
@@ -5701,6 +5701,8 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
                     !( m_NodeStatusCH[in] == OK_GEM_AIA ||  ( ( abs ( oldvolume - dBR->Vs ) / oldvolume ) > 0.1 ) &&
                        ( flowflag != 3 ) ))                                   // not for Richards flow
                 {
+		  if (ii == 0) 
+		  {
                     rwmutex.lock();
                     cout <<
                          "Error: main Loop Kin-Chem loop " << ii << " failed when running GEM on Node #"
@@ -5715,7 +5717,9 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
 //                    t_Node->GEM_print_ipm ( "ipm_for_crash_node_fail.txt" );
                     rwmutex.unlock();
                     // exit ( 1 );
-                    node_fail = 1; //node failed and do nothing....
+                     node_fail = 1; //node failed and do nothing....
+		  }
+                    else node_fail = 0;
                     // leave loop
                     ii=iisplit-1;
                 } // end 2. gems failed
