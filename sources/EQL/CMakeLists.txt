@@ -1,5 +1,5 @@
 # Source files
-SET ( SOURCES 
+set ( SOURCES 
 	cacint.h
 	cacint.cpp
 	eqlink.h
@@ -7,9 +7,9 @@ SET ( SOURCES
 )
 
 # Create the library
-ADD_LIBRARY ( EQL STATIC ${SOURCES} )
+add_library ( EQL STATIC ${SOURCES} )
 
-INCLUDE_DIRECTORIES (
+include_directories (
 	${CMAKE_SOURCE_DIR}/Base
 	${CMAKE_SOURCE_DIR}/Mathlib
 	${CMAKE_SOURCE_DIR}/GEO

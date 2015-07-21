@@ -117,6 +117,7 @@ class Problem
       inline double PS_Global();                  // 03 2009 PCH
 	  inline double MULTI_COMPONENTIAL_FLOW();            // 02 2011 AKS/NB
 	  inline double TNEQ();						//07/2013 HS/TN
+	  inline double TES();						//07/2013 HS/TN
       inline double GroundWaterFlow();
       inline double ComponentalFlow();
       inline double OverlandFlow();
@@ -152,6 +153,8 @@ class Problem
 	int mrank;
     /// processor number for MPI  
 	int msize;
+
+	static const size_t max_processes = 16;
 };
 
 extern bool MODCreate();                          //OK

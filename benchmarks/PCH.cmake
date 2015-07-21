@@ -43,4 +43,4 @@ ADD_BENCHMARK ("CHP" MULTIPHASE/BuckleyLeverett/h2_line "OGS_FEM_LIS" 1
 	MULTIPHASE/BuckleyLeverett/h2_line0080.vtk)
 
 ADD_BENCHMARK ("CHP" MULTIPHASE/McWhorterProblem/h2_line "OGS_FEM_MKL" 1
-	MULTIPHASE/McWhorterProblem/h2_line_167.vtu)
+	MULTIPHASE/McWhorterProblem/h2_line_165.vtu)

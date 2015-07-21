@@ -34,7 +34,10 @@
 //F: Fluid momentum
 //A: Gas flow
 //N: Thermal nonequilibrium
-enum EnumProcessType { L, U, G, T, C, H, M, O, R, F, A, V, P, S, N};
+enum EnumProcessType { EPT_LIQUID_FLOW, EPT_UNCONFINED_FLOW, EPT_GROUNDWATER_FLOW, EPT_TWOPHASE_FLOW, EPT_COMPONENTAL_FLOW,
+                       EPT_HEAT_TRANSPORT, EPT_MASS_TRANSPORT, EPT_OVERLAND_FLOW, EPT_RICHARDS_FLOW, EPT_FLUID_MOMENTUM,
+                       EPT_GAS_FLOW, EPT_MULTIPHASE_FLOW, EPT_PSGLOBAL, EPT_MULTI_COMPONENTIAL_FLOW,
+                       EPT_THERMAL_NONEQUILIBRIUM, EPT_TES };
 //-----------------------------------------------------
 
 namespace process
@@ -80,10 +83,12 @@ public:
 	void CalcMass2();
 	void CalcMassMCF();                   //AKS/NB
 	void CalcMassTNEQ();                      //AKS/NB
+	void CalcMassTES();                       //AKS/NB
 	void CalcMassPSGLOBAL();              // PCH
 	// 2. Lumped mass matrix
 	void CalcLumpedMass();
 	void CalcLumpedMass2();
+	void CalcLumpedMassTES();
 	void CalcLumpedMassMCF();  //AKS
 	void CalcLumpedMassPSGLOBAL();        // PCH
 	// 3. Laplace matrix
@@ -99,11 +104,13 @@ public:
 	void CalcAdvection();
 	void CalcAdvectionMCF();
 	void CalcAdvectionTNEQ();
+	void CalcAdvectionTES();
 	// 8. Storage matrix
 	void CalcStorage();
 	// 9. Content matrix
 	void CalcContent();
 	void CalcContentTNEQ(); //NW
+	void CalcContentTES(); //NW
 	//
 	void CalcSatution();                  //WW
 	//
@@ -190,8 +197,8 @@ public:
 	// Gauss value
 	void ExtropolateGauss(CRFProcess* m_pcs, const int idof);
 	// Extrapolate reaction rates on TNEQ flow
-	void ExtrapolateGauss_ReactRate_TNEQ(CRFProcess *m_pcs);
-	void UpdateSolidDensity(size_t elem_idx);       // HS
+	void ExtrapolateGauss_ReactRate_TNEQ_TES(CRFProcess *m_pcs);
+	void UpdateSolidDensity(size_t elem_idx, const bool initial = true);       // HS
 	// CB _ctx_ CB_merge_0513
 	//void Set_ctx_(long ele_index, double val, int gaussp, int i_dim);
 	//double Get_ctx_(long ele_index, int gaussp, int i_dim);
@@ -220,7 +227,6 @@ private:
 	double* eqs_rhs;                      //For DDC WW
 	bool heat_phase_change;
 
-	char pcsT;
 	//     /**
 	//      * process type, \sa enum ProcessType
 	//      */
@@ -282,13 +288,16 @@ private:
 	// 10 2008 PCH
 	void CalCoefLaplaceMultiphase(int phase, int ip = 0);
 	void CalCoefLaplace2(bool Gravity, int dof_index);
-	void CalCoefLaplaceTNEQ(int dof_index);
+	void CalCoefLaplaceTNEQ(const int dof_index);
+	void CalCoefLaplaceTES(const int dof_index);
 	void CalCoefLaplacePSGLOBAL(bool Gravity, int dof_index);
 	double CalCoefAdvection();        //SB4200 OK/CMCD
 	//AKS/NB
-	double CalCoefAdvectionTNEQ(int dof_index);
+	double CalCoefAdvectionTNEQ(const int dof_index);
+	double CalCoefAdvectionTES(const int dof_index);
 
-	double CalCoefMassTNEQ(int dof_index);
+	double CalCoefMassTNEQ(const int dof_index);
+	double CalCoefMassTES(const int dof_index);
 	void CalCoefMassMCF();
 	void CalCoefAdvectionMCF();
 	void CalCoefLaplaceMCF(int ip);
@@ -297,13 +306,15 @@ private:
 
 	double CalCoefStorage();       //SB4200
 	double CalCoefContent();
-	double CalCoefContentTNEQ(int dof_index); //NW
+	double CalCoefContentTNEQ(const int dof_index); //NW
+	double CalCoefContentTES(const int dof_index);
 	double CalCoefStrainCouping(const int phase = 0);
 
 	double  CalcCoefDualTransfer();
 	// 27.2.2007 WW
 	double CalCoef_RHS_T_MPhase(int dof_index);
-	double CalCoef_RHS_TNEQ(int dof_index);
+	double CalCoef_RHS_TNEQ(const int dof_index);
+	double CalCoef_RHS_TES(const int dof_index);
 	// 27.2.2007 WW
 	double CalCoef_RHS_M_MPhase(int dof_index);
 	double CalCoef_RHS_PSGLOBAL(int dof_index);
@@ -370,6 +381,7 @@ private:
 	void Assemble_RHS_AIR_FLOW();         //AKS
 	void Assemble_RHS_HEAT_TRANSPORT();   //AKS
 	void Assemble_RHS_TNEQ();      //AKS
+	void Assemble_RHS_TES();      //AKS
 	void Assemble_RHS_HEAT_TRANSPORT2();  //AKS
 	void Assemble_RHS_T_PSGlobal();       // Assembly of RHS by temperature for PSGlobal
 	void AssembleRHS(int dimension);      // PCH
@@ -440,9 +452,9 @@ public:
 	double *rho_s_prev, *rho_s_curr;
 	double *q_R;
 	// End of Thermal Storage parameters---------------
+#ifdef USE_TRANSPORT_FLUX
 	Matrix TransportFlux;  // Fick or Fourier law  with dispersion      JOD 2014-11-10
-	
-
+#endif
 private:
 	// Friend class
 	friend class ::CRFProcess;

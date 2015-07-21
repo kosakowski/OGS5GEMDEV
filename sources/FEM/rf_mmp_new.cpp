@@ -9,6 +9,7 @@
 // C++ STL
 //#include <iostream>
 #include <cfloat>
+#include "display.h"
 
 // FEMLib
 #include "tools.h"
@@ -28,7 +29,6 @@ extern double gravity_constant;
 // this
 #include "rf_mmp_new.h"
 //#include "rf_react.h"
-#include "gs_project.h"
 // Gauss point veclocity
 #include "fem_ele_std.h"
 #include "fem_ele_vec.h"
@@ -391,10 +391,6 @@ std::ios::pos_type CMediumProperties::Read(std::ifstream* mmp_file)
 				in >> geo_area_file;
 				// JT, Dec. 16, 2009, added lines below to correct and globalize the read of geometry area file
 				std::string file_name = geo_area_file;
-				CGSProject* m_gsp = NULL;
-				m_gsp = GSPGetMember("mmp");
-				if(m_gsp)
-					file_name = m_gsp->path + geo_area_file;
 				indexChWin = FileName.find_last_of('\\');
 				indexChLinux = FileName.find_last_of('/');
 				if(indexChWin == string::npos && indexChLinux == std::string::npos)
@@ -1773,10 +1769,6 @@ std::ios::pos_type CMediumProperties::Read(std::ifstream* mmp_file)
 			in.str(GetLineFromFile1(mmp_file));
 			in >> permeability_file;
 			string file_name = permeability_file;
-			CGSProject* m_gsp = NULL;
-			m_gsp = GSPGetMember("mmp");
-			if(m_gsp)
-				file_name = m_gsp->path + permeability_file;
 			//-------WW
 			indexChWin = FileName.find_last_of('\\');
 			indexChLinux = FileName.find_last_of('/');
@@ -1815,10 +1807,6 @@ std::ios::pos_type CMediumProperties::Read(std::ifstream* mmp_file)
 			in.str(GetLineFromFile1(mmp_file));
 			in >> porosity_file;
 			string file_name = porosity_file;
-			CGSProject* m_gsp = NULL;
-			m_gsp = GSPGetMember("mmp");
-			if(m_gsp)
-				file_name = m_gsp->path + porosity_file;
 			//else{ //CB this is to get the correct path in case the exe is not run from within the project folder
 			//  pos = (int)FileName.find_last_of('\\', -1) + 1;
 			//  file_name = FileName.substr(0,pos) + porosity_file;
@@ -2184,150 +2172,6 @@ void CMediumProperties::Write(std::fstream* mmp_file)
 	//----------------------------------------------------------------------
 }
 
-/**************************************************************************
-   FEMLib-Method:
-   Task:
-   Programing:
-   03/2004 OK Implementation
-   last modification:
-**************************************************************************/
-void MMPWriteTecplot(std::string msh_name)
-{
-	CMediumProperties* m_mmp = NULL;
-	int i;
-	int no_mat = (int)mmp_vector.size();
-	for(i = 0; i < no_mat; i++)
-	{
-		m_mmp = mmp_vector[i];
-		m_mmp->WriteTecplot(msh_name);
-	}
-}
-
-
-/**************************************************************************
-   FEMLib-Method:
-   Task:
-   Programing:
-   01/2005 OK Implementation
-   09/2005 OK MSH
-   10/2005 OK OO-ELE
-   last modification:
-**************************************************************************/
-void CMediumProperties::WriteTecplot(std::string msh_name)
-{
-	std::string element_type;
-	//----------------------------------------------------------------------
-	// GSP
-	CGSProject* m_gsp = NULL;
-	m_gsp = GSPGetMember("msh");
-	if(!m_gsp)
-		return;
-	//--------------------------------------------------------------------
-	// file handling
-	std::string mat_file_name = m_gsp->path + "MAT_" + name + TEC_FILE_EXTENSION;
-	std::fstream mat_file (mat_file_name.data(),ios::trunc | ios::out);
-	mat_file.setf(ios::scientific,ios::floatfield);
-	mat_file.precision(12);
-	//--------------------------------------------------------------------
-	// MSH
-	MeshLib::CElem* m_ele = NULL;
-	_mesh = FEMGet(msh_name);
-	if(!_mesh)
-		return;
-	//--------------------------------------------------------------------
-	if (!mat_file.good())
-		return;
-	mat_file.seekg(0L,std::ios::beg);
-	//--------------------------------------------------------------------
-	long j = 0;
-	for(size_t i = 0; i < _mesh->ele_vector.size(); i++)
-	{
-		m_ele = _mesh->ele_vector[i];
-		if(m_ele->GetPatchIndex() == static_cast<size_t>(number))
-			j++;
-	}
-	long no_elements = j - 1;
-	//--------------------------------------------------------------------
-	mat_file << "VARIABLES = X,Y,Z,MAT" << "\n";
-	const size_t no_nodes (_mesh->nod_vector.size());
-	mat_file << "ZONE T = " << name << ", " \
-	         << "N = " << no_nodes << ", " \
-	         << "E = " << no_elements << ", " \
-	         << "F = FEPOINT" << ", " << "ET = BRICK" << "\n";
-	for(size_t i = 0; i < no_nodes; i++)
-	{
-		double const* const pnt (_mesh->nod_vector[i]->getData());
-		mat_file << pnt[0] << " " << pnt[1] << " " << pnt[2] << " " << number << "\n";
-	}
-	j = 0;
-	for(size_t i = 0; i < _mesh->ele_vector.size(); i++)
-	{
-		m_ele = _mesh->ele_vector[i];
-		if(m_ele->GetPatchIndex() == static_cast<size_t>(number))
-		{
-			switch(m_ele->GetElementType())
-			{
-			case MshElemType::LINE:
-				mat_file \
-				<< m_ele->getNodeIndices()[0] + 1 << " " << m_ele->getNodeIndices()[1] + 1 <<
-				" " << m_ele->getNodeIndices()[1] + 1 << " " << m_ele->getNodeIndices()[0] +
-				1 << "\n";
-				j++;
-				element_type = "ET = QUADRILATERAL";
-				break;
-			case MshElemType::QUAD:
-				mat_file \
-				<< m_ele->getNodeIndices()[0] + 1 << " " << m_ele->getNodeIndices()[1] + 1 <<
-				" " << m_ele->getNodeIndices()[2] + 1 << " " << m_ele->getNodeIndices()[3] +
-				1 << "\n";
-				j++;
-				element_type = "ET = QUADRILATERAL";
-				break;
-			case MshElemType::HEXAHEDRON:
-				mat_file \
-				<< m_ele->getNodeIndices()[0] + 1 << " " << m_ele->getNodeIndices()[1] + 1 <<
-				" " << m_ele->getNodeIndices()[2] + 1 << " " << m_ele->getNodeIndices()[3] +
-				1 << " " \
-				<< m_ele->getNodeIndices()[4] + 1 << " " << m_ele->getNodeIndices()[5] + 1 <<
-				" " << m_ele->getNodeIndices()[6] + 1 << " " << m_ele->getNodeIndices()[7] +
-				1 << "\n";
-				j++;
-				element_type = "ET = BRICK";
-				break;
-			case MshElemType::TRIANGLE:
-				mat_file \
-				<< m_ele->getNodeIndices()[0] + 1 << " " << m_ele->getNodeIndices()[1] + 1 <<
-				" " << m_ele->getNodeIndices()[2] + 1 << "\n";
-				j++;
-				element_type = "ET = TRIANGLE";
-				break;
-			case MshElemType::TETRAHEDRON:
-				mat_file \
-				<< m_ele->getNodeIndices()[0] + 1 << " " << m_ele->getNodeIndices()[1] + 1 <<
-				" " << m_ele->getNodeIndices()[2] + 1 << " " << m_ele->getNodeIndices()[3] +
-				1 << "\n";
-				j++;
-				element_type = "ET = TETRAHEDRON";
-				break;
-			case MshElemType::PRISM:
-				mat_file \
-				<< m_ele->getNodeIndices()[0] + 1 << " " << m_ele->getNodeIndices()[0] + 1 <<
-				" " << m_ele->getNodeIndices()[1] + 1 << " " << m_ele->getNodeIndices()[2] +
-				1 << " " \
-				<< m_ele->getNodeIndices()[3] + 1 << " " << m_ele->getNodeIndices()[3] + 1 <<
-				" " << m_ele->getNodeIndices()[4] + 1 << " " << m_ele->getNodeIndices()[5] +
-				1 << "\n";
-				j++;
-				element_type = "ET = BRICK";
-				break;
-			default:
-				std::cerr <<
-				"CMediumProperties::WriteTecplot MshElemType not handled" <<
-				"\n";
-			}
-		}
-	}
-}
 
 ////////////////////////////////////////////////////////////////////////////
 // Access functions
@@ -2432,7 +2276,7 @@ double CMediumProperties::GetEffectiveSaturationForPerm(const double wetting_sat
 **************************************************************************/
 double CMediumProperties::PermeabilitySaturationFunction(const double wetting_saturation, int phase)
 {
-	double kr, sl, se, slr, slm, m, b;
+	double kr = 0.0, sl, se, slr, slm, m, b;
 	int model, gueltig;
 	bool phase_shift = false;
 	sl = wetting_saturation;
@@ -3053,8 +2897,8 @@ double* CMediumProperties::MassDispersionTensorNew(int ip, int tr_phase) // SB +
     double arg, Daq, Pec;
 	ElementValue* gp_ele = ele_gp_value[index];
 	CompProperties* m_cp = cp_vec[component];
-	CFluidProperties* m_mfp;
-	m_mfp = Fem_Ele_Std->FluidProp;
+	//CFluidProperties* m_mfp;
+	//m_mfp = Fem_Ele_Std->FluidProp;
 	MshElemType::type eleType = m_pcs->m_msh->ele_vector[number]->GetElementType();
 	int Dim = m_pcs->m_msh->GetCoordinateFlag() / 10;
 	//----------------------------------------------------------------------
@@ -3271,7 +3115,7 @@ double* CMediumProperties::DispersionTensorMCF(int ip, int PCSIndex, int CIndex,
 {
 	int k;
 	double Material[9], D[9], multiplier=1.0;
-	double set, vg, fac, alpha_l,alpha_t, g[3] = {0.,0.,0.}, l_char = 0.0, theta = Fem_Ele_Std->pcs->m_num->ls_theta; 
+	double set, vg, fac = 0.0, alpha_l,alpha_t, g[3] = {0.,0.,0.}, l_char = 0.0, theta = Fem_Ele_Std->pcs->m_num->ls_theta;
 	static double tensor[9];
 	CFluidProperties* m_mfp;
 	SolidProp::CSolidProperties* m_msp = NULL;
@@ -3907,14 +3751,13 @@ void CMediumProperties::SetMediumPropertiesDefaultsBordenAquifer(void)
  *************************************************************************/
 double CMediumProperties::Porosity(long number,double theta)
 {
-	static int nidx0, nidx1, idx_n;
+	int nidx0, nidx1;
 	double primary_variable[PCS_NUMBER_MAX];
 	int gueltig;
 #ifdef GEM_REACT
 	int idx;
 #endif
 	double porosity_sw;
-    CRFProcess *m_pcs_flow; // AB & CB
 	CFiniteElementStd* assem = m_pcs->GetAssember();
 	string str;
 	///
@@ -3923,10 +3766,6 @@ double CMediumProperties::Porosity(long number,double theta)
 	// CB Get idx of porosity in elements mat vector for het porosity
 	size_t por_index (0);
 	
-	if(porosity_model==13){
-      m_pcs_flow = PCSGetFlow();
-      idx_n = m_pcs_flow->GetElementValueIndex("POROSITY");
-    }
 	if (porosity_model == 11)
 		for (por_index = 0; por_index
 		     < m_pcs->m_msh->mat_names_vector.size(); por_index++)
@@ -4044,11 +3883,16 @@ double CMediumProperties::Porosity(long number,double theta)
 		porosity = PorosityVolStrain(number, porosity_model_values[0], assem);
 		break;
     case 13:
+	{
+		CRFProcess *m_pcs_flow = PCSGetFlow();
+		const int idx_n = m_pcs_flow->GetElementValueIndex("POROSITY");
+
 		// porosity change through dissolution/precipitation
 		// Here, you should access porosity from the element value vector of the flow process
 		// so you have to get the index of porosity above, if porosity model = 13
 		porosity = m_pcs_flow->GetElementValue(number, idx_n+1); 
 		break;
+	}
 #ifdef GEM_REACT
 	case 15:
 		porosity = porosity_model_values[0]; // default value as backup
@@ -4827,7 +4671,7 @@ double* CMediumProperties::PermeabilityTensor(long index)
 //12.(ii) PERMEABILITY_FUNCTION_PRESSURE
 //------------------------------------------------------------------------
 //WX: implementation of ths permeability_function_pressure. 1. version only for multi_phase_flow. 05.2010
-double CMediumProperties::PermeabilityFunctionPressure(long index, double PG2)
+double CMediumProperties::PermeabilityFunctionPressure(long /*index*/, double PG2)
 {
 	int gueltig; //WX: for function GetCurveValue(). 11.05.2010
 	double fac_perm_pressure = 1;
@@ -4954,6 +4798,7 @@ double CMediumProperties::PermeabilityFunctionStrain(long index,
 			double threshold = 0.;
 			threshold = permeability_strain_model_value[0];
 
+			// TODO: Error index out of bounds
 			if(permeability_strain_model_value[3]>MKleinsteZahl)
 				threshold = GetCurveValue(permeability_strain_model_value[3],
 		                                0,
@@ -5486,10 +5331,6 @@ void GetHeterogeneousFields()
 	// File handling
 	string file_path;
 	string file_path_base_ext;
-	CGSProject* m_gsp = NULL;
-	m_gsp = GSPGetMember("mmp");
-	if(m_gsp)
-		file_path = m_gsp->path;
 
 	//----------------------------------------------------------------------
 	// Tests
@@ -5876,10 +5717,6 @@ void CMediumProperties::WriteTecplotDistributedProperties()
 	//----------------------------------------------------------------------
 	// Path
 	string path;
-	CGSProject* m_gsp = NULL;
-	m_gsp = GSPGetMember("msh");
-	if (m_gsp)
-		path = m_gsp->path;
 	//--------------------------------------------------------------------
 	// MSH
 	MeshLib::CNode* m_nod = NULL;
@@ -7255,7 +7092,7 @@ double CMediumProperties::TortuosityFunction(long number,
    09/2004   CMCD In GeoSys 4
  */
 /**************************************************************************/
-double CMediumProperties::NonlinearFlowFunction(long index, int gp, double theta, CFiniteElementStd* assem)
+double CMediumProperties::NonlinearFlowFunction(long index, int gp, double /*theta*/, CFiniteElementStd* assem)
 {
 	double k_rel = 1.0;
 	//OK411
@@ -8716,7 +8553,7 @@ double CMediumProperties::HeatTransferCoefficient(long number,double theta, CFin
 
     return val;
 }
-//TN - added for TNEQ process
+//TN - added for TNEQ/TEQ process
 void CMediumProperties::setFrictionPhase (FiniteElement::FrictionPhase fric_phase)
 {
 	_fric_phase = fric_phase;

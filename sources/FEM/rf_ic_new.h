@@ -13,7 +13,7 @@
 // C++ STL
 //#include <fstream>
 //#include <string>
-//#include <vector>
+#include <vector>
 
 // FEM
 #include "DistributionInfo.h"                     // TF

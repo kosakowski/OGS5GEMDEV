@@ -17,12 +17,14 @@
 #include <iostream>
 #include <vector>
 
+#include "display.h"
 #include "StringTools.h"
 #include "files0.h"
 #include "makros.h"
 #include "msh_lib.h"
 #include "rf_kinreact.h"
 #include "mathlib.h"
+#include "timer.h"
 #include "rf_mfp_new.h"
 #include "rf_mmp_new.h"
 #include "rf_msp_new.h"
@@ -3812,9 +3814,9 @@ void CKinReactData::Biodegradation( double *m_Conc, long node, double eps, doubl
 									double *usedtneu, int *nok, int *nbad, int tt, int tsteps)
 {
   // double *Concentration; 
-  double* newVolume;
-  double *oldVolume;
-  double *oldMass;
+  double* newVolume = NULL;
+  double *oldVolume = NULL;
+  double *oldMass = NULL;
   double nexth = 0.;
   long sp;//, timelevel;
   //  int nok=0, nbad=0, Number_of_Components;
@@ -3824,7 +3826,7 @@ void CKinReactData::Biodegradation( double *m_Conc, long node, double eps, doubl
    double DarcyVelocity = 0.0;
    double mod_Reynolds;
    double beta_4, grain_var; //, grain_expo;
-   double one_three, two_three, four_nine, fife_nine, elev_nine, fife_three;
+   double one_three, two_three;
    double Peclet, Delta;
    double NAPLcontent = 1;
    double WATERcontent = 1;
@@ -3835,7 +3837,6 @@ void CKinReactData::Biodegradation( double *m_Conc, long node, double eps, doubl
    int idxS = 0;
    int shidx;
   CTimeDiscretization* m_tim = NULL;
-  string speciesname = " dummy";
   float garage = 0;
   bool success = false;
   //double *m_Conc_save;  // CB: for failure of ODE integration
@@ -3955,7 +3956,7 @@ void CKinReactData::Biodegradation( double *m_Conc, long node, double eps, doubl
      newVolume = dvector(0,Number_of_blobs);
      // initialize
      for (r = 0; r < Number_of_blobs; r++)
-	      oldVolume[r] = oldMass[r] = newVolume[r] = newVolume[r] = 0.;
+	      oldVolume[r] = oldMass[r] = newVolume[r] = 0.;
      // 1) Here, calculate current Mass and old Volume of NAPL for each blob
      //    - Mass is required for computing current Csat in 2)
      //    - old Volume is required for updating Interfacial Area in postprocessing
@@ -4070,10 +4071,6 @@ void CKinReactData::Biodegradation( double *m_Conc, long node, double eps, doubl
         beta_4       = 0.518+0.114*Delta+0.1+m_kb->UI ;
         one_three    = 1.00/3.00;
         two_three    = 2.00/3.00;
-        four_nine    = 4.00/9.00;
-        fife_nine    = 5.00/9.00;
-        elev_nine    = 11.00/9.00;
-        fife_three   = 5.00/3.00;
 
         switch(shidx)
         {
@@ -4291,7 +4288,7 @@ void CKinReactData::Calc_linearized_rates( double *m_Conc, long Number_of_Compon
 /*                                                                                   */
 /*************************************************************************************/
 
-void derivs(double t, double c[], double dcdt[], int n, long node, double steplength)
+void derivs(double t, double c[], double dcdt[], int n, long node, double /*steplength*/)
 {
 	t = t; //OK411
    int i, j, r, nreactions, BacteriaNumber;
@@ -6895,44 +6892,34 @@ double CKinReact::GetNodePoreVelocity(long node_number)
  **************************************************************************/
 double CKinReact::GetNodeDarcyVelocity(long node)
 {
+	CRFProcess *m_pcs = NULL;
 
-  // MeshLib::CNode* m_nod = NULL;
-  // MeshLib::CElem* m_ele = NULL;
-   CRFProcess *m_pcs = NULL;
-   //CFEMesh* m_msh = fem_msh_vector[0];            //SB: ToDo hart gesetzt
-   //CMediumProperties *m_mat_mp = NULL;
+	long i;
+	long idxVx, idxVy, idxVz;
+	double vel_nod[3];
+	double DarcyVel;
 
-   long i;
-   //long group;
-   //long el, elem;
-   long idxVx, idxVy, idxVz; //, idxs1;
-   double vel_nod[3]; //, coord[3], vel_ele[3];
-   //double distance, sum_w, weight;
-   //double* grav_c;
-   double DarcyVel,   theta;//poro,satu,
+	m_pcs = PCSGetFlow();
 
-   m_pcs = PCSGetFlow();
-   theta = m_pcs->m_num->ls_theta;
- 
- // initialize data structures
- for(i=0;i<3;i++)
-  vel_nod[i]=0;
- DarcyVel = 0;
+	// initialize data structures
+	for(i=0;i<3;i++)
+		vel_nod[i]=0;
+	DarcyVel = 0;
 
- // get the indices of velocity of flow process
- idxVx = m_pcs->GetNodeValueIndex("VELOCITY_X1"); 
- idxVy = m_pcs->GetNodeValueIndex("VELOCITY_Y1"); 
- idxVz = m_pcs->GetNodeValueIndex("VELOCITY_Z1"); 
- // Get the velocity components
- vel_nod[0] = m_pcs->GetNodeValue(node, idxVx);
- vel_nod[1] = m_pcs->GetNodeValue(node, idxVy);
- vel_nod[2] = m_pcs->GetNodeValue(node, idxVz);
- // absolute value of velocity vector 
- for(i=0;i<3;i++)
-   DarcyVel += pow(vel_nod[i],2); 
- DarcyVel = sqrt(DarcyVel); 
+	// get the indices of velocity of flow process
+	idxVx = m_pcs->GetNodeValueIndex("VELOCITY_X1");
+	idxVy = m_pcs->GetNodeValueIndex("VELOCITY_Y1");
+	idxVz = m_pcs->GetNodeValueIndex("VELOCITY_Z1");
+	// Get the velocity components
+	vel_nod[0] = m_pcs->GetNodeValue(node, idxVx);
+	vel_nod[1] = m_pcs->GetNodeValue(node, idxVy);
+	vel_nod[2] = m_pcs->GetNodeValue(node, idxVz);
+	// absolute value of velocity vector
+	for(i=0;i<3;i++)
+		DarcyVel += pow(vel_nod[i],2);
+	DarcyVel = sqrt(DarcyVel);
 
-   return DarcyVel;
+	return DarcyVel;
 }
 
 /**************************************************************************/

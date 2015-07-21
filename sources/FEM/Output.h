@@ -163,7 +163,14 @@ public:
 	double getTime () const { return _time; }
 
 	const std::vector<double>& getTimeVector () const { return time_vector; }
-	std::string& getFileBaseName () { return file_base_name; }
+    const std::string& getFileBaseName () const { return file_base_name; }
+
+    /**
+     * @brief sets file_base_name to the full path corresponding to the given base name.
+     *
+     * The function internally uses the defaultOutputPath as set as a commandline argument.
+     */
+    void setFileBaseName(const std::string& fn);
 
 	size_t getNSteps () const { return nSteps; }
 	/**

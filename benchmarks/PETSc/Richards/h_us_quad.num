@@ -10,7 +10,7 @@ GeoSys-NUM: Numerical Parameter ----------------------------------------
 petsc bcgs bjacobi 1.e-7 2000 1.0
  $NON_LINEAR_SOLVER 
 ; method error_tolerance max_iterations relaxation
-  PICARD   1.0e-3            10             0.0
+  PICARD   1.0e-3            50             0.0
 #STOP
 
 

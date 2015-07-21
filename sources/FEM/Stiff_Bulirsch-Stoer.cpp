@@ -772,7 +772,7 @@ bool rkqs(double y[], double dydx[], int n, double *x, double htry, double eps,
 
    // failed, truncation error too large
    htemp=SAFETY*h*pow(errmax,PSHRNK);                 // reduce step size
-   h=(h >= 0.0 ?  (htemp,0.1*h) : DMIN(htemp,0.1*h)); // no more than factor of 1/10
+   h=(h >= 0.0 ?  DMAX(htemp,0.1*h) : DMIN(htemp,0.1*h)); // no more than factor of 1/10
 	  xnew=(*x)+h;
     if (xnew == *x){ 
       std::cout << "step size underflow in rkqs" << "\n";

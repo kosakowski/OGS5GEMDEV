@@ -368,6 +368,8 @@ private:
 
 	// JOD
 	void SetSurfaceNodeVector(Surface* m_sfc, std::vector<long>&sfc_nod_vector);
+	void SetSurfaceNodeVector(GEOLIB::Surface const* sfc,
+		std::vector<std::size_t> & sfc_nod_vector);
 	void SetSurfaceNodeValueVector( CSourceTerm* m_st,
 	                                Surface* m_sfc,
 	                                std::vector<long> const &sfc_nod_vector,

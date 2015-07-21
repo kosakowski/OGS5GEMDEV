@@ -6,11 +6,16 @@
    last modified
 **************************************************************************/
 #include "makros.h"
+
 // C++ STL
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
+#include <ctime>
 #include <iostream>
+
+#include "display.h"
+#include "memory.h"
 
 // FileIO
 #include "BoundaryConditionIO.h"
@@ -30,7 +35,6 @@
 // FEMLib
 extern void remove_white_space(std::string*);
 //#include "problem.h"
-#include "gs_project.h"
 #include "tools.h"
 //#include "rf_node.h"
 #include "rf_bc_new.h"
@@ -506,6 +510,10 @@ std::ios::pos_type CBoundaryCondition::Read(std::ifstream* bc_file,
 						<< "(" << tempst2 << ")" << std::endl;
 					_isConstrainedBC = false;
 				}
+
+				in >> tempst;
+				if (tempst == "STABLE")
+					temp._isConstrainedVelStable = true;
 
 				if (getGeoType() != GEOLIB::SURFACE)
 					std::cout << "\n Warning! Make sure, that a velocity constrained BC is a SURFACE!" << std::endl;
@@ -1050,7 +1058,8 @@ void CBoundaryConditionsGroup::Set(CRFProcess* pcs, int ShiftInNodeVector,
 				{
 					elem = m_msh->ele_vector[ii];
 					nn = elem->GetNodesNumber(quadratic);
-					if(elem->GetPatchIndex()==static_cast<size_t>(bc->getExcavMatGr())||elem->GetPatchIndex()==Domain_MG)
+					if(elem->GetPatchIndex()==static_cast<size_t>(bc->getExcavMatGr())
+							|| static_cast<int>(elem->GetPatchIndex())==Domain_MG)
 					{
 						Size = (int)nodes_vector.size();
 						for(i = 0; i < nn; i++)
@@ -1367,18 +1376,22 @@ void CBoundaryConditionsGroup::Set(CRFProcess* pcs, int ShiftInNodeVector,
 //#endif
 					std::vector<size_t> msh_nod_vec;
 					m_msh->GetNODOnSFC(sfc, msh_nod_vec);
-//#ifndef NDEBUG
-//					debug_fname = "MeshNodesNew-BC-" + sfc_name + ".gli";
-//					debug_out.open (debug_fname.c_str());
-//					debug_out << "#POINTS" << "\n";
-//					for (size_t k(0); k<msh_nod_vec.size(); k++) {
-//						debug_out << k << " " <<
-//							GEOLIB::Point((m_msh->getNodeVector())[msh_nod_vec[k]]->getData()) <<
-//							" $NAME " << msh_nod_vec[k] << "\n";
-//					}
-//					debug_out << "#STOP" << "\n";
-//					debug_out.close();
-//#endif
+#ifndef NDEBUG
+#ifdef DEBUGMESHNODESEARCH
+					{
+						std::string const debug_fname(bc->geo_name+"-FoundNodes.gli");
+						std::ofstream debug_out(debug_fname.c_str());
+						debug_out << "#POINTS\n";
+						for (size_t k(0); k<msh_nod_vec.size(); k++) {
+							debug_out << k << " " <<
+								GEOLIB::Point((m_msh->getNodeVector())[msh_nod_vec[k]]->getData()) <<
+								" $NAME " << msh_nod_vec[k] << "\n";
+						}
+						debug_out << "#STOP" << "\n";
+						debug_out.close();
+					}
+#endif
+#endif
 //					nodes_vector.clear();
 					for (size_t k(0); k < msh_nod_vec.size(); k++) {
 //						std::cout << "\t" << k << "\t" << nodes_vector_old[k] << "\t" << msh_nod_vec[k] << "\n";
@@ -1800,6 +1813,8 @@ void CBoundaryCondition::SurfaceInterpolation(CRFProcess* m_pcs,
 				gC[i] = 0.0;
 			vn[2] = 0.0;
 			nPointsPly = (int) m_polyline->point_vector.size();
+			if (m_polyline->point_vector.front() == m_polyline->point_vector.back())
+				nPointsPly -= 1;
 			for (i = 0; i < nPointsPly; i++)
 			{
 				gC[0] += m_polyline->point_vector[i]->x;

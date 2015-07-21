@@ -25,6 +25,8 @@
 /*------------------------------------------------------------------------*/
 /* Pre-processor definitions */
 #include "makros.h"
+#include "display.h"
+#include "MemWatch.h"
 /*------------------------------------------------------------------------*/
 // MSHLib
 #include "msh_lib.h"
@@ -64,6 +66,7 @@ extern int ReadData(char*, GEOLIB::GEOObjects& geo_obj, std::string& unique_name
 #include "rf_node.h"
 #include "rf_out_new.h"
 #include "tools.h"
+#include "timer.h"
 #include "rf_msp_new.h"//WX:01.2013
 //
 #ifdef CHEMAPP
@@ -88,10 +91,6 @@ namespace process
 {class CRFProcessDeformation;
 }
 using process::CRFProcessDeformation;
-
-//NW: moved the following variables from rf.cpp to avoid linker errors
-std::string FileName;                             //WW
-std::string FilePath;                             //23.02.2009. WW
 
 /**************************************************************************
    GeoSys - Function: Constructor
@@ -396,7 +395,7 @@ Problem::Problem (char* filename) :
 		// Release memory of other domains. WW
 		for(size_t i = 0; i < dom_vector.size(); i++)
 		{
-			if(i != myrank)
+			if(i != (size_t)myrank)
 			{
 				// If shared memory, skip the following line
 #if defined(NEW_BREDUCE2)
@@ -471,7 +470,7 @@ Problem::Problem (char* filename) :
 
 		//check maximum number of coupling iterations against maximum time step increase
 		if (m_tim->time_control_type == TimeControlType::SELF_ADAPTIVE
-				&& m_tim->adapt_itr_type == IterationType::COUPLED
+				&& (m_tim->adapt_itr_type == IterationType::COUPLED || m_tim->adapt_itr_type==IterationType::COUPLED_STABLE_ERROR)
 				&& cpl_overall_max_iterations < m_tim->time_adapt_tim_vector.back())
 			std::cout << "Warning: Maximum number of coupling iterations is smaller than maximum time step increase!!!" << std::endl;
 	}
@@ -500,14 +499,9 @@ Problem::Problem (char* filename) :
 	CRFProcessDeformation* dm_pcs = NULL;
 
 	//  //WW
-	bool fluid_mom_pcs = false;
 	for (size_t i = 0; i < no_processes; i++)
 	{
 		m_pcs = pcs_vector[i];
-		if(m_pcs->getProcessType() == FiniteElement::FLUID_MOMENTUM) //09.2012 WW
-		{
-			fluid_mom_pcs = true;
-		}
 		m_pcs->CalcSecondaryVariables(true); //WW
 		m_pcs->Extropolation_MatValue(); //WW
 	}
@@ -520,6 +514,16 @@ Problem::Problem (char* filename) :
 
 #ifdef OGS_DELETE_EDGES_AFTER_INIT
 	// Free memory occupied by edges. 09.2012. WW
+	bool fluid_mom_pcs = false;
+	for (size_t i = 0; i < no_processes; i++)
+	{
+		m_pcs = pcs_vector[i];
+		if(m_pcs->getProcessType() == FiniteElement::FLUID_MOMENTUM) //09.2012 WW
+		{
+			fluid_mom_pcs = true;
+			break;
+		}
+	}
 	if(!fluid_mom_pcs)
 	{
        for(size_t k = 0; k < fem_msh_vector.size(); k++)
@@ -596,7 +600,7 @@ Problem::~Problem()
     3: PS_GLOBAL   | 4: MULTI_PHASE_FLOW  | 5: COMPONENTAL_FLOW
     6: OVERLAND_FLOW   | 7: AIR_FLOW          | 8: HEAT_TRANSPORT
     9: FLUID_MOMENTUM  |10: RANDOM_WALK       |11: MASS_TRANSPORT
-   12: DEFORMATION     | 14: TNEQ
+   12: DEFORMATION     | 14: TNEQ             |15: TES
    Return:
    Programming:
    07/2008 WW
@@ -747,6 +751,14 @@ inline int Problem::AssignProcessIndex(CRFProcess* m_pcs, bool activefunc)
       active_processes[14] = &Problem::TNEQ;
       return 14;
    }
+	else if (m_pcs->getProcessType() == FiniteElement::TES)
+	{
+		if (!activefunc)
+			return 15;
+		total_processes[15] = m_pcs;
+		active_processes[15] = &Problem::TES;
+		return 15;
+	}
    std::cout << "Error: no process is specified. " << '\n';
 	return -1;
 }
@@ -760,7 +772,7 @@ inline int Problem::AssignProcessIndex(CRFProcess* m_pcs, bool activefunc)
     3: TWO_PHASE_FLOW  | 4: MULTI_PHASE_FLOW  | 5: COMPONENTAL_FLOW
     6: OVERLAND_FLOW   | 7: AIR_FLOW          | 8: HEAT_TRANSPORT
     9: FLUID_MOMENTUM  |10: RANDOM_WALK       |11: MASS_TRANSPORT
-   12: DEFORMATION     |13: PS_GLOBAL         |14: TNEQ
+   12: DEFORMATION     |13: PS_GLOBAL         |14: TNEQ              | 15: TES
    Return:
    Programming:
    07/2008 WW
@@ -769,28 +781,26 @@ inline int Problem::AssignProcessIndex(CRFProcess* m_pcs, bool activefunc)
    --------------------------------------------------------------------*/
 void Problem::SetActiveProcesses()
 {
-	int i;
 	CRFProcess* m_pcs = NULL;
-        const int max_processes = 15;                  // PCH, TN
 	total_processes.resize(max_processes);
 	active_processes = new ProblemMemFn[max_processes];
 	coupled_process_index.resize(max_processes);
 	exe_flag = new bool[max_processes];
 	//
-	for(i = 0; i < max_processes; i++)
+	for(size_t i = 0; i < max_processes; i++)
 	{
 		total_processes[i] = NULL;
 		active_processes[i] = NULL;
 		coupled_process_index[i] = -1;
 	}
 	//
-	for(i = 0; i < (int)pcs_vector.size(); i++)
+	for(size_t i = 0; i < pcs_vector.size(); i++)
 	{
 		m_pcs = pcs_vector[i];
 		AssignProcessIndex(m_pcs);
 	}
 	//
-	for(i = 0; i < max_processes; i++)
+	for(size_t i = 0; i < max_processes; i++)
 		if(total_processes[i])
 		{
 			// JT: Check for a coupled variable or process (variable is probably necessary for multiple component transport situations.
@@ -1242,7 +1252,7 @@ bool Problem::CouplingLoop()
 	int i, index, cpl_index;
 	double max_outer_error, max_inner_error; //, error;
         bool transient_bc = false;
-	bool run_flag[15]; // KG: fixed upper number of processes (14) is not a good idea! use same number as for exe_flag ...
+	bool run_flag[max_processes];
 	int outer_index, inner_index, inner_max; //, inner_min;
 	//
 	CRFProcess* a_pcs = NULL;
@@ -1405,10 +1415,17 @@ bool Problem::CouplingLoop()
 				max_outer_error = MMax(max_outer_error,a_pcs->cpl_max_relative_error);
 
 				// Reapply BCs if constrained BC
+#if defined(USE_MPI) || defined(USE_PETSC)
+				bool has_constained_bc_i = a_pcs->hasConstrainedBC();
+				bool has_constained_bc = false;
+				MPI_Allreduce(&has_constained_bc_i, &has_constained_bc, 1, MPI_INT, MPI_LOR, MPI_COMM_WORLD);
+			    	if(has_constained_bc)   
+#else                                
 				if(a_pcs->hasConstrainedBC())
+#endif
 				{
-#ifdef USE_MPI
-					const int rank = myrank;
+#if defined(USE_MPI) || defined(USE_PETSC)
+					const int rank = mrank;
 #else
 					const int rank = -1;
 #endif
@@ -2841,6 +2858,28 @@ inline double Problem::TNEQ()
 	return error;
 }
 
+
+/*-------------------------------------------------------------------------
+GeoSys - Function: TES()
+Task: Simulate Reactive thermal nonequilibrium flow
+Return: error
+Programming:
+07/2013 HS,TN Implementation
+Modification:
+-------------------------------------------------------------------------*/
+inline double Problem::TES()
+{
+	double error = 1.0e+8;
+	CRFProcess* m_pcs = total_processes[15];
+	if(!m_pcs->selected)
+		return error;
+	error = m_pcs->ExecuteNonLinear(loop_process_number); 
+	if(m_pcs->TimeStepAccept())
+		m_pcs->CalIntegrationPointValue();
+	return error;
+}
+
+
 /*-------------------------------------------------------------------------
    GeoSys - Function: GroundWaterFlow()
    Task:
@@ -3089,7 +3128,7 @@ inline double Problem::MassTrasport()
     double error = 1.0e+8;
     double minimum_error;
     bool capvec = false;
-    bool prqvec = false;
+    // bool prqvec = false;
     int  max_gems_iteration_loop;
     CRFProcess* m_pcs = total_processes[11];
     //
@@ -3127,7 +3166,7 @@ inline double Problem::MassTrasport()
                 if (local_richards_flow != NULL)
                 {
                     int nidx1 = local_richards_flow->GetNodeValueIndex("PRESSURE1",0);
-                    for (int j=0; j<m_pcs->m_msh->GetNodesNumber(false); j++)
+				for (size_t j=0; j<m_pcs->m_msh->GetNodesNumber(false);j++)
                     {
                         double local_conc = m_pcs->GetNodeValue(j,nidx0+1);
                         double local_pressure = local_richards_flow->GetNodeValue(j,nidx1+1);
@@ -3144,7 +3183,8 @@ inline double Problem::MassTrasport()
             CompProperties* m_cp = cp_vec[component];
 
             if (m_cp->OutputMassOfComponentInModel == 1) {			// 05/2012 BG
-                if (singlephaseflow_process.size() >= 0)
+			// TODO: Check
+			if (singlephaseflow_process.size() > 0)
                     OutputMassOfComponentInModel(singlephaseflow_process, m_pcs);
                 else
                     OutputMassOfComponentInModel(multiphase_processes, m_pcs);
@@ -3877,6 +3917,10 @@ inline void Problem::LOPExecuteRegionalRichardsFlow(CRFProcess* m_pcs_global, in
 		}
 		//m_pcs->m_msh = FEMGet("RICHARDS_FLOW");
 		// pcs->m_msh->RenumberNodesForGlobalAssembly(); related to Comment 1  // MB/WW
+		if (!m_pcs_local->TimeStepAccept()) {
+			m_pcs_global->accepted = false;
+			break;
+	}
 	}
 #else // ifndef USE_MPI_REGSOIL
 	num_parallel_blocks = no_richards_problems / size;

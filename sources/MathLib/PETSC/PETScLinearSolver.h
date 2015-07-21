@@ -33,7 +33,7 @@ public:
     ~PETScLinearSolver();
 
   void Config(const PetscReal tol, const PetscInt maxits, const KSPType lsol,
-                const PCType prec_type);
+              const PCType prec_type, const std::string &prefix = "");
 
   void Init(const int *sparse_index = NULL);
   
@@ -78,14 +78,12 @@ public:
        MatZeroEntries(A);
     }
 
-
     void set_rank_size(const int m_rank, const int size)
     {
       mpi_size = size;
       rank = m_rank;  
     } 
  
-
     PetscInt getStartRow() const {return i_start;} 
     PetscInt getEndRow() const {return i_end;} 
 

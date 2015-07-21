@@ -10,7 +10,7 @@
   805      6 1.e-010       1000            0    1    2
  $NON_LINEAR_SOLVER 
 ; method error_tolerance max_iterations relaxation
-  PICARD 1e-5            25             0.0
+  PICARD 1e-5            50             0.0
 
 #NUMERICS
  $PCS_TYPE
@@ -22,7 +22,7 @@
   3
  $NON_LINEAR_SOLVER  
  ; method error_tolerance max_iterations relaxation
-  PICARD 1e-3            25             0.0
+  PICARD 1e-3            50             0.0
 #STOP
 
 

@@ -5184,7 +5184,7 @@ int CECLIPSEData::WriteDataBackToEclipse(CRFProcess* m_pcs, std::string folder)
 {
 	std::string Filename;
 	//WW int phase1, phase2;
-	int phase1, phase2; // SB redo wtp
+	int /*phase1,*/ phase2; // SB redo wtp
 	CRFProcess* n_pcs = NULL;
 	//int indexProcess;
 	int indexConcentration;
@@ -5254,14 +5254,14 @@ int CECLIPSEData::WriteDataBackToEclipse(CRFProcess* m_pcs, std::string folder)
 	case 2:
 		//WW	phase1 = 0;
 		//WW	phase2 = 1;
-		phase1 = 0;
+		//phase1 = 0;
 		phase2 = 1;
 		break;
 	case 3:
 		// Assumption that there are 3 phases but water is only used for the boundaries -> the oil and gas phase are the relevant one for the exchange with OGS
 		//WW	phase1 = 1;
 		//WW	phase2 = 2;
-		phase1 = 1;
+		//phase1 = 1;
 		phase2 = 2;
 		break;
 	default:

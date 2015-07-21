@@ -90,7 +90,7 @@ CElem::CElem(size_t Index, CElem* onwer, int Face) :
 {
 	int i, j, k, n, ne;
 	int faceIndex_loc[10];
-	int edgeIndex_loc[10];
+	int edgeIndex_loc[10] = {};
 	no_faces_on_surface = 0;
 	n = owner->GetElementFaceNodes(Face, faceIndex_loc);
 	face_index = Face;
@@ -1765,6 +1765,5 @@ void CElem::InvertNormalVector()
 	normal_vector[2] = -normal_vector[2];
 
 }
-
 
 }                                                 // namespace MeshLib

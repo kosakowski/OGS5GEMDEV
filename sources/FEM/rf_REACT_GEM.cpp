@@ -4528,10 +4528,10 @@ double REACT_GEM::CementHydrationKinetics (double oldvalue, long kin_phasenr, do
 
     Rd=m_kin[kin_phasenr].kinetic_parameters[3]* pow(alpha_t,2.0/3.0);
     Rd /= (1-pow(alpha_t,1.0/3.0));
-    Rm=MIN(Rn,Rd);
+    Rm=std::min(Rn,Rd);
 
     Rs=m_kin[kin_phasenr].kinetic_parameters[4]*pow(alpha_t,(m_kin[kin_phasenr].kinetic_parameters[5]));
-    Rm=MIN(Rm,Rs);
+    Rm=std::min(Rm,Rs);
     // calculate new rate
     if (  oldvalue < (m_kin[kin_phasenr].kinetic_parameters[6] * m_kin[kin_phasenr].surface_area[0])) // initial behaviour
     {

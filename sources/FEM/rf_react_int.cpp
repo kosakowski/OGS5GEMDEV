@@ -2721,7 +2721,7 @@ void VLE_CalcNewPressure(double T, double &P, double &V_gas, double &V_liquid, d
     rho = VLE::density_CO2(T,P); //to use mixture fluid EoS
 }
 
-void VLE_isobaric_fixphase(double T, double P, Phase_Properties2 &vapor, Phase_Properties2 &liquid, Phase_Properties2 &solid, int f){
+void VLE_isobaric_fixphase(double T, double P, Phase_Properties2 &vapor, Phase_Properties2 &liquid, Phase_Properties2 & /*solid*/, int /*f*/){
 	double wH2O=0, mCO2=0, mNaCl=0;
 	wH2O=liquid.H2O/55.51;
 	mCO2=liquid.CO2/wH2O;

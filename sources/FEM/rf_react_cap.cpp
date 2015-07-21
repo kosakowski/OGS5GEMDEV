@@ -15,6 +15,7 @@ Kiel, 11/2008
 #include <signal.h>
 #include "display.h"
 #include "makros.h"
+#include "memory.h"
 #include "rf_pcs.h"
 //#include "nodes.h"
 #include "rf_pcs.h"
@@ -54,8 +55,6 @@ Kiel, 11/2008
 #include "VLE.h"
 #include "HKF.h"
 //CB2406 #endif
-
-#include "gs_project.h" // CB
 
 using namespace std;
 /*
@@ -1844,14 +1843,14 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
           // here, calculate equilibrium geochemistry for a node
 		noerr=0;
 		if(first_time && fg==0){ // do when the first node is called
-			CAP_tqce(" ", 0, 0, vals, &noerr);
+			CAP_tqce(const_cast<char*>(" "), 0, 0, vals, &noerr);
 			first_time = false;
 		}
 		else {
 			if(ii==1 /*|| ii==1 || ii==8 || ii==12 || ii==16 || ii==20 */)
-				CAP_tqce(" ", 0, 0, vals, &noerr); // this is faster, using previuos result as start for iteration
+				CAP_tqce(const_cast<char*>(" "), 0, 0, vals, &noerr); // this is faster, using previuos result as start for iteration
 			else
-				CAP_tqce(" ", 0, 0, vals, &noerr); // this is faster, using previuos result as start for iteration
+				CAP_tqce(const_cast<char*>(" "), 0, 0, vals, &noerr); // this is faster, using previuos result as start for iteration
 		}
       }
       //DL ---------------relative activity---------------start
@@ -1898,7 +1897,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
             // calculate
 			noerr=0;
 			if(first_time && fg==0){ // do when the first node is called
-				CAP_tqce(" ", 0, 0, vals, &noerr);
+				CAP_tqce(const_cast<char*>(" "), 0, 0, vals, &noerr);
 				first_time = false;
 			}
 			else {
@@ -2317,7 +2316,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 				//return redox Eh value of given reaction at this node
         if(pcs_redox>-1){
 		  value1=0.0;
-		  for(i=2;i<(int)species_redox_name.size();i++){
+		  for(i=2;i<species_redox_name.size();i++){
 			  if(species_redox_phase[i]==0)
 				  CAP_tqgetr((char *)"ac", species_redox_idx[i], 0, &value, &noerr);
 			  else
@@ -2372,7 +2371,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 } // end of function loopnodereact
 
 
-void REACT_CAP::LoopNodeReact_Liquid_Vapor(int f, int nodeflag){
+void REACT_CAP::LoopNodeReact_Liquid_Vapor(int /*f*/, int nodeflag){
 	LI i, noerr = 0;
 	cout << "\n" << " --> Liquid Vapor Reactions " << "\n";
 
@@ -2387,7 +2386,7 @@ void REACT_CAP::LoopNodeReact_Liquid_Vapor(int f, int nodeflag){
 		if(species_kin_phase[i]==0) CAP_tqcsp(species_kin_idx[i], (char *)"dormant", &noerr);		
 }
 
-void REACT_CAP::LoopNodeReact_Liquid_Solid(int f, int nodeflag){
+void REACT_CAP::LoopNodeReact_Liquid_Solid(int /*f*/, int /*nodeflag*/){
 	//LI i, noerr=0;
 	cout << "\n" << " --> Liquid Solid Reactions " << "\n";
 
@@ -2410,7 +2409,7 @@ void REACT_CAP::LoopNodeReact_Liquid_Solid(int f, int nodeflag){
 	  kinetic parameters updata at the ChemApp state
 	                                         DL   10/10
 ***********************************************************/
-void REACT_CAP::KinParamUpdata(int ii, int err, vector <double> & spvc){  
+void REACT_CAP::KinParamUpdata(int /*ii*/, int err, vector <double> & spvc){
 
 	int i, i_re, i_resp;
 	long noerr = 0;
@@ -2465,7 +2464,7 @@ void REACT_CAP::KinParamUpdata(int ii, int err, vector <double> & spvc){
 	  kinetic parameters updata HKF
 	                                         DL   11/10
 ***********************************************************/
-void REACT_CAP::KinParamUpdataHKF(int ii, double T, double P, int err){
+void REACT_CAP::KinParamUpdataHKF(int /*ii*/, double T, double P, int err){
 	
 	int i=-1, i_re, i_resp;
 	//long noerr = 0;
@@ -3149,5 +3148,3 @@ void REACT_CAP::ConvertIC2BC(const GEOLIB::GEOObjects& geo_obj, const std::strin
 	}
 
 }
-#ifdef OGS_FEM_CAP // CAP_REACT
-#endif

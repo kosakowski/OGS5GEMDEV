@@ -13,6 +13,7 @@
 #include <iostream>
 #include <set>
 
+#include "display.h"
 #include "files0.h"
 #include "mathlib.h"
 
@@ -1488,7 +1489,7 @@ std::vector<double>&node_value_vector) const
       static bool isIDinRange( const size_t n_id, const size_t id_max0, 
                                    const size_t id_min1,  const size_t id_max1 )
       {
-	return ( (n_id < id_max0) || (n_id >= id_min1) && (n_id <  id_max1) ) ? true : false;
+	return (n_id < id_max0) || (n_id >= id_min1 && n_id <  id_max1);
       }
    };
 #endif
@@ -1714,6 +1715,8 @@ void CSourceTerm::FaceIntegration(CFEMesh* msh, std::vector<long> const &nodes_o
                gC[i] = 0.0;
             vn[2] = 0.0;
             nPointsPly = (int) m_polyline->point_vector.size();
+            if (m_polyline->point_vector.front() == m_polyline->point_vector.back())
+               nPointsPly -= 1;
             for (i = 0; i < nPointsPly; i++)
             {
                gC[0] += m_polyline->point_vector[i]->x;
@@ -1860,6 +1863,10 @@ void CSourceTerm::FaceIntegration(CFEMesh* msh, std::vector<long> const &nodes_o
          //1st check
          if (elem->selected < nfn)
             continue;
+
+         if(elem->GetDimension() != 3)
+            continue;
+
          //2nd check: if all nodes of the face are on the surface
          count = 0;
          for (k = 0; k < nfn; k++)
@@ -1886,7 +1893,7 @@ void CSourceTerm::FaceIntegration(CFEMesh* msh, std::vector<long> const &nodes_o
          face->SetOrder(msh->getOrder());
          face->ComputeVolume();
          fem->setOrder(msh->getOrder() + 1);
-         fem->ConfigElement(face, true);
+         fem->ConfigElement(face, this->_pcs->m_num->ele_gauss_points, true);
          fem->FaceIntegration(nodesFVal);
          for (k = 0; k < nfn; k++)
          {
@@ -2026,7 +2033,7 @@ std::vector<double>&node_value_vector) const
          continue;
       for (size_t j = 0; j < nn; j++)
          nodesFVal[j] = node_value_vector[G2L[e_nodes[j]->GetIndex()]];
-      fem->ConfigElement(elem, true);
+      fem->ConfigElement(elem, this->_pcs->m_num->ele_gauss_points, true);
       fem->setOrder(msh->getOrder() + 1);
       fem->FaceIntegration(nodesFVal);
       for (size_t j = 0; j < nn; j++)
@@ -2428,7 +2435,7 @@ CNodeValue* cnodev)
 void GetCouplingNODValueNewton(double &value, CSourceTerm* m_st,
 CNodeValue* cnodev)
 {
-   double relPerm, area, condArea, gamma;
+   double relPerm, area, condArea, gamma = 0.0;
    double h_this, h_cond, z_this, z_cond, h_this_shifted, h_this_averaged;
    double epsilon = 1.e-7, value_jacobi, h_this_epsilon = 0.0,
       relPerm_epsilon, condArea_epsilon;          //OK411 epsilon as in pcs->assembleParabolicEquationNewton
@@ -2990,7 +2997,6 @@ void GetNODValue(double& value, CNodeValue* cnodev, CSourceTerm* st)
  **************************************************************************/
 void GetNODHeatTransfer(double& value, CSourceTerm* st, long geo_node){
    CRFProcess* m_pcs_this = NULL;
-   int i,Index;
    double poro;
 
    //Get process type
@@ -2999,16 +3005,14 @@ void GetNODHeatTransfer(double& value, CSourceTerm* st, long geo_node){
    CFEMesh* mesh (m_pcs_this->m_msh);
    
    //Get number of conneted elements
-   long number_of_connected_elements = mesh->nod_vector[geo_node]->getConnectedElementIDs().size();
+   size_t number_of_connected_elements = mesh->nod_vector[geo_node]->getConnectedElementIDs().size();
 
    poro = 0.0;
    double geo_area = 0.0;
 
    //loop over connected elements and get average porosity
-   for (i=0;i<number_of_connected_elements;i++){
+   for (size_t i=0;i<number_of_connected_elements;i++){
 	   long msh_ele = mesh->nod_vector[geo_node]->getConnectedElementIDs()[i];
-	   CElem *m_ele = mesh->ele_vector[msh_ele];
-	   Index = m_ele->GetIndex();
 	   int group = mesh->ele_vector[msh_ele]->GetPatchIndex();
 	   poro += mmp_vector[group]->porosity;
 	   geo_area += mmp_vector[group]->geo_area;
@@ -3028,6 +3032,7 @@ void GetNODHeatTransfer(double& value, CSourceTerm* st, long geo_node){
    double temp = m_pcs_this->GetNodeValue(geo_node, nidx1);
 
    //Find position of current node in st vectors
+   size_t i;
    for (i=0; i<st->get_node_value_vectorArea().size(); i++){
 	   if (geo_node == st->st_node_ids[i])
 		   break;
@@ -3362,6 +3367,7 @@ void CSourceTermGroup::SetCOL(CSourceTerm *m_st, const int ShiftInNodeVector)
 void CSourceTermGroup::SetSFC(CSourceTerm* m_st, const int ShiftInNodeVector)
 {
    std::vector<long> sfc_nod_vector;
+   std::vector<std::size_t> sfc_node_ids;
    std::vector<long> sfc_nod_vector_cond;
    std::vector<double> sfc_nod_val_vector;
    Surface* m_sfc = NULL;
@@ -3370,8 +3376,17 @@ void CSourceTermGroup::SetSFC(CSourceTerm* m_st, const int ShiftInNodeVector)
 
    if (m_sfc)
    {
+      GEOLIB::Surface const& sfc(
+		*(dynamic_cast<GEOLIB::Surface const*>(m_st->getGeoObj()))
+      );
+      std::cout << "Surface " << m_st->geo_name << ": " << sfc.getNTriangles()  << "\n";
+      SetSurfaceNodeVector(&sfc, sfc_node_ids);
 
+/*
       SetSurfaceNodeVector(m_sfc, sfc_nod_vector);
+*/
+      sfc_nod_vector.insert(sfc_nod_vector.begin(),
+         sfc_node_ids.begin(), sfc_node_ids.end());
       if (m_st->isCoupled())
          m_st->SetSurfaceNodeVectorConditional(sfc_nod_vector,
             sfc_nod_vector_cond);
@@ -3465,6 +3480,12 @@ void CSourceTermGroup::SetSurfaceNodeVector(Surface* m_sfc,
    m_msh->GetNODOnSFC(m_sfc, sfc_nod_vector, for_source);
 }
 
+void CSourceTermGroup::SetSurfaceNodeVector(GEOLIB::Surface const* sfc,
+		std::vector<std::size_t> & sfc_nod_vector)
+{
+   const bool for_source = true;
+   m_msh->GetNODOnSFC(sfc, sfc_nod_vector, for_source);
+}
 
 /**************************************************************************
  MSHLib-Method:
@@ -3857,9 +3878,13 @@ void CSourceTermGroup::SetSurfaceNodeValueVector(CSourceTerm* st,
       while (p != m_sfc->polyline_of_surface_vector.end())
       {
          m_ply = *p;
+         long nPointsPly = (long) m_ply->point_vector.size();
+         if (m_ply->point_vector.front() == m_ply->point_vector.back())
+            nPointsPly -= 1;
+
          for (long k = 0; k < (long) st->DistribedBC.size(); k++)
          {
-            for (long l = 0; l < (long) m_ply->point_vector.size(); l++)
+            for (long l = 0; l < nPointsPly; l++)
             {
                if (st->PointsHaveDistribedBC[k]
                   == m_ply->point_vector[l]->id)
@@ -4865,5 +4890,3 @@ double z_cond, CSourceTerm* m_st)
       return factor * (h_cond - z_cond);  // Richards', two-phase flow (liquid & gas)
    }
 }
-
-

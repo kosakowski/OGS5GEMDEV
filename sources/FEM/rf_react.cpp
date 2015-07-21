@@ -6,6 +6,7 @@
 #include "display.h"
 #include "files0.h"
 #include "makros.h"
+#include "memory.h"
 #include "mathlib.h"
 #include "rf_ic_new.h"
 #include "rf_kinreact.h"
@@ -52,6 +53,11 @@ extern "C"
 }
 
 string libphreeqc_print;
+#endif
+
+// WH: coupling OGS#IPQC
+#ifdef OGS_FEM_IPQC
+#include <IPhreeqc.h>
 #endif
 
 vector <REACT*> REACT_vec;
@@ -602,7 +608,7 @@ void CRFProcess::InterpolateTempGP(CRFProcess* m_pcs, std::string name)
 		else
 			GP[0] = GP[1] = GP[2] = 0.0;
 
-		m_pcs->fem->ConfigElement(elem);
+		m_pcs->fem->ConfigElement(elem, m_num->ele_gauss_points);
 		m_pcs->fem->setUnitCoordinates(GP);
 		m_pcs->fem->ComputeShapefct(1); // Linear
 		for(j = 0; j < elem->GetVertexNumber(); j++)
@@ -658,7 +664,7 @@ void CRFProcess::ExtropolateTempGP(CRFProcess* m_pcs, std::string name)
 		else
 			GP[0] = GP[1] = GP[2] = 0.0;
 
-		m_pcs->fem->ConfigElement(elem);
+		m_pcs->fem->ConfigElement(elem, m_pcs->m_num->ele_gauss_points);
 		m_pcs->fem->setUnitCoordinates(GP);
 		m_pcs->fem->ComputeShapefct(1); // Linear
 		for(j = 0; j < elem->GetVertexNumber(); j++)
@@ -2587,6 +2593,46 @@ double unitfactor_l = 1, unitfactor_s = 1;
 
 int REACT::Call_Phreeqc(void)
 {
+//WH: run IPQC
+#ifdef OGS_FEM_IPQC
+  std::string ipqc_database; //WH: database name for IPQC
+  int returnCode = 1;
+  int pqcId = CreateIPhreeqc(); // create IPQC instance
+
+  if(this->file_name_database.size()==0)
+    ipqc_database = "phreeqc.dat";
+  else
+    ipqc_database = this->file_name_database;
+  
+  // Load phreeqc database
+  if(LoadDatabase(pqcId, (FilePath + ipqc_database).c_str()) > 0)
+  {
+    OutputErrorString(pqcId);
+    returnCode = 0;
+  }
+
+  //run the specified phreeqc input file "phinp.dat".
+  if(returnCode == 1)
+  {
+    //Sets the selected-output file switch on, so that phreeqc will write output to the SELECTED_OUTPUT file "phout_sel.dat"
+    SetSelectedOutputFileOn(pqcId, 1);
+
+    if(RunFile(pqcId, "phinp.dat") > 0)
+    {
+      OutputErrorString(pqcId);
+      returnCode = 0;
+    }
+  }
+
+  if(DestroyIPhreeqc(pqcId) != IPQ_OK) // destroy IPQC instance
+    {
+      OutputErrorString(pqcId);
+      returnCode = 0;
+    }
+
+  return returnCode;
+#else
+
   std::string mm_phreeqc = "phreeqc phinp.dat  phinp.out  ";
   //const char *m_phreeqc;
    //  m_phreeqc="phrqc phinp.dat  phinp.out  phreeqc.dat";
@@ -2613,6 +2659,7 @@ int REACT::Call_Phreeqc(void)
 
 #ifndef PHREEQC
 	return 1;
+#endif
 #endif
 }
 

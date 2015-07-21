@@ -258,7 +258,7 @@ double VLE::dZ_H2O(double V){
 }
 
 
-double VLE::Z_CO2(double T, double P, double V){ //K, bar, cm^3
+double VLE::Z_CO2(double T, double /*P*/, double V){ //K, bar, cm^3
     double a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15;
 	double R,Tc,Pc,Vc,Tr,Vr,B,C,D,E,F;	
 	a1 =  8.99288497E-2;    
@@ -322,7 +322,7 @@ double VLE::LnPHI_CO2(double T, double P){
     return Z-1-log(Z)+B/Vr+C/2/pow(Vr,2)+D/4/pow(Vr,4)+E/5/pow(Vr,5)+a13/(2*pow(Tr,3)*a15)*(a14+1-(a14+1+a15/pow(Vr,2))*exp(-a15/pow(Vr,2)));
 }
 
-double VLE::Z_CH4(double T, double P, double V){
+double VLE::Z_CH4(double T, double /*P*/, double V){
     double a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15;
 	double R,Tc,Pc,Vc,Tr,Vr,B,C,D,E,F;
     a1  =  8.72553928E-2;	
@@ -386,7 +386,7 @@ double VLE::LnPHI_CH4(double T, double P){
     return Z-1-log(Z)+B/Vr+C/2/pow(Vr,2)+D/4/pow(Vr,4)+E/5/pow(Vr,5)+a13/(2*pow(Tr,3)*a15)*(a14+1-(a14+1+a15/pow(Vr,2))*exp(-a15/pow(Vr,2)));
 }
 
-double VLE::Z_H2O(double T, double P, double V){
+double VLE::Z_H2O(double T, double /*P*/, double V){
     double a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15;
 	double R,Tc,Pc,Vc,Tr,Vr,B,C,D,E,F;
 	a1 = 8.64449220E-2;		

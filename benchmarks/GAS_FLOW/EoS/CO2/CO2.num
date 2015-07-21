@@ -9,6 +9,6 @@ $LINEAR_SOLVER
 2	1	1.0e-015	2000	1	100	4
 $NON_LINEAR_SOLVER
 ; method error_tolerance max_iterations relaxation
-PICARD	1.0e-05	10	1
+PICARD	1.0e-05	50	1
 
 #STOP

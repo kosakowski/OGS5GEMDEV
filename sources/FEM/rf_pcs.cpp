@@ -41,6 +41,8 @@
 #include <set>
 
 #include "isnan.h"
+#include "display.h"
+#include "memory.h"
 // GEOLib
 #include "PointWithID.h"
 
@@ -732,7 +734,9 @@ void CRFProcess::Create()
 #ifdef USE_MPI
      eqs_new = EQS_Vector[eqs_num * k];
 #else
-     if(getProcessType() == FiniteElement::MULTI_PHASE_FLOW || getProcessType() == FiniteElement::PS_GLOBAL || getProcessType() == FiniteElement::TNEQ)
+	if (getProcessType() == FiniteElement::MULTI_PHASE_FLOW || getProcessType() == FiniteElement::PS_GLOBAL
+	    || getProcessType() == FiniteElement::TNEQ
+	    || getProcessType() == FiniteElement::TES)
 	 {
 	   eqs_new = EQS_Vector[eqs_num * k + 2 ];
      }
@@ -1021,7 +1025,6 @@ void CRFProcess::Create()
 				Axisymm = -1;  // Axisymmetry is true
 			fem = new CFiniteElementStd(this, Axisymm
 			                            * m_msh->GetCoordinateFlag());
-			fem->SetGaussPointNumber(m_num->ele_gauss_points);
 		}
 	}
 
@@ -1273,23 +1276,15 @@ void CRFProcess:: WriteSolution()
 	if ( ( aktueller_zeitschritt % nwrite_restart  ) > 0 )
 		return;
 	
-#if defined(USE_PETSC)  //|| defined(other parallel libs)//03.3012. WW
-	string rank_str;
-    	int rank , msize;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-        MPI_Comm_size(MPI_COMM_WORLD, &msize);
-	stringstream ss (stringstream::in | stringstream::out);
-	ss.clear(); 
-	ss.str("");
-	ss << rank;
-	rank_str = ss.str();
-	ss.clear();
 	std::string pcs_type_name (convertProcessTypeToString(this->getProcessType()));
-	std::string m_file_name = FileName + "_" + pcs_type_name + "_" +
-	                          pcs_primary_function_name[0] + "_primary_value_"+rank_str+".asc";
+#if defined(USE_PETSC)  //|| defined(other parallel libs)//03.3012. WW
+	int rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	std::string m_file_name = FileName + "_" + pcs_type_name + "_"
+	                          + pcs_primary_function_name[0] + "_primary_value_"
+	                          + number2str(rank) + ".asc";
 
 #else
-	std::string pcs_type_name (convertProcessTypeToString(this->getProcessType()));
 	std::string m_file_name = FileName + "_" + pcs_type_name + "_" +
 	                          pcs_primary_function_name[0] + "_primary_value.asc";
 #endif				  
@@ -1331,24 +1326,15 @@ void CRFProcess:: WriteSolution()
 **************************************************************************/
 void CRFProcess:: ReadSolution()
 {
- 	
-#if defined(USE_PETSC)  //|| defined(other parallel libs)//03.3012. WW
-        string rank_str;
-	int rank , msize;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-        MPI_Comm_size(MPI_COMM_WORLD, &msize);
-	stringstream ss (stringstream::in | stringstream::out);
-	ss.clear(); 
-	ss.str("");
-	ss << rank;
-	rank_str = ss.str();
-	ss.clear();
 	std::string pcs_type_name (convertProcessTypeToString(this->getProcessType()));
-	std::string m_file_name = FileName + "_" + pcs_type_name + "_" +
-	                          pcs_primary_function_name[0] + "_primary_value_"+rank_str+".asc";
+#if defined(USE_PETSC)  //|| defined(other parallel libs)//03.3012. WW
+	int rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	std::string m_file_name = FileName + "_" + pcs_type_name + "_"
+	                          + pcs_primary_function_name[0] + "_primary_value_"
+	                          + number2str(rank) + ".asc";
 
 #else 
-	std::string pcs_type_name (convertProcessTypeToString(this->getProcessType()));
 	std::string m_file_name = FileName + "_" + pcs_type_name + "_" +
 	                          pcs_primary_function_name[0] + "_primary_value.asc";
 #endif
@@ -2511,6 +2497,11 @@ void CRFProcess::Config(void)
    {
       type = 1414;
       ConfigTNEQ();
+}
+	if (this->getProcessType() == FiniteElement::TES)        //24.02.2007 WW
+	{
+		type = 1415;
+		ConfigTES();
 }
 }
 
@@ -4237,7 +4228,7 @@ void CRFProcess::ConfigTNEQ()
    //pcs_number_of_evals++;
 
    for(size_t i=0; i<GetPrimaryVNumber(); i++)
-      Shift[i] = i*m_msh->GetNodesNumber(true);
+      Shift[i] = i*m_msh->GetNodesNumber(false);
 
    //// HS
    //// initialize the pointers for rho_s ODE calculation
@@ -4278,6 +4269,7 @@ void CRFProcess::ConfigTNEQ()
 			                          1.0,   // delta_t
 									  react_syst);      
 
+	// TODO [CL] eliminate this, rewirte stepper bulirsch stoer
 	yy_rho_s    = Eigen::VectorXd::Zero(1);
 	dydxx_rho_s = Eigen::VectorXd::Zero(1);
 	// initial value for y
@@ -4292,6 +4284,134 @@ void CRFProcess::ConfigTNEQ()
 	// HS, end of thermal storage case-------------------------------------------------------------   
    //}
 }
+
+
+/**************************************************************************
+FEMLib-Method: For reactive thermal non-equilibrium flow
+Task:
+Programing:
+07/2013 HS/TN Implementation
+**************************************************************************/
+void CRFProcess::ConfigTES()
+{
+	dof = 3;
+	// 1.1 primary variables
+	pcs_number_of_primary_nvals = 3;
+	pcs_primary_function_name[0] = "PRESSURE1";
+	pcs_primary_function_unit[0] = "Pa";
+	pcs_primary_function_name[1] = "TEMPERATURE1";
+	pcs_primary_function_unit[1] = "K";
+	pcs_primary_function_name[2] = "CONCENTRATION1";
+	pcs_primary_function_unit[2] = "kg/kg";
+	// 1.2 secondary variables
+	pcs_number_of_secondary_nvals = 0;
+	// Nodal velocity.
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "VELOCITY_X1";
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "m/s";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "VELOCITY_Y1";
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "m/s";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "VELOCITY_Z1";
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "m/s";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+	// this is the nodal based reaction rate of solid density in PTC flow.
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "REACT_RATE_N"; //TN TEST
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "kg/m3s";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+	// this is the nodal based solid density in PTC flow.
+	pcs_secondary_function_name[pcs_number_of_secondary_nvals] = "SOLID_DENSITY_N"; //TN TEST
+	pcs_secondary_function_unit[pcs_number_of_secondary_nvals] = "kg/m3";
+	pcs_secondary_function_timelevel[pcs_number_of_secondary_nvals] = 1;
+	pcs_number_of_secondary_nvals++;
+
+	pcs_number_of_evals = 0;
+	pcs_eval_name[pcs_number_of_evals] = "VELOCITY1_X";
+	pcs_eval_unit[pcs_number_of_evals] = "m/s";
+	pcs_number_of_evals++;
+	pcs_eval_name[pcs_number_of_evals] = "VELOCITY1_Y";
+	pcs_eval_unit[pcs_number_of_evals] = "m/s";
+	pcs_number_of_evals++;
+	pcs_eval_name[pcs_number_of_evals] = "VELOCITY1_Z";
+	pcs_eval_unit[pcs_number_of_evals] = "m/s";
+	pcs_number_of_evals++;
+	//pcs_eval_name[pcs_number_of_evals] = "POROSITY";
+	//pcs_eval_unit[pcs_number_of_evals] = "-";
+	//pcs_number_of_evals++;
+	pcs_eval_name[pcs_number_of_evals] = "PERMEABILITY";
+	pcs_eval_unit[pcs_number_of_evals] = "m2";
+	pcs_number_of_evals++;
+	pcs_eval_name[pcs_number_of_evals] = "SOLID_DENSITY";
+	pcs_eval_unit[pcs_number_of_evals] = "kg/m3";
+	pcs_number_of_evals++;
+	pcs_eval_name[pcs_number_of_evals] = "REACT_RATE";
+	pcs_eval_unit[pcs_number_of_evals] = "kg/m3s";
+	pcs_number_of_evals++;
+	//pcs_eval_name[pcs_number_of_evals] = "T_EQUIL"; //TN
+	//pcs_eval_unit[pcs_number_of_evals] = "K";
+	//pcs_number_of_evals++;
+
+	for(size_t i=0; i<GetPrimaryVNumber(); i++)
+		Shift[i] = i*m_msh->GetNodesNumber(false);
+
+	//// HS
+	//// initialize the pointers for rho_s ODE calculation
+	//rho_s = Eigen::VectorXd::Zero(1); // HS, temp storage for density of the solid phase
+	//qR = Eigen::VectorXd::Zero(1);    // HS, temp storage for solid density change rate
+	//this->m_hydration  = new conversion_rate(400/*solid temperature*/,
+	//                                   600/*gass temperature*/,
+	//							 2.0/*pressure of gas phase*/,
+	//							 0.2/*mass fraction of H2O in gas*/,
+	//							 1700/*initial solid density*/,
+	//							 0.0/*delta_time*/);
+	//this->m_ode_solver = new StepperBulischStoer<conversion_rate>(rho_s/*y value vector*/,
+	//                                                        qR/*dydx value vector*/,
+	//												  this->GetTimeStepping()->time_current/*t0 value*/,
+	//												  1e-12 /*relative tolerance*/,
+	//												  1e-12 /*relative tolerance*/,
+	//												  false /*if dense output*/);
+
+
+	// HS, thermal storage case-------------------------------------------------------------------
+
+	//Loop material group - TN
+	//for (long group_count = 0; group_count < mmp_vector.size(); group_count ++){
+	long group_count = 0;
+	m_rho_s_0 = msp_vector[group_count]->Density();      // get initial solid density
+	double poro = mmp_vector[group_count]->porosity;
+	FiniteElement::SolidReactiveSystem react_syst = msp_vector[group_count]->getSolidReactiveSystem();
+	//if (group_count != 0) break;
+	// if (this->m_num->reaction_scaling!=.0) {
+	double start_t = 0.0;
+	// now initialize the conversion_rate class
+	m_conversion_rate = new conversion_rate(573.0,     // T_solid, Kelvin
+	                                        573.0,     // T_gas, Kelvin
+	                                        0.0,       // p_gas
+	                                        0.0,       // w_water, mass fraction unitless
+	                                        m_rho_s_0, // kg/m3, // rho_s_initial,
+	                                        1.0-poro,  // solid volume fraction
+	                                        1.0,       // delta_t
+	                                        react_syst);
+
+	yy_rho_s    = Eigen::VectorXd::Zero(1);
+	dydxx_rho_s = Eigen::VectorXd::Zero(1);
+	// initial value for y
+	yy_rho_s(0) = m_rho_s_0;
+
+	// evaluate inital value of dydt
+	//m_conversion_rate->eval(start_t, yy_rho_s, dydxx_rho_s);
+	dydxx_rho_s(0) = 0.0;
+	// initialize the solver
+	m_solver = new StepperBulischStoer<conversion_rate>(yy_rho_s, dydxx_rho_s, start_t, 1e-6, 1e-6, true);
+	// }
+	// HS, end of thermal storage case-------------------------------------------------------------
+	//}
+}
+
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -4562,7 +4682,7 @@ void CRFProcess::CheckMarkedElement()
 			}
 		}
 		//WX:02.2013: excav with deactivated subdomain
-		if(ExcavMaterialGroup>=0&&ExcavMaterialGroup==elem->GetPatchIndex())
+		if(ExcavMaterialGroup==(int)elem->GetPatchIndex())
 		{
 			if(!elem->GetMark()||abs(elem->GetExcavState())<MKleinsteZahl)
 			{
@@ -4617,7 +4737,7 @@ void CRFProcess::CheckExcavedElement()
 	for (l = 0; l < (long)m_msh->ele_vector.size(); l++)
 	{
 		elem = m_msh->ele_vector[l];
-		if(elem->GetPatchIndex() == ExcavMaterialGroup && elem->GetExcavState()==-1)//WX:04.2012
+		if((int)elem->GetPatchIndex() == ExcavMaterialGroup && elem->GetExcavState()==-1)//WX:04.2012
 		{
 			double const* ele_center(elem->GetGravityCenter());
 			if((GetCurveValue(ExcavCurve,0,aktuelle_zeit,
@@ -4983,10 +5103,17 @@ double CRFProcess::Execute()
 			   const long nshift = ii*g_nnodes;
 			   for(j=0; j<g_nnodes; j++)
 			   {
+#if defined(USE_PETSC) // || defined(other parallel libs)//08.2014. WW
+				  k =  pcs_number_of_primary_nvals*m_msh->Eqs2Global_NodeIndex[j] + ii;
+				  const double val_n = GetNodeValue(j, nidx1);       //03.04.2009. WW
+				  SetNodeValue(j, nidx1, eqs_x[k] );
+				  eqs_x[k] = val_n;      // Used for time stepping. 03.04.2009. WW
+#else
 				  k = m_msh->Eqs2Global_NodeIndex[j];
 				  const double val_n = GetNodeValue(k, nidx1);       //03.04.2009. WW
 				  SetNodeValue(k, nidx1, eqs_x[j + nshift]);
 				  eqs_x[j + nshift] = val_n;      // Used for time stepping. 03.04.2009. WW
+#endif
 			   }
 			}
 		}
@@ -4998,17 +5125,26 @@ double CRFProcess::Execute()
 			   const long nshift = ii*g_nnodes;
 			   for(j=0; j<g_nnodes; j++)
 			   {
+#if defined(USE_PETSC) // || defined(other parallel libs)//08.2014. WW
+				  k = pcs_number_of_primary_nvals*m_msh->Eqs2Global_NodeIndex[j] + ii;
+				  const double val_n = GetNodeValue(j, nidx1);       
+				  SetNodeValue(j, nidx1, (1.0-nl_theta)*val_n + nl_theta * eqs_x[k]);
+				  eqs_x[k] = val_n;      // Used for time stepping. 03.04.2009. WW
+#else
 				  k = m_msh->Eqs2Global_NodeIndex[j];
 				  const double val_n = GetNodeValue(k, nidx1);       //03.04.2009. WW
 				  SetNodeValue(k, nidx1, (1.0-nl_theta)*val_n + nl_theta*eqs_x[j + nshift]);
 				  eqs_x[j + nshift] = val_n;      // Used for time stepping. 03.04.2009. WW
+#endif
 			   }
 			}
 		}
 
 		// maybe works also for other processes involving velocities
 		// update nod velocity if constrained BC
-		if (this->accepted		// do I really need to check every single bc node, or how can I access a bc group?
+		// do I really need to check every single bc node, or how can I access a bc group?
+		if ( (this->hasConstrainedBC() || this->hasConstrainedST())
+			&& this->accepted
 			&& (this->getProcessType() == FiniteElement::RICHARDS_FLOW
 				|| this->getProcessType() == FiniteElement::LIQUID_FLOW) )
 		{
@@ -5095,21 +5231,14 @@ void CRFProcess::CalculateElementMatrices(void)
 	switch(this->type)
 	{
 	case 1:                               //SM
-		break;
 	case 2:                               //MTM2
-		break;
 	case 3:                               //HTM
-		break;
 	case 5:                               // Gas flow
-		break;
 	case 11:
-		break;
 	case 12:                              //MMP
-		break;
 	case 13:                              //MPC
-		break;
 	  case 14:									//TNEQ
-		  break;
+	case 15:                              //TES
 	case 66:                              //OF
 		break;
 	default:
@@ -5195,17 +5324,19 @@ void CRFProcess::AddFCT_CorrectionVector()
 	//Remark: Using iteration is only possible after the sparse table has been constructed.
 	for(size_t i = 0; i < node_size; i++)
 	{
+#ifdef USE_PETSC
 		const size_t i_global = FCT_GLOB_ADDRESS(i);
+#endif
 		col = &fct_f[i];
 		for(jj = col->begin(); jj != col->end(); jj++)
 		{
 			const size_t j = (*jj).first;
-			const size_t j_global = FCT_GLOB_ADDRESS(j);
 			if (i > j || i==j)
 				continue;  //do below only for upper triangle due to symmetric
 
 			// Get artificial diffusion operator D
 #if defined(USE_PETSC)
+			const size_t j_global = FCT_GLOB_ADDRESS(j);
 			double d1 = (*FCT_d)(i_global, j_global);
 #else
 #if defined(NEW_EQS)
@@ -5302,11 +5433,13 @@ void CRFProcess::AddFCT_CorrectionVector()
 		// L*u^n
 		for (size_t i = 0; i < node_size; i++)
 		{
+#ifdef USE_PETSC
 			const size_t i_global = FCT_GLOB_ADDRESS(i);
+#endif
 			for (size_t j = 0; j < node_size; j++)
 			{
+#ifdef USE_PETSC
 				const size_t j_global = FCT_GLOB_ADDRESS(j);
-#if defined(USE_PETSC)
 				// b+=-(1-theta)*D*u^n
                 (*V)(i) += (*FCT_d)(i_global, j_global) * (*V1)(j);
 #else
@@ -5320,7 +5453,7 @@ void CRFProcess::AddFCT_CorrectionVector()
 		}
 		for (size_t i = 0; i < node_size; i++) {
 #if defined(USE_PETSC)
-			if (i < m_msh->getNumNodesLocal()) {
+			if (i < (size_t)m_msh->getNumNodesLocal()) {
 				const size_t i_global = FCT_GLOB_ADDRESS(i);
 				eqs_new->add_bVectorEntry(i_global, - (1.0 - theta) * (*V)(i), ADD_VALUES);
 			}
@@ -5464,7 +5597,7 @@ void CRFProcess::AddFCT_CorrectionVector()
 
 #if defined(USE_PETSC)
 
-			if (i < m_msh->getNumNodesLocal())
+			if (i < (size_t)m_msh->getNumNodesLocal())
 				eqs_new->add_bVectorEntry(i_global, val, ADD_VALUES);
 #else
             eqs_rhs[i] += val;
@@ -5566,7 +5699,7 @@ void CRFProcess::GlobalAssembly()
 				elem->SetOrder(false);
 				//WW
 				fem->SetElementNodesDomain(m_dom->element_nodes_dom[i]);
-				fem->ConfigElement(elem, Check2D3D);
+				fem->ConfigElement(elem, m_num->ele_gauss_points, Check2D3D);
 				fem->m_dom = m_dom; //OK
 				fem->Assembly();
 			}
@@ -5610,7 +5743,7 @@ void CRFProcess::GlobalAssembly()
 				if (elem->GetMark() && elem->GetExcavState() == -1)
 				{
 					elem->SetOrder(false);
-					fem->ConfigElement(elem, Check2D3D);
+					fem->ConfigElement(elem, m_num->ele_gauss_points, Check2D3D);
 					fem->Assembly();
 					// NEUMANN CONTROL---------
 					if (Tim->time_control_type == TimeControlType::NEUMANN)
@@ -5717,7 +5850,7 @@ void CRFProcess::GlobalAssembly_std(bool is_quad, bool Check2D3D)
 			continue;     // For OpenMP. WW
 
 		elem->SetOrder(is_quad);
-		fem->ConfigElement(elem,Check2D3D);
+		fem->ConfigElement(elem, m_num->ele_gauss_points, Check2D3D);
 		fem->Assembly();
 	}
 }
@@ -5755,7 +5888,7 @@ void CRFProcess::Integration(vector<double> &node_velue)
 			n_val[k] = node_velue[elem->GetNodeIndex(k)];
 
 		elem->SetOrder(false);
-		fem->ConfigElement(elem,Check2D3D);
+		fem->ConfigElement(elem, m_num->ele_gauss_points, Check2D3D);
 		fem->FaceIntegration(n_val);
 
 		for(k = 0; k < elem->GetNodesNumber(false); k++)
@@ -5774,7 +5907,6 @@ void CRFProcess::Integration(vector<double> &node_velue)
 void CRFProcess::CalIntegrationPointValue()
 {
 	CElem* elem = NULL;
-	cal_integration_point_value = false;
 	continuum = 0;                        //15.02.2007/
 	//  cal_integration_point_value = true;
 	// Currently, extropolation only valid for liquid and Richards flow.
@@ -5785,22 +5917,29 @@ void CRFProcess::CalIntegrationPointValue()
 	//			"TWO_PHASE_FLOW") != string::npos
 	//			|| _pcs_type_name.find("AIR_FLOW") != string::npos
 	//			|| _pcs_type_name.find("PS_GLOBAL") != string::npos) //WW/CB
-	if (getProcessType() == FiniteElement::LIQUID_FLOW || getProcessType() == FiniteElement::RICHARDS_FLOW
-	    || getProcessType() == FiniteElement::MULTI_PHASE_FLOW
-	    || getProcessType() == FiniteElement::GROUNDWATER_FLOW
-	    || getProcessType() == FiniteElement::TWO_PHASE_FLOW
-	    || getProcessType() == FiniteElement::DEFORMATION_H2 // 07.2011. WW
-	    || getProcessType() == FiniteElement::AIR_FLOW
-	    || getProcessType() == FiniteElement::PS_GLOBAL
-	    || getProcessType() == FiniteElement::MULTI_COMPONENTIAL_FLOW  //AKS/NB
-	    || getProcessType() == FiniteElement::DEFORMATION_FLOW //NW
-	    || getProcessType() == FiniteElement::TNEQ //HS, TN
-		|| getProcessType() == FiniteElement::HEAT_TRANSPORT //JOD 2014-11-10
-		|| getProcessType() == FiniteElement::MASS_TRANSPORT // JOD 2014-11-10
-	    )
+
+	switch (getProcessType())
+	{
+	case FiniteElement::LIQUID_FLOW:
+	case FiniteElement::RICHARDS_FLOW:
+	case FiniteElement::MULTI_PHASE_FLOW:
+	case FiniteElement::GROUNDWATER_FLOW:
+	case FiniteElement::TWO_PHASE_FLOW:
+	case FiniteElement::DEFORMATION_H2: // 07.2011. WW
+	case FiniteElement::AIR_FLOW:
+	case FiniteElement::PS_GLOBAL:
+	case FiniteElement::MULTI_COMPONENTIAL_FLOW:  //AKS/NB
+	case FiniteElement::DEFORMATION_FLOW: //NW
+	case FiniteElement::TNEQ: //HS, TN
+	case FiniteElement::TES: //HS, TN
+	case FiniteElement::HEAT_TRANSPORT: //JOD 2014-11-10
+	case FiniteElement::MASS_TRANSPORT: // JOD 2014-11-10
 		cal_integration_point_value = true;
-	if (!cal_integration_point_value)
+		break;
+	default:
+		cal_integration_point_value = false;
 		return;
+	}
 
    std::cout << "->Calculate velocity" << '\n';
 
@@ -5821,17 +5960,22 @@ void CRFProcess::CalIntegrationPointValue()
 		{
 			if ((getProcessType() == FiniteElement::HEAT_TRANSPORT || getProcessType() == FiniteElement::MASS_TRANSPORT) && !elem->selected)
 				continue;   // not selected for TOTAL_FLUX calculation JOD 2014-11-10
-			fem->ConfigElement(elem);
+			fem->ConfigElement(elem, m_num->ele_gauss_points);
 			fem->Config(); //OK4709
 			// fem->m_dom = NULL; // To be used for parallization
 			if(getProcessType() == FiniteElement::MULTI_COMPONENTIAL_FLOW)
 				fem->Cal_VelocityMCF();
 			else 
 			fem->Cal_Velocity();
+
+			/* TODO [CL]: keep that or use the value calculated during solving the equation system?
 			//moved here from additional lower loop
-			if (getProcessType() == FiniteElement::TNEQ)
+			if (getProcessType() == FiniteElement::TNEQ || getProcessType() == FiniteElement::TES)
+			{
 				fem->CalcSolidDensityRate(); // HS, thermal storage reactions
 		}
+			*/
+	}
 	}
    } else { //NW
        const size_t mesh_ele_vector_size(m_msh->ele_vector.size());
@@ -5853,7 +5997,7 @@ void CRFProcess::CalIntegrationPointValue()
                    ElementValue* gp_ele = ele_gp_value[i];
                    gp_ele->GetEleVelocity(pre_v);
                    
-                   fem->ConfigElement(elem);
+                   fem->ConfigElement(elem, m_num->ele_gauss_points);
                    fem->Config();                           //OK4709
                    // fem->m_dom = NULL; // To be used for parallization
                    
@@ -5872,7 +6016,7 @@ void CRFProcess::CalIntegrationPointValue()
        std::cout << "  Local Picard iteration: itr. count = " << i_itr << "/" << v_itr_max << ", error(max. norm)=" << vel_error << std::endl;
    }
 
-    //if (getProcessType() == FiniteElement::TNEQ) {
+    //if (getProcessType() == FiniteElement::TNEQ || getProcessType() == FiniteElement::TEQ) {
     //    const size_t mesh_ele_vector_size(m_msh->ele_vector.size());
     //    for (size_t i = 0; i < mesh_ele_vector_size; i++)
     //    {
@@ -5939,7 +6083,7 @@ void CRFProcess::CalGPVelocitiesfromFluidMomentum()
 		elem = m_msh->ele_vector[i]; // get element
 		if (elem->GetMark())      // Marked for use
 		{
-			fem->ConfigElement(elem);
+			fem->ConfigElement(elem, m_num->ele_gauss_points);
 			fem->Cal_GP_Velocity_FM(i_ind);
 		}
 	}                                     // end element loop
@@ -6280,6 +6424,7 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 		for(i = 0; i < Size; i++)
 		{
 			l_index = st_node_value[i]->geo_node_number;
+			if(node_connected_doms[l_index] > 0)
 			st_node_value[i]->node_value /= (double)node_connected_doms[l_index];
 		}
 	}
@@ -6357,7 +6502,10 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 		static long i;
 		static double bc_value, fac = 1.0, time_fac = 1.0;
 		long bc_msh_node = -1;
-		long bc_eqs_index, shift;
+#ifndef USE_PETSC
+		long bc_eqs_index;
+#endif
+		long shift;
 		int interp_method = 0;
 		int curve, valid = 0;
 		int ii, idx0 = -1;
@@ -6365,14 +6513,18 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 		CBoundaryCondition* m_bc; //WW
 		CFunction* m_fct = NULL;  //OK
 		bool is_valid = false;    //OK
+#ifndef USE_PETSC
 		bool onExBoundary = false;                     //WX
+#endif
 		bool excavated = false;   //WX
 		bool onDeactiveBoundary=true;//WX:09.2011
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
 		vector<int> bc_eqs_id;
 		vector<double> bc_eqs_value;
 #else
+#if !defined(NEW_EQS)
 		double* eqs_rhs = NULL;
+#endif
 		CPARDomain* m_dom = NULL;
 #endif
 		//
@@ -6412,7 +6564,6 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 			//TODO
 #ifdef NEW_EQS                              //WW
 			eqs_p = eqs_new;
-			eqs_rhs = eqs_new->b; //27.11.2007 WW
 #else
 			eqs_rhs = eqs->b;
 #endif
@@ -6427,10 +6578,7 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 			if(type == 4 ) //WW
 			{
 				eqs_p = m_dom->eqsH;
-				eqs_rhs = m_dom->eqsH->b;
 			}
-			else
-				eqs_rhs = m_dom->eqs->b;
 #else
 			eqs_rhs = m_dom->eqs->b;
 #endif
@@ -6462,9 +6610,10 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 			if(m_bc->getExcav() > 0)
 			{
 				CNode* node;
-				CElem* elem;
 				//unsigned int counter;	//void warning
+#ifndef USE_PETSC
 				onExBoundary = false;	//WX:01.2011
+#endif
 				excavated = false;
 
 				node = m_msh->nod_vector[m_bc_node->geo_node_number];
@@ -6476,10 +6625,10 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 					+ExcavBeginCoordinate)<node_coordinate[ExcavDirection]))
 				{
 					excavated = true;
-					double* tmp_ele_coor = NULL;
+#ifndef USE_PETSC
 					for(unsigned int j=0; j<node->getConnectedElementIDs().size(); j++)
 					{
-						elem = m_msh->ele_vector[node->getConnectedElementIDs()[j]];
+						CElem* elem = m_msh->ele_vector[node->getConnectedElementIDs()[j]];
 						double const* tmp_ele_coor (elem->GetGravityCenter());
 						//if(elem->GetPatchIndex()!=ExcavMaterialGroup){
 						//if(elem->GetExcavState()==-1)
@@ -6497,6 +6646,7 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 							break;
 				   }
 				   }
+#endif
 			}
 			}
 
@@ -6708,12 +6858,14 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 					        m_bc->getPeriodePhaseShift());
 
 				//----------------------------------------------------------------
+#ifndef USE_PETSC
 				if(rank > -1)
 					bc_eqs_index = bc_msh_node;
 				else
 					//WW#
 					bc_eqs_index =
 					        m_msh->nod_vector[bc_msh_node]->GetEquationIndex();
+#endif
 				//..............................................................
 				// NEWTON WW   //Modified for JFNK. 09.2010. WW
 				if(m_num->nls_method >= 1 // 04.08.2010. WW _name.find("NEWTON")!=string::npos
@@ -6935,7 +7087,7 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
 		vector<int> bc_eqs_id;
 		vector<double> bc_eqs_value;
-#else
+#elif !defined(NEW_EQS)
 		double* eqs_rhs = NULL;
 #endif
 #ifdef NEW_EQS
@@ -6963,7 +7115,6 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 #if !defined(USE_PETSC) // && !defined(other parallel libs)//03~04.3012. WW		     
 #ifdef NEW_EQS                              //WW
 			eqs_p = eqs_new;
-			eqs_rhs = eqs_new->b; //27.11.2007 WW
 #else
 			eqs_rhs = eqs->b;
 #endif
@@ -6978,10 +7129,7 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 			if(type == 4 ) //WW
 			{
 				eqs_p = m_dom->eqsH;
-				eqs_rhs = m_dom->eqsH->b;
 			}
-			else
-				eqs_rhs = m_dom->eqs->b;
 #else
 			eqs_rhs = m_dom->eqs->b;
 #endif
@@ -7455,26 +7603,45 @@ bool CRFProcess::checkConstrainedBC(CBoundaryCondition const & bc, CBoundaryCond
 		if (local_constrained.constrainedVariable == ConstrainedVariable::VELOCITY)
 		{
 			//get velocity vector at node
-			std::vector<double>vel_v(3);
-			this->getNodeVelocityVector(bc_node.geo_node_number, &(vel_v)[0]);
+			std::valarray<double>vel(0.0, 3);	// ini valarray with size=3 and element values=0
 
-			//check if velocity is zero
-			double magn_vel_v(MBtrgVec(&vel_v[0], 3));
-			if (magn_vel_v < std::numeric_limits<size_t>::epsilon()*1e-10 || magn_vel_v == 0)
+			if (local_constrained._isConstrainedVelStable)
 			{
+				const std::size_t no_connected_nodes = m_msh->nod_vector[bc_node.geo_node_number]->getNumConnectedNodes();
+				for (std::size_t j=0; j < no_connected_nodes; j++)
+				{
+					std::size_t const connected_node_id = m_msh->nod_vector[bc_node.geo_node_number]->getConnectedNodes()[j];
+					if (connected_node_id == static_cast<std::size_t>(bc_node.geo_node_number))
+					{
+						std::valarray<double>temp_vel(this->getNodeVelocityVector(connected_node_id));
+						temp_vel *= (no_connected_nodes - 1);
+						vel += temp_vel;
+					}
+					else
+						vel += this->getNodeVelocityVector(connected_node_id);
+				}
+			}
+			else
+				vel += this->getNodeVelocityVector(bc_node.geo_node_number);
+
+			//nomalize velocity vector
+			double magn_vel_v(MBtrgVec(&vel[0], 3));
+			if ( !(magn_vel_v > 0) )	//check if velocity is not zero
+			{
+				#ifdef DEBUG
 				std::cout << "No constrained applied at node " << bc_node.msh_node_number
 						<< " as magnitude of velocity " << magn_vel_v
-						<< " is < than epsilon() " << std::numeric_limits<size_t>::epsilon()*1e-10
+						<< " is not > than 0 "
 						<< std::endl;
+				#endif
 				continue;
 			}
 
-
-			//nomalize velocity vector
-			NormalizeVector(&vel_v[0], 3);
+			//NormalizeVector(&vel[0], 3); can use other way to calc normalized vector, as vector now valarray:
+			vel /= magn_vel_v;
 
 			//calculate scalar product of velocity vector and BC surface normal
-			double const scalar_prod(MathLib::scpr(&(vel_v)[0], bc_node.GetNormalVector(), 3));
+			double const scalar_prod(MathLib::scpr(&(vel)[0], bc_node.GetNormalVector(), 3));
 
 			//select case to handle BC
 			if (scalar_prod < 0 && scalar_prod >= -1.01
@@ -7537,29 +7704,19 @@ bool CRFProcess::checkConstrainedBC(CBoundaryCondition const & bc, CBoundaryCond
 Copied & modified from 
 rf_kinreact.cpp (Reaction-Method:)
 **************************************************************************/
-void CRFProcess::getNodeVelocityVector(const long node_id, double * vel_nod)
+std::valarray<double> CRFProcess::getNodeVelocityVector(const long node_id)
 {
 	CRFProcess *m_pcs = NULL;
-	long i;
+	std::valarray<double> vel_nod (0.0, 3);
 	
 	m_pcs = PCSGetFlow();
 	
-	// initialize data structures
-	for (i = 0; i<3; i++)
-		vel_nod[i] = 0;
-	
-	/*
-	// get the indices of velocity of flow process
-	idxVx = m_pcs->GetNodeValueIndex("VELOCITY_X1", true);
-	idxVy = m_pcs->GetNodeValueIndex("VELOCITY_Y1", true);
-	idxVz = m_pcs->GetNodeValueIndex("VELOCITY_Z1", true);
-	*/
-
 	// Get the velocity components
 	vel_nod[0] = m_pcs->GetNodeValue(node_id, this->_idxVx);
 	vel_nod[1] = m_pcs->GetNodeValue(node_id, this->_idxVy);
 	vel_nod[2] = m_pcs->GetNodeValue(node_id, this->_idxVz);
 	
+	// Shift entries for 2D
 	const int dimensions(m_msh->GetCoordinateFlag());
 	if (dimensions == 22)
 	{
@@ -7573,8 +7730,9 @@ void CRFProcess::getNodeVelocityVector(const long node_id, double * vel_nod)
 		vel_nod[0] = 0;
 	}
 
-	//return vel_nod;
+	return vel_nod;
 }
+
 
 	int CRFProcess::getFirstNodeBelowGWL(size_t current_node)
 	{
@@ -7948,7 +8106,7 @@ void CRFProcess::getNodeVelocityVector(const long node_id, double * vel_nod)
 						elem = m_msh->ele_vector[ele_index];
 						if (elem->GetMark())
 						{
-							fem->ConfigElement(elem);
+							fem->ConfigElement(elem, m_num->ele_gauss_points);
 							if(getProcessType() == FiniteElement::MULTI_COMPONENTIAL_FLOW)	fem->Cal_VelocityMCF();
 							else
 							fem->Cal_Velocity();
@@ -8187,6 +8345,7 @@ void CRFProcess::getNodeVelocityVector(const long node_id, double * vel_nod)
 		}
 		iter_count =  SpBICGSTAB_Parallel(dom_vector[myrank], eqs->x, dim_eqs);
 #else // ifdef USE_MPI
+
 		iter_count = eqs->LinearSolver(eqs->b,eqs->x,eqs->dim);
 #endif
 
@@ -8616,6 +8775,9 @@ void CRFProcess::getNodeVelocityVector(const long node_id, double * vel_nod)
 		case FiniteElement::TNEQ:
          CalcSecondaryVariablesTNEQ();        //HS
          break;
+		case FiniteElement::TES:
+			CalcSecondaryVariablesTES(initial);        //HS
+			break;
 		case FiniteElement::LIQUID_FLOW:
             if(aktueller_zeitschritt>0)
               CalcSecondaryVariablesLiquidFlow();
@@ -9252,6 +9414,10 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 	int num_dof_errors = pcs_number_of_primary_nvals;
 	double unknowns_norm = 0.0;
 	double absolute_error[DOF_NUMBER_MAX];
+#if defined(USE_PETSC) // || defined(other parallel libs)//02.2014. WW
+	g_nnodes = m_msh->getNumNodesLocal(); 
+	eqs_x = eqs_new->GetGlobalSolution();
+#else
 	g_nnodes = m_msh->GetNodesNumber(false);
 
 #ifdef NEW_EQS
@@ -9259,6 +9425,8 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 #else
 	eqs_x = eqs->x;
 #endif
+
+#endif // if defined(USE_PETSC)  
 
 	switch(method)
 	{
@@ -9271,7 +9439,11 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 			if(m_num->nls_method > 0){  // NEWTON-RAPHSON
 				for(ii=0;ii<pcs_number_of_primary_nvals;ii++){
 					for(i = 0; i < g_nnodes; i++){
+#if defined(USE_PETSC) // || defined(other parallel libs)//08.2014. WW
+					   val1 = eqs_x[ pcs_number_of_primary_nvals * m_msh->Eqs2Global_NodeIndex[i] + ii];
+#else
 					   val1 = eqs_x[i+ii*g_nnodes];
+#endif
 					   unknowns_norm += val1*val1;
 					}
 				}
@@ -9282,8 +9454,12 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 					nidx1 = GetNodeValueIndex(pcs_primary_function_name[ii]) + 1;
 					//
 					for (i = 0; i < g_nnodes; i++){
+#if defined(USE_PETSC) // || defined(other parallel libs)//08.2014. WW
+					   val1 = GetNodeValue(i, nidx1) - eqs_x[pcs_number_of_primary_nvals*m_msh->Eqs2Global_NodeIndex[i] + ii];
+#else
 					   k = m_msh->Eqs2Global_NodeIndex[i];
 					   val1 = GetNodeValue(k, nidx1) - eqs_x[i+ii*g_nnodes];
+#endif
 					   unknowns_norm += val1*val1;
 					}
 				}
@@ -9305,9 +9481,14 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 					nidx1 = GetNodeValueIndex(pcs_primary_function_name[ii]) + 1;
 					//
 					for(i = 0; i < g_nnodes; i++){
+#if defined(USE_PETSC) // || defined(other parallel libs)//02.2018. WW
+					   val1 = eqs_x[pcs_number_of_primary_nvals*m_msh->Eqs2Global_NodeIndex[i] + ii];
+					   val2 = GetNodeValue(i, nidx1);
+#else
 					   k = m_msh->Eqs2Global_NodeIndex[i];
 					   val1 = eqs_x[i+ii*g_nnodes];
 					   val2 = GetNodeValue(k, nidx1);
+#endif
 					   //
 					   unknowns_norm += val1*val1;
 					   value += val2*val2;
@@ -9321,9 +9502,14 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 					//
 					error = 0.0;
 					for (i = 0; i < g_nnodes; i++){
+#if defined(USE_PETSC) // || defined(other parallel libs)//08.2014. WW
+						val1 = GetNodeValue(i, nidx1);
+						val2 = val1 - eqs_x[pcs_number_of_primary_nvals*m_msh->Eqs2Global_NodeIndex[i] + ii];
+#else
 					   k = m_msh->Eqs2Global_NodeIndex[i];
 					   val1 = GetNodeValue(k, nidx1);
 					   val2 = val1 - eqs_x[i+ii*g_nnodes];
+#endif
 					   //
 					   unknowns_norm += val2*val2;
 					   value += val1*val1;
@@ -9345,7 +9531,11 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 				{
 					error = 0.0;
 					for(i = 0; i < g_nnodes; i++){
+#if defined(USE_PETSC) // || defined(other parallel libs)//08.2014. WW
+					   val1 = eqs_x[pcs_number_of_primary_nvals*m_msh->Eqs2Global_NodeIndex[i] + ii];
+#else
 					   val1 = eqs_x[i+ii*g_nnodes];
+#endif
 					   error += val1*val1;
 					}
 					unknowns_norm += error;
@@ -9359,8 +9549,12 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 					//
 					error = 0.0;
 					for (i = 0; i < g_nnodes; i++){
+#if defined(USE_PETSC) // || defined(other parallel libs)//08.2014. WW
+					   val1 = GetNodeValue(i, nidx1) - eqs_x[pcs_number_of_primary_nvals*m_msh->Eqs2Global_NodeIndex[i] + ii];
+#else
 					   k = m_msh->Eqs2Global_NodeIndex[i];
 					   val1 = GetNodeValue(k, nidx1) - eqs_x[i+ii*g_nnodes];
+#endif
 					   error += val1*val1;
 					}
 					unknowns_norm += error;
@@ -9378,7 +9572,11 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 			if(m_num->nls_method > 0){  // NEWTON-RAPHSON
 				for(ii=0;ii<pcs_number_of_primary_nvals;ii++){
 					for(i = 0; i < g_nnodes; i++){
+#if defined(USE_PETSC) // || defined(other parallel libs)//08.2014. WW
+					   val1 = eqs_x[pcs_number_of_primary_nvals*m_msh->Eqs2Global_NodeIndex[i] + ii];
+#else
 					   val1 = eqs_x[i+ii*g_nnodes];
+#endif
 					   unknowns_norm += val1*val1;
 					}
 				}
@@ -9389,8 +9587,12 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 					nidx1 = GetNodeValueIndex(pcs_primary_function_name[ii]) + 1;
 					//
 					for (i = 0; i < g_nnodes; i++){
+#if defined(USE_PETSC) // || defined(other parallel libs)//08.2014. WW
+					   val1 = GetNodeValue(i, nidx1) - eqs_x[pcs_number_of_primary_nvals*m_msh->Eqs2Global_NodeIndex[i] + ii];
+#else
 					   k = m_msh->Eqs2Global_NodeIndex[i];
 					   val1 = GetNodeValue(k, nidx1) - eqs_x[i+ii*g_nnodes];
+#endif
 					   unknowns_norm += val1*val1;
 					}
 				}
@@ -9410,7 +9612,11 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 				{
 					error = 0.0;
 					for (i = 0; i < g_nnodes; i++){
+#if defined(USE_PETSC) // || defined(other parallel libs)//08.3014. WW
+					   val1 = eqs_x[pcs_number_of_primary_nvals*m_msh->Eqs2Global_NodeIndex[i] + ii];
+#else
 					   val1 = eqs_x[i+ii*g_nnodes];
+#endif
 					   unknowns_norm += val1*val1;
 					   val1 = fabs(val1);
 					   if(val1 > error)
@@ -9426,8 +9632,12 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 					nidx1 = GetNodeValueIndex(pcs_primary_function_name[ii]) + 1;
 					//
 					for (i = 0; i < g_nnodes; i++){
+#if defined(USE_PETSC) // || defined(other parallel libs)//08.3014. WW
+					   val1 = GetNodeValue(i, nidx1) - eqs_x[pcs_number_of_primary_nvals*m_msh->Eqs2Global_NodeIndex[i] + ii];
+#else
 					   k = m_msh->Eqs2Global_NodeIndex[i];
 					   val1 = GetNodeValue(k, nidx1) - eqs_x[i+ii*g_nnodes];
+#endif
 					   unknowns_norm += val1*val1;
 					   val1 = fabs(val1);
 					   if(val1 > error)
@@ -9516,6 +9726,16 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 		//
 		*/
 	}
+
+#if defined(USE_PETSC) // || defined(other parallel libs)//08.2014. WW
+	for(ii=0;ii<pcs_number_of_primary_nvals;ii++)
+	{
+	    double val_temp = pcs_absolute_error[ii];
+	    pcs_absolute_error[ii] = 0.;
+	    MPI_Allreduce(&val_temp, &pcs_absolute_error[ii], 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+	}
+#endif
+
 	//
 	// Store the error (JT)
 	// JT: now returning RELATIVE error. NECESSARY BECAUSE DOF MAY BE > 1 AND EACH DOF MAY HAVE DIFFERENT CHARACTER
@@ -9536,6 +9756,7 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 		   pcs_relative_error[ii] = absolute_error[ii] / m_num->nls_error_tolerance[ii];
 		   error_g = MMax(error_g, pcs_relative_error[ii]);
 		}
+		nls_max_relative_error = error_g;
 		pcs_num_dof_errors = num_dof_errors;
 		pcs_unknowns_norm = unknowns_norm;
 	}
@@ -9568,10 +9789,9 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 	double CRFProcess::ExecuteNonLinear(int loop_process_number, bool print_pcs)
 	{
 		double nonlinear_iteration_error = 0.0;
-		double nl_theta, damping, norm_x0, norm_b0, norm_x, norm_b, val;
+		double nl_theta, damping, norm_x0, norm_b0, norm_x, norm_b;
 		double error_x1, error_x2, error_b1, error_b2 = 0, error, last_error, percent_difference;
 		//double* eqs_x = NULL;     //
-		double* eqs_b = NULL;
 		bool converged, diverged;
 		int ii, nidx1, num_fail = 0;
 		size_t j, g_nnodes;
@@ -9589,6 +9809,7 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 		eqs_x = eqs_new->GetGlobalSolution();
 #endif
 #if !defined(USE_PETSC) // && !defined(other parallel libs)//03.3012. WW
+		double* eqs_b = NULL;
 		int k;
 #ifdef NEW_EQS
 		eqs_x = eqs_new->x;
@@ -9700,7 +9921,7 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 						norm_b = 0.0; // must calculate this
 						for(ii = 0; ii < pcs_number_of_primary_nvals; ii++){
 							for (j = 0; j < g_nnodes; j++){
-								val = eqs_b[j + ii*g_nnodes];
+								double val = eqs_b[j + ii*g_nnodes];
 								norm_b += val*val;
 							}
 						}
@@ -9788,6 +10009,9 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 
 			// CHECK FOR TIME STEP FAILURE
 			// ---------------------------------------------------
+
+			if (m_num->nls_max_iterations>1 && !converged && iter_nlin+1 == m_num->nls_max_iterations) accepted = false;
+
 			if(!accepted || Tim->isDynamicTimeFailureSuggested(this)){
 				  accepted = false;
 				  Tim->last_dt_accepted = false;
@@ -9814,7 +10038,7 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 					const long ish = ii * g_nnodes;
 					for(j = 0; j < g_nnodes; j++){
 						k = m_msh->Eqs2Global_NodeIndex[j];
-						val = GetNodeValue(k,nidx1) + damping*eqs_x[j + ish];
+						double val = GetNodeValue(k,nidx1) + damping*eqs_x[j + ish];
 						SetNodeValue(k,nidx1,val);
 					}
 #endif
@@ -9848,7 +10072,7 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 		// NON-LINEAR ITERATIONS COMPLETE
 		// ------------------------------------------------------------
 		// PI time step size control. 27.08.2008. WW
-		if(accepted && Tim->GetPITimeStepCrtlType() > 0){
+		if(Tim->GetPITimeStepCrtlType() > 0){
 			PI_TimeStepSize(); // might also set accepted to false here.
 		}
 		//
@@ -9968,7 +10192,7 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 			elem = m_msh->ele_vector[i];
 			if (elem->GetMark()) // Marked for use
 			{
-				fem->ConfigElement(elem);
+				fem->ConfigElement(elem, m_num->ele_gauss_points);
 				for(k = 0; k < NS; k++)
 					fem->ExtropolateGauss(this, k);
 			}
@@ -10000,6 +10224,8 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 			idx[1] = GetNodeValueIndex("PERMEABILITY_Y1");
 			if (NS > 2)
 				idx[2] = GetNodeValueIndex("PERMEABILITY_Z1");
+			else
+				idx[2] = 0;
 			for (size_t i = 0; i < m_msh->GetNodesNumber(false); i++)
 				for (int k = 0; k < NS; k++)
 					SetNodeValue(i, idx[k], 0.0);
@@ -10021,7 +10247,7 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 			elem = m_msh->ele_vector[i];
 			if (elem->GetMark()) // Marked for use
 			{
-				fem->ConfigElement(elem);
+				fem->ConfigElement(elem, m_num->ele_gauss_points);
 				fem->CalcNodeMatParatemer();
 			}
 		}
@@ -10528,7 +10754,7 @@ double CRFProcess::CalcIterationNODError(FiniteElement::ErrorMethod method, bool
 				if (elem->GetMark()) // Marked for use
 				{
 					elem->SetOrder(false);
-					fem->ConfigElement(elem,false);
+					fem->ConfigElement(elem, m_num->ele_gauss_points, false);
 					fem->CalcSatution();
 				}
 			}
@@ -10576,11 +10802,48 @@ void CRFProcess::CalcSecondaryVariablesTNEQ()
         elem = m_msh->ele_vector[i];
         if (elem->GetMark())                        // Marked for use
         {
-            fem->ConfigElement(elem);
+			fem->ConfigElement(elem, m_num->ele_gauss_points);
 			fem->UpdateSolidDensity(i);          // HS, thermal storage reactions
-            fem->ExtrapolateGauss_ReactRate_TNEQ( this ); // HS added 19.02.2013
+			fem->ExtrapolateGauss_ReactRate_TNEQ_TES( this ); // HS added 19.02.2013
         }
     }
+}
+
+
+/*************************************************************************
+   GeoSys-FEM Function:
+Task: Updating rho_s values in TES
+
+Programming: 
+11/2011 HS Implementation for thermal storage project
+**************************************************************************/
+void CRFProcess::CalcSecondaryVariablesTES(const bool initial)
+{
+	// TODO [CL] merge with TNEQ
+	// loop over all the nodes,
+	// clean the nodal reaction rate values
+	const size_t node_vector_size     = m_msh->nod_vector.size();
+	const int idx_nodal_react_rate    = GetNodeValueIndex("REACT_RATE_N");
+	const int idx_nodal_solid_density = GetNodeValueIndex("SOLID_DENSITY_N");
+
+	for (size_t idx_node=0; idx_node<node_vector_size; idx_node++)
+	{
+		SetNodeValue( idx_node, idx_nodal_react_rate, 0.0 );
+		SetNodeValue( idx_node, idx_nodal_solid_density, 0.0);
+	}
+
+	// loop over all the elements and update the rho_s values.
+	const size_t mesh_ele_vector_size(m_msh->ele_vector.size());
+	for (size_t i = 0; i < mesh_ele_vector_size; i++)
+	{
+		CElem *const elem = m_msh->ele_vector[i];
+		if (elem->GetMark())                        // Marked for use
+		{
+			fem->ConfigElement(elem, m_num->ele_gauss_points);
+			fem->UpdateSolidDensity(i, initial);          // HS, thermal storage reactions
+			fem->ExtrapolateGauss_ReactRate_TNEQ_TES( this ); // HS added 19.02.2013
+		}
+	}
 }
 
 
@@ -11508,7 +11771,7 @@ void CRFProcess::CalcSecondaryVariablesLiquidFlow()
 	bool Use_Element;
 	vector<size_t> vecConsideredEdges;
 	vector<CNode*> vec_nodes_edge;
-	bool Edge_on_Geo, Point_on_Geo;
+		bool Edge_on_Geo = false, Point_on_Geo;
 	std::vector<size_t> nod_vector_at_geo;
 	CElem* m_ele = NULL;
 	CEdge* m_edg = NULL;
@@ -11599,7 +11862,7 @@ void CRFProcess::CalcSecondaryVariablesLiquidFlow()
 		Use_Element = true;
 
 		// Configure Element for interpolation of node velocities to GP velocities
-		fem->ConfigElement(m_ele);
+			fem->ConfigElement(m_ele, m_num->ele_gauss_points);
 		// velocity vector
 		for (size_t j = 0; j < 3; j++) {
 			//v[j] = m_pcs_flow->GetElementValue(m_ele->GetIndex(), v_eidx[j]);
@@ -11772,7 +12035,7 @@ Programming: 05/2011 BG
 //	double totalmass; // 2012-08 TF not used
 //	double totalmassflux; // 2012-08 TF / unused
 	double *ConcentrationGradient (new double[3]);
-	int numberPolyline;
+		int numberPolyline = 0;
 
 	if (this->Tim->step_current == 0) {
 		this->PolylinesforOutput.push_back(NameofPolyline);
@@ -12393,7 +12656,7 @@ void CRFProcess::Calc2DElementGradient(MeshLib::CElem* m_ele, double ElementConc
 					cout << m_ele->GetIndex() << "\n";
 					//WW ldummy = m_nod->GetIndex();
 					//WW ddummy = eqs->b[m_nod->GetIndex()];
-					fem->ConfigElement(m_ele,false);
+					fem->ConfigElement(m_ele, m_num->ele_gauss_points, false);
 					fem->AssembleParabolicEquationRHSVector();
 					//WW ddummy = eqs->b[m_nod->GetIndex()];
 				}
@@ -12411,7 +12674,7 @@ void CRFProcess::Calc2DElementGradient(MeshLib::CElem* m_ele, double ElementConc
 					continue;
 				{
 					//cout << m_ele->GetIndex() << "\n";
-					fem->ConfigElement(m_ele,false);
+					fem->ConfigElement(m_ele, m_num->ele_gauss_points, false);
 					fem->AssembleParabolicEquationRHSVector();
 				}
 				break;
@@ -13118,7 +13381,6 @@ CRFProcess* PCSGetMass(size_t component_number)
 				Axisymm = -1;  // Axisymmetry is true
 			//OK4801 needs NUM
 			fem = new CFiniteElementStd(this, Axisymm * m_msh->GetCoordinateFlag());
-			fem->SetGaussPointNumber(m_num->ele_gauss_points);
 			if (!fem)
 				succeed = false;
 		}
@@ -13284,13 +13546,10 @@ CRFProcess* PCSGetMass(size_t component_number)
 	void EQSDelete()
 	{
 		LINEAR_SOLVER* eqs = NULL;
-		CRFProcess* m_pcs = NULL;
 		//----------------------------------------------------------------------
 		for(size_t i = 0; i < PCS_Solver.size(); i++)
 		{
 			eqs = PCS_Solver[i];
-			FiniteElement::ProcessType pcs_type (FiniteElement::convertProcessType (eqs->pcs_type_name));
-			m_pcs = PCSGet(pcs_type);
 			if(eqs->unknown_vector_indeces)
 				eqs->unknown_vector_indeces = \
 				        (int*) Free(eqs->unknown_vector_indeces);
@@ -13301,8 +13560,6 @@ CRFProcess* PCSGetMass(size_t component_number)
 				eqs->unknown_update_methods = \
 				        (int*) Free(eqs->unknown_update_methods);
 			eqs = DestroyLinearSolver(eqs);
-			//WWif(m_pcs)
-			//	m_pcs->eqs = NULL;
 			PCS_Solver.erase((PCS_Solver.begin() + i));
 		}
 		//PCS_Solver.clear();
@@ -13498,7 +13755,6 @@ CRFProcess* PCSGetMass(size_t component_number)
         // CB_merge_0513
 		//int dof_DM = 1;
 		int dof_DM = 0;  //WW 02.2023. Pardiso
-		int DM_type = -1;         //03.08.2010. WW
 		CRFProcess* m_pcs = NULL;
 		CFEMesh* a_msh = NULL;
 		SparseTable* sp = NULL;
@@ -13526,7 +13782,6 @@ CRFProcess* PCSGetMass(size_t component_number)
 			{
 				dof_DM = m_pcs->GetPrimaryVNumber();
 				dof = dof_DM;
-				DM_type =  m_pcs->type; //03.08.2010. WW
 				if(m_pcs->type == 42)
 					dof = m_pcs->m_msh->GetMaxElementDim();
 			}
@@ -13664,8 +13919,13 @@ CRFProcess* PCSGetMass(size_t component_number)
 		if (size_bc == 0 && size_st == 0)
 			return;
 
+#ifdef USE_PETSC
+		std::string m_file_name = FileName + "_" + convertProcessTypeToString(
+		        this->getProcessType()) + "_BC_ST_" +  number2str(myrank) + ".asc";
+#else
 		std::string m_file_name = FileName + "_" + convertProcessTypeToString(
 		        this->getProcessType()) + "_BC_ST.asc";
+#endif
 		std::ofstream os(m_file_name.c_str(), ios::trunc | ios::out);
 		if (!os.good())
 		{
@@ -14637,7 +14897,7 @@ void CRFProcess::CalGPVelocitiesfromECLIPSE(string path,
 			tempstring += "; " + temp.str();
 
 			// Configure Element for interpolation of node velocities to GP velocities
-			fem->ConfigElement(elem);
+			fem->ConfigElement(elem, m_num->ele_gauss_points);
 			// Interpolate from nodes to GP of actual element
 			//cout << "Element: " << i << "\n";
 			tempstring = fem->Cal_GP_Velocity_ECLIPSE(tempstring,

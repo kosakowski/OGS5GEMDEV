@@ -41,7 +41,8 @@
 
 #include "mathlib.h"
 #include "fem_ele.h"
-#include "tools.h"  
+#include "tools.h"
+#include "FileTools.h"
 
 extern size_t max_dim;                            //OK411 todo
 
@@ -1376,14 +1377,11 @@ void COutput::WriteELEValuesTECHeader(fstream &tec_file)
 **************************************************************************/
 void COutput::WriteELEValuesTECData(fstream &tec_file)
 {
-	CRFProcess* m_pcs = NULL;
-   CRFProcess* m_pcs_2 = NULL;
-	if (!_ele_value_vector.empty())
-		m_pcs = GetPCS_ELE(_ele_value_vector[0]);
-	else
+	CRFProcess* m_pcs_2 = NULL;
+	if (_ele_value_vector.empty())
 		return;
 
-   vector <bool> skip; // CB
+	vector <bool> skip; // CB
 	size_t no_ele_values = _ele_value_vector.size();
 	bool out_element_vel = false;
 	bool out_element_transport_flux = false; // JOD 2014-11-10
@@ -1445,10 +1443,12 @@ void COutput::WriteELEValuesTECData(fstream &tec_file)
 		}
 		else if (out_element_transport_flux) // JOD 2014-11-10
 		{
+#ifdef USE_TRANSPORT_FLUX
 			gp_ele = ele_gp_value[i];
 			tec_file << gp_ele->TransportFlux(0, 0) << " ";
 			tec_file << gp_ele->TransportFlux(1, 0) << " ";
 			tec_file << gp_ele->TransportFlux(2, 0) << " ";
+#endif
 		}
       for (size_t j = 0; j < ele_value_index_vector.size(); j++)
       {
@@ -3799,7 +3799,7 @@ void COutput::CalculateTotalFlux(CFEMesh* msh, vector<long>&nodes_on_geo,
 			face->SetNormalVector();
 			face->DirectNormalVector();
 			element->setOrder(msh->getOrder() + 1);
-			element->ConfigElement(face, true); // 2D fem	
+			element->ConfigElement(face, m_pcs_flow->m_num->ele_gauss_points, true); // 2D fem
 
 			for (k = 0; k < nfn; k++)
 			{
@@ -3889,7 +3889,6 @@ void COutput::NODWritePointsCombined(double time_current)
 
 	tec_file << geo_name << " ";
 	std::string nod_value_name;
-	int nidx = m_pcs_out->GetNodeValueIndex(nod_value_name) + 1;
 
 	double val_n;
 
@@ -3952,7 +3951,7 @@ void COutput::NODWritePrimaryVariableList(double time_current)
 
 		case GEOLIB::GEODOMAIN:
 
-			for (long i = 0; i < m_msh->nod_vector.size(); i++)
+			for (std::size_t i = 0; i < m_msh->nod_vector.size(); i++)
 				tec_file << m_msh->nod_vector[i]->GetIndex() << "        " << m_pcs_out->GetNodeValue(m_msh->nod_vector[i]->GetIndex(), 1) << "\n";
 
 			cout << "Data output: " << convertProcessTypeToString(getProcessType()) << " primary variables - DOMAIN - " << m_msh->nod_vector.size() << " nodes" << endl;
@@ -3963,7 +3962,7 @@ void COutput::NODWritePrimaryVariableList(double time_current)
 			if (m_sfc)
 				m_msh->GetNODOnSFC(m_sfc, nodes_vector);
 
-			for (long i = 0; i < nodes_vector.size(); i++)
+			for (std::size_t i = 0; i < nodes_vector.size(); i++)
 				tec_file << nodes_vector[i] << "        " << m_pcs_out->GetNodeValue(nodes_vector[i], 1) << "\n";
 
 			cout << "Data output: " << convertProcessTypeToString(getProcessType()) << " primary variables - SURFACE " << geo_name << " -  " << nodes_vector.size() << " nodes" << endl;
@@ -3975,9 +3974,10 @@ void COutput::NODWritePrimaryVariableList(double time_current)
 				double min_edge_length(m_msh->getMinEdgeLength());
 				m_msh->setMinEdgeLength(m_polyline->epsilon);
 				m_msh->GetNODOnPLY(ply, nodes_vector);
+				m_msh->setMinEdgeLength(min_edge_length);
 			}
 
-			for (long i = 0; i < nodes_vector.size(); i++)
+			for (std::size_t i = 0; i < nodes_vector.size(); i++)
 				tec_file << nodes_vector[i] << "        " << m_pcs_out->GetNodeValue(nodes_vector[i], 1) << "\n";
 
 			cout << "Data output: " << convertProcessTypeToString(getProcessType()) << " primary variables - POLYLINE " << geo_name << " - " << nodes_vector.size() << " nodes" << endl;
@@ -4112,9 +4112,10 @@ void COutput::SetTotalFluxNodesPLY(std::vector<long>& nodes_vector)
 
 	if (ply) {
 		CGLPolyline* m_polyline = GEOGetPLYByName(geo_name);
-		double min_edge_length(m_msh->getMinEdgeLength()); // ?????
+		double min_edge_length(m_msh->getMinEdgeLength());
 		m_msh->setMinEdgeLength(m_polyline->epsilon);
 		m_msh->GetNODOnPLY(ply, nodes_vector);
+		m_msh->setMinEdgeLength(min_edge_length);
 	}
 
 }
@@ -4150,8 +4151,16 @@ Programing:
 void COutput::SetTotalFluxNodesDOM(std::vector<long>& nodes_vector)
 {
 	nodes_vector.resize(m_msh->nod_vector.size());
-	for (long i = 0; i < m_msh->nod_vector.size(); i++)
+	for (std::size_t i = 0; i < m_msh->nod_vector.size(); i++)
 		nodes_vector[i] = m_msh->nod_vector[i]->GetIndex();
 	
 
 }
+
+
+void COutput::setFileBaseName(const std::string& fn)
+{
+	file_base_name = pathJoin(defaultOutputPath, pathBasename(fn));
+}
+
+

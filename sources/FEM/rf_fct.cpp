@@ -6,7 +6,6 @@
    09/2008 NB Function with multiple arguments
 **************************************************************************/
 #include "files0.h"
-#include "gs_project.h"
 #include "makros.h"
 #include "rf_fct.h"
 
