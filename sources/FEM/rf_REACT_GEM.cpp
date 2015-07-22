@@ -85,7 +85,6 @@ REACT_GEM::REACT_GEM ( void )
 	idx_oxygen = -1;
 	idx_hydrogen = -1;
         flag_concentrations_with_water=0;
-	flag_scale_water_volume_for_hayekit=0; //default!
 	initialized_flag = 0;
 	heatflag = 0;
 	flowflag = 0;
@@ -2416,34 +2415,30 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
             i = in * nIC + j;
             ii = in * nPS * nIC + 0 * nIC + j; // corresponding index of first phase (fluid) for m_bPS
             m_bIC[i] -= m_bPS[ii];        // B vector without solute
-	if ( !flag_scale_water_volume_for_hayekit)
-            m_bPS[ii] *= skal_faktor; // completely newly scaled first phase ...this is default!
-	else
-			{ // this is necessary for not coupling with hydrology, but porosity change or water is used by gems....
-//				if ( idx_hydrogen == j )
-//					m_bPS[ii] *= skal_faktor;
-//				if ( idx_oxygen == j )
-//					m_bPS[ii] *= skal_faktor;
-			  m_bPS[ii] *= skal_faktor; // completely newly scaled first phase ...only for coupling with hydraulics
-			}
+            if ( flag_coupling_hydrology )
+                m_bPS[ii] *= skal_faktor; // completely newly scaled first phase ...this is default!
+            else
+            {   // this is necessary for hayekit, as only water needs to be scaled and we apply this also for not coupling with hydrology
+                if ( idx_hydrogen == j )
+                    m_bPS[ii] *= skal_faktor;
+                if ( idx_oxygen == j )
+                    m_bPS[ii] *= skal_faktor;
+            }
         }
-	if ( !flag_scale_water_volume_for_hayekit )
-	{
-        for ( j=0 ; j <= idx_water; j++ )
+        if ( flag_coupling_hydrology )
         {
-            i = in * nDC + j;
-            m_xDC[i] *= skal_faktor;     //newly scaled xDC including water /excluding rest
+            for ( j=0 ; j <= idx_water; j++ )
+            {
+                i = in * nDC + j;
+                m_xDC[i] *= skal_faktor;     //newly scaled xDC including water /excluding rest
+            }
         }
-	}
-	else  // special case for hayekit
-	{
-		j = idx_water;
+        else  // special case for hayekit and not coupling with hydrology
         {
+            j = idx_water; // scale only water
             i = in * nDC + j;
-            m_xDC[i] *= skal_faktor;     //newly scaled xDC including water /excluding rest
+            m_xDC[i] *= skal_faktor;
         }
-	  
-	}
         // here we do not need to account for different flow processes ....
         //****************************************************************************************
         if ( flag_transport_b == 1 )
@@ -2468,7 +2463,7 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
                     else
                         m_soluteB[i] = m_bPS[ii];
                 }
-//better not..might cause problems at the moment                m_soluteB[i] += m_soluteB_corr[i]; // corrected for substracted negative concentrations 
+//better not..might cause problems at the moment                m_soluteB[i] += m_soluteB_corr[i]; // corrected for substracted negative concentrations
                 m_soluteB[i] /= m_fluid_volume[in]; // now these are the concentrations
             }
 
@@ -3242,16 +3237,6 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
 			// subkeyword found
 			in.str ( GetLineFromFile1 ( gem_file ) );
 			in >> flag_calculate_boundary_nodes;
-			in.clear();
-			continue;
-		}
-		// ......................................................
-		/// Key word "$SCALE_WATER_FOR_HAYEKIT": should be set to 1 if Hayekit example (analytical solution for porosity change by reactions) is calculated. For GEMS the volume of the water phase is scaled by removing H2O, but not the amount of solutes.
-		if ( line_string.find ( "$SCALE_WATER_FOR_HAYEKIT" ) != string::npos )
-		{
-			// subkeyword found
-			in.str ( GetLineFromFile1 ( gem_file ) );
-			in >> flag_scale_water_volume_for_hayekit;
 			in.clear();
 			continue;
 		}				// ......................................................
@@ -5605,7 +5590,9 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
      iisplit=1;
      dtchem=dt;
     }
-        // do the splitting not for the first timestep
+// DEBUG
+
+    // do the splitting not for the first timestep
     else
     {
         // set smaller time step ...use a critera based on kinetic rate!
@@ -5623,7 +5610,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
            dtchem=dt;  
 	}
     }
-
+    
     /*  
     
     // now we calculate kinetic constraints for GEMS!
@@ -5701,7 +5688,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
                     !( m_NodeStatusCH[in] == OK_GEM_AIA ||  ( ( abs ( oldvolume - dBR->Vs ) / oldvolume ) > 0.1 ) &&
                        ( flowflag != 3 ) ))                                   // not for Richards flow
                 {
-		  if (ii == 0) 
+		  if (ii == 0) // first attempt to solve chemistry failed
 		  {
                     rwmutex.lock();
                     cout <<
@@ -5729,8 +5716,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
                     //Get data
                     REACT_GEM::GetReactInfoFromGEM ( in,m_Node); // this should be also save for MPI
                     // calculate the chemical porosity
-                    if ( m_flow_pcs->GetRestartFlag() < 2 )
-                        REACT_GEM::CalcPorosity ( in, m_Node);                         //during init it should be always done, except for restart !!!
+                    REACT_GEM::CalcPorosity ( in, m_Node);                         
 
                     REACT_GEM::CalcReactionRate ( in, m_Node); //moved it after porosity calculation because of chrunchflow kinetics (model 4)!
                 } // end 2. gems ok
@@ -5744,8 +5730,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
                 //Get data
                 REACT_GEM::GetReactInfoFromGEM ( in,m_Node); // this should be also save for MPI
                 // calculate the chemical porosity
-                if ( m_flow_pcs->GetRestartFlag() < 2 )
-                    REACT_GEM::CalcPorosity ( in, m_Node);                         //during init it should be always done, except for restart !!!
+                REACT_GEM::CalcPorosity ( in, m_Node);                         
 
                 REACT_GEM::CalcReactionRate ( in, m_Node); //moved it after porosity calculation because of chrunchflow kinetics (model 4)!
             } // end gems ok

@@ -8,12 +8,15 @@ GeoSys-TIM: Timestepping ------------------------------------------------
   10.0
  $TIME_CONTROL
   SELF_ADAPTIVE
+  MULTIPLIER
    10001  1.1
    10001  0.8
   MAX_TIME_STEP
     1.0e6
    MIN_TIME_STEP
     1.0e1
+  INITIAL_STEP_SIZE
+   1e1 
 #TIME_STEPPING
  $PCS_TYPE
   MASS_TRANSPORT
@@ -23,12 +26,15 @@ GeoSys-TIM: Timestepping ------------------------------------------------
   10.0
  $TIME_CONTROL
    SELF_ADAPTIVE
+   MULTIPLIER
    80 1.1
    85 0.8
    MAX_TIME_STEP
     1.0e6
    MIN_TIME_STEP
     1.0e1
+  INITIAL_STEP_SIZE
+   1e1 
 #STOP
 
 

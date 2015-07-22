@@ -3,7 +3,7 @@ GeoSys-TIM: Timestepping ------------------------------------------------
  $PCS_TYPE
   GROUNDWATER_FLOW
  $TIME_STEPS
-   100000  1.0e+2
+   10000  1.0e+2
  $TIME_END
   1.0e+4
  $TIME_START
@@ -12,7 +12,7 @@ GeoSys-TIM: Timestepping ------------------------------------------------
  $PCS_TYPE
   MASS_TRANSPORT
  $TIME_STEPS
-   100000  1.0e+2
+   10000  1.0e+2
  $TIME_END
   1.0e+4
  $TIME_START

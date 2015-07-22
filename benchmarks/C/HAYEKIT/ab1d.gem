@@ -1,7 +1,7 @@
 GeoSys-MMP  Material Medium Properties ------------------------------------
 #GEM_PROPERTIES
   $GEM_THREADS
-    1
+    16
   $GEM_INIT_FILE
     TestSolub-dat.lst    ; only file name, no path
   $FLAG_CALCULATE_BOUNDARY_NODE
@@ -14,10 +14,8 @@ GeoSys-MMP  Material Medium Properties ------------------------------------
     1.0
   $FLAG_COUPLING_HYDROLOGY
     0    ; 0-not coupled;1=coupled;
-  $SCALE_WATER_FOR_HAYEKIT
-   1    ; special for this benchmark....
   $TEMPERATURE_GEM
-    298.15       ; temperature for GEMS in degree Celsius
+    298.15       ; temperature for GEMS in degree Kelvin
   $TRANSPORT_B
      1 ; 1: do transport of b vector
  $KINETIC_GEM     ; wie Traber and Maeder
