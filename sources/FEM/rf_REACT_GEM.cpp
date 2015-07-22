@@ -5707,7 +5707,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
                      node_fail = 1; //node failed and do nothing....
 		  }
                     else node_fail = 0;
-                    // leave loop
+                    // leave loop without new calculation of porosity and reaction rates...take last values!
                     ii=iisplit-1;
                 } // end 2. gems failed
                 else

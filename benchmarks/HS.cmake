@@ -41,7 +41,7 @@ ADD_BENCHMARK ("HS" C/calcite_gems/calcite "OGS_FEM_GEMS" 1
 	C/calcite_gems/calcite0210.vtk)
 
 ADD_BENCHMARK ("HS_LONG" C/comedy2d/cement2d "OGS_FEM_GEMS" 1
-	C/comedy2d/cement2d0030.vtk)
+	C/comedy2d/cement2d0006.vtk)
 
 ADD_BENCHMARK ("HS" C/HAYEKIT/ab1d "OGS_FEM_GEMS" 1
 	C/HAYEKIT/ab1d0100.vtk)
