@@ -40,13 +40,13 @@
 <pa_DB>  1e-17
 
 # DHB: Maximum allowed relative mass balance residual for ICs { 1e-13 } 
-<pa_DHB>  1e-11
+<pa_DHB>  1e-14
 
 # EPS: Tolerance of the SolveSimplex() balance residual for ICs { 1e-10 } 
 <pa_EPS>  1e-10
 
 # DK: Tolerance for the Dikin's criterion of IPM convergence { 3e-6 } 
-<pa_DK>  1e-07
+<pa_DK>  1e-06
 
 # DS: Cutoff minimum amount of stable phase in GEM IPM primal solution, moles { 1e-20 }
 <pa_DS>  1e-20
@@ -72,7 +72,7 @@
 <pa_AG>  1
 
 # DGC: Smoothing parameter 2- exponent in smoothing function (-1 to +1) { 1 or 0.001 for adsorption }
-<pa_DGC>  0.01
+<pa_DGC>  0
 
 # PSM: Level of diagnostic messages { 0- disabled (no ipmlog file); 1- default; 2-including warnings }
 <pa_PSM>  1
@@ -134,7 +134,7 @@
 # DKIN: Tolerance for non-trivial metastability restrictions on DC amounts, moles { 1e-10 } 
 <pa_DKIN>  1e-10
 # pa_PLLG: Tolerance for checking divergence in IPM dual solution, 1 to 30000 { 3000 }, 0 disables
-<pa_PLLG>  30000
+<pa_PLLG>  0
 # tMin: Type of thermodynamic potential to minimize (reserved)
 <tMin>  0
 

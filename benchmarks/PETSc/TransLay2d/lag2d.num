@@ -8,12 +8,13 @@ GeoSys-NUM: Numerical Parameter ----------------------------------------
   1
  $LINEAR_SOLVER 
 ; method error_tolerance max_iterations theta precond storage
- petsc bcgs bjacobi 1.e-10 10000 1.0
+ petsc bcgs bjacobi 1.e-7 10000 1.0
+; petsc preonly tfs 1.e-14 2000 1.0
 ;  3      6    1.e-010     10000       1.0    1     4
 ; 2      1 1.e-012       1000           0.5   1       4
-;  3      6 1.e-021       10000           1.0   101       4
+;  2      6 1.e-021       10000           1.0   1       4
  $NON_LINEAR_SOLVER 
-; method error_tolerance max_iterations relaxation
+ method error_tolerance max_iterations relaxation
   PICARD   1.0e-3            10             0.0
  $ELE_GAUSS_POINTS
   3
@@ -22,8 +23,8 @@ GeoSys-NUM: Numerical Parameter ----------------------------------------
   MASS_TRANSPORT
  $LINEAR_SOLVER 
 ; method error_tolerance max_iterations theta precond storage
-;  2      6 1.e-021       2000           1.0   1       2
- petsc bcgs bjacobi 1.e-14 2000 1.0
+;  2      6 1.e-021       2000           1.0   1       4
+ petsc bcgs bjacobi 1.e-10 2000 1.0
 ; petsc preonly tfs 1.e-14 2000 1.0
  $ELE_GAUSS_POINTS
   3

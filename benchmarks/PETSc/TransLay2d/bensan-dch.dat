@@ -72,8 +72,8 @@
 <DCNL>
 'Al(SO4)+' 'Al(SO4)2-' 'Al+3' 'AlO+' 'AlO2-' 'AlO2H@' 'AlOH+2' 'AlHSiO3+2' 'AlSiO4-' 'Ba(CO3)@' 'Ba(HCO3)+' 'Ba(SO4)@' 'Ba+2' 'BaOH+' 'Ca(CO3)@' 'Ca(HCO3)+' 'Ca(SO4)@' 'Ca+2' 'CaOH+' 'Ca(HSiO3)+' 'CaSiO3@' 'Fe(CO3)@' 'Fe(HCO3)+' 'Fe(HSO4)+' 'Fe(SO4)@' 'Fe+2' 'FeCl+' 'FeOH+' 'Fe(HSO4)+2' 'Fe(SO4)+' 'Fe(SO4)2-' 'Fe+3' 'Fe2(OH)2+4' 'Fe3(OH)4+5' 'FeCl+2' 'FeCl2+' 'FeCl3@' 'FeO+' 'FeO2-' 'FeO2H@' 
 'FeOH+2' 'FeHSiO3+2' 'K(SO4)-' 'K+' 'KOH@' 'Mg(CO3)@' 'Mg(HCO3)+' 'Mg+2' 'MgOH+' 'MgSO4@' 'Mg(HSiO3)+' 'MgSiO3@' 'Na(CO3)-' 'Na(HCO3)@' 'Na(SO4)-' 'Na+' 'NaOH@' 'HSiO3-' 'SiO2@' 'SiO3-2' 'Sr(CO3)@' 'Sr(HCO3)+' 'Sr(SO4)@' 'Sr+2' 'SrOH+' 'CO2@' 'CO3-2' 'HCO3-' 'CH4@' 'ClO4-' 'Cl-' 'H2@' 'O2@' 'S2O3-2' 'HSO3-' 'SO3-2' 'HSO4-' 'SO4-2' 'H2S@' 'HS-' 
-'S-2' 'OH-' 'H+' 'H2O@' 'CO2' 'CH4' 'H2' 'O2' 'H2S' 'Ba_Mont' 'Ca_Mont' 'Fe_Mont' 'K_Mont' 'Mg_Mont' 'NaMont' 'Sr_Mont' 'Jennite' 'Tob-II' 'C2AH8' 'C2FH8' 'C3AH6' 'C3FH6' 'C4AH13' 'C4FH13' 'ettringite' 'Fe-ettringite' 'ettringite' 'Fe-ettringite' 'monosulphate' 'Fe-monosulphate' 'straetlingite' 'C2FSH8' 'hemicarbonate' 'Fe-hemicarbonate' 'monocarbonate' 'Femonocarbonate' 'C4AH13' 'monosulphate' 'C4AH13' 'monosulphate' 
-'IlliteEx-Al' 'IlliteEx-Ca' 'IlliteEx-Mg' 'IlliteEx-Na' 'IlliteEx-K' 'hydrotalcite' 'Fe-hydrotalcite' 'Phillipsite_Ca' 'Phillipsite_K' 'Phillipsite_Na' 'Gbs' 'Kln' 'witherite' 'Brt' 'CAH10' 'Laumontite' 'Mordenite' 'Cal' 'Ord-Dol' 'Portlandite' 'Anh' 'Gp' 'hemihydrate' 'Sd' 'Mag_hyd' 'Fe(OH)3(mic)' 'Py' 'syngenite' 'Mgs' 'Brc' 'Analcime' 'Qtz' 'Inert_Qtz' 'Qtz' 'Qtz' 'Str' 'Cls' 
+'S-2' 'OH-' 'H+' 'H2O@' 'CO2' 'CH4' 'H2' 'O2' 'H2S' 'Ba_Mont' 'Ca_Mont' 'Fe_Mont' 'K_Mont' 'Mg_Mont' 'NaMont' 'Sr_Mont' 'Jennite' 'Tob-II' 'C2AH8' 'C2FH8' 'C3AH6' 'C3FH6' 'C4AH13_1' 'C4FH13' 'ettringite1' 'Fe-ettringite1' 'ettringite2' 'Fe-ettringite2' 'monosulphate1' 'Fe-monosulphate' 'straetlingite' 'C2FSH8' 'hemicarbonate' 'Fe-hemicarbonate' 'monocarbonate' 'Femonocarbonate' 'C4AH13_2' 'monosulphate2' 'C4AH13_3' 'monosulphate3' 
+'IlliteEx-Al' 'IlliteEx-Ca' 'IlliteEx-Mg' 'IlliteEx-Na' 'IlliteEx-K' 'hydrotalcite' 'Fe-hydrotalcite' 'Phillipsite_Ca' 'Phillipsite_K' 'Phillipsite_Na' 'Gbs' 'Kln' 'witherite' 'Brt' 'CAH10' 'Laumontite' 'Mordenite' 'Cal' 'Ord-Dol' 'Portlandite' 'Anh' 'Gp' 'hemihydrate' 'Sd' 'Mag_hyd' 'Fe(OH)3(mic)' 'Py' 'syngenite' 'Mgs' 'Brc' 'Analcime' 'Gravel' 'Inert_Qtz' 'Quartz' 'Sand' 'Str' 'Cls' 
 # ccDC: Class codes of DCs (Dependent Components) [nDC]
 <ccDC>
 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 'S' 
@@ -91,12 +91,10 @@
 ## (7) Phases section
 # PHNL: List of Phase names (up to 16 characters per name) [nPH]
 <PHNL>
-'aq_gen' 'gas_gen' 'SS_Montmor' 'Tob_jen_ss' 'C2AFH8' 'C3AFH6' 'C4AFH13' 'ettringite-Al' 'ettringite-Fe' 'monosulphate' 'straetlingite' 'hemicarbonate' 'monocarbonate' 'SO4_OH_AFm' 'OH_SO4_AFm' 'IlliteEx' 'OH-hydrotalcite' 'Phillipsite' 'Gibbsite' 'Kaolinite' 'Witherite' 'Barite' 'CAH10' 'Laumontite' 'Mordenite' 'Calcite' 'Dolomite-ord' 'Portlandite' 'Anhydrite' 'Gypsum' 'hemihydrate' 'Siderite' 'Hydro-Magnetite' 'Ferrihydrite-mc' 'Pyrite' 'syngenite' 'Magnesite' 'Brucite' 'Analcime' 'Gravel' 
-'Inert_Quartz' 'Quartz' 'Sand' 'Strontianite' 'Celestite' 
+'aq_gen' 'gas_gen' 'SS_Montmor' 'Tob_jen_ss' 'C2AFH8' 'C3AFH6' 'C4AFH13' 'ettringite-Al' 'ettringite-Fe' 'monosulphate' 'straetlingite' 'hemicarbonate' 'monocarbonate' 'SO4_OH_AFm' 'OH_SO4_AFm' 'IlliteEx' 'OH-hydrotalcite' 'Phillipsite' 'Gibbsite' 'Kaolinite' 'Witherite' 'Barite' 'CAH10' 'Laumontite' 'Mordenite' 'Calcite' 'Dolomite-ord' 'Portlandite' 'Anhydrite' 'Gypsum' 'hemihydrate' 'Siderite' 'Hydro-Magnetite' 'Ferrihydrite-mc' 'Pyrite' 'syngenite' 'Magnesite' 'Brucite' 'Analcime' 'Gravel' 'Inert_Quartz' 'Quartz' 'Sand' 'Strontianite' 'Celestite' 
 # ccPH: Codes of phase aggregate state [nPH]
 <ccPH>
-'a' 'g' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 
-'s' 's' 's' 's' 's' 
+'a' 'g' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 's' 
 # nDCinPH: Number of DCs included in each phase [nPH]
 <nDCinPH>
 84 5 7 2 2 2 2 2 2 2 2 2 2 2 2 5 2 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 

@@ -14,9 +14,9 @@ GeoSys-TIM: Timestepping ------------------------------------------------
   MAX_TIME_STEP
     1.0e6
    MIN_TIME_STEP
-    1.0e1
+    1.0
   INITIAL_STEP_SIZE
-   1e1 
+   5.0
 #TIME_STEPPING
  $PCS_TYPE
   MASS_TRANSPORT
@@ -32,9 +32,9 @@ GeoSys-TIM: Timestepping ------------------------------------------------
    MAX_TIME_STEP
     1.0e6
    MIN_TIME_STEP
-    1.0e1
+    1.0
   INITIAL_STEP_SIZE
-   1e1 
+   5.0 
 #STOP
 
 
