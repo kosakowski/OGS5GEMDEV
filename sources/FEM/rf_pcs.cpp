@@ -7053,9 +7053,9 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 		//PetscViewer viewer;
 		//eqs_new->EQSV_Viewer(FileName, viewer);
 
-
-		eqs_new->zeroRows_in_Matrix(nbc, &bc_eqs_id[0]);
 		eqs_new->AssembleMatrixPETSc();
+		eqs_new->zeroRows_in_Matrix(nbc, &bc_eqs_id[0]);
+
 		
 #endif		
 	}
