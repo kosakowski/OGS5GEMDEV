@@ -222,7 +222,7 @@ public:
     double CalcSoluteBDelta ();
     double CalcMaxSoluteBDelta ();
     double CalcSoluteBDeltaNode ( long in );
-    double m_diff_gems;
+    double minimum_kinetic_time_step; // for refinement of kinetics
     void StoredSolutionAllPicardIteration ( );
     void StoreOldSolutionAll ( );
     void RestoreOldSolutionAll ( );

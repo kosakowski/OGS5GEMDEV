@@ -105,7 +105,7 @@ REACT_GEM::REACT_GEM ( void )
 	gem_mass_scale = 1.0e-0;                   // GEMS default mass scaling parameter
 	flag_calculate_boundary_nodes = 0;                        // set to zero if boundary nodes should not change the porosity
 	m_max_failed_nodes = 5; //default number of max allowed nodes to fail
-	m_diff_gems = 0.0;
+	minimum_kinetic_time_step = 1.0e-3; // set a lower value for kinetics time step in order to limit refinement
         calc_limits=1; // default value if no iterative mode
 	gem_nThread = 1; // default number of threads
 	string tinit_path = " ";
@@ -3282,12 +3282,11 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
 			continue;
 		}
 		/// Key word "$MY_SMART_GEMS": if the summarized change in b-vector is smaller than this value, GEMS calculations are not done and previous values are taken.  .........................
-		if ( line_string.find ( "$MY_SMART_GEMS" ) != string::npos )
+		if ( line_string.find ( "$MINIMUM_KINETIC_TIME_STEP" ) != string::npos )
 		{
-		         cout << "GEMS input: MY_SMART_GEMS is not supported anymore\n";
 			// subkeyword found
 			in.str ( GetLineFromFile1 ( gem_file ) );
-			in >> m_diff_gems;
+			in >> minimum_kinetic_time_step;
 			in.clear();
 			continue;
 		}        // ......................................................
@@ -3300,6 +3299,8 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
 			in.clear();
 			continue;
 		}        // ......................................................
+		/// keyword "$CALCULATE_GEMS" is used to exclude nodes from gems calculations....
+		/// nodes are not calculated in intervall between lower and upper limit...input: condition type (default: 1), number of species, lower limit, upper limit 
         if ( line_string.find ( "$CALCULATE_GEMS" ) != string::npos )
         {
             in.str ( GetLineFromFile1 ( gem_file ) );
@@ -3830,7 +3831,7 @@ double REACT_GEM::MaxDtKinetics(long in, TNode *m_Node)
             }
         }
     }
-
+  if (mxdt < minimum_kinetic_time_step) mxdt=dummy; // limit to value that is provided in *.gem input...hardcoded value for min time step is 1e-3 s
 //  DEBUG
 //cout << "DEBUG kinetics: node , default time step dt, min kinetic time step " << in << " " << dt << " " << mxdt << "\n";
         return mxdt;
@@ -5389,10 +5390,10 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
                     if ( repeated_fail > m_max_failed_nodes )
                     {
                         rwmutex.lock();
-                        cout << "GEFMS: " << repeated_fail <<
-                             "nodes failed this timestep, check chemical system!"
+                        cout << "GEMS: " << repeated_fail <<
+                             " nodes failed this timestep, check chemical system!"
                              << "\n";
-
+                        cout << "writing out gems dbr and ipm file for last failed node and EXIT SIMULATION \n";
                         string rank_str;
                         rank_str = "0";
 
@@ -5595,14 +5596,16 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
     // do the splitting not for the first timestep
     else
     {
-        // set smaller time step ...use a critera based on kinetic rate!
-        dummy=MaxDtKinetics(in, m_Node);
-	if ((dummy > 1.0e-6) && (dummy < dt))
+        dummy=MaxDtKinetics(in, m_Node);        // set smaller time step ...use a critera based on kinetic rate! and minimum value given in *.gem file
+
+	if ((dummy >max_kinetic_timestep) && (dummy < dt)) // max_kinetic_timestep is the maximum allowed timestep according to kinetic criteria
 	{
           iisplit=dt/dummy;
 	  if (iisplit < 1) iisplit=1;
-	  if (iisplit > 100) iisplit=100;
+	  if (iisplit > 100000) iisplit=100000; // hardcoded number for kinetics, in order to limit the time for calculations..
           dtchem=dt/(double) iisplit;
+	  // DEBUG
+	  cout << "DEBUG OGS-GEM kinetic time step: node,  min kin time, dt, iisplit " << in << " "  << dtchem << " " << dt << " " << iisplit << "\n";
 	}
 	else
 	{
@@ -5684,8 +5687,9 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
 
                 dBR->NodeStatusCH = NEED_GEM_AIA;
                 m_NodeStatusCH[in] = m_Node->GEM_run ( true );
+		// second time, therefore we also accept BAD_GEM_AIA .....dangerous!
                 if (
-                    !( m_NodeStatusCH[in] == OK_GEM_AIA ||  ( ( abs ( oldvolume - dBR->Vs ) / oldvolume ) > 0.1 ) &&
+                    !( m_NodeStatusCH[in] == OK_GEM_AIA ||  m_NodeStatusCH[in] == BAD_GEM_AIA || ( ( abs ( oldvolume - dBR->Vs ) / oldvolume ) > 0.1 ) &&
                        ( flowflag != 3 ) ))                                   // not for Richards flow
                 {
 		  if (ii == 0) // first attempt to solve chemistry failed
