@@ -4396,13 +4396,13 @@ double* CMediumProperties::PermeabilityTensor(long index)
                         // then get the values from nodes
                            dummy = m_vec_GEM->REACT_GEM::GetNodePorosityValue(m_Elem->GetNodeIndex ( ii ));
                            dummy0 = m_vec_GEM->REACT_GEM::GetNodePorosityValueInitial(m_Elem->GetNodeIndex ( ii ));
-			   pdummy = CMediumProperties::KozenyCarmanNew( KC_permeability_initial,
+			   pdummy = CMediumProperties::KozenyCarman_normalized( KC_permeability_initial,
 			                                                    dummy0,
 			                                                    dummy );
                            permeability_average += 1.0 / pdummy;
 
                         }
-                        k_new =  count_nodes / permeability_average; // This is now harmonic mean of node diffusion coefficients	
+                        k_new =  count_nodes / permeability_average; // This is now harmonic mean of node permeabilities
                     
 #else			
 			
@@ -6354,7 +6354,7 @@ double CMediumProperties::KozenyCarman_normalized(double k0, double n0, double n
 	{
 		rt = k0;
 
-		rt *= MathLib::fastpow( n / n0, 3 );
+		rt *= pow( n / n0, 3 );
 
 		rt *= ((1 - n0) / (1 - n) * (1 - n0) / (1 - n));
 	}
