@@ -48,7 +48,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
-
+#include <cmath>
 #include <cstring>
 #include <iostream>
 //
@@ -124,6 +124,11 @@ REACT_GEM::~REACT_GEM ( void )
 
 	if ( initialized_flag > 0 )
 	{
+
+	  for (int i = 0; i < gem_nThread; ++i) // here we join the threads! otherwise it might be that boost/phtread throws an assertion, because condition variables are still in use when destroyed!
+	  {
+	      gemThread[i].join();
+	  }
 		delete [] gemThread ; //each mpi task creates gem_nThread workers
 		delete [] m_xDC;
 		delete [] m_gam;
@@ -216,8 +221,6 @@ REACT_GEM::~REACT_GEM ( void )
 		m_kin.clear();
                 delete  gem_barrier_finish;
 		delete  gem_barrier_start;
-
-	  
 	}
 }
 
@@ -3591,8 +3594,8 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
                                                  if (omega_components[in * nDC + j] > 1.e12) omega_components[in * nDC + j]=1.0e12; 
 						// loop over all components of the phase
                                                 omega_phase[in * nPH + k] +=   omega_components[in * nDC + j];     //m_Node->DC_a ( j );
-//						mol_phase[in * nPH + k] +=( m_xDC[in * nDC + j] );
-						mol_phase[in * nPH + k] +=( m_xDC[in * nDC + j] * m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter] );
+						mol_phase[in * nPH + k] +=( m_xDC[in * nDC + j] );
+					//	mol_phase[in * nPH + k] +=( m_xDC[in * nDC + j] * m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter] ); // this is charge of phase for SS
 					//	cout << " j " << j << " DC_a " << m_Node->DC_a ( j ) << "  " << pow(10,m_Node->DC_a (j)) << " ph_satindex " << m_Node->Ph_SatInd(k)<< " Debug kin omega phase "<< omega_phase[in*nPH+k] << " fraction component " << omega_components[in*nDC+j]/omega_phase[in*nPH+k] << "  mol component " <<  m_xDC[in * nDC + j] << "  mol phase " << mol_phase[in*nPH+k] << " volume " << m_Node->Ph_Volume ( k )<< "\n"; // debug					  
 					}
 			}
@@ -3819,14 +3822,14 @@ double REACT_GEM::MaxDtKinetics(long in, TNode *m_Node)
 	        for (j= m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++)
 		{
 		                  // calculate mass change effect of rate on element i: access stoichiometric matrix dCH->A[i*nIC+j]; 
-                   dummyc += fabs(dmdt[in * nPH + k]*dCH->A[i*nIC+j]);
+                   dummyc += fabs(dmdt[in * nPH + k]*dCH->A[j*nIC+i]);
 		}
 //		m_soluteB must be bigger than zero, otherwise the folowing does not make any sense ;-)
-                if (m_soluteB[i] > 0.0)
+                if ((m_soluteB[in*nIC+i] > 0.0) || (dummyc > 0.0))
 		{
 // calculate quotient of element mass in solution / change .. This is time needed to produce element amount by kinetic rate!
-		dummy= 0.1*m_soluteB[i]/dummyc; // divided by ten in order to scale to 10% of element mass
-		if (dummy < mxdt) mxdt=dummy; // return always minimum time!
+		   dummy= 0.1*m_soluteB[in*nIC+i]/dummyc; // divided by ten in order to scale to 10% of element mass
+		   if (dummy < mxdt) mxdt=dummy; // return always minimum time!
 		}
             }
         }
@@ -3843,6 +3846,67 @@ double REACT_GEM::MaxDtKinetics(long in, TNode *m_Node)
 //cout << "DEBUG kinetics: node , default time step dt, min kinetic time step " << in << " " << dt << " " << mxdt << "\n";
         return mxdt;
 }
+
+double REACT_GEM::MaxChangeKineticsPhase(long in, int ii, int i, TNode *m_Node) // in: node number, ii: counter for kinetics phase, i: endmember number in phase
+{
+    int idx=0, iomega_max;
+    const char* species;
+    double mxchange;
+    double dummy, dummyc;
+    int k,j;
+    DATACH* dCH;                            //pointer to DATACH
+    DATABR* dBR;                            // pointer to DBR
+
+    // Getting direct access to work node DCH structure which
+    // exchanges data between GEMIPM and FMT parts
+    dCH = m_Node->pCSD();
+    if ( !dCH )
+        return 0;
+
+    // Getting direct access to work node DATABR structure which
+    // exchanges data between GEMIPM and FMT parts
+    dBR = m_Node->pCNode();
+    if ( !dBR )
+        return 0;
+
+     mxchange=0.0;  // set to big number
+    
+    // ii is the phase to invest
+        k = m_kin[ii].phase_number;
+
+        if ( m_kin[ii].kinetic_model > 0 ) // do it only if kinetic model is defined take model
+        {
+            // we need the effect of dummy on each element concentration
+            // loop over all concentrations and calculate if phase has an effect !
+//            for (i = 0; i<nIC; i++) // loop over all elements
+	  // i: is the endmember to invest -> corresponds to idx in dependent component list
+	  species = m_kin[ii].endmember_species[i].c_str();
+	  idx = m_Node ->IC_name_to_xCH (species);
+            {
+	        dummy=0.0;
+	        // loop over all dependent components in the kinetically controlled phase
+	        for (j= m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++)
+		{
+		                  // calculate mass change effect of rate on element i: access stoichiometric matrix dCH->A[i*nIC+j]; 
+                   dummyc += dCH->A[j*nIC+idx];
+		}
+//		m_soluteB must be bigger than zero, otherwise the folowing does not make any sense ;-)
+                if ((m_bPS[in*nIC+idx] > 0.0) && (dummyc > 0.0)) 
+		{
+// calculate quotient of element mass in solution / change .. This is time needed to produce element amount by kinetic rate!
+  		   dummy = 0.1*(m_bPS[in*nIC+idx]/dummyc); // divided by ten in order to scale to 10% of element mass
+                   mxchange=dummy; // return always minimum time!
+		}
+
+            }
+        }
+
+
+    //  DEBUG
+ if (in == 0) cout << "DEBUG kinetics: node , max change according to 10% concentrations change " << mxchange << " solute mass " <<  m_bPS[in*nIC+idx] << " dummyc " << dummyc << "\n";
+        return mxchange;
+}
+
 
 /**
  * REACT_GEM::CalcLimitsInitial ( long in )
@@ -3948,8 +4012,7 @@ int REACT_GEM::CalcLimitsInitial ( long in, TNode* m_Node)
 
 int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration, TNode* m_Node)
 {
-    int idx=0, iomega_max;
-    const char* species;
+    int iomega_max;
     double dummy, dummy2,omega_dummy, omega_max, charge_phase,phase_change,mdiff;  // dummy value and amount we need
     long i, k,j;
     double *dm_endmember, dm_sum, dm_abssum, dll_sum, dul_sum,checksum, dm_minus,dm_plus; //change of mass for endmember in given time intervall, sum of changes for endmember in given time intervall
@@ -3990,9 +4053,9 @@ int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration
 
     // do nothing if omega_phase is between 0.99 and 1.01
 
-    for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )  // mol_phase includes corrections for valence of endmembers! in order to get
+    for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )  // mol_phase does not include corrections for valence of endmembers! charge_phase does this!
     {
-        charge_phase +=m_xDC[in * nDC + j] * m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter];
+        charge_phase +=m_xDC[in * nDC + j]* m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter];
     }
 //cout << "\n\n\n DEBUG solidsolution node number "<< in << " phase_change" <<  phase_change<< " total mass " << mol_phase[in * nPH + k] << "\n";
 
@@ -4053,12 +4116,31 @@ int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration
             if (dm_endmember[i] > 0.0) m_dul[in * nDC + j] += dm_endmember[i];
             if (dm_endmember[i] < 0.0) m_dll[in * nDC + j] += dm_endmember[i];
         }
+        // testwise add additional degree of freedom 
+/*
+        if (omega_phase[in * nPH + k]<0.5) 
+       {
+	 m_dll[in*nDC+j] *= 0.5;
+	 m_dul[in*nDC+j] *= 2.0;
+       }
+       if (omega_phase[in * nPH + k]>2.0)
+       {
+	 m_dul[in*nDC+j] *= 2.0;
+	 m_dll[in*nDC+j] *= 0.5;
+       }
+*/       
     }
 
    // until here we calculated congruent dissolution/precipitation
   // in the next step we adjust compostion according to partial over/undersaturation
     dm_sum=0.0;
+    dm_plus=0.0;
+    dm_minus=0.0;
     dm_abssum=0.0;
+    // DEBUG
+    double sum_mol_fraction=0.0;
+    double sum_omega_fraction=0.0;
+    
     for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )
     {
         i=j-m_kin[ii].dc_counter; // counts from zero to dCH->nDCinPH[k]
@@ -4072,10 +4154,22 @@ int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration
         else
         {
 	    // relative saturation vs relative mol-amount
-            dm_endmember[i] =  (omega_components[in * nDC + j]/omega_phase[in * nPH + k]) /(m_xDC[in*nDC+j]/mol_phase[in*nPH+ k]) ;
-   cout << "DEBUG solid solution i, change "<< i << " " <<  dm_endmember[i] << " mold endmember " <<  m_xDC[in * nDC + j] << " omega_comp " << omega_components[in * nDC + j] << " phase_comp " << omega_phase[in * nPH + k] << " \n";	    
-	    // multiply with the total amount
-	    //dm_endmember[i] *= m_xDC[in*nDC+j]* m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter];
+//            dm_endmember[i] =  (omega_components[in * nDC + j]/omega_phase[in * nPH + k]) /(m_xDC[in*nDC+j]/mol_phase[in*nPH+ k]) ;
+//	    sum_mol_fraction += m_xDC[in * nDC + j]/mol_phase[in*nPH+ k];
+            dummy =  (omega_components[in * nDC + j]/omega_phase[in * nPH + k]) /(m_xDC[in*nDC+j]*m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter]/charge_phase) ;
+	    if (in == 0) cout << "DEBUG solid solution i, rel change "<< i << " " <<  dummy ; 
+
+	    dm_endmember[i] = -0.1 * m_xDC[in*nDC+j]*m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter] * (1 - dummy);
+	    dummy = MaxChangeKineticsPhase(in, ii, i,m_Node);
+	    if (abs(dummy) < (abs(dm_endmember[i]))) dm_endmember[i] = copysign(dummy,dm_endmember[i]);
+	    if ((0.1*m_xDC[in * nDC + j]) < (abs(dm_endmember[i]))) dm_endmember[i] = copysign((0.1*m_xDC[in * nDC + j]),dm_endmember[i]);
+	    
+	    
+	    sum_mol_fraction += m_xDC[in * nDC + j]*m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter]/charge_phase;
+	    sum_omega_fraction +=(omega_components[in * nDC + j]/omega_phase[in * nPH + k]);
+	    
+
+	    if (in == 0) cout << " change "<< i << " " <<  dm_endmember[i] << " max change allowed " << dummy << " mol fraction " <<  m_xDC[in * nDC + j] * m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter]/charge_phase << " omega fraction " << omega_components[in * nDC + j] / omega_phase[in * nPH + k] << " \n";	    
         }
         if ( !( dm_endmember[i] <= 1.0 ) && !( dm_endmember[i] > 1.0 ) ) //test for NaN
         {
@@ -4098,10 +4192,81 @@ int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration
             dm_plus += dm_endmember[i];
         dm_sum += dm_endmember[i];
         dm_abssum += abs(dm_endmember[i]);
-//    cout << "DEBUG solid solution i, change "<< i << " " <<  dm_endmember[i] << " mold endmember " <<  m_xDC[in * nDC + j] << " dm_sum " << dm_sum << " dm_abssum " << dm_abssum << " \n";
+    if (in == 0)    cout << "DEBUG solid solution i, change "<< i << " " <<  dm_endmember[i] << " mold endmember " <<  m_xDC[in * nDC + j] << " dm_sum " << dm_sum << " dm_abssum " << dm_abssum << " \n";
+    if (in == 0)    cout << "DEBUG solid solution: sum_mol_fraction"<< sum_mol_fraction << " sum_omega_fraction " <<  sum_omega_fraction  << " \n";
 
     }
     
+    dm_sum=0.0;
+    dm_abssum=0.0;
+    // DEBUG
+    sum_mol_fraction=0.0;
+    sum_omega_fraction=0.0;
+    // now finally set the constraints
+    for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )
+    {
+        i=j-m_kin[ii].dc_counter; // counts from zero to dCH->nDCinPH[k]
+//        cout << "DEBUG solid solution i, change "<< i << " " <<  dm_endmember[i] << " mold endmember " <<  m_xDC[in * nDC + j] << " \n";
+        // surface complexation species are not kinetically controlled -- 0 is old way...X is new way in DCH files
+        if ( ( dCH->ccDC[j]  == '0' ) || ( dCH->ccDC[j]  == 'X' ) || ( dCH->ccDC[j]  == 'Y' ) || ( dCH->ccDC[j]  == 'Z' ) )
+        {
+            m_dll[in * nDC + j] = 0.0; // set to zero
+            m_dul[in * nDC + j] = 1.0e+10; // very high number
+        }
+        else
+        {
+	if (in == 0)  cout << "DEBUG solid solution i, change "<< i << " " <<  dm_endmember[i] << " mold endmember " <<  m_xDC[in * nDC + j] << " dm_plus " << dm_plus << " dm_minus " << dm_minus << " \n";
+
+            if (dm_plus > 0.0 && (abs(dm_minus) < dm_plus))
+            {
+                // scale such that dm_endmember sum is zero
+                if (dm_endmember[i] > 0.0)
+                {
+                    dm_endmember[i] *= abs(dm_minus)/dm_plus;
+                }
+            }
+            else if (dm_minus < 0.0 && (abs(dm_minus) > dm_plus))
+            {
+                if (dm_endmember[i] < 0.0)
+                {
+                    dm_endmember[i] *= dm_plus/abs(dm_minus);
+                }
+            }
+            else
+            {
+                dm_endmember[i]=0.0;
+            }
+        }
+        if ( !( dm_endmember[i] <= 1.0 ) && !( dm_endmember[i] > 1.0 ) ) //test for NaN
+        {
+            // no change!
+            dm_endmember[i]=0.0;
+        }
+        if ( ( dm_endmember[i] > 1.0e6 )  ) //test for inf
+        {
+            // no change!
+            dm_endmember[i]=0.0;
+        }
+        if ( ( dm_endmember[i] < -1.0e6 )  ) //test for inf
+        {
+            // no change!
+            dm_endmember[i]=0.0;
+        }
+ 
+
+        dm_sum += dm_endmember[i];
+        dm_abssum += abs(dm_endmember[i]);
+	if (in == 0)  cout << "DEBUG solid solution i, change "<< i << " " <<  dm_endmember[i] << " mold endmember " <<  m_xDC[in * nDC + j] << " dm_sum " << dm_sum << " dm_abssum " << dm_abssum << " \n";
+
+        // set values
+        m_dul[in * nDC + j] += dm_endmember[i];
+        m_dll[in * nDC + j] += dm_endmember[i];
+    }
+
+ 
+    
+    
+
     // check for problems
     for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + 	dCH->nDCinPH[k]; j++ )
     {
