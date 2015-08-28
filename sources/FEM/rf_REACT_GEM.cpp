@@ -5791,11 +5791,13 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
                    ( flowflag != 3 ) ))                                   // not for Richards flow
             {
                 // restore old constraints and give a lot more freedom..special version!!!!
-                for ( j = 0; j < nDC; j++ )
+/*  removed this in order to have better control on kinetics!
+	      for ( j = 0; j < nDC; j++ )
                 {
                     m_dll[in * nDC + j] = m_dll[in * nDC + j]*0.999999;
                     m_dul[in * nDC + j] = m_dul[in * nDC + j]*1.000001;
                 }
+*/                
                 //move data to GEMS
                 REACT_GEM::SetReactInfoBackGEM ( in,m_Node); // this should be also save for MPI
                 // take values from old B volume for comparison
