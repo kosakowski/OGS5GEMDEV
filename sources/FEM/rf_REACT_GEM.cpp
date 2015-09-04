@@ -3457,14 +3457,14 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
             else if ( d_kin.surface_model == 5 ) // model 5 is for bruno: surfacearea = surfacearea[0] * (porosity -surface_area[1]) 
             {
                 in >> d_kin.surface_area[0] >> d_kin.surface_area[1]; // surface: m*m / mol
-                cout << "mimic crunch: surface area " << d_kin.surface_area[0] <<
-                     "\n";
+                cout << " surfacearea = surfacearea[0] * (porosity -surface_area[1] " << d_kin.surface_area[0] << " " << d_kin.surface_area[1] << "\n";
             }
             else if ( d_kin.surface_model == 6 ) // model 6 is kinetic for spherical grains
             {
                 in >> d_kin.surface_area[0]; // surface: m*m / mol
-                cout << "const specific surface area for spherical particles" << d_kin.surface_area[0] <<
+                cout << "const specific surface area for spherical particles ... not yet implemented!!!!!!" << d_kin.surface_area[0] <<
                      "\n";
+	        exit(1);
             }
             else if ( d_kin.surface_model == 33 ) // model 33 is kinetic for cement hydration
             {
