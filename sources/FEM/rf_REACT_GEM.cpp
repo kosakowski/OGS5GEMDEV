@@ -4608,7 +4608,10 @@ double REACT_GEM::SurfaceAreaPh ( long kin_phasenr,long in,  TNode* m_Node )
 	else if ( m_kin[kin_phasenr].surface_model == 4 )
 		surf_area = m_kin[kin_phasenr].surface_area[0] * m_porosity[in]; // multiplication of specific surface area and  porosity
 	else if ( m_kin[kin_phasenr].surface_model == 5 )
-		surf_area = m_kin[kin_phasenr].surface_area[0] * abs(m_porosity[in]-m_kin[kin_phasenr].surface_area[1]); // multiplication of specific surface area and  porosity		
+	  {
+		surf_area = m_kin[kin_phasenr].surface_area[0] * abs(m_porosity[in]-m_kin[kin_phasenr].surface_area[1]); // multiplication of specific surface area and  porosity
+                if (m_porosity[in] <= m_kin[kin_phasenr].surface_area[1]) surf_area=0.0;     
+	  }		
 	else if ( m_kin[kin_phasenr].surface_model == 6 ) // sphrerical grains ...but not yet implemented!
 		surf_area = m_kin[kin_phasenr].surface_area[0] ; // multiplication of specific surface area and  porosity		
 	else if ( m_kin[kin_phasenr].surface_model == 33 )
