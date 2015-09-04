@@ -3454,6 +3454,12 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
                 cout << "mimic crunch: surface area " << d_kin.surface_area[0] <<
                      "\n";
             }
+            else if ( d_kin.surface_model == 5 ) // model 5 is for bruno: surfacearea = surfacearea[0] * (porosity -surface_area[1]) 
+            {
+                in >> d_kin.surface_area[0] >> d_kin.surface_area[1]; // surface: m*m / mol
+                cout << "mimic crunch: surface area " << d_kin.surface_area[0] <<
+                     "\n";
+            }
             else if ( d_kin.surface_model == 6 ) // model 6 is kinetic for spherical grains
             {
                 in >> d_kin.surface_area[0]; // surface: m*m / mol
@@ -4601,6 +4607,10 @@ double REACT_GEM::SurfaceAreaPh ( long kin_phasenr,long in,  TNode* m_Node )
 		surf_area *= m_kin[kin_phasenr].surface_area[0] / m_porosity[in]; // multiplication with specific surface area and division by porosity
 	else if ( m_kin[kin_phasenr].surface_model == 4 )
 		surf_area = m_kin[kin_phasenr].surface_area[0] * m_porosity[in]; // multiplication of specific surface area and  porosity
+	else if ( m_kin[kin_phasenr].surface_model == 5 )
+		surf_area = m_kin[kin_phasenr].surface_area[0] * abs(m_porosity[in]-m_kin[kin_phasenr].surface_area[1]); // multiplication of specific surface area and  porosity		
+	else if ( m_kin[kin_phasenr].surface_model == 6 ) // sphrerical grains ...but not yet implemented!
+		surf_area = m_kin[kin_phasenr].surface_area[0] ; // multiplication of specific surface area and  porosity		
 	else if ( m_kin[kin_phasenr].surface_model == 33 )
 		// constant surface area value for cement hydration!
 		surf_area = m_kin[kin_phasenr].surface_area[0];		
