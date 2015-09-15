@@ -125,6 +125,11 @@ REACT_GEM::~REACT_GEM ( void )
 	if ( initialized_flag > 0 )
 	{
 
+	  for (int i = 0; i < gem_nThread; ++i) // here we interrupt the threads! 
+	  {
+	      gemThread[i].interrupt();
+	  }
+
 	  for (int i = 0; i < gem_nThread; ++i) // here we join the threads! otherwise it might be that boost/phtread throws an assertion, because condition variables are still in use when destroyed!
 	  {
 	      gemThread[i].join();
@@ -2789,7 +2794,7 @@ double REACT_GEM::CalcSoluteBDeltaNode ( long in )
 	double dummy = 0;
 	for ( i = 0; i < nIC - 1; i++ ) 
 	{// nIC-1 as last IC is charge
-		dummy = max ( dummy,abs (
+		dummy = max ( dummy,fabs (
 		                      m_soluteB[in * nIC + i] -
 		                      m_soluteB_pts[in * nIC + i] ) );
 //		cout << "GEMS CalcSoluteBDeltaNode: node comp-nr diff " <<in << " " << i << " " << (m_soluteB[in * nIC + i] - m_soluteB_pts[in * nIC + i] ) << " \n";
@@ -3602,7 +3607,9 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
 //                                                omega_phase[in * nPH + k] +=   omega_components[in * nDC + j];     //m_Node->DC_a ( j );
 					//	mol_phase[in * nPH + k] +=( m_xDC[in * nDC + j] );
 						mol_phase[in * nPH + k] +=( m_xDC[in * nDC + j] * m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter] ); // this is charge of phase for SS
-					//	cout << " j " << j << " DC_a " << m_Node->DC_a ( j ) << "  " << pow(10,m_Node->DC_a (j)) << " ph_satindex " << m_Node->Ph_SatInd(k)<< " Debug kin omega phase "<< omega_phase[in*nPH+k] << " fraction component " << omega_components[in*nDC+j]/omega_phase[in*nPH+k] << "  mol component " <<  m_xDC[in * nDC + j] << "  mol phase " << mol_phase[in*nPH+k] << " volume " << m_Node->Ph_Volume ( k )<< "\n"; // debug					  
+					rwmutex.lock();	
+					if (in==0) cout << setprecision(16) << "DEBUG j " << j << " DC_a " << m_Node->DC_a ( j ) <<  " ph_satindex " << m_Node->Ph_SatInd(k)<< " m_xDC "<< m_xDC[in*nDC+j] << " DLL " << m_dll[in*nDC +j] << "  dul " <<  m_dul[in * nDC + j] << "\n"; // debug					  
+					rwmutex.unlock();	
 					}
 			}
 			else // normal behabviour for single component phases and SS which do have all the same endmember characteristics
@@ -3704,7 +3711,7 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
 				else
 				{
 					//      cout << "activities " <<aa << " " << ab << " " << ac <<" " << temp << "\n";
-					sactivity = m_Node->Get_aDC ( j,true );     //DC_a ( idx ); // extract activities (not activity coefficients!)
+					sactivity = m_Node->DC_a ( idx ); // extract activities (not activity coefficients!)
 					//                  cout << "Activity " << sactivity << pow(10.0,sactivity)<< "\n";
 					aa *=
 					        pow ( sactivity,
@@ -3858,7 +3865,7 @@ double REACT_GEM::MaxChangeKineticsPhase(long in, int ii, int i, TNode *m_Node) 
     int idx=0, iomega_max;
     const char* species;
     double mxchange;
-    double dummy, dummyc;
+    double dummy=0.0, dummyc=0.0;
     int k,j;
     DATACH* dCH;                            //pointer to DATACH
     DATABR* dBR;                            // pointer to DBR
@@ -4001,7 +4008,7 @@ int REACT_GEM::CalcLimitsInitial ( long in, TNode* m_Node)
 			{
 				m_dll[in * nDC + k] = m_constraints[ii].ll_constraint; 
 				m_dul[in * nDC + k] = m_constraints[ii].ul_constraint; 
-//	rwmutex.lock(); // first lock for reading gem init files
+  //                  	rwmutex.lock(); // first lock for reading gem init files
 //			  cout << "add constraint to node " << in <<". Criteria given for species " << m_constraints[ii].nB << " " <<" value, lower- and upper limit: "<<m_bIC[in * nIC + m_constraints[ii].nB] << " " 
 //			       <<  m_constraints[ii].l_amount << " " << m_constraints[ii].u_amount << " " << m_constraints[ii].ll_constraint << "\n";
 //			       	rwmutex.unlock(); // first lock for reading gem init files
@@ -4103,7 +4110,7 @@ int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration
         if (dm_endmember[i] > 0.0)    // sum of endmembers which are created newly: these are limited by ions in solution...therefore never touch again
             dm_plus += dm_endmember[i];
         dm_sum += dm_endmember[i];
-        dm_abssum += abs(dm_endmember[i]);
+        dm_abssum += fabs(dm_endmember[i]);
 
     }
 
@@ -4169,12 +4176,12 @@ int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration
 //            dm_endmember[i] =  (omega_components[in * nDC + j]/omega_phase[in * nPH + k]) /(m_xDC[in*nDC+j]/mol_phase[in*nPH+ k]) ;
 //	    sum_mol_fraction += m_xDC[in * nDC + j]/mol_phase[in*nPH+ k];
             dummy =  (omega_components[in * nDC + j]/omega_phase[in * nPH + k]) /(m_xDC[in*nDC+j]/endmember_sum) ;
-	    if (in == 0) cout << "DEBUG solid solution i, rel change "<< i << " " <<  dummy ; 
+//	    if (in == 0) cout << "DEBUG solid solution i, rel change "<< i << " " <<  dummy ; 
 
 	    dm_endmember[i] = 0.1 * m_xDC[in*nDC+j]*m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter] * (dummy-1.0);
 	    dummy = 0.1* MaxChangeKineticsPhase(in, ii, i,m_Node);
-	    if (abs(dummy) < (abs(dm_endmember[i]))) dm_endmember[i] = copysign(dummy,dm_endmember[i]);
-	    if ((0.01*m_xDC[in * nDC + j]) < (abs(dm_endmember[i]))) dm_endmember[i] = copysign((0.1*m_xDC[in * nDC + j]),dm_endmember[i]);
+	    if (fabs(dummy) < (fabs(dm_endmember[i]))) dm_endmember[i] = copysign(dummy,dm_endmember[i]);
+	    if ((0.01*m_xDC[in * nDC + j]) < (fabs(dm_endmember[i]))) dm_endmember[i] = copysign((0.1*m_xDC[in * nDC + j]),dm_endmember[i]);
 	    
 	    
 	    sum_charge_fraction += m_xDC[in * nDC + j]*m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter]/mol_phase[in*nPH+k];
@@ -4182,9 +4189,9 @@ int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration
 	    sum_omega_fraction +=(omega_components[in * nDC + j]/omega_phase[in * nPH + k]);
 	    
 
-	    if (in == 0) cout << " change "<< i << " " <<  dm_endmember[i] << " max change allowed " << dummy << " mol fraction " <<  m_xDC[in * nDC + j] /mol_phase[in*nPH+ k] 
-	          << " omega fraction " << omega_components[in * nDC + j] / omega_phase[in * nPH + k] << " charge_fraction " << m_xDC[in * nDC + j]*m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter]/charge_phase;	    
-	    if (in == 0) cout <<  " mol " <<  m_xDC[in * nDC + j]<< " omega " << omega_components[in * nDC + j]  << " \n";	    
+//	    if (in == 0) cout << " change "<< i << " " <<  dm_endmember[i] << " max change allowed " << dummy << " mol fraction " <<  m_xDC[in * nDC + j] /mol_phase[in*nPH+ k] 
+//	          << " omega fraction " << omega_components[in * nDC + j] / omega_phase[in * nPH + k] << " charge_fraction " << m_xDC[in * nDC + j]*m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter]/charge_phase;	    
+//	    if (in == 0) cout <<  " mol " <<  m_xDC[in * nDC + j]<< " omega " << omega_components[in * nDC + j]  << " \n";	    
         }
         if ( !( dm_endmember[i] <= 1.0 ) && !( dm_endmember[i] > 1.0 ) ) //test for NaN
         {
@@ -4206,9 +4213,9 @@ int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration
         if (dm_endmember[i] > 0.0)    // sum of endmembers which are created newly: these are limited by ions in solution...therefore never touch again
             dm_plus += dm_endmember[i];
         dm_sum += dm_endmember[i];
-        dm_abssum += abs(dm_endmember[i]);
-    if (in == 0)    cout << "DEBUG solid solution i, change "<< i << " " <<  dm_endmember[i] << " mold endmember " <<  m_xDC[in * nDC + j] << " dm_sum " << dm_sum << " dm_abssum " << dm_abssum << " \n";
-    if (in == 0)    cout << "DEBUG solid solution: sum_mol_fraction"<< sum_mol_fraction << " sum_omega_fraction " <<  sum_omega_fraction  << " \n";
+        dm_abssum += fabs(dm_endmember[i]);
+//    if (in == 0)    cout << "DEBUG solid solution i, change "<< i << " " <<  dm_endmember[i] << " mold endmember " <<  m_xDC[in * nDC + j] << " dm_sum " << dm_sum << " dm_abssum " << dm_abssum << " \n";
+//    if (in == 0)    cout << "DEBUG solid solution: sum_mol_fraction"<< sum_mol_fraction << " sum_omega_fraction " <<  sum_omega_fraction  << " \n";
 
     }
     
@@ -4230,21 +4237,21 @@ int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration
         }
         else
         {
-	if (in == 0)  cout << "DEBUG solid solution i, change "<< i << " " <<  dm_endmember[i] << " mold endmember " <<  m_xDC[in * nDC + j] << " dm_plus " << dm_plus << " dm_minus " << dm_minus << " \n";
+// //	if (in == 0)  cout << "DEBUG solid solution i, change "<< i << " " <<  dm_endmember[i] << " mold endmember " <<  m_xDC[in * nDC + j] << " dm_plus " << dm_plus << " dm_minus " << dm_minus << " \n";
 
-            if (dm_plus > 0.0 && (abs(dm_minus) < dm_plus))
+            if (dm_plus > 0.0 && (fabs(dm_minus) < dm_plus))
             {
                 // scale such that dm_endmember sum is zero
                 if (dm_endmember[i] > 0.0)
                 {
-                    dm_endmember[i] *= abs(dm_minus)/dm_plus;
+                    dm_endmember[i] *= fabs(dm_minus)/dm_plus;
                 }
             }
-            else if (dm_minus < 0.0 && (abs(dm_minus) > dm_plus))
+            else if (dm_minus < 0.0 && (fabs(dm_minus) > dm_plus))
             {
                 if (dm_endmember[i] < 0.0)
                 {
-                    dm_endmember[i] *= dm_plus/abs(dm_minus);
+                    dm_endmember[i] *= dm_plus/fabs(dm_minus);
                 }
             }
             else
@@ -4270,24 +4277,23 @@ int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration
  
 
         dm_sum += dm_endmember[i];
-        dm_abssum += abs(dm_endmember[i]);
-	if (in == 0)  cout << "DEBUG solid solution i, change "<< i << " " <<  dm_endmember[i] << " mold endmember " <<  m_xDC[in * nDC + j] << " dm_sum " << dm_sum << " dm_abssum " << dm_abssum << " \n";
+        dm_abssum += fabs(dm_endmember[i]);
+//	if (in == 0)  cout << "DEBUG solid solution i, change "<< i << " " <<  dm_endmember[i] << " mold endmember " <<  m_xDC[in * nDC + j] << " dm_sum " << dm_sum << " dm_abssum " << dm_abssum << " \n";
 
         // set values
 	if (dm_endmember[i] > 0.0)
 	{
           m_dul[in * nDC + j] += dm_endmember[i];
-          m_dll[in * nDC + j] = m_dul[in * nDC + j]-1.0e-9; // give some freedom and take into account an error in kinetics
+          m_dll[in * nDC + j] = m_dul[in * nDC + j]; // give some freedom and take into account an error in kinetics
 	}
 	else 
 	{
           m_dll[in * nDC + j] += dm_endmember[i];
-          m_dul[in * nDC + j] = m_dll[in * nDC + j]+1.0e-9; // give some freedom and take into account an error in kinetics
+          m_dul[in * nDC + j] = m_dll[in * nDC + j]; // give some freedom and take into account an error in kinetics
 	}
 	  
     }
 
- 
     
     
 
@@ -4303,6 +4309,9 @@ int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration
         {
             m_dul[in * nDC + j] = m_dll[in * nDC + j];
         }
+// TEST DEBUG
+        m_dul[in*nDC + j] *= 1.1;
+      
     }
 
 
@@ -4609,7 +4618,7 @@ double REACT_GEM::SurfaceAreaPh ( long kin_phasenr,long in,  TNode* m_Node )
 		surf_area = m_kin[kin_phasenr].surface_area[0] * m_porosity[in]; // multiplication of specific surface area and  porosity
 	else if ( m_kin[kin_phasenr].surface_model == 5 )
 	  {
-		surf_area = m_kin[kin_phasenr].surface_area[0] * abs(m_porosity[in]-m_kin[kin_phasenr].surface_area[1]); // multiplication of specific surface area and  porosity
+		surf_area = m_kin[kin_phasenr].surface_area[0] * fabs(m_porosity[in]-m_kin[kin_phasenr].surface_area[1]); // multiplication of specific surface area and  porosity
                 if (m_porosity[in] <= m_kin[kin_phasenr].surface_area[1]) surf_area=0.0;     
 	  }		
 	else if ( m_kin[kin_phasenr].surface_model == 6 ) // sphrerical grains ...but not yet implemented!
@@ -5294,7 +5303,6 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 //        rwmutex.unlock();
 
         if ( ( m_flow_pcs->GetRestartFlag() >= 2 ) ) // everything is stored in concentrations for restart ...moved it to here from init_gems
-
             // Convert from concentration
             REACT_GEM::ConcentrationToMass ( in,1); // I believe this is save for MPI
         // this we have already
@@ -5349,13 +5357,13 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
                 rwmutex.lock();
                 cout << " Error: Init Loop failed when running GEM on Node #" << in << "." << "\n";
                 cout << "Returned Error Code: " << m_NodeStatusCH[in] << "  we proceed!\n";
-                // t_Node->GEM_write_dbr ( "dbr_for_crash_node_init_thread.txt" );
-                // t_Node->GEM_print_ipm ( "ipm_for_crash_node_init_thread.txt" );
+                t_Node->GEM_write_dbr ( "dbr_for_crash_node_init_thread.txt" );
+                t_Node->GEM_print_ipm ( "ipm_for_crash_node_init_thread.txt" );
                 rwmutex.unlock();
-//   #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
-//                MPI_Finalize();                 //make sure MPI exits
-//   #endif
-//                exit ( 1 );
+  #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
+                MPI_Finalize();                 //make sure MPI exits
+   #endif
+                exit ( 1 );
 
             }
             else if (( m_NodeStatusCH[in] == BAD_GEM_AIA || m_NodeStatusCH[in] ==
@@ -5812,7 +5820,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
             // test for bad GEMS and for volume changes bigger than 10% ...maximum 5 failed nodes per process.....
 
             if (
-                !( m_NodeStatusCH[in] == OK_GEM_AIA ||  ( ( abs ( oldvolume - dBR->Vs ) / oldvolume ) > 0.1 ) &&
+                !( m_NodeStatusCH[in] == OK_GEM_AIA ||  ( ( fabs ( oldvolume - dBR->Vs ) / oldvolume ) > 0.1 ) &&
                    ( flowflag != 3 ) ))                                   // not for Richards flow
             {
                 // restore old constraints and give a lot more freedom..special version!!!!
@@ -5834,7 +5842,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
                 m_NodeStatusCH[in] = m_Node->GEM_run ( true );
 		// second time, therefore we also accept BAD_GEM_AIA .....dangerous!
                 if (
-                    !( m_NodeStatusCH[in] == OK_GEM_AIA ||  m_NodeStatusCH[in] == BAD_GEM_AIA || ( ( abs ( oldvolume - dBR->Vs ) / oldvolume ) > 0.1 ) &&
+                    !( m_NodeStatusCH[in] == OK_GEM_AIA ||  m_NodeStatusCH[in] == BAD_GEM_AIA || ( ( fabs ( oldvolume - dBR->Vs ) / oldvolume ) > 0.1 ) &&
                        ( flowflag != 3 ) ))                                   // not for Richards flow
                 {
 		  if (ii == 0) // first attempt to solve chemistry failed
