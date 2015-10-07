@@ -124,12 +124,10 @@ REACT_GEM::~REACT_GEM ( void )
 
 	if ( initialized_flag > 0 )
 	{
-
 	  for (int i = 0; i < gem_nThread; ++i) // here we interrupt the threads! 
 	  {
 	      gemThread[i].interrupt();
 	  }
-
 	  for (int i = 0; i < gem_nThread; ++i) // here we join the threads! otherwise it might be that boost/phtread throws an assertion, because condition variables are still in use when destroyed!
 	  {
 	      gemThread[i].join();
@@ -1126,7 +1124,8 @@ void REACT_GEM::SetReactInfoBackGEM ( long in,  TNode* m_Node )
 		                      m_dul + in * nDC,
 		                      m_dll + in * nDC,
 		                      m_aPH + in * nPH );
-	//	cout << m_xDC+in*nDC << "\n";
+
+		                      //	cout << m_xDC+in*nDC << "\n";
 }
 
 short REACT_GEM::Run_MainLoop ( )
@@ -3605,11 +3604,9 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
                                                  if (omega_components[in * nDC + j] > 1.e12) omega_components[in * nDC + j]=1.0e12; 
 						// loop over all components of the phase
 //                                                omega_phase[in * nPH + k] +=   omega_components[in * nDC + j];     //m_Node->DC_a ( j );
-					//	mol_phase[in * nPH + k] +=( m_xDC[in * nDC + j] );
-						mol_phase[in * nPH + k] +=( m_xDC[in * nDC + j] * m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter] ); // this is charge of phase for SS
-//					rwmutex.lock();	
-//					if (in==0) cout << setprecision(16) << "DEBUG j " << j << " DC_a " << m_Node->DC_a ( j ) <<  " ph_satindex " << m_Node->Ph_SatInd(k)<< " m_xDC "<< m_xDC[in*nDC+j] << " DLL " << m_dll[in*nDC +j] << "  dul " <<  m_dul[in * nDC + j] << "\n"; // debug					  
-//					rwmutex.unlock();	
+						mol_phase[in * nPH + k] +=( m_xDC[in * nDC + j] );
+					//	mol_phase[in * nPH + k] +=( m_xDC[in * nDC + j] * m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter] ); // this is charge of phase for SS
+					//	cout << " j " << j << " DC_a " << m_Node->DC_a ( j ) << "  " << pow(10,m_Node->DC_a (j)) << " ph_satindex " << m_Node->Ph_SatInd(k)<< " Debug kin omega phase "<< omega_phase[in*nPH+k] << " fraction component " << omega_components[in*nDC+j]/omega_phase[in*nPH+k] << "  mol component " <<  m_xDC[in * nDC + j] << "  mol phase " << mol_phase[in*nPH+k] << " volume " << m_Node->Ph_Volume ( k )<< "\n"; // debug					  
 					}
 			}
 			else // normal behabviour for single component phases and SS which do have all the same endmember characteristics
@@ -3805,6 +3802,8 @@ double REACT_GEM::MaxDtKinetics(long in, TNode *m_Node)
     DATACH* dCH;                            //pointer to DATACH
     DATABR* dBR;                            // pointer to DBR
 
+    if (m_kin.size() < 1) return dt; // return current time step size, if no kinetics is defined
+    
     // Getting direct access to work node DCH structure which
     // exchanges data between GEMIPM and FMT parts
     dCH = m_Node->pCSD();
@@ -3816,7 +3815,7 @@ double REACT_GEM::MaxDtKinetics(long in, TNode *m_Node)
     dBR = m_Node->pCNode();
     if ( !dBR )
         return 0;
-
+     dummy=dt; // make sure dummy is initialized even if no kinetics is used!
      mxdt=dt;  // set to current time step length
     
     // loop over all kinetic phases
@@ -3916,7 +3915,7 @@ double REACT_GEM::MaxChangeKineticsPhase(long in, int ii, int i, TNode *m_Node) 
 
 
     //  DEBUG
-// if (in == 0) cout << "DEBUG kinetics: node , max change according to 10% concentrations change " << mxchange << " solute mass " <<  m_bPS[in*nIC+idx] << " dummyc " << dummyc << "\n";
+ // if (in == 0) cout << "DEBUG kinetics: node , max change according to 10% concentrations change " << mxchange << " solute mass " <<  m_bPS[in*nIC+idx] << " dummyc " << dummyc << "\n";
         return mxchange;
 }
 
@@ -4008,7 +4007,7 @@ int REACT_GEM::CalcLimitsInitial ( long in, TNode* m_Node)
 			{
 				m_dll[in * nDC + k] = m_constraints[ii].ll_constraint; 
 				m_dul[in * nDC + k] = m_constraints[ii].ul_constraint; 
-  //                  	rwmutex.lock(); // first lock for reading gem init files
+//	rwmutex.lock(); // first lock for reading gem init files
 //			  cout << "add constraint to node " << in <<". Criteria given for species " << m_constraints[ii].nB << " " <<" value, lower- and upper limit: "<<m_bIC[in * nIC + m_constraints[ii].nB] << " " 
 //			       <<  m_constraints[ii].l_amount << " " << m_constraints[ii].u_amount << " " << m_constraints[ii].ll_constraint << "\n";
 //			       	rwmutex.unlock(); // first lock for reading gem init files
@@ -4048,7 +4047,8 @@ int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration
 
     dm_endmember = new double[dCH->nDCinPH[k]]; //create vector for holding endmember amounts ...
 
-//    cout << " kinetics mole phase " << ii << " "  << mol_phase[in * nPH + k]<< "\n";
+//    cout << "DEBUG kinetics mole phase " << ii << " "  << mol_phase[in * nPH + k] << " phase stability " << omega_phase[in * nPH +k]<< "\n";
+    
     dm_sum=0.0;
     dul_sum=0.0;
     dll_sum=0.0;
@@ -4237,7 +4237,7 @@ int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration
         }
         else
         {
-// //	if (in == 0)  cout << "DEBUG solid solution i, change "<< i << " " <<  dm_endmember[i] << " mold endmember " <<  m_xDC[in * nDC + j] << " dm_plus " << dm_plus << " dm_minus " << dm_minus << " \n";
+//	if (in == 0)  cout << "DEBUG solid solution i, change "<< i << " " <<  dm_endmember[i] << " mold endmember " <<  m_xDC[in * nDC + j] << " dm_plus " << dm_plus << " dm_minus " << dm_minus << " \n";
 
             if (dm_plus > 0.0 && (fabs(dm_minus) < dm_plus))
             {
@@ -4297,10 +4297,18 @@ int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration
     
     
 
-    // check for problems
+    // check for problems an loose constraints
     for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + 	dCH->nDCinPH[k]; j++ )
     {
-
+        if (omega_phase[in * nPH + k] >1.01) 
+	{
+	  m_dll[in * nDC + j] *= 0.99;    // give some freedom and take into account an error in kinetics
+	}
+	else if  (omega_phase[in * nPH + k] <0.99)
+	{
+	  m_dul[in * nDC + j] *= 1.01;	  // give some freedom and take into account an error in kinetics
+	}
+	  
         if  (m_dll[in * nDC + j] < 0.0)
         {
             m_dll[in * nDC + j] =0.0 ;
@@ -4309,13 +4317,8 @@ int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration
         {
             m_dul[in * nDC + j] = m_dll[in * nDC + j];
         }
-// TEST DEBUG
-        m_dul[in*nDC + j] *= 1.1;
-      
+       	cout << "DEBUG solid solution: node "<< in << " j " <<  j << " phase omega " << omega_phase[in*nPH+k] << " omega comp " << omega_components[in*nDC+j] << " rel mass " << m_xDC[in * nDC + j]/mol_phase[in * nPH + k]<< " mol " <<  m_xDC[in * nDC + j] << " dll " << m_dll[in * nDC + j] << " dul " << m_dul[in * nDC + j] << " \n"; 
     }
-
-
-
 
 
     delete[] dm_endmember;
@@ -4433,7 +4436,7 @@ int REACT_GEM::CalcLimits ( long in, int flag_equilibration,double deltat, TNode
         return 0;
 
 
-    if (flag_equilibration ==1) //for calculation of solid solution inside Picard iteration
+    if (flag_equilibration == 1) //for calculation of solid solution inside Picard iteration
     {
 
         // kinetic_model==1 dissolution+precipitation kinetics
@@ -4581,7 +4584,7 @@ int REACT_GEM::CalcLimits ( long in, int flag_equilibration,double deltat, TNode
                         m_dll[in * nDC + j] = 0.0;
 
                     if ( m_dll[in * nDC + j] > m_dul[in * nDC + j] )
-                        m_dll[in * nDC + j] = m_dul[in * nDC + j];    // dll should be always lower than dul
+                        m_dll[in * nDC + j] = m_dul[in * nDC + j];    // dll should be always lower or equal to dul
   //              if ((in == 5)&&(ii == (m_kin.size()-2)))  cout << "Kin debug for component no. " << j << " at node " << in << " m_xDC "  <<  m_xDC[in*nDC+j] << " m_dll, mdul " << m_dll[in*nDC+j] << " " << m_dul[in*nDC+j] << " diff " << m_dul[in*nDC+j]- m_dll[in*nDC+j] << " Kin debug mol phase " << mol_phase[in*nPH+k] << " dmdt " << dmdt[in*nPH+k]*dt << "\n";
 //                if ((in == 5))  cout << "Kin debug for component no. " << j << " at node " << in << " m_xDC "  <<  m_xDC[in*nDC+j] << " m_dll, mdul " << m_dll[in*nDC+j] << " " << m_dul[in*nDC+j] << " diff " << m_dul[in*nDC+j]- m_dll[in*nDC+j] << " Kin debug mol phase " << mol_phase[in*nPH+k] << " dmdt " << dmdt[in*nPH+k]*dt << "\n";
 //                if ((in == 5))  cout << "Kin debug for component no. " << j << " at node " << in << " kinetic model points to "  << m_kin[ii].dc_counter  << "\n";
@@ -4622,7 +4625,7 @@ double REACT_GEM::SurfaceAreaPh ( long kin_phasenr,long in,  TNode* m_Node )
                 if (m_porosity[in] <= m_kin[kin_phasenr].surface_area[1]) surf_area=0.0;     
 	  }		
 	else if ( m_kin[kin_phasenr].surface_model == 6 ) // sphrerical grains ...but not yet implemented!
-		surf_area = m_kin[kin_phasenr].surface_area[0] ; // multiplication of specific surface area and  porosity		
+		surf_area = m_kin[kin_phasenr].surface_area[0] ; 		
 	else if ( m_kin[kin_phasenr].surface_model == 33 )
 		// constant surface area value for cement hydration!
 		surf_area = m_kin[kin_phasenr].surface_area[0];		
@@ -5279,10 +5282,16 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
     // run GEMS once
     tdBR->NodeStatusCH = NEED_GEM_AIA;
     t_Node->GEM_run ( false );
+/*
+        t_Node->GEM_write_dbr ( "dbr_for_crash_node_init_thread1.txt" );
+        t_Node->GEM_print_ipm ( "ipm_for_crash_node_init_thread1.txt" );
+// TEST 
 
-    //    t_Node->GEM_write_dbr ( "dbr_for_crash_node_init_thread1.txt" );
-    //    t_Node->GEM_print_ipm ( "ipm_for_crash_node_init_thread1.txt" );
-
+        t_Node->GEM_write_dbr ( "dbr_for_crash_node_init_thread2.txt" );
+        t_Node->GEM_print_ipm ( "ipm_for_crash_node_init_thread2.txt" );
+*/
+//	t_Node->SetNumericalMethod(gem_numerical_method);
+//        t_Node->GEM_run ( false );
 
     rwmutex.unlock();
 
@@ -5290,7 +5299,6 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
     int mycount,mystart;
     mycount = gem_nThread; //make sure the loop over the nodes counts only the threads!
     mystart = tid;
-
     //    cout << "thread " << tid << " waits for start barrier " << "\n";
     gem_barrier_start->wait(); // wait for init run start
     //    cout << "thread " << tid << " passed start barrier " << "\n";
@@ -5303,6 +5311,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 //        rwmutex.unlock();
 
         if ( ( m_flow_pcs->GetRestartFlag() >= 2 ) ) // everything is stored in concentrations for restart ...moved it to here from init_gems
+
             // Convert from concentration
             REACT_GEM::ConcentrationToMass ( in,1); // I believe this is save for MPI
         // this we have already
@@ -5411,7 +5420,6 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 
         // Order GEM to run
         tdBR->NodeStatusCH = NEED_GEM_AIA;
-
         m_NodeStatusCH[in] = t_Node->GEM_run ( false );
 
         if ( ( m_NodeStatusCH[in] == ERR_GEM_AIA || m_NodeStatusCH[in] == ERR_GEM_SIA ) )
@@ -5429,6 +5437,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
                     m_dll[in * nDC + j] = 0.0;
                 m_dul[in * nDC + j] = 1.00 * m_dul[in * nDC + j] + 1.0e-6; // make bigger
             }
+
             REACT_GEM::SetReactInfoBackGEM ( in, t_Node); // needs to be done to
             //            m_Node->GEM_write_dbr ( "dbr_for_crash_node_fail1.txt" );
 
@@ -5466,8 +5475,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 #endif
                 exit ( 1 );
             }
-            else if ( m_NodeStatusCH[in] == BAD_GEM_AIA || m_NodeStatusCH[in] ==
-                      BAD_GEM_SIA )
+            else if ( m_NodeStatusCH[in] == BAD_GEM_AIA || m_NodeStatusCH[in] == BAD_GEM_SIA )
             {
                 rwmutex.lock();
                 cout <<
