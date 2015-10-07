@@ -3607,9 +3607,9 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
 //                                                omega_phase[in * nPH + k] +=   omega_components[in * nDC + j];     //m_Node->DC_a ( j );
 					//	mol_phase[in * nPH + k] +=( m_xDC[in * nDC + j] );
 						mol_phase[in * nPH + k] +=( m_xDC[in * nDC + j] * m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter] ); // this is charge of phase for SS
-					rwmutex.lock();	
-					if (in==0) cout << setprecision(16) << "DEBUG j " << j << " DC_a " << m_Node->DC_a ( j ) <<  " ph_satindex " << m_Node->Ph_SatInd(k)<< " m_xDC "<< m_xDC[in*nDC+j] << " DLL " << m_dll[in*nDC +j] << "  dul " <<  m_dul[in * nDC + j] << "\n"; // debug					  
-					rwmutex.unlock();	
+//					rwmutex.lock();	
+//					if (in==0) cout << setprecision(16) << "DEBUG j " << j << " DC_a " << m_Node->DC_a ( j ) <<  " ph_satindex " << m_Node->Ph_SatInd(k)<< " m_xDC "<< m_xDC[in*nDC+j] << " DLL " << m_dll[in*nDC +j] << "  dul " <<  m_dul[in * nDC + j] << "\n"; // debug					  
+//					rwmutex.unlock();	
 					}
 			}
 			else // normal behabviour for single component phases and SS which do have all the same endmember characteristics
@@ -3916,7 +3916,7 @@ double REACT_GEM::MaxChangeKineticsPhase(long in, int ii, int i, TNode *m_Node) 
 
 
     //  DEBUG
- if (in == 0) cout << "DEBUG kinetics: node , max change according to 10% concentrations change " << mxchange << " solute mass " <<  m_bPS[in*nIC+idx] << " dummyc " << dummyc << "\n";
+// if (in == 0) cout << "DEBUG kinetics: node , max change according to 10% concentrations change " << mxchange << " solute mass " <<  m_bPS[in*nIC+idx] << " dummyc " << dummyc << "\n";
         return mxchange;
 }
 
