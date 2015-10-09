@@ -3463,12 +3463,11 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
                 in >> d_kin.surface_area[0] >> d_kin.surface_area[1]; // surface: m*m / mol
                 cout << " surfacearea = surfacearea[0] * (porosity -surface_area[1] " << d_kin.surface_area[0] << " " << d_kin.surface_area[1] << "\n";
             }
-            else if ( d_kin.surface_model == 6 ) // model 6 is kinetic for spherical grains
+            else if ( d_kin.surface_model == 6 ) // model 6 is for Bruno...
             {
-                in >> d_kin.surface_area[0]; // surface: m*m / mol
-                cout << "const specific surface area for spherical particles ... not yet implemented!!!!!!" << d_kin.surface_area[0] <<
-                     "\n";
-	        exit(1);
+                in >> d_kin.surface_area[0]>>d_kin.surface_area[1] ; // surface: m*m 
+                cout << "surfacearea = surfacearea[0] * (1-alpha/porosity), surfacearea[0] " << d_kin.surface_area[0] << " alpha: " << d_kin.surface_area[1] << "\n";
+
             }
             else if ( d_kin.surface_model == 33 ) // model 33 is kinetic for cement hydration
             {
@@ -4612,21 +4611,21 @@ double REACT_GEM::SurfaceAreaPh ( long kin_phasenr,long in,  TNode* m_Node )
 	if ( m_kin[kin_phasenr].surface_model == 1 )
 		// multiplication with specific surface area gives area
 		surf_area *= m_kin[kin_phasenr].surface_area[0];
-	else if ( m_kin[kin_phasenr].surface_model == 2 )
+	else if ( m_kin[kin_phasenr].surface_model == 2 ) // independent from phase volume!
 		// constant surface area
 		surf_area = m_kin[kin_phasenr].surface_area[0];
 	else if ( m_kin[kin_phasenr].surface_model == 3 )
 		surf_area *= m_kin[kin_phasenr].surface_area[0] / m_porosity[in]; // multiplication with specific surface area and division by porosity
-	else if ( m_kin[kin_phasenr].surface_model == 4 )
+	else if ( m_kin[kin_phasenr].surface_model == 4 )// independent from phase volume!
 		surf_area = m_kin[kin_phasenr].surface_area[0] * m_porosity[in]; // multiplication of specific surface area and  porosity
-	else if ( m_kin[kin_phasenr].surface_model == 5 )
+	else if ( m_kin[kin_phasenr].surface_model == 5 )// independent from phase volume!
 	  {
 		surf_area = m_kin[kin_phasenr].surface_area[0] * fabs(m_porosity[in]-m_kin[kin_phasenr].surface_area[1]); // multiplication of specific surface area and  porosity
                 if (m_porosity[in] <= m_kin[kin_phasenr].surface_area[1]) surf_area=0.0;     
 	  }		
-	else if ( m_kin[kin_phasenr].surface_model == 6 ) // sphrerical grains ...but not yet implemented!
-		surf_area = m_kin[kin_phasenr].surface_area[0] ; 		
-	else if ( m_kin[kin_phasenr].surface_model == 33 )
+	else if ( m_kin[kin_phasenr].surface_model == 6 ) // exponential model: S = Sr x exp (1 - alpha/porosity)    alpha: parameter
+		surf_area = m_kin[kin_phasenr].surface_area[0] * exp(1.0-m_kin[kin_phasenr].surface_area[1]/m_porosity[in]) ; 	// independent from phase volume!	
+	else if ( m_kin[kin_phasenr].surface_model == 33 ) // independent from phase volume!
 		// constant surface area value for cement hydration!
 		surf_area = m_kin[kin_phasenr].surface_area[0];		
 	else
