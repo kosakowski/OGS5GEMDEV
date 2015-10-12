@@ -4624,7 +4624,7 @@ double REACT_GEM::SurfaceAreaPh ( long kin_phasenr,long in,  TNode* m_Node )
                 if (m_porosity[in] <= m_kin[kin_phasenr].surface_area[1]) surf_area=0.0;     
 	  }		
 	else if ( m_kin[kin_phasenr].surface_model == 6 ) // exponential model: S = Sr x exp (1 - alpha/porosity)    alpha: parameter
-		surf_area = m_kin[kin_phasenr].surface_area[0] * exp(1.0-m_kin[kin_phasenr].surface_area[1]/m_porosity[in]) ; 	// independent from phase volume!	
+		surf_area *= m_kin[kin_phasenr].surface_area[0] * exp(1.0-m_kin[kin_phasenr].surface_area[1]/m_porosity[in]) ; 	// independent from phase volume!	
 	else if ( m_kin[kin_phasenr].surface_model == 33 ) // independent from phase volume!
 		// constant surface area value for cement hydration!
 		surf_area = m_kin[kin_phasenr].surface_area[0];		
