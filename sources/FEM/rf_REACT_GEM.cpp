@@ -1372,7 +1372,7 @@ double REACT_GEM::GetPressureValue_MT ( long node_Index, int timelevel )
 			// change the pressure unit from meters of water to bar.
 			// pressure = Pressure_M_2_Bar ( pressure , m_FluidProp->Density() );
 			// add atmospheric pressure
-			if ( pressure < 0.0 /*valcumm suction in groundwater is not so realistic*/
+			if ( pressure <= 0.0 /*valcumm suction in groundwater is not so realistic*/
 			     || pressure > 1.0e+15 /*some very high pressure*/
 			     )
 				pressure = 1.0e+5; // then set it to 1.0 bar;
@@ -3466,7 +3466,7 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
             else if ( d_kin.surface_model == 6 ) // model 6 is for Bruno...
             {
                 in >> d_kin.surface_area[0]>>d_kin.surface_area[1] ; // surface: m*m 
-                cout << "surfacearea = surfacearea[0] * (1-alpha/porosity), surfacearea[0] " << d_kin.surface_area[0] << " alpha: " << d_kin.surface_area[1] << "\n";
+                cout << "surfacearea = surfacearea[0] * exp(alpha * pow(porosity,-1/3), surfacearea[0]: " << d_kin.surface_area[0] << " alpha: " << d_kin.surface_area[1] << "\n";
 
             }
             else if ( d_kin.surface_model == 33 ) // model 33 is kinetic for cement hydration
@@ -4623,8 +4623,8 @@ double REACT_GEM::SurfaceAreaPh ( long kin_phasenr,long in,  TNode* m_Node )
 		surf_area = m_kin[kin_phasenr].surface_area[0] * fabs(m_porosity[in]-m_kin[kin_phasenr].surface_area[1]); // multiplication of specific surface area and  porosity
                 if (m_porosity[in] <= m_kin[kin_phasenr].surface_area[1]) surf_area=0.0;     
 	  }		
-	else if ( m_kin[kin_phasenr].surface_model == 6 ) // exponential model: S = Sr x exp (1 - alpha/porosity)    alpha: parameter
-		surf_area *= m_kin[kin_phasenr].surface_area[0] * exp(1.0-m_kin[kin_phasenr].surface_area[1]/m_porosity[in]) ; 	// independent from phase volume!	
+	else if ( m_kin[kin_phasenr].surface_model == 6 ) // exponential model: S = Sr x exp (alpha*pow(porosity,-1/3))    alpha: parameter
+		surf_area *= m_kin[kin_phasenr].surface_area[0] * exp(m_kin[kin_phasenr].surface_area[1] * pow(m_porosity[in],-1.0/3.0)) ; 	// independent from phase volume!	
 	else if ( m_kin[kin_phasenr].surface_model == 33 ) // independent from phase volume!
 		// constant surface area value for cement hydration!
 		surf_area = m_kin[kin_phasenr].surface_area[0];		
