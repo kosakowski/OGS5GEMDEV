@@ -5643,6 +5643,9 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
                  time_gem_total << " s, this dt for GEMS: " <<  tdummy2 <<
                  " total fraction in GEMS: " << time_fraction << " idle time: " <<
                  twaittotal << "\n";
+            cout << "GEMS: " << repeated_fail <<
+                 " nodes failed this timestep, check chemical system!"
+                 << "\n";
             rwmutex.unlock();
         }
 #endif
@@ -5819,7 +5822,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
             oldvolume = m_Vs[in];
             //check constraints
             REACT_GEM::CheckConstraints(in,m_Node);
-
+	    
             dBR->NodeStatusCH = NEED_GEM_AIA;
             m_NodeStatusCH[in] = m_Node->GEM_run ( true );
 
@@ -5831,13 +5834,12 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
                    ( flowflag != 3 ) ))                                   // not for Richards flow
             {
                 // restore old constraints and give a lot more freedom..special version!!!!
-/*  removed this in order to have better control on kinetics!
 	      for ( j = 0; j < nDC; j++ )
                 {
-                    m_dll[in * nDC + j] = m_dll[in * nDC + j]*0.999999;
-                    m_dul[in * nDC + j] = m_dul[in * nDC + j]*1.000001;
+                    m_dll[in * nDC + j] = m_dll[in * nDC + j]*0.9999;
+                    m_dul[in * nDC + j] = m_dul[in * nDC + j]*1.0001;
                 }
-*/                
+                
                 //move data to GEMS
                 REACT_GEM::SetReactInfoBackGEM ( in,m_Node); // this should be also save for MPI
                 // take values from old B volume for comparison
@@ -5847,9 +5849,10 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
 
                 dBR->NodeStatusCH = NEED_GEM_AIA;
                 m_NodeStatusCH[in] = m_Node->GEM_run ( true );
-		// second time, therefore we also accept BAD_GEM_AIA .....dangerous!
+		// second time, therefore we also accept BAD_GEM_AIA .....dangerous!...
                 if (
-                    !( m_NodeStatusCH[in] == OK_GEM_AIA ||  m_NodeStatusCH[in] == BAD_GEM_AIA || ( ( fabs ( oldvolume - dBR->Vs ) / oldvolume ) > 0.1 ) &&
+//                    !( m_NodeStatusCH[in] == OK_GEM_AIA ||  m_NodeStatusCH[in] == BAD_GEM_AIA || ( ( fabs ( oldvolume - dBR->Vs ) / oldvolume ) > 0.1 ) &&
+                    !( m_NodeStatusCH[in] == OK_GEM_AIA ||  m_NodeStatusCH[in] == OK_GEM_AIA || ( ( fabs ( oldvolume - dBR->Vs ) / oldvolume ) > 0.1 ) &&
                        ( flowflag != 3 ) ))                                   // not for Richards flow
                 {
 		  if (ii == 0) // first attempt to solve chemistry failed
@@ -5877,9 +5880,11 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
                 else
                 {
                     node_fail=0; // ok
+
                     //Get data
                     REACT_GEM::GetReactInfoFromGEM ( in,m_Node); // this should be also save for MPI
-                    // calculate the chemical porosity
+
+		    // calculate the chemical porosity
                     REACT_GEM::CalcPorosity ( in, m_Node);                         
 
                     REACT_GEM::CalcReactionRate ( in, m_Node); //moved it after porosity calculation because of chrunchflow kinetics (model 4)!
