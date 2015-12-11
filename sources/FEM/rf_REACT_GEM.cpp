@@ -4335,6 +4335,7 @@ int REACT_GEM::CheckConstraints ( long in,TNode* m_Node)
     long int jj,ii; // indices for loops
     int iret,i;
     double *dll_check, *dul_check; // these should never exceed values in b vector
+    double rel_error; // used for correction of constraints
     DATACH* dCH;                            //pointer to DATACH
     DATABR* dBR;
     // Getting direct access to DataCH structure in GEMIPM2K memory
@@ -4350,6 +4351,8 @@ int REACT_GEM::CheckConstraints ( long in,TNode* m_Node)
 
     // 1: ok 0: error
     iret=1;
+    // set relative error to zero
+    rel_error=0.0;
     // create temporary work arrays
     dll_check = new double[nIC]; //create vector for holding sum of constraints
     dul_check = new double[nIC]; //create vector for holding sum of constraints
@@ -4381,10 +4384,10 @@ int REACT_GEM::CheckConstraints ( long in,TNode* m_Node)
       {
 	if (dll_check[ii] > m_bIC[in*nIC+ii]) 
 	{
+          rel_error=max(abs(m_bIC[in*nIC+ii]-dll_check[ii])/m_bIC[in*nIC+ii],rel_error);
 	  rwmutex.lock();
-	  cout << "DEBUG: lower CheckConstraints failed: node, "<< in << " IC number, " <<ii<< " dll, " << dll_check[ii] << " dul, " << dul_check[ii] << " bIC, " << m_bIC[in*nIC+ii] << " diff " << m_bIC[in*nIC+ii]-dll_check[ii] << "\n";
+	  cout << "DEBUG: lower CheckConstraints failed: node, "<< in << " IC number, " <<ii<< " dll, " << dll_check[ii] << " dul, " << dul_check[ii] << " bIC, " << m_bIC[in*nIC+ii] << " diff " << m_bIC[in*nIC+ii]-dll_check[ii] << " rel error " << rel_error << "\n";
           rwmutex.unlock();
-
 	  //	if (dul_check[ii] >= m_bIC[ii]) cout << "DEBUG: upper CheckConstraints failed: node, IC number, dll, dul, bIC, diff"<< in << " " <<ii<< " " << dll_check[ii] << " " << dul_check[ii] << " " << m_bIC[ii] << " " << m_bIC[ii]-dul_check[ii] << "\n";
 	  iret=0;
 //	  cout << " Experimental fix by changing dll \n";
@@ -4392,14 +4395,14 @@ int REACT_GEM::CheckConstraints ( long in,TNode* m_Node)
         }
       }
     
-    if (iret == -1) // reset constraints to previous values if we have a problem! 
+    if (iret == -1) // reset constraints to previous values if we have a problem! and loosen the value?
       // not very good...seems also to destroy mass balances!
       // best solution at the moment seems to let the node fail?
     {
      	for ( i = 0; i < nDC; i++ )
            {
-             m_dll[i] = m_dll_pts[in*nNodes+i];          // set to zero
-             m_dul[i] = m_dul_pts[in*nNodes+i];       // very high number
+             m_dll[i] *= 0.9999; //(1.0-(rel_error*2.0));          // set a bit smaller
+             m_dul[i] *= 1.0001;  //(1.0+(rel_error*2.0));       // set a bit higher
           }
  
     }
@@ -4528,14 +4531,14 @@ int REACT_GEM::CalcLimits ( long in, int flag_equilibration,double deltat, TNode
                             }
                             else if ( dummy < 0.0) // This is the dissolution case
                             {
-                                m_dul[in * nDC + j] = m_xDC[in * nDC + j];
+                                m_dul[in * nDC + j] = m_xDC[in * nDC + j]+dummy;
                                 m_dll[in * nDC + j] = m_xDC[in * nDC + j]+dummy;
 //                            m_dll[in * nDC + j] += dummy;
 //                            m_dul[in * nDC + j] = dummy;
                             }
                             else if (dummy > 0.0) // This is the precipitation case
                             {
-                                m_dll[in * nDC + j] = m_xDC[in * nDC + j];
+                                m_dll[in * nDC + j] = m_xDC[in * nDC + j]+dummy;
 //                            m_dll[in * nDC + j] = dummy;
                                 m_dul[in * nDC + j] = m_xDC[in * nDC + j]+dummy;
 //                            m_dul[in * nDC + j] += dummy;
@@ -4566,7 +4569,7 @@ int REACT_GEM::CalcLimits ( long in, int flag_equilibration,double deltat, TNode
                     }
 
                     if ( ( m_xDC[in * nDC + j] < 1.0e-6 ) &&
-                            ( omega_phase[in * nPH + k] >= 1.0001 ) &&
+                            ( omega_phase[in * nPH + k] >= 1.1 ) &&
                             ( m_dul[in * nDC + j] < 1.0e-6 ) )
                     {
                         m_dul[in * nDC + j] = 1.0e-6; // allow some kind of precipitation...based on saturation index for component value...here we set 10-6 mol per m^3 ..which is maybe 10-10 per litre ...?
@@ -5816,12 +5819,13 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
 //            else if (calc_limits==0 && flag_iterative_scheme)
 //                REACT_GEM::CalcLimits ( in,1,dtchem,m_Node);
 
-            //move data to GEMS
+            //check constraints before moving data to GEMS...otherwise changed dll/dul are not transfered
+            REACT_GEM::CheckConstraints(in,m_Node);
+	    //move data to GEMS
             REACT_GEM::SetReactInfoBackGEM ( in,m_Node); // this should be also save for MPI
             // take values from old B volume for comparison
             oldvolume = m_Vs[in];
-            //check constraints
-            REACT_GEM::CheckConstraints(in,m_Node);
+
 	    
             dBR->NodeStatusCH = NEED_GEM_AIA;
             m_NodeStatusCH[in] = m_Node->GEM_run ( true );
@@ -5833,19 +5837,20 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
                 !( m_NodeStatusCH[in] == OK_GEM_AIA ||  ( ( fabs ( oldvolume - dBR->Vs ) / oldvolume ) > 0.1 ) &&
                    ( flowflag != 3 ) ))                                   // not for Richards flow
             {
-                // restore old constraints and give a lot more freedom..special version!!!!
+
+	      // restore old constraints from mineral amounts and give a lot more freedom..special version!!!!
 	      for ( j = 0; j < nDC; j++ )
                 {
                     m_dll[in * nDC + j] = m_dll[in * nDC + j]*0.9999;
                     m_dul[in * nDC + j] = m_dul[in * nDC + j]*1.0001;
                 }
                 
+                //check constraints before moving data to GEMS...otherwise changed dll/dul are not transfered
+                REACT_GEM::CheckConstraints(in,m_Node);
                 //move data to GEMS
                 REACT_GEM::SetReactInfoBackGEM ( in,m_Node); // this should be also save for MPI
                 // take values from old B volume for comparison
                 oldvolume = m_Vs[in];
-                //check constraints
-                REACT_GEM::CheckConstraints(in,m_Node);
 
                 dBR->NodeStatusCH = NEED_GEM_AIA;
                 m_NodeStatusCH[in] = m_Node->GEM_run ( true );
@@ -5859,7 +5864,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
 		  {
                     rwmutex.lock();
                     cout <<
-                         "Error: main Loop Kin-Chem loop " << ii << " failed when running GEM on Node #"
+                         "Error: main Loop Kin-Chem loop " << ii << " of " << iisplit << " kinetic substeps failed when running GEM on Node #"
                          << in << "." << " Returned Error Code: " <<
                          m_NodeStatusCH[in];
                     cout << " or GEM weird result at node " << in <<
