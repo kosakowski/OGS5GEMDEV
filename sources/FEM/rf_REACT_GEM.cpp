@@ -5890,7 +5890,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
                     REACT_GEM::GetReactInfoFromGEM ( in,m_Node); // this should be also save for MPI
 
 		    // calculate the chemical porosity
-                    REACT_GEM::CalcPorosity ( in, m_Node);                         
+                    if (flag_porosity_change) REACT_GEM::CalcPorosity ( in, m_Node);                         
 
                     REACT_GEM::CalcReactionRate ( in, m_Node); //moved it after porosity calculation because of chrunchflow kinetics (model 4)!
                 } // end 2. gems ok
@@ -5904,7 +5904,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
                 //Get data
                 REACT_GEM::GetReactInfoFromGEM ( in,m_Node); // this should be also save for MPI
                 // calculate the chemical porosity
-                REACT_GEM::CalcPorosity ( in, m_Node);                         
+                if (flag_porosity_change) REACT_GEM::CalcPorosity ( in, m_Node);                         
 
                 REACT_GEM::CalcReactionRate ( in, m_Node); //moved it after porosity calculation because of chrunchflow kinetics (model 4)!
             } // end gems ok
