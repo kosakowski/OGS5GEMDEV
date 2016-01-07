@@ -5646,7 +5646,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
                  time_gem_total << " s, this dt for GEMS: " <<  tdummy2 <<
                  " total fraction in GEMS: " << time_fraction << " idle time: " <<
                  twaittotal << "\n";
-            cout << "GEMS: " << repeated_fail <<
+            if (repeated_fail > 0) cout << "GEMS: " << repeated_fail <<
                  " nodes failed this timestep, check chemical system!"
                  << "\n";
             rwmutex.unlock();
