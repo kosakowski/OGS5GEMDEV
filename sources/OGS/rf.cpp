@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************/
 /* ROCKFLOW - Modul: rf.c
  */
@@ -28,8 +37,6 @@
 #include "lis.h"
 #include <omp.h>
 #endif
-
-
 
 #include "BuildInfo.h"
 
@@ -62,6 +69,8 @@ void ShowSwitches ( void );
 #if defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL) || \
         defined(USE_MPI_GEMS) || defined(USE_MPI_KRC) 
 double elapsed_time_mpi;
+MPI_Comm comm_DDC;
+#include "SplitMPI_Communicator.h"
 // ------
 #endif
 
@@ -103,6 +112,10 @@ int main ( int argc, char* argv[] )
 	/* parse command line arguments */
 	std::string anArg;
 	std::string modelRoot;
+	#if defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL) || \
+		defined(USE_MPI_GEMS) || defined(USE_MPI_KRC)
+		int nb_ddc=0; //number of cores for DDC related processes
+	#endif
 
 	for( int i = 1; i < argc; i++ )
 	{
@@ -160,6 +173,16 @@ int main ( int argc, char* argv[] )
 			if (! path.empty()) defaultOutputPath = path;
 			continue;
 		}
+#if defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL) || \
+	defined(USE_MPI_GEMS) || defined(USE_MPI_KRC)
+		std::string decompositions;
+		if( anArg == "--domain-decomposition" || anArg == "-ddc" )
+		{
+			decompositions = std::string( argv[++i] );
+			nb_ddc = atoi(decompositions.c_str());
+			continue;
+		}
+#endif
 		// anything left over must be the model root, unless already found
 		if ( modelRoot == "" )
 			modelRoot = std::string( argv[i] );
@@ -167,6 +190,15 @@ int main ( int argc, char* argv[] )
 
 	if( argc > 1 && modelRoot == "" ) // non-interactive mode and no model given
 		exit(0);             // e.g. just wanted the build info
+
+	std::string solver_pkg_name = SOLVER_PACKAGE_NAME;
+	// No default linear solver package is in use.
+	if(solver_pkg_name.find("Default") == std::string::npos)
+	{
+		std::cout << "\nWarning: " << solver_pkg_name
+		<< " other than the OGS default one is in use." <<std::endl;
+		std::cout << "         The solver setting may need to be adjusted for the solution accuracy!" << std::endl;
+	}
 
 	char* dateiname(NULL);
 #ifdef SUPERCOMPUTER
@@ -198,9 +230,10 @@ int main ( int argc, char* argv[] )
 #endif
 	MPI_Barrier (MPI_COMM_WORLD); // 12.09.2007 WW
 	elapsed_time_mpi = -MPI_Wtime(); // 12.09.2007 WW
-	MPI_Comm_size(MPI_COMM_WORLD,&mysize);
-	MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
-	std::cout << "After MPI_Init myrank = " << myrank << '\n';
+	bool splitcomm_flag;
+	int np;
+	MPI_Comm_size(MPI_COMM_WORLD, &np);	
+	splitcomm_flag = SplitMPI_Communicator::CreateCommunicator(MPI_COMM_WORLD, np, nb_ddc);
 	time_ele_paral = 0.0;
 #endif
 /*---------- MPI Initialization ----------------------------------*/
@@ -223,9 +256,6 @@ int main ( int argc, char* argv[] )
 	PetscSynchronizedPrintf(PETSC_COMM_WORLD, "===\nUse PETSc solver");
 	PetscSynchronizedPrintf(PETSC_COMM_WORLD, "Number of CPUs: %d, rank: %d\n", r_size, rank);
 #endif
-
-
-
 
 /*---------- LIS solver -----------------------------------------*/
 #ifdef LIS
@@ -305,11 +335,28 @@ int main ( int argc, char* argv[] )
 #endif
 #if defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL) || defined(USE_MPI_GEMS)  || defined(USE_MPI_KRC)
 	aproblem->setRankandSize(myrank, mysize);
-#endif
 
+	if (myrank != MPI_UNDEFINED)
+	{
+#endif
 	aproblem->Euler_TimeDiscretize();
 	delete aproblem;
 	aproblem = NULL;
+#if defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL) || defined(USE_MPI_GEMS)  || defined(USE_MPI_KRC)
+	  }
+
+	//sending killing signals to ranks of group_IPQC, only when the group exists
+	if (splitcomm_flag == true){
+		int signal = -1, rank_IPQC, mysize_IPQC = np - nb_ddc;
+		for (int i=0; i< mysize_IPQC; i++){
+			rank_IPQC = mysize + i;
+			MPI_Send(&signal, 1, MPI_INT, rank_IPQC, 0, MPI_COMM_WORLD);
+		}
+ 	  }
+
+#endif
+
+
 	if(ClockTimeVec.size()>0)
 		ClockTimeVec[0]->PrintTimes();  //CB time
 	DestroyClockTime();

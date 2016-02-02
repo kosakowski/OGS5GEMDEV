@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /*
    The members of class Element definitions.
    Designed and programmed by WW, 06/2004
@@ -359,12 +368,9 @@ CFiniteElementVec::CFiniteElementVec(process::CRFProcessDeformation* dm_pcs,
 	time_unit_factor = pcs->time_unit_factor;
 
 #if defined(USE_PETSC) // || defined(other parallel libs)//05~07.3013. WW
-	idxm = new int[60];  //> global indices of local matrix rows  
-	idxn = new int[60];  //> global indices of local matrix columns 
+	idxm = new int[60];  //> global indices of local matrix rows
+	idxn = new int[60];  //> global indices of local matrix columns
 	local_idx = new int[60]; //> local index for local assemble
-
-        local_matrix = new double[3600];
-        local_vec = new double[60];
 #endif
 
 }
@@ -493,14 +499,6 @@ CFiniteElementVec::~CFiniteElementVec()
 		vec_B_matrix[i] = NULL;
 		vec_B_matrix_T[i] = NULL;
 	}
-
-#if defined(USE_PETSC) // || defined(other parallel libs)//05~07.3013. WW
-        delete [] local_matrix;
-        delete [] local_vec;
-#endif
-
-
-
 }
 
 /***************************************************************************
@@ -792,7 +790,7 @@ double CFiniteElementVec::CalDensity()
 			Sw = 1.0;     // JT, should be 1.0, unless multiphase (calculate below) (if unsaturated, fluid density would be negligible... so still works)
 			if(Flow_Type > 0 && Flow_Type != 10)
 			{
-                Sw = 0.; //WW 
+                Sw = 0.; //WW
 				for(i = 0; i < nnodes; i++)
 					Sw += shapefct[i] * AuxNodal_S[i];
 			}
@@ -862,20 +860,19 @@ void CFiniteElementVec::ComputeMatrix_RHS(const double fkt,
 	Matrix* tmp_AuxMatrix2 = AuxMatrix2;
 	Matrix* tmp_Stiffness = Stiffness;
 
-        int act_r = 0;
+	int act_r = 0;
 #if defined(USE_PETSC) // || defined(other parallel libs)//05.3013. WW
-        act_r = act_nodes_h;
+	act_r = act_nodes_h;
 #else
 	act_r = nnodesHQ;
 #endif
 
-
-        for (i = 0; i < act_r; i++)
+	for (i = 0; i < act_r; i++)
 	{
 #if defined(USE_PETSC) // || defined(other parallel libs)//05.3013. WW
-           const int ia = local_idx[i];           
+		const int ia = local_idx[i];
 #else
-           const int ia = i;
+		const int ia = i;
 #endif
 		//NW      setTransB_Matrix(i);
 		tmp_B_matrix_T = this->vec_B_matrix_T[ia];
@@ -908,11 +905,11 @@ void CFiniteElementVec::ComputeMatrix_RHS(const double fkt,
 
 			// Local assembly of stiffness matrix
 			for (k = 0; k < ele_dim; k++)
-            {
-                const int kia =    ia + k * nnodesHQ;
+			{
+				const int kia = ia + k * nnodesHQ;
 				for (l = 0; l < ele_dim; l++)
 					(*tmp_Stiffness)(kia, j + l * nnodesHQ) += (*tmp_AuxMatrix)(k,l) * fkt;
-           }
+			}
 		}                         // loop j
 	}                                     // loop i
 
@@ -943,52 +940,52 @@ void CFiniteElementVec::ComputeMatrix_RHS(const double fkt,
 		}
 
 		if(axisymmetry)
-            {
-               for (k = 0; k < act_r; k++)
-               {
+		{
+			for (k = 0; k < act_r; k++)
+			{
 #if defined(USE_PETSC) // || defined(other parallel libs)//05.3013. WW
-                  const int ka = local_idx[k];           
+				const int ka = local_idx[k];
 #else
-                  const int ka = k;
+				const int ka = k;
 #endif
 				for (l = 0; l < nnodes; l++)
 					for(j = 0; j < ele_dim; j++)
 					{
-                         dN_dx = dshapefctHQ[nnodesHQ * j + ka];
+						dN_dx = dshapefctHQ[nnodesHQ * j + ka];
 						if(j == 0)
-                             dN_dx += shapefctHQ[ka] / Radius;
+							dN_dx += shapefctHQ[ka] / Radius;
 
 						f_buff = fac * dN_dx * shapefct[l];
-                         (*PressureC)(nnodesHQ * j + ka, l) += f_buff;
+						(*PressureC)(nnodesHQ * j + ka, l) += f_buff;
 						if(PressureC_S)
-                             (*PressureC_S)(nnodesHQ * j + ka, l) += f_buff * fac1;
-                          if(PressureC_S_dp)
-                             (*PressureC_S_dp)(nnodesHQ * j + ka, l) += f_buff * fac2;
-                    }
-                }
+							(*PressureC_S)(nnodesHQ * j + ka, l) += f_buff * fac1;
+						if(PressureC_S_dp)
+							(*PressureC_S_dp)(nnodesHQ * j + ka, l) += f_buff * fac2;
+					}
 			}
+		}
 		else
-            {
-               for (k = 0; k < act_r; k++)
-               {
+		{
+			for (k = 0; k < act_r; k++)
+			{
 
 #if defined(USE_PETSC) // || defined(other parallel libs)//05.3013. WW
-                  const int ka = local_idx[k];           
+				const int ka = local_idx[k];
 #else
-                  const int ka = k;
+				const int ka = k;
 #endif
 				for (l = 0; l < nnodes; l++)
 					for(j = 0; j < ele_dim; j++)
 					{
-                       f_buff = fac *  dshapefctHQ[nnodesHQ * j +  ka] * shapefct[l];
-                       (*PressureC)(nnodesHQ * j + ka,l) += f_buff;
-                       if(PressureC_S)
-                         (*PressureC_S)(nnodesHQ * j + ka, l) += f_buff * fac1;
-                       if(PressureC_S_dp)
-                         (*PressureC_S_dp)(nnodesHQ * j + ka, l) += f_buff * fac2;
-                    }
-               }
-	    }
+						f_buff = fac *  dshapefctHQ[nnodesHQ * j +  ka] * shapefct[l];
+						(*PressureC)(nnodesHQ * j + ka,l) += f_buff;
+						if(PressureC_S)
+							(*PressureC_S)(nnodesHQ * j + ka, l) += f_buff * fac1;
+						if(PressureC_S_dp)
+							(*PressureC_S_dp)(nnodesHQ * j + ka, l) += f_buff * fac2;
+					}
+			}
+		}
 	}
 	//---------------------------------------------------------
 	// Assemble gravity force vector
@@ -1000,12 +997,12 @@ void CFiniteElementVec::ComputeMatrix_RHS(const double fkt,
 		i = (ele_dim - 1) * nnodesHQ;
 		const double coeff = LoadFactor * rho * smat->grav_const * fkt;
 		for (k = 0; k < act_r; k++)
-        {
+		{
 
 #if defined(USE_PETSC) // || defined(other parallel libs)//05.3013. WW
-                    const int ka = local_idx[k];           
+			const int ka = local_idx[k];
 #else
-                    const int ka = k;
+			const int ka = k;
 #endif
 			(*RHS)[i + ka] += coeff * shapefctHQ[ka];
 		//        (*RHS)(i+ka) += LoadFactor * rho * smat->grav_const * shapefctHQ[ka] * fkt;
@@ -1056,7 +1053,7 @@ void CFiniteElementVec::LocalAssembly(const int update)
 #elif defined(NEW_EQS)
 		b_rhs = pcs->eqs_new->b;
 #else
-		b_rhs = pcs->eqs->b;	  
+		b_rhs = pcs->eqs->b;
 #endif
 	  }
 	(*RHS) = 0.0;
@@ -1340,99 +1337,51 @@ bool CFiniteElementVec::GlobalAssembly()
 #if defined(USE_PETSC) // || defined(other parallel libs)//06.2013. WW
 void CFiniteElementVec::GlobalAssembly_Stiffness()
 {
-   double f1; //,f2;
-   f1 = 1.0;
-   //f2 = -1.0;
+	const int dof = ele_dim;
+	const int m_dim = nnodesHQ * dof;
+	const int n_dim = m_dim;
 
-//   double biot = 1.0;
-//   biot = smat->biot_const;
+	int non_ghost_flag = 1;
+	if (act_nodes_h != nnodesHQ)
+	    non_ghost_flag = -1;
 
-   int m_dim, n_dim;
-   int dof = ele_dim;
-
-   double *local_matrix_asy = NULL;
-   double *local_vec_asy = NULL;
-   petsc_group::PETScLinearSolver *eqs = pcs->eqs_new;
-
-   if(act_nodes_h != nnodesHQ)
-   {
-      m_dim = act_nodes_h * dof;
-      n_dim = nnodesHQ * dof;
-
-      const int dim_full = nnodesHQ * dof;
-      //     int i_dom, j_dom, in, jn; 
-      int i_dom,  in; 
-      // put the subdomain portion of local stiffness matrix to Mass 
-      double *loc_m = Stiffness->getEntryArray();
-      double *loc_v = RHS->getEntryArray();
-      double *loc_dymass;
-      local_matrix_asy = local_matrix;
-      local_vec_asy =  local_vec;
-
-      if(dynamic)
-      {
-         f1 = 0.5 * beta2 * dt * dt;
-         //f2 = -0.5 * bbeta1 * dt;
-         loc_dymass = Mass->getEntryArray();
-      }
-
-      for(int i = 0; i < nnodesHQ; i++)
+	for (int i = 0; i < nnodesHQ; i++)
 	{
-	  const int i_buff = MeshElement->nodes[i]->GetEquationIndex() *  dof;		
-	  for(int k=0; k<dof; k++)
-	    {
-	      idxn[k*nnodesHQ + i] = i_buff + k;	
-	    }	    
-	  // local_vec[i] = 0.;
-	}     
+		const int i_buff = MeshElement->nodes[i]->GetEquationIndex() *  dof;
+		for(int k=0; k<dof; k++)
+		{
+			const int ki = k*nnodesHQ + i;
+			idxm[ki] = non_ghost_flag *( i_buff + k);
+			idxn[ki] = non_ghost_flag * idxm[ki]; // always positive
+		}
+	}
 
-      for(int i=0; i<m_dim; i++)
+	if (non_ghost_flag == -1)
 	{
-	  i_dom = i/act_nodes_h;
-	  in = i % act_nodes_h;
-	  int i_full = local_idx[in] + i_dom * nnodesHQ;
-	  local_vec_asy[i] = loc_v[i_full];
-	  i_full *= dim_full; 
+		for (int i = 0; i < act_nodes_h; i++)
+		{
+			for(int k=0; k<dof; k++)
+			{
+				const int ki = k*nnodesHQ + local_idx[i];
+				idxm[ki] *= -1;
+				if (idxm[ki] == 0)
+					idxm[ki] = -9999;
+				// If local size is used to build up matrix, idxn should
+                // be processed in the same way. 
+			}
+		}
+	}
 
-	  idxm[i] = MeshElement->nodes[local_idx[in]]->GetEquationIndex() *  dof + i_dom;
-         
+	const double* local_matrix = Stiffness->getEntryArray();
+	double* local_vec = RHS->getEntryArray();
+	for(std::size_t i=0; i<RHS->Size(); i++)
+		local_vec[i] *= -1.0;
+	// if (dynamic) // not available.
 
-	  for(int j=0; j<dim_full; j++)
-	    {
-	      local_matrix_asy[i*dim_full +j] = f1 * loc_m[i_full + j]; 
-              if(dynamic)
-              {
-                 local_matrix_asy[i*dim_full +j] += loc_dymass[i_full + j]; 
-              }
-	    }
-	}      
-    }
-  else
-    {
-      m_dim = nnodesHQ * dof;
-      n_dim = m_dim;
-      //----------------------------------------------------------------------
-      // For non-overlapping partition DDC
-      local_matrix_asy = Stiffness->getEntryArray();
-      local_vec_asy = RHS->getEntryArray();
+	petsc_group::PETScLinearSolver *eqs = pcs->eqs_new;
 
-      for(int i = 0; i < nnodesHQ; i++)
-	{
-	  const int i_buff = MeshElement->nodes[i]->GetEquationIndex() *  dof;		
-	  for(int k=0; k<dof; k++)
-	    {
-	      const int ki = k*nnodesHQ + i;
-	      idxm[ki] = i_buff + k;
-	      idxn[ki] = idxm[ki];
-	    }	    
-	  // local_vec[i] = 0.;
-	}     
-    }
-
-   eqs->addMatrixEntries(m_dim, idxm, n_dim, idxn, local_matrix_asy);
-   eqs->setArrayValues(1, m_dim, idxm, local_vec_asy);
-  //eqs->AssembleRHS_PETSc();
-  //eqs->AssembleMatrixPETSc(MAT_FINAL_ASSEMBLY );
+	eqs->addMatrixEntries(m_dim, idxm, n_dim, idxn, local_matrix);
+	eqs->setArrayValues(1, m_dim, idxm, local_vec);
 }
 #else
 /***************************************************************************
@@ -1502,9 +1451,6 @@ void CFiniteElementVec::GlobalAssembly_Stiffness()
 				// Local assembly of stiffness matrix
 				for (size_t k = 0; k < ele_dim; k++)
 				{
-#if defined(USE_PETSC) // || defined(other parallel libs)//10.3012. WW
-				  //TODO
-#else
 #ifdef NEW_EQS
 					(*A)(eqs_number[i] + NodeShift[k],eqs_number[j] +
 					     NodeShift[k])
@@ -1513,7 +1459,6 @@ void CFiniteElementVec::GlobalAssembly_Stiffness()
 					MXInc(eqs_number[i] + NodeShift[k],
 					      eqs_number[j] + NodeShift[k],
 					      (*Mass)(i, j));
-#endif
 #endif
 				}
 			}             // loop j
@@ -1530,9 +1475,6 @@ void CFiniteElementVec::GlobalAssembly_Stiffness()
 			{
 				for (size_t l = 0; l < ele_dim; l++)
 				  {
-#if defined(USE_PETSC) // || defined(other parallel libs)//10.3012. WW
-				    //TODO
-#else
 #ifdef NEW_EQS
 					(*A)(eqs_number[i] + NodeShift[k],eqs_number[j] +
 					     NodeShift[l])
@@ -1542,7 +1484,6 @@ void CFiniteElementVec::GlobalAssembly_Stiffness()
 					MXInc(eqs_number[i] + NodeShift[k],
 					      eqs_number[j] + NodeShift[l],
 					      f1 * (*Stiffness)(i + k * nnodesHQ, j + l * nnodesHQ));
-#endif
 #endif
 				  }
 			}
@@ -1670,7 +1611,7 @@ void CFiniteElementVec::GlobalAssembly_PressureCoupling(Matrix* pCMatrix,
 		for (int j = 0; j < nnodes; j++)
 		{
 			for(size_t k = 0; k < ele_dim; k++)
-			  {  
+			  {
 #ifdef NEW_EQS
 				(*A)(NodeShift[k] + eqs_number[i], NodeShift[dim_shift] +
 				     eqs_number[j])
@@ -1906,12 +1847,12 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 							bishop_coef_ini = pow(S_e_ini,smat->bishop_model_value);
 							AuxNodal[i] = LoadFactor*pow(S_e,smat->bishop_model_value)* val_n;
 							break;
-						case 3:  
+						case 3:
 							h_pcs->GetNodeValue(nodes[i],idx_p1_ini)<smat->bishop_model_value ?  bishop_coef_ini=0.0 : bishop_coef_ini=1.0;
 							if(val_n<smat->bishop_model_value)
-							   AuxNodal[i] = 0.0;						
+							   AuxNodal[i] = 0.0;
 							else
-							   AuxNodal[i] = LoadFactor * val_n;						
+							   AuxNodal[i] = LoadFactor * val_n;
 							break;
 						default :
 							break;
@@ -1923,7 +1864,7 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 
 				if(pcs->Neglect_H_ini==2)//WX:08.2011
 				{
-						if(smat->bishop_model==1||smat->bishop_model==2||smat->bishop_model==3)  
+						if(smat->bishop_model==1||smat->bishop_model==2||smat->bishop_model==3)
 							AuxNodal[i] -= LoadFactor * bishop_coef_ini * h_pcs->GetNodeValue(nodes[i],idx_p1_ini);
 						else
 						{
@@ -1975,7 +1916,7 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 						}
 						bishop_coef = pow(S_e, smat->bishop_model_value);
 						break;
-					case 3:  
+					case 3:
 						S_e = (AuxNodal_S[i]-m_mmp->capillary_pressure_values[1])
 							/(m_mmp->capillary_pressure_values[2]-m_mmp->capillary_pressure_values[1]);
 						if(pcs->Neglect_H_ini==2)
@@ -2337,7 +2278,7 @@ void CFiniteElementVec::LocalAssembly_continuum(const int update)
 		{
 			for (i = 0; i < ns; i++)
 				dstress[i] = 0.0;
-			if(!excavation)//WX:07.2011 nonlinear excavation					
+			if(!excavation)//WX:07.2011 nonlinear excavation
 			{
 				//De->Write();
 			De->multi(dstrain, dstress);
@@ -3899,9 +3840,12 @@ ElementValue_DM::ElementValue_DM(CElem* ele,  const int NGP, bool HM_Staggered)
 	}
 }
 // 01/2006 WW
-void ElementValue_DM::Write_BIN(std::fstream& os)
+void ElementValue_DM::Write_BIN(std::fstream& os, const bool last_step)
 {
-	Stress0->Write_BIN(os);
+	if (last_step)
+		Stress_i->Write_BIN(os);
+	else
+		Stress0->Write_BIN(os);
 	Stress_i->Write_BIN(os);
 	if(pStrain)
 		pStrain->Write_BIN(os);
@@ -4010,9 +3954,9 @@ ElementValue_DM::~ElementValue_DM()
 	if(orientation)
 		delete orientation;
 
-	if(scalar_aniso_comp) 
+	if(scalar_aniso_comp)
 		delete scalar_aniso_comp;//WX:09.2011
-	if(scalar_aniso_tens) 
+	if(scalar_aniso_tens)
 		delete scalar_aniso_tens;
 
 	NodesOnPath = NULL;

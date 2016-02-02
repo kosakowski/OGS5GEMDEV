@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************
    ROCKFLOW - Object: Process PCS
    Task:
@@ -8,6 +17,7 @@
 #ifndef rf_pcs_INC
 #define rf_pcs_INC
 
+#include <ctime>
 #include <valarray>
 
 #include "makros.h"
@@ -22,8 +32,6 @@
 #include "rf_tim_new.h"
 #include "conversion_rate.h"          // HS, 10.2011
 #include "SparseMatrixDOK.h"
-//#include "Stiff_Bulirsch-Stoer.h"   // HS, 10.2011
-#include "StepperBulischStoer.h"   // HS, 10.2011
 
 #include "Eigen/Eigen"
 
@@ -273,8 +281,8 @@ protected:                                        //WW
 	//New equation and solver objects WW
 #if defined(USE_PETSC) // || defined(other parallel libs)//03.3012. WW
    petsc_group::PETScLinearSolver *eqs_new;
-  int mysize;                               
-  int myrank; 
+  int mysize;
+  int myrank;
 #elif defined(NEW_EQS)
 #ifdef LIS
 public:
@@ -732,7 +740,7 @@ public:
 	bool hasConstrainedST(){ return _hasConstrainedST; }
 	void hasConstrainedBC(const bool state){ _hasConstrainedBC = state; }
 	void hasConstrainedST(const bool state){ _hasConstrainedST = state; }
-	
+
 	void setidxVx(int index){ _idxVx = index; }
 	void setidxVy(int index){ _idxVy = index; }
 	void setidxVz(int index){ _idxVz = index; }
@@ -780,6 +788,7 @@ public:
 	double pcs_absolute_error[DOF_NUMBER_MAX];	// JT2012: for NLS, we store error for each DOF
 	double pcs_unknowns_norm;
 	double cpl_max_relative_error;				// JT2012: For CPL, we just store the maximum, not each dof value
+	double cpl_max_relative_error_overall;
 	double nls_max_relative_error;
 	double cpl_absolute_error[DOF_NUMBER_MAX];	// JT2012:
 	double temporary_absolute_error[DOF_NUMBER_MAX];	// JT2012:
@@ -824,7 +833,7 @@ public:
 	//WW
 
 	void CalcSecondaryVariablesTNEQ();      //HS
-	void CalcSecondaryVariablesTES(const bool initial = true);      //HS
+	void CalcSecondaryVariablesTES();      //HS
 	void CalcSecondaryVariablesUnsaturatedFlow(bool initial = false);
 	void CalcSecondaryVariablesPSGLOBAL(); // PCH
 	void CalcSecondaryVariablesLiquidFlow();                                                  // PCH
@@ -902,17 +911,13 @@ public:
 	}
 #endif
 	// HS 10.2011
-	double m_rho_s_0; 
+	double m_rho_s_0;
 	conversion_rate *m_conversion_rate;
-	StepperBulischStoer<conversion_rate> *m_solver;
-	Eigen::VectorXd yy_rho_s;     // rho_s
-	Eigen::VectorXd dydxx_rho_s;  // d{rho_s}/dt
-	// end of thermal storage problem 
 
 #if defined(USE_PETSC) //03.3012. WW
         /// Initialize the RHS array of the system of equations with the previous solution.
         void InitializeRHS_with_u0(const bool quad = false); //in rf_pcs1.cpp
-       
+
         /// Initialize the unknows of equations with existing solutions within a index range.
         void initializeRHS_with_u0(const int min_id, const int max_id); //in rf_pcs1.cpp
 #endif
@@ -927,9 +932,14 @@ private:
 	// method to check on constrained source terms
 	bool checkConstrainedST(std::vector<CSourceTerm*> & st_vector, CSourceTerm const & st, CNodeValue const & st_node);
 	// method to check on constrained boundary conditions
-	bool checkConstrainedBC(CBoundaryCondition const & bc, CBoundaryConditionNode const & bc_node, double & bc_value);
+	bool checkConstrainedBC(CBoundaryCondition const & bc, CBoundaryConditionNode & bc_node, double & bc_value);
 	std::valarray<double> getNodeVelocityVector(const long node_id);
+	double calcPressureFromHead(CBoundaryCondition const & bc, std::size_t node_number, double pressure_value,
+			 double const & time_fac = 1, double const & fac = 1);
+	double calcHeadFromPressure(CBoundaryCondition const & bc, std::size_t node_number, double pressure_value,
+			 double const & time_fac = 1, double const & fac = 1);
 
+	double evaluteSwitchBC(CBoundaryCondition const & bc, CBoundaryConditionNode const & bc_node, double time_fac, double fac);
 };
 
 //========================================================================

@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************
    PARLib - Object: PAR
    Task: class implementation
@@ -208,6 +217,10 @@ extern void DOMCreate();
         defined(USE_MPI_GEMS) || defined(USE_MPI_BRNS) || defined(USE_MPI_KRC)
 extern char t_fname[3];
 extern double time_ele_paral;
+
+//#include <mpi.h> 
+//extern MPI_Comm comm_DDC;
+
 #endif
 //---- MPI Parallel --------------
 #define DDC_FILE_EXTENSION ".ddc"

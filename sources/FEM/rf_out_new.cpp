@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************
    FEMLib - Object: OUT
    Task:
@@ -61,6 +70,7 @@ extern size_t max_dim;                            //OK411 todo
 // MPI Parallel
 #if defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL)
 #include "par_ddc.h"
+#include "SplitMPI_Communicator.h"
 #endif
 
 #if defined(USE_PETSC) ||  defined(USE_MPI) || defined(USE_MPI_PARPROC) || defined(USE_MPI_REGSOIL)//|| defined(other parallel libs)//03.3012. WW
@@ -103,14 +113,20 @@ bool OUTRead(const std::string& file_base_name,
 	ios::pos_type position;
 	bool output_version = false; // 02.2011. WW
 
+#if defined(USE_PETSC)
+	MPI_Comm communicator = PETSC_COMM_WORLD;
+#elif defined(USE_MPI)
+	MPI_Comm communicator = comm_DDC;
+#endif 
+
 #if defined(USE_PETSC) || defined(USE_MPI) //|| defined(other parallel libs)//03.3012. WW
 	int rank , msize;
 	string rank_str;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &msize);
+	MPI_Comm_rank(communicator, &rank);
+	MPI_Comm_size(communicator, &msize);
 	std::ifstream is;
 	stringstream ss (stringstream::in | stringstream::out);
-	ss.clear(); 
+	ss.clear();
 	ss.str("");
 	ss << rank;
 	rank_str = ss.str();
@@ -610,11 +626,11 @@ void OUTData(double time_current, int time_step_number, bool force_output)
 			}
 		}
 		else if (m_out->dat_type_name.compare("TOTAL_FLUX") == 0)
-			m_out->NODWriteTotalFlux(time_current, time_step_number); // 6/2012 JOD, MW 
+			m_out->NODWriteTotalFlux(time_current, time_step_number); // 6/2012 JOD, MW
 		else if (m_out->dat_type_name.compare("COMBINE_POINTS") == 0) m_out->NODWritePointsCombined(time_current);	// 6/2012 for calibration JOD
 		else if (m_out->dat_type_name.compare("PRIMARY_VARIABLES") == 0)
 			m_out->NODWritePrimaryVariableList(time_current); //JOD 2014-11-10
-		
+
 		// ELE values, only called if ele values are defined for output, 05/2012 BG
 		if (m_out->getElementValueVector().size() > 0)
 			m_out->CalcELEFluxes();

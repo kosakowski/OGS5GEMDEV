@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 // Classes for interface GeoSys - DUMUX
 #include <vector>
 
@@ -6,7 +15,7 @@
 #include "fem_ele.h"
 #include "fem_ele_std.h"
 
-#include "geo_pnt.h" 
+#include "geo_pnt.h"
 
 class CReadTextfiles_DuMux
 {

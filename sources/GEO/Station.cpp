@@ -1,6 +1,11 @@
 /**
  * \file Station.cpp
  * KR Initial implementation
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
  */
 
 #include <cmath>
@@ -248,7 +253,7 @@ int StationBorehole::addStratigraphy(const std::vector<GEOLIB::Point*> &profile,
 		}
 		return 1;
 	}
-	
+
 	std::cout << "Error in StationBorehole::addStratigraphy() - Length of parameter vectors does not match." << "\n";
 	return 0;
 }

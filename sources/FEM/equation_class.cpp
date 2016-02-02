@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************
    Task: Linear equation
    Programing:
@@ -14,6 +23,7 @@
 #if defined(USE_MPI)
 #include "par_ddc.h"
 #include <mpi.h>
+#include "SplitMPI_Communicator.h"
 #endif
 
 #include "Configure.h"
@@ -28,6 +38,8 @@
 
 #ifdef LIS                                        // 07.02.2008 PCH
 #include "lis.h"
+#endif
+#ifdef _OPENMP
 #include <omp.h>
 #endif
 
@@ -82,7 +94,6 @@ Linear_EQS::Linear_EQS(const SparseTable &sparse_table,
                        const long dof, bool messg) : message(messg), a_pcs(NULL)
 #endif
 {
-	long i;
 	/// If JFNK method.  //03.08.2010. WW
 #ifdef JFNK_H2M
 	if(dof < 0)
@@ -116,7 +127,7 @@ Linear_EQS::Linear_EQS(const SparseTable &sparse_table,
 #endif
 	b = new double[size_A];
 	//
-	for(i = 0; i < size_A; i++)
+	for(long i = 0; i < size_A; i++)
 	{
 #ifndef USE_MPI
 		x[i] = 0.;
@@ -141,13 +152,12 @@ Linear_EQS::Linear_EQS(const SparseTable &sparse_table,
 **************************************************************************/
 Linear_EQS::Linear_EQS(const long size)
 {
-	long i;
 	A = NULL;
 	b = NULL;
 	size_global = size;
 	x = new double[size];
 	//
-	for(i = 0; i < size; i++)
+	for(long i = 0; i < size; i++)
 		x[i] = 0.;
 	iter = 0;
 	bNorm = 1.0;
@@ -184,7 +194,7 @@ Linear_EQS::~Linear_EQS()
 void Linear_EQS::ConfigNumerics(CNumerics* m_num, const long n)
 {
 	(void)n;
-	int i, nbuffer = 0;                   // Number of temperary float arrays
+	int nbuffer = 0;                   // Number of temperary float arrays
 	precond_type = m_num->ls_precond;
 	solver_type = m_num->ls_method;
 	switch(solver_type)
@@ -232,7 +242,7 @@ void Linear_EQS::ConfigNumerics(CNumerics* m_num, const long n)
 	case 13:                              // 06.2010. WW
 		solver_name = "GMRES";
 		m_gmres = m_num->Get_m();
-		for(i = 0; i < 4; i++)
+		for(int i = 0; i < 4; i++)
 		{
 			double* new_array = new double[m_gmres + 1];
 			f_buffer.push_back(new_array);
@@ -248,7 +258,7 @@ void Linear_EQS::ConfigNumerics(CNumerics* m_num, const long n)
 	   #else
 	 */
 	//#endif
-	for(i = 0; i < nbuffer; i++)
+	for(int i = 0; i < nbuffer; i++)
 	{
 		double* new_array = new double[size_A];
 		f_buffer.push_back(new_array);
@@ -521,8 +531,11 @@ int Linear_EQS::Solver(CNumerics* num)
 #ifdef MKL                               // PCH 10.03.2009: Requires the system platform where Math Kernel Library is properly configured.
 		//cout << "---------------------------------------------------" << "\n";
 		//omp_set_num_threads (1);
-		cout << "->Start calling PARDISO with " << omp_get_max_threads() << " threads" <<
-		"\n";
+#ifdef _OPENMP
+		cout << "->Start calling PARDISO with " << omp_get_max_threads() << " threads \n";
+#else
+		cout << "->Start calling PARDISO with 1 thread\n";
+#endif
 		// Assembling the matrix
 		// Establishing CRS type matrix from GeoSys Matrix data storage type
 		int nonzero = A->nnz();
@@ -970,15 +983,14 @@ void Linear_EQS::TransPrecond(double* vec_s, double* vec_r)
  ********************************************************************/
 double Linear_EQS::dot (const double* xx,  const double* yy)
 {
-	long i;
 	double val = 0.;
 #if defined(USE_MPI)
 	double val_i = dom->Dot_Interior(xx,  yy);
 	val_i += dom->Dot_Border_Vec(xx,  yy);
 	//
-	MPI_Allreduce(&val_i, &val, 1, MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+	MPI_Allreduce(&val_i, &val, 1, MPI_DOUBLE,MPI_SUM,comm_DDC);
 #else
-	for(i = 0; i < size_A; i++)
+	for(long i = 0; i < size_A; i++)
 		val += xx[i] * yy[i];
 #endif
 	return val;
@@ -1007,9 +1019,8 @@ double Linear_EQS::NormX()
  ********************************************************************/
 double Linear_EQS::dot (const double* xx,  const double* yy, const long n)
 {
-	long i;
 	double val = 0.;
-	for(i = 0; i < n; i++)
+	for(long i = 0; i < n; i++)
 		val += xx[i] * yy[i];
 	return val;
 }
@@ -1021,7 +1032,6 @@ double Linear_EQS::dot (const double* xx,  const double* yy, const long n)
  ********************************************************************/
 inline void Linear_EQS::MatrixMulitVec(double* xx,  double* yy)
 {
-	long i;                               //, size = A->Dim();
 	//
 	A->multiVec(xx, yy);
 #if defined(NEW_BREDUCE)
@@ -1029,7 +1039,7 @@ inline void Linear_EQS::MatrixMulitVec(double* xx,  double* yy)
 #else
 	dom->Local2Border(yy, border_buffer0);
 	MPI_Allreduce(border_buffer0, border_buffer1, A->Dof() * dom->BSize(),
-	              MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+	              MPI_DOUBLE,MPI_SUM,comm_DDC);
 	dom->Border2Local(border_buffer1, yy);
 #endif
 }
@@ -1049,7 +1059,7 @@ inline void Linear_EQS::TransMatrixMulitVec(double* xx,  double* yy)
 #else
 	dom->Local2Border(yy, border_buffer0);
 	MPI_Allreduce(border_buffer0, border_buffer1, A->Dof() * dom->BSize(),
-	              MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+	              MPI_DOUBLE,MPI_SUM,comm_DDC);
 	dom->Border2Local(border_buffer1, yy);
 #endif
 }
@@ -1078,7 +1088,7 @@ void Linear_EQS::Message()
 	cout << "      Iterations |" << " Max Iters |" << " Norm of b |" << " Error\n";
 	cout << "      " << setw(11) << iter << "|" << setw(11) << max_iter << "|"
 	     << setw(11) << bNorm << "|" << setw(11) << error << "\n";
-	if (iter == max_iter) 
+	if (iter == max_iter)
 		cout << "      WARNING: Maximum iterations reached !!! \n";
 	cout << "      ------------------------------------------------\n";
 	cout.flush();
@@ -1117,14 +1127,11 @@ inline bool Linear_EQS::CheckNormRHS(const double normb_new)
 **************************************************************************/
 int Linear_EQS::CG()
 {
-	long i, size;
-	double rrM1;
-	double* p, * r, * s;
 	//
-	size = A->Dim();
-	p = f_buffer[0];
-	r = f_buffer[1];
-	s = f_buffer[2];
+	const long size = A->Dim();
+	double* p = f_buffer[0];
+	double* r = f_buffer[1];
+	double* s = f_buffer[2];
 	//
 	double bNorm_new = Norm(b);
 	// Check if the norm of b is samll enough for convengence
@@ -1133,12 +1140,12 @@ int Linear_EQS::CG()
 	//
 	// r0 = b-Ax
 	A->multiVec(x,s);
-	for(i = 0; i < size; i++)
+	for(long i = 0; i < size; i++)
 		r[i] = b[i] - s[i];
 	//
 	// Preconditioning: M^{-1}r
 	Precond(r, s);
-	for(i = 0; i < size; i++)
+	for(long i = 0; i < size; i++)
 		p[i] = s[i];
 	// Check the convergence
 	if ((error = Norm(r) / bNorm) < tol)
@@ -1154,7 +1161,7 @@ int Linear_EQS::CG()
 		A->multiVec(p, s);
 		const double alpha = rr / dot(p,s);
 		// Update
-		for(i = 0; i < size; i++)
+		for(long i = 0; i < size; i++)
 		{
 			x[i] += alpha * p[i];
 			r[i] -= alpha * s[i];
@@ -1167,10 +1174,10 @@ int Linear_EQS::CG()
 		//
 		Precond(r, s);
 		//
-		rrM1 = rr;
+		const double rrM1 = rr;
 		rr   = dot(s, r);
 		const double beta = rr / rrM1;
-		for(i = 0; i < size; i++)
+		for(long i = 0; i < size; i++)
 			p[i] = s[i] + beta * p[i];
 	}
 	//
@@ -1184,20 +1191,19 @@ int Linear_EQS::CG()
 **************************************************************************/
 int Linear_EQS::BiCG()
 {
-	long i, size;
-	double rho1, rho2 = 0., alpha, beta;
-	double* z, * zt, * p, * pt, * q, * qt, * r, * rt;
 	//
-	size = A->Dim();
-	z = f_buffer[0];
-	zt = f_buffer[1];
-	p = f_buffer[2];
-	pt = f_buffer[3];
-	q = f_buffer[4];
-	qt = f_buffer[5];
-	r = f_buffer[6];
-	rt = f_buffer[7];
+	const long size = A->Dim();
+	double* z = f_buffer[0];
+	double* zt = f_buffer[1];
+	double* p = f_buffer[2];
+	double* pt = f_buffer[3];
+	double* q = f_buffer[4];
+	double* qt = f_buffer[5];
+	double* r = f_buffer[6];
+	double* rt = f_buffer[7];
 	//
+
+	double rho2 = 1.;
 	double bNorm_new = Norm(b);
 	// Check if the norm of b is samll enough for convengence
 	if(CheckNormRHS(bNorm_new))
@@ -1205,7 +1211,7 @@ int Linear_EQS::BiCG()
 	//
 	// r0 = b-Ax
 	A->multiVec(x,rt);
-	for(i = 0; i < size; i++)
+	for(long i = 0; i < size; i++)
 	{
 		r[i] = b[i] - rt[i];
 		rt[i] = r[i];
@@ -1223,7 +1229,7 @@ int Linear_EQS::BiCG()
 	{
 		Precond(r, z);
 		TransPrecond(rt, zt);
-		rho1 = dot(z, rt);
+		const double rho1 = dot(z, rt);
 		//
 		if (fabs(rho1) < DBL_MIN)
 		{
@@ -1232,15 +1238,15 @@ int Linear_EQS::BiCG()
 		}
 		//
 		if(iter == 1)
-			for(i = 0; i < size; i++)
+			for(long i = 0; i < size; i++)
 			{
 				p[i] = z[i];
 				pt[i] = zt[i];
 			}
 		else
 		{
-			beta = rho1 / rho2;
-			for(i = 0; i < size; i++)
+			const double beta = rho1 / rho2;
+			for(long i = 0; i < size; i++)
 			{
 				p[i] = z[i] + beta * p[i];
 				pt[i] = zt[i] + beta * pt[i];
@@ -1249,9 +1255,9 @@ int Linear_EQS::BiCG()
 		//
 		A->multiVec(p, q);
 		A->Trans_MultiVec(pt, qt);
-		alpha = rho1 / dot(pt,q);
+		const double alpha = rho1 / dot(pt,q);
 		//
-		for(i = 0; i < size; i++)
+		for(long i = 0; i < size; i++)
 		{
 			x[i] += alpha * p[i];
 			r[i] -= alpha * q[i];
@@ -1279,20 +1285,18 @@ int Linear_EQS::BiCG()
  **************************************************************************/
 int Linear_EQS::BiCGStab()
 {
-	long i, size;
+	//
+	const long size = size_A;
+	double* r0 = f_buffer[0];
+	double* r = f_buffer[1];
+	double* s = f_buffer[2];
+	double* s_h = f_buffer[3];
+	double* t = f_buffer[4];
+	double* v = f_buffer[5];
+	double* p = f_buffer[6];
+	double* p_h = f_buffer[7];
+	//
 	double rho_0, rho_1, alpha, beta, omega, tt = 0., norm_r = 0.;
-	double* r0, * r, * s, * s_h, * t, * v, * p, * p_h;
-	//
-	size = size_A;
-	r0 = f_buffer[0];
-	r = f_buffer[1];
-	s = f_buffer[2];
-	s_h = f_buffer[3];
-	t = f_buffer[4];
-	v = f_buffer[5];
-	p = f_buffer[6];
-	p_h = f_buffer[7];
-	//
 	rho_0 = alpha = omega = 1.0;
 	//
 	double bNorm_new = Norm(b);
@@ -1304,24 +1308,24 @@ int Linear_EQS::BiCGStab()
 #ifdef JFNK_H2M
 	if(a_pcs)                             /// JFNK. 24.11.2010
 	{
-		for(i = 0; i < size; i++)
+		for(long i = 0; i < size; i++)
 			r0[i] = b[i];  // r = b-Ax
 		a_pcs->Jacobian_Multi_Vector_JFNK(x, s);
-		for(i = 0; i < size; i++)
+		for(long i = 0; i < size; i++)
 			r0[i] -= s[i];  // r = b-Ax
 	}
 	else
 	{
 		A->multiVec(x,s);         // s as buffer
-		for(i = 0; i < size; i++)
+		for(long i = 0; i < size; i++)
 			r0[i] = b[i] - s[i];  // r = b-Ax
 	}
 #else // ifdef JFNK_H2M
 	A->multiVec(x,s);                     // s as buffer
-	for(i = 0; i < size; i++)
+	for(long i = 0; i < size; i++)
 		r0[i] = b[i] - s[i];      // r = b-Ax
 #endif
-	for(i = 0; i < size; i++)
+	for(long i = 0; i < size; i++)
 	{
 		r[i] = r0[i];
 		v[i] = 0.;
@@ -1342,12 +1346,12 @@ int Linear_EQS::BiCGStab()
 			return 0;
 		}
 		if (iter == 1)
-			for(i = 0; i < size; i++)
+			for(long i = 0; i < size; i++)
 				p[i] = r[i];
 		else
 		{
 			beta = (rho_1 / rho_0) * (alpha / omega);
-			for(i = 0; i < size; i++)
+			for(long i = 0; i < size; i++)
 				p[i] = r[i] + beta * (p[i] - omega * v[i]);
 		}
 		// Preconditioner
@@ -1362,11 +1366,11 @@ int Linear_EQS::BiCGStab()
 		//
 		alpha = rho_1 / dot(r0, v);
 		//
-		for(i = 0; i < size; i++)
+		for(long i = 0; i < size; i++)
 			s[i] = r[i] - alpha * v[i];
 		if ((error = Norm(s) / bNorm) < tol)
 		{
-			for(i = 0; i < size; i++)
+			for(long i = 0; i < size; i++)
 				x[i] += alpha * p_h[i];
 			Message();
 			return iter;
@@ -1387,7 +1391,7 @@ int Linear_EQS::BiCGStab()
 		else
 			omega = 1.0;
 		// Update solution
-		for(i = 0; i < size; i++)
+		for(long i = 0; i < size; i++)
 		{
 			x[i] += alpha * p_h[i] + omega * s_h[i];
 			r[i] = s[i] - omega * t[i];
@@ -1421,21 +1425,19 @@ int Linear_EQS::BiCGStab()
  **************************************************************************/
 int Linear_EQS::CGS()
 {
-	long i, size;
+	//
+	const long size = A->Dim();
+	double* r0 = f_buffer[0];
+	double* r = f_buffer[1];
+	double* p = f_buffer[2];
+	double* p_h = f_buffer[3];
+	double* q = f_buffer[4];
+	double* q_h = f_buffer[5];
+	double* v = f_buffer[6];
+	double* u = f_buffer[7];
+	double* u_h = f_buffer[8];
+	//
 	double rho_1, rho_2, alpha, beta;
-	double* r0, * r, * p, * p_h, * q, * q_h, * v, * u, * u_h;
-	//
-	size = A->Dim();
-	r0 = f_buffer[0];
-	r = f_buffer[1];
-	p = f_buffer[2];
-	p_h = f_buffer[3];
-	q = f_buffer[4];
-	q_h = f_buffer[5];
-	v = f_buffer[6];
-	u = f_buffer[7];
-	u_h = f_buffer[8];
-	//
 	rho_1 = rho_2 = 1.0;
 	//
 	double bNorm_new = Norm(b);
@@ -1444,7 +1446,7 @@ int Linear_EQS::CGS()
 		return 0;
 	//
 	A->multiVec(x,v);                     // v as buffer
-	for(i = 0; i < size; i++)
+	for(long i = 0; i < size; i++)
 	{
 		r0[i] = b[i] - v[i];      // r = b-Ax
 		r[i] = r0[i];
@@ -1465,12 +1467,12 @@ int Linear_EQS::CGS()
 			return 0;
 		}
 		if (iter == 1)
-			for(i = 0; i < size; i++)
+			for(long i = 0; i < size; i++)
 				p[i] = u[i] = r[i];
 		else
 		{
 			beta = rho_1 / rho_2;
-			for(i = 0; i < size; i++)
+			for(long i = 0; i < size; i++)
 			{
 				u[i] = r[i] + beta * q[i];
 				p[i] = u[i] + beta * (q[i] + beta * p[i]);
@@ -1483,19 +1485,19 @@ int Linear_EQS::CGS()
 		//
 		alpha = rho_1 / dot(r0, v);
 		//
-		for(i = 0; i < size; i++)
+		for(long i = 0; i < size; i++)
 		{
 			q[i] = u[i] - alpha * v[i];
 			q_h[i] = u[i] + q[i];
 		}
 		// Preconditioner
 		Precond(q_h, u_h);
-		for(i = 0; i < size; i++)
+		for(long i = 0; i < size; i++)
 			x[i] += alpha * u_h[i];
 		//
 		A->multiVec(u_h, q_h);
 		//
-		for(i = 0; i < size; i++)
+		for(long i = 0; i < size; i++)
 			r[i] -= alpha * q_h[i];
 		rho_2 = rho_1;
 		if ((error = Norm(r) / bNorm) < tol)
@@ -1554,11 +1556,7 @@ inline void Linear_EQS::Set_Plane_Rotation(double &dx, double &dy, double &cs, d
 /// Update solution in GMRES
 inline void Linear_EQS::Update(double* x, int k, Matrix &h, double* s)
 {
-	long i;
-	long m, j;
 	long size = 0;
-	int v_idx0 = 7;
-
 	if(A)
 		size = A->Dim();
 	else
@@ -1566,24 +1564,25 @@ inline void Linear_EQS::Update(double* x, int k, Matrix &h, double* s)
 
 	double* v_j;
 
-	m = m_gmres;
+	const long m = m_gmres;
+	int v_idx0 = 7;
 
 	double* y = f_buffer[3];
-	for (j = 0; j < m + 1; j++)
+	for (long j = 0; j < m + 1; j++)
 		y[j] = s[j];
 
 	// Back solve
-	for (i = k; i >= 0; i--)
+	for (long i = k; i >= 0; i--)
 	{
 		y[i] /= h(i,i);
-		for ( j = i - 1; j >= 0; j--)
+		for (long j = i - 1; j >= 0; j--)
 			y[j] -= h(j,i) * y[i];
 	}
 
-	for (j = 0; j <= k; j++)
+	for (long j = 0; j <= k; j++)
 	{
 		v_j =  f_buffer[v_idx0 + j];
-		for(i = 0; i < size; i++)
+		for (long i = 0; i < size; i++)
 			x[i] += v_j[i] * y[j];
 	}
 }
@@ -1592,26 +1591,24 @@ inline void Linear_EQS::Update(double* x, int k, Matrix &h, double* s)
 /// GMRES solver. WW
 int Linear_EQS::GMRES()
 {
-	long i, k, l, m;
-	double normb, beta;
-	double* s, * cs, * sn,  * v, * w, * r, * t, * v_k;
-
-	normb = Norm(b);
+	double normb = Norm(b);
 	// Check if the norm of b is samll enough for convengence
 	if(CheckNormRHS(normb))
 		return 0;
 
 	//
-	m = m_gmres;
+	const long m = m_gmres;
 
-	s = f_buffer[0];
-	cs = f_buffer[1];
-	sn = f_buffer[2];
-	w = f_buffer[4];
-	r = f_buffer[5];
-	t = f_buffer[6];                      // Buffer array
+	double* s = f_buffer[0];
+	double* cs = f_buffer[1];
+	double* sn = f_buffer[2];
+	double* w = f_buffer[4];
+	double* r = f_buffer[5];
+	double* t = f_buffer[6];                      // Buffer array
+	double *v, *v_k;
 
 	int v_idx0 = 7;
+	double beta;
 
 	// Norm of Mb
 	Precond(b, r);
@@ -1622,21 +1619,21 @@ int Linear_EQS::GMRES()
 #ifdef JFNK_H2M
 	if(a_pcs)                             /// JFNK. 20.10.2010
 	{
-		for(l = 0; l < size_A; l++)
+		for(long l = 0; l < size_A; l++)
 			r[l] = b[l];
 		a_pcs->Jacobian_Multi_Vector_JFNK(x, w);
-		for(l = 0; l < size_A; l++)
+		for(long l = 0; l < size_A; l++)
 			r[l] -= w[l];  // r = b-Ax.
 	}
 	else
 	{
 		A->multiVec(x,w);         // Ax-->w
-		for(l = 0; l < size_A; l++)
+		for(long l = 0; l < size_A; l++)
 			r[l] = b[l] - w[l];  // r = b-Ax.
 	}
 #else // ifdef JFNK_H2M
 	A->multiVec(x,w);                     // Ax-->w
-	for(l = 0; l < size_A; l++)
+	for(long l = 0; l < size_A; l++)
 		r[l] = b[l] - w[l];       // r = b-Ax.
 #endif
 
@@ -1657,12 +1654,12 @@ int Linear_EQS::GMRES()
 	while (iter <= max_iter)
 	{
 		v =  f_buffer[v_idx0];
-		for(l = 0; l < size_A; l++)
+		for(long l = 0; l < size_A; l++)
 			v[l] = r[l] / beta;  //  r/beta
-		for(l = 0; l < m + 1; l++)
+		for(long l = 0; l < m + 1; l++)
 			s[l] = 0.0;
 		s[0] = beta;
-
+		long i;
 		for (i = 0; i < m && iter <= max_iter; i++, iter++)
 		{
 			v =  f_buffer[v_idx0 + i];
@@ -1674,20 +1671,20 @@ int Linear_EQS::GMRES()
 			A->multiVec(v, t);
 			Precond(t, w);
 
-			for (k = 0; k <= i; k++)
+			for (long k = 0; k <= i; k++)
 			{
 				v_k = f_buffer[v_idx0 + k];
 				H(k, i) = dot(w, v_k);
 
-				for(l = 0; l < size_A; l++)
+				for(long l = 0; l < size_A; l++)
 					w[l] -= H(k, i) * v_k[l];
 			}
 			H(i + 1, i) = Norm(w);
 			v_k = f_buffer[v_idx0 + i + 1];
-			for(l = 0; l < size_A; l++)
+			for(long l = 0; l < size_A; l++)
 				v_k[l] = w[l] / H(i + 1, i);
 
-			for (k = 0; k < i; k++)
+			for (long k = 0; k < i; k++)
 				Set_Plane_Rotation(H(k,i), H(k + 1,i), cs[k], sn[k]);
 
 			Get_Plane_Rotation(H(i,i), H(i + 1,i), cs[i], sn[i]);
@@ -1718,7 +1715,7 @@ int Linear_EQS::GMRES()
 #endif
 		A->multiVec(x, t);
 
-		for(l = 0; l < size_A; l++)
+		for(long l = 0; l < size_A; l++)
 			w[l] = b[l] - t[l];  // r = b-Ax.
 		Precond(w, r);            // M*r
 
@@ -1786,7 +1783,7 @@ void Linear_EQS::ComputePreconditioner_Jacobi()
 #else
 	dom->Local2Border(prec_M, border_buffer0); // to buffer
 	MPI_Allreduce(border_buffer0, border_buffer1,
-	              A->Dof() * dom->BSize(), MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+	              A->Dof() * dom->BSize(), MPI_DOUBLE,MPI_SUM,comm_DDC);
 #endif
 	dom->Border2Local(border_buffer1, prec_M);
 }
@@ -1816,27 +1813,21 @@ void Linear_EQS::Precond_Jacobi(const double* vec_s, double* vec_r)
 **************************************************************************/
 int Linear_EQS::CG(double* xg, const long n)
 {
-	long i, size, size_b, size_t;
-	double rrM1;
-	double* p, * r, * s;
-	double* p_b, * r_b, * s_b;
-	double* x_b;
 	//
-	size = A->Dim();
-	size_b = dom->BSize() * A->Dof();
-	//size_t = size + size_b; //[0, size_i): internal; [size_i, size_i+size_b): border.
+	const long size = A->Dim();
+	const long size_b = dom->BSize() * A->Dof();
 	//
-	p = f_buffer[0];
-	r = f_buffer[1];
-	s = f_buffer[2];
+	double* p = f_buffer[0];
+	double* r = f_buffer[1];
+	double* s = f_buffer[2];
 	//
 
 	//*** Norm b
 	double bNorm_new;
 	double buff_fl = dom->Dot_Interior(b, b);
-	MPI_Allreduce(&buff_fl, &bNorm_new, 1, MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+	MPI_Allreduce(&buff_fl, &bNorm_new, 1, MPI_DOUBLE,MPI_SUM,comm_DDC);
 	dom->Local2Border(b, border_buffer0); // p_b s_b as buffer
-	MPI_Allreduce(border_buffer0, border_buffer1, size_b, MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+	MPI_Allreduce(border_buffer0, border_buffer1, size_b, MPI_DOUBLE,MPI_SUM,comm_DDC);
 	// (rhs on border)
 	buff_fl = bNorm_new + dot(border_buffer1, border_buffer1, size_b);
 	bNorm_new = sqrt(buff_fl);
@@ -1847,16 +1838,16 @@ int Linear_EQS::CG(double* xg, const long n)
 	//    A*x
 	dom->Global2Local(xg, x, n);
 	A->multiVec(x,s);                     // s as buffer
-	for(i = 0; i < size; i++)
+	for(long i = 0; i < size; i++)
 		r[i] = b[i] - s[i];       // r = b-Ax
 	//   Collect border r
 	dom->Local2Border(r, border_buffer0); //
-	MPI_Allreduce(border_buffer0, border_buffer1, size_b, MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+	MPI_Allreduce(border_buffer0, border_buffer1, size_b, MPI_DOUBLE,MPI_SUM,comm_DDC);
 	dom->Border2Local(border_buffer1, r);
 	//
 	// Preconditioning: M^{-1}r
 	Precond(r, s);
-	for(i = 0; i < size; i++)
+	for(long i = 0; i < size; i++)
 		p[i] = s[i];
 	// Check the convergence
 	if ((error = Norm(r) / bNorm) < tol)
@@ -1872,7 +1863,7 @@ int Linear_EQS::CG(double* xg, const long n)
 		MatrixMulitVec(p, s);
 		const double alpha = rr / dot(p,s);
 		// Update
-		for(i = 0; i < size; i++)
+		for(long i = 0; i < size; i++)
 		{
 			x[i] += alpha * p[i];
 			r[i] -= alpha * s[i];
@@ -1882,11 +1873,11 @@ int Linear_EQS::CG(double* xg, const long n)
 		// Preconditioner
 		Precond(r, s);
 		//
-		rrM1 = rr;
+		double rrM1 = rr;
 		rr   = dot(s, r);
 		//
 		const double beta = rr / rrM1;
-		for(i = 0; i < size; i++)
+		for(long i = 0; i < size; i++)
 			p[i] = s[i] + beta * p[i];
 	}
 	//
@@ -1905,34 +1896,28 @@ int Linear_EQS::CG(double* xg, const long n)
  **************************************************************************/
 int Linear_EQS::CGS(double* xg, const long n)
 {
-	long i, size, size_b, size_t;
-	double rho_1, rho_2, alpha, beta;
-	double* r0, * r, * p, * p_h, * q, * q_h, * v, * u, * u_h;
-	double* r0_b, * r_b, * p_b, * p_h_b, * q_b, * q_h_b, * v_b, * u_b, * u_h_b;
-	double* x_b;
-	//
-	size = A->Dim();
-	size_b = dom->BSize() * A->Dof();
-	//size_t = size + size_b; //[0, size_i): internal; [size_i, size_i+size_b): border.
-	r0 = f_buffer[0];
-	r = f_buffer[1];
-	p = f_buffer[2];
-	p_h = f_buffer[3];
-	q = f_buffer[4];
-	q_h = f_buffer[5];
-	v = f_buffer[6];
-	u = f_buffer[7];
-	u_h = f_buffer[8];
+	const long size = A->Dim();
+	const long size_b = dom->BSize() * A->Dof();
+	double* r0 = f_buffer[0];
+	double* r = f_buffer[1];
+	double* p = f_buffer[2];
+	double* p_h = f_buffer[3];
+	double* q = f_buffer[4];
+	double* q_h = f_buffer[5];
+	double* v = f_buffer[6];
+	double* u = f_buffer[7];
+	double* u_h = f_buffer[8];
 	//
 	//
-	rho_1 = rho_2 = 1.0;
+	double rho_1 = 1.0;
+	double rho_2 = 1.0;
 	//
 	//*** Norm b
 	double bNorm_new;
 	double buff_fl = dom->Dot_Interior(b, b);
-	MPI_Allreduce(&buff_fl, &bNorm_new, 1, MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+	MPI_Allreduce(&buff_fl, &bNorm_new, 1, MPI_DOUBLE,MPI_SUM,comm_DDC);
 	dom->Local2Border(b, border_buffer0); //
-	MPI_Allreduce(border_buffer0, border_buffer1, size_b, MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+	MPI_Allreduce(border_buffer0, border_buffer1, size_b, MPI_DOUBLE,MPI_SUM,comm_DDC);
 	//  (rhs on border)
 	buff_fl = bNorm_new + dot(border_buffer1, border_buffer1, size_b);
 	bNorm_new = sqrt(buff_fl);
@@ -1943,14 +1928,14 @@ int Linear_EQS::CGS(double* xg, const long n)
 	//    A*x
 	dom->Global2Local(xg, x, n);
 	A->multiVec(x,v);                     // v as buffer
-	for(i = 0; i < size; i++)
+	for(long i = 0; i < size; i++)
 		r0[i] = b[i] - v[i];      // r = b-Ax
 	//   Collect border r
 	dom->Local2Border(r0, border_buffer0); //  buffer
-	MPI_Allreduce(border_buffer0, border_buffer1, size_b, MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+	MPI_Allreduce(border_buffer0, border_buffer1, size_b, MPI_DOUBLE,MPI_SUM,comm_DDC);
 	dom->Border2Local(border_buffer1, r0);
 	//
-	for(i = 0; i < size; i++)
+	for(long i = 0; i < size; i++)
 	{
 		r[i] = r0[i];
 		v[i] = 0.;
@@ -1968,12 +1953,12 @@ int Linear_EQS::CGS(double* xg, const long n)
 			break;
 		//
 		if (iter == 1)
-			for(i = 0; i < size; i++)
+			for(long i = 0; i < size; i++)
 				p[i] = u[i] = r[i];
 		else
 		{
-			beta = rho_1 / rho_2;
-			for(i = 0; i < size; i++)
+			const double beta = rho_1 / rho_2;
+			for(long i = 0; i < size; i++)
 			{
 				u[i] = r[i] + beta * q[i];
 				p[i] = u[i] + beta * (q[i] + beta * p[i]);
@@ -1984,21 +1969,21 @@ int Linear_EQS::CGS(double* xg, const long n)
 		// A M^{-1}p-->v
 		MatrixMulitVec(p_h, v);
 		//
-		alpha = rho_1 / dot(r0, v);
+		const double alpha = rho_1 / dot(r0, v);
 		//
-		for(i = 0; i < size; i++)
+		for(long i = 0; i < size; i++)
 		{
 			q[i] = u[i] - alpha * v[i];
 			q_h[i] = u[i] + q[i];
 		}
 		// Preconditioner
 		Precond(q_h, u_h);
-		for(i = 0; i < size; i++)
+		for(long i = 0; i < size; i++)
 			x[i] += alpha * u_h[i];
 		//
 		MatrixMulitVec(u_h, q_h);
 		//
-		for(i = 0; i < size; i++)
+		for(long i = 0; i < size; i++)
 			r[i] -= alpha * q_h[i];
 		rho_2 = rho_1;
 		if ((error = Norm(r) / bNorm) < tol)
@@ -2022,27 +2007,24 @@ int Linear_EQS::CGS(double* xg, const long n)
  **************************************************************************/
 int Linear_EQS::BiCGStab(double* xg, const long n)
 {
-	long i, size, size_b;                 //, size_t;
-	double rho_0, rho_1, alpha, beta, omega, tt = 0., norm_v = 0.;
-	double* r0, * r, * s, * s_h, * t, * v, * p, * p_h;
-	double* r0_b, * r_b, * s_b, * s_h_b, * t_b, * v_b, * p_b, * p_h_b;
-	double* x_b;
 	//
-	size = A->Dim();
+	const long size = A->Dim();
 	//
-	size_b = dom->BSize() * A->Dof();
+	const long size_b = dom->BSize() * A->Dof();
 	// size_t = size + size_b; //[0, size_i): internal; [size_i, size_i+size_b): border.
-	r0 = f_buffer[0];
-	r = f_buffer[1];
-	s = f_buffer[2];
-	s_h = f_buffer[3];
-	t = f_buffer[4];
-	v = f_buffer[5];
-	p = f_buffer[6];
-	p_h = f_buffer[7];
+	double* r0 = f_buffer[0];
+	double* r = f_buffer[1];
+	double* s = f_buffer[2];
+	double* s_h = f_buffer[3];
+	double* t = f_buffer[4];
+	double* v = f_buffer[5];
+	double* p = f_buffer[6];
+	double* p_h = f_buffer[7];
 	//
 	//
-	rho_0 = alpha = omega = 1.0;
+	double rho_0 = 1.0;
+	double alpha = 1.0;
+	double omega = 1.0;
 
 #ifdef  TEST_MPI
 	//TEST
@@ -2064,9 +2046,9 @@ int Linear_EQS::BiCGStab(double* xg, const long n)
 	//*** Norm b
 	double bNorm_new;
 	double buff_fl = dom->Dot_Interior(b, b);
-	MPI_Allreduce(&buff_fl, &bNorm_new, 1, MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+	MPI_Allreduce(&buff_fl, &bNorm_new, 1, MPI_DOUBLE,MPI_SUM,comm_DDC);
 	dom->Local2Border(b, border_buffer0); // buffer
-	MPI_Allreduce(border_buffer0, border_buffer1, size_b, MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+	MPI_Allreduce(border_buffer0, border_buffer1, size_b, MPI_DOUBLE,MPI_SUM,comm_DDC);
 	// (rhs on border)
 	buff_fl = bNorm_new + dot(border_buffer1, border_buffer1, size_b);
 	bNorm_new = sqrt(buff_fl);
@@ -2078,11 +2060,11 @@ int Linear_EQS::BiCGStab(double* xg, const long n)
 	//    A*x
 	dom->Global2Local(xg, x, n);
 	A->multiVec(x,s);                     // s as buffer
-	for(i = 0; i < size; i++)
+	for(long i = 0; i < size; i++)
 		r0[i] = b[i] - s[i];      // r = b-Ax
 	//   Collect border r
 	dom->Local2Border(r0, border_buffer0); // buffer
-	MPI_Allreduce(border_buffer0, border_buffer1, size_b, MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+	MPI_Allreduce(border_buffer0, border_buffer1, size_b, MPI_DOUBLE,MPI_SUM,comm_DDC);
 	dom->Border2Local(border_buffer1, r0);
 
 #ifdef  TEST_MPI
@@ -2092,32 +2074,32 @@ int Linear_EQS::BiCGStab(double* xg, const long n)
 		Dum << " |r_0|= " << Norm(r0) << "\n";
 		Dum << " |b_0|= " << bNorm << "\n";
 		Dum << " x  " << "\n";
-		for(i = 0; i < n; i++)
+		for(long i = 0; i < n; i++)
 			Dum << xg[i] << "\n";
 		/*
 		   Dum<<" b  "<<"\n";
-		   for(i=0; i<size; i++)
+		   for(int i=0; i<size; i++)
 		   Dum<<b[i]<<"\n";
 		   Dum<<"inter: r  Ax  "<<"\n";
-		   for(i=0; i<size; i++)
+		   for(int i=0; i<size; i++)
 		   Dum<<r0[i]<<"\n";
 		   Dum<<"border: r  Ax  "<<"\n";
-		   for(i=0; i<size_b; i++)
+		   for(int i=0; i<size_b; i++)
 		   Dum<<r0_b[i]<<"\n";
 
 		   Dum<<"inter: x  "<<"\n";
-		   for(i=0; i<size; i++)
+		   for(int i=0; i<size; i++)
 		   Dum<<x[i]<<"\n";
 
 		   Dum<<"border: x  "<<"\n";
-		   for(i=0; i<size_b; i++)
+		   for(int i=0; i<size_b; i++)
 		   Dum<<x_b[i]<<"\n";
 		 */
 	}
 #endif
 
 	// Initial. [0, size_i): internal; [size_i, size_i+size_b): border.
-	for(i = 0; i < size; i++)
+	for(long i = 0; i < size; i++)
 	{
 		r[i] = r0[i];
 		v[i] = 0.;
@@ -2142,7 +2124,7 @@ int Linear_EQS::BiCGStab(double* xg, const long n)
 	//
 	for (iter = 1; iter <= max_iter; iter++)
 	{
-		rho_1 = dot(r0, r);
+		const double rho_1 = dot(r0, r);
 		if (fabs(rho_1) < DBL_MIN)
 			break;
 
@@ -2154,13 +2136,13 @@ int Linear_EQS::BiCGStab(double* xg, const long n)
 
 		if (iter == 1)
 			// p[0, size_i): internal; p[size_i, size_i+size_b)-->p_b: border.
-			for(i = 0; i < size; i++)
+			for(long i = 0; i < size; i++)
 				p[i] = r[i];
 		else
 		{
-			beta = (rho_1 / rho_0) * (alpha / omega);
+			const double beta = (rho_1 / rho_0) * (alpha / omega);
 			// [0, size_i): internal; [size_i, size_i+size_b): border.
-			for(i = 0; i < size; i++)
+			for(long i = 0; i < size; i++)
 				p[i] = r[i] + beta * (p[i] - omega * v[i]);
 		}
 		// Preconditioner
@@ -2179,42 +2161,26 @@ int Linear_EQS::BiCGStab(double* xg, const long n)
 			dot(r0, v) << " dot(r0, r) " << dot(r0, r)  << "\n";
 
 			Dum << "\n r0, r,  v   " << "\n";
-			//  for(i=0; i<size_t; i++)
-			//   Dum<<r0[i]<<"       "<<r[i]<<"       "<<v[i]<<"\n";
 		}
 #endif
 
 		//
-		for(i = 0; i < size; i++)
+		for(long i = 0; i < size; i++)
 			s[i] = r[i] - alpha * v[i];
-		norm_v = sqrt(dot(s,s));
+		const double norm_v = sqrt(dot(s,s));
 		if ((error = norm_v / bNorm) < tol)
 		{
-			for(i = 0; i < size; i++)
+			for(long i = 0; i < size; i++)
 				x[i] += alpha * p_h[i];
 			break;
 		}
-
-#ifdef  TEST_MPI
-		/*
-		   //TEST
-		   if(A->Dof()>1)
-		   {
-		   //TEST
-		   Dum<<"\n  norm_v/bNorm  "<<error <<"\n";
-		   for(i=0; i<size_t; i++)
-		   Dum<<s[i]<<"\n";
-		   exit(0);
-		   }
-		 */
-#endif
 
 		//  M^{-1}s,
 		Precond(s, s_h);
 		// A* M^{-1}s
 		MatrixMulitVec(s_h, t);
 		//
-		tt = dot(t,t);
+		const double tt = dot(t,t);
 
 #ifdef  TEST_MPI
 		//TEST
@@ -2228,30 +2194,30 @@ int Linear_EQS::BiCGStab(double* xg, const long n)
 		else
 			omega = 1.0;
 		// Update solution
-		for(i = 0; i < size; i++)
+		for(long i = 0; i < size; i++)
 		{
 			x[i] += alpha * p_h[i] + omega * s_h[i];
 			r[i] = s[i] - omega * t[i];
 		}
 		rho_0 = rho_1;
 		//
-		norm_v = sqrt(dot(r,r));
+		const double norm_v1 = sqrt(dot(r,r));
 
 #ifdef  TEST_MPI
 		//TEST
 		//TEST
 		// if(A->Dof()>1)
 		{
-			Dum << " sqrt(dot(r,r))  " << norm_v  << "\n";
+			Dum << " sqrt(dot(r,r))  " << norm_v1  << "\n";
 			// exit(0);
 		}
 #endif
 
-		if ((error = norm_v / bNorm) < tol)
+		if ((error = norm_v1 / bNorm) < tol)
 			break;
 		if (fabs(omega) < DBL_MIN)
 		{
-			error = norm_v / bNorm;
+			error = norm_v1 / bNorm;
 			break;
 		}
 
@@ -2272,7 +2238,7 @@ int Linear_EQS::BiCGStab(double* xg, const long n)
 	// if(A->Dof()>1)
 	{
 		Dum << " x " << "\n";
-		for(i = 0; i < n; i++)
+		for(long i = 0; i < n; i++)
 			Dum << xg[i] << "\n";
 		Dum.close();
 		// exit(0);
@@ -2297,28 +2263,27 @@ int Linear_EQS::BiCGStab(double* xg, const long n)
  **************************************************************************/
 int Linear_EQS::BiCG(double* xg, const long n)
 {
-	long i, size, size_b;
-	double rho1, rho2, alpha, beta;
-	double* z, * zt, * p, * pt, * q, * qt, * r, * rt;
 	//
-	size = A->Dim();
+	const long size = A->Dim();
 	//
-	size_b = dom->BSize() * A->Dof();
-	z = f_buffer[0];
-	zt = f_buffer[1];
-	p = f_buffer[2];
-	pt = f_buffer[3];
-	q = f_buffer[4];
-	qt = f_buffer[5];
-	r = f_buffer[6];
-	rt = f_buffer[7];
+	const long size_b = dom->BSize() * A->Dof();
+	double* z = f_buffer[0];
+	double* zt = f_buffer[1];
+	double* p = f_buffer[2];
+	double* pt = f_buffer[3];
+	double* q = f_buffer[4];
+	double* qt = f_buffer[5];
+	double* r = f_buffer[6];
+	double* rt = f_buffer[7];
+
+	double rho2 = 1.0;
 	//
 	//*** Norm b
 	double bNorm_new;
 	double buff_fl = dom->Dot_Interior(b, b);
-	MPI_Allreduce(&buff_fl, &bNorm_new, 1, MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+	MPI_Allreduce(&buff_fl, &bNorm_new, 1, MPI_DOUBLE,MPI_SUM,comm_DDC);
 	dom->Local2Border(b, border_buffer0); //
-	MPI_Allreduce(border_buffer0, border_buffer1, size_b, MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+	MPI_Allreduce(border_buffer0, border_buffer1, size_b, MPI_DOUBLE,MPI_SUM,comm_DDC);
 	//  (rhs on border)
 	buff_fl = bNorm_new + dot(border_buffer1, border_buffer1, size_b);
 	bNorm_new = sqrt(buff_fl);
@@ -2331,15 +2296,15 @@ int Linear_EQS::BiCG(double* xg, const long n)
 	//    A*x
 	dom->Global2Local(xg, x, n);
 	A->multiVec(x,rt);                    // rt as buffer
-	for(i = 0; i < size; i++)
+	for(long i = 0; i < size; i++)
 		r[i] = b[i] - rt[i];      // r = b-Ax
 	//   Collect border r
 	dom->Local2Border(r, border_buffer0); //  buffer
-	MPI_Allreduce(border_buffer0, border_buffer1, size_b, MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+	MPI_Allreduce(border_buffer0, border_buffer1, size_b, MPI_DOUBLE,MPI_SUM,comm_DDC);
 	dom->Border2Local(border_buffer1, r);
 	//
 	// Initial.
-	for(i = 0; i < size; i++)
+	for(long i = 0; i < size; i++)
 	{
 		r[i] = b[i] - rt[i];
 		rt[i] = r[i];
@@ -2366,6 +2331,7 @@ int Linear_EQS::BiCG(double* xg, const long n)
 #endif
 
 	//
+	double rho1, alpha, beta;
 	for (iter = 1; iter <= max_iter; iter++)
 	{
 		Precond(r, z);
@@ -2384,7 +2350,7 @@ int Linear_EQS::BiCG(double* xg, const long n)
 		}
 		//
 		if (iter == 1)
-			for(i = 0; i < size; i++)
+			for(long i = 0; i < size; i++)
 			{
 				p[i] = z[i];
 				pt[i] = zt[i];
@@ -2392,7 +2358,7 @@ int Linear_EQS::BiCG(double* xg, const long n)
 		else
 		{
 			beta = rho1 / rho2;
-			for(i = 0; i < size; i++)
+			for(long i = 0; i < size; i++)
 			{
 				p[i] = z[i] + beta * p[i];
 				pt[i] = zt[i] + beta * pt[i];
@@ -2406,7 +2372,7 @@ int Linear_EQS::BiCG(double* xg, const long n)
 		Dum << " alpha " << alpha << "\n";
 #endif
 
-		for(i = 0; i < size; i++)
+		for(long i = 0; i < size; i++)
 		{
 			x[i] += alpha * p[i];
 			r[i] -= alpha * q[i];

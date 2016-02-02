@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 #ifndef gl_lin_INC
 #define gl_lin_INC
 
@@ -29,9 +38,9 @@ public:
 	int display_mode;
 	//MSH
 	std::vector<double*> nodes_coor_vector;
-	// kg44 needed for domain decomposition with PETSC	
+	// kg44 needed for domain decomposition with PETSC
 	void SetConditionTypeIC(const bool value) { for_ic=value;} ;
-	bool GetConditionTypeIC() const {return for_ic;} ;	
+	bool GetConditionTypeIC() const {return for_ic;} ;
 	//Method
 	CGLLine* GEOGetLine(long);
 	CGLLine* CheckLineOutPut();

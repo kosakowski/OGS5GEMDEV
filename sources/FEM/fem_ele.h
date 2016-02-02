@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /*
    Class element declaration
    class for finite element.
@@ -18,7 +27,7 @@
 #else
 // MSH
 #include "par_ddc.h"                              //OK //Moved from fem_ele_std.h. WW
-#endif 
+#endif
 
 
 
@@ -101,9 +110,9 @@ public:
 
 	// Integrate Neumman type BC
 	void FaceIntegration(double* NodeVal);
-	
+
 	void FaceNormalFluxIntegration(long index, double *NodeVal_adv, double *NodeVal, int* nodesFace, CElem* face, CRFProcess* m_pcs, double* normal_vector); // JOD 2014-11-10
-	
+
 	// Coupling
 	//
 	bool isTemperatureCoupling() const {return T_Flag; }
@@ -220,13 +229,13 @@ protected:
 	double dbuff[20];
 
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
-  int act_nodes; //> activated nodes 
+  int act_nodes; //> activated nodes
   int act_nodes_h; //> activated nodes for high order elements
-  int *idxm;  //> global indices of local matrix rows  
-  int *idxn;  //> global indices of local matrix columns 
+  int *idxm;  //> global indices of local matrix rows
+  int *idxn;  //> global indices of local matrix columns
   int *local_idx; //> local index for local assemble
-  //double *local_matrix; //>  local matrix 
-  //double *local_vec; //>  local vector  
+  //double *local_matrix; //>  local matrix
+  //double *local_vec; //>  local vector
 #endif
 	ExtrapolationMethod::type extrapo_method;
 	ExtrapolationMethod::type GetExtrapoMethod() {return extrapo_method; }

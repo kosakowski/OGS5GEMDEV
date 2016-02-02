@@ -1,4 +1,13 @@
-/**************************************************************************
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
+ /**************************************************************************
  FEMLib - Object: Source Terms ST
  Task:
  Programing:
@@ -217,7 +226,7 @@ std::ios::pos_type CSourceTerm::Read(std::ifstream *st_file,
 
    std::stringstream in;
 
-                                                  // JOD 
+                                                  // JOD
    channel = 0, node_averaging = 0, air_breaking = false;
    no_surface_water_pressure = 0, explicit_surface_water_pressure = false;
    distribute_volume_flux = false;
@@ -349,7 +358,7 @@ std::ios::pos_type CSourceTerm::Read(std::ifstream *st_file,
          distribute_volume_flux = true;
          continue;
       }
-                                               
+
       if (line_string.find("$NEGLECT_SURFACE_WATER_PRESSURE") != std::string::npos)
       {       // JOD 4.10.01
          in.clear();
@@ -357,7 +366,7 @@ std::ios::pos_type CSourceTerm::Read(std::ifstream *st_file,
          continue;
       }
 
-	  if (line_string.find("$EXPLICIT_SURFACE_WATER_PRESSURE") != std::string::npos) 
+	  if (line_string.find("$EXPLICIT_SURFACE_WATER_PRESSURE") != std::string::npos)
       {       // JOD 5.3.07
          in.clear();
          explicit_surface_water_pressure = true;
@@ -468,7 +477,7 @@ std::ios::pos_type CSourceTerm::Read(std::ifstream *st_file,
 			  _isConstrainedST = false;
 		  }
 
-		  in >> tempst;	//full constrain option 
+		  in >> tempst;	//full constrain option
 		  if (tempst == "COMPLETE_CONSTRAIN")
 		  {
 			  temp._isCompleteConstrained = true;
@@ -549,12 +558,12 @@ void CSourceTerm::ReadDistributionType(std::ifstream *st_file)
       in.clear();
    }
 
-	// If a linear function is given. 25.08.2011. WW  
-	if (getProcessDistributionType() == FiniteElement::FUNCTION) 
-	{ 
-	  in.clear(); 
-	  dis_linear_f = new LinearFunctionData(*st_file); 
-	} 
+	// If a linear function is given. 25.08.2011. WW
+	if (getProcessDistributionType() == FiniteElement::FUNCTION)
+	{
+	  in.clear();
+	  dis_linear_f = new LinearFunctionData(*st_file);
+	}
 
    if (this->getProcessDistributionType() == FiniteElement::LINEAR || this->getProcessDistributionType() == FiniteElement::LINEAR_NEUMANN)
    {
@@ -1125,18 +1134,18 @@ void CSourceTermGroup::Set(CRFProcess* m_pcs, const int ShiftInNodeVector,
         	 source_term->DirectAssign(ShiftInNodeVector);
         	 set = true;
          }
-		 
+
          //CB cannot match CONCENRATION with comp name!!
          // modified to fix bug with MASS_TRANSPORT
          if (convertProcessTypeToString (source_term->getProcessType ()).compare(pcs_type_name) == 0)
          {
            if(convertPrimaryVariableToString(source_term->getProcessPrimaryVariable()).compare(pcs_pv_name) == 0)
              set = true;
-           else if ((source_term->getProcessType() == FiniteElement::MASS_TRANSPORT) 
+           else if ((source_term->getProcessType() == FiniteElement::MASS_TRANSPORT)
                 && (cp_vec[source_term->getProcessCompVecIndex()]->compname.compare(pcs_pv_name) == 0))
              set = true;
-         }		 
-		 
+         }
+
 
 		// 05/2012 BG, it does not work for mass transport if the second part with "CONCENTRATION" is not added !! problem identified by GK und HS
          //if ((convertProcessTypeToString (source_term->getProcessType ()).compare(pcs_type_name) == 0)
@@ -1481,31 +1490,22 @@ std::vector<double>&node_value_vector) const
    }
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
    const size_t id_act_l_max = static_cast<size_t>(msh->getNumNodesLocal());
-   const size_t id_act_h_min =  msh->GetNodesNumber(false);
+   const size_t id_l_max =  msh->GetNodesNumber(false);
    const size_t id_act_h_max =  msh->getLargestActiveNodeID_Quadratic();
-
-   struct loc_function
-   {
-      static bool isIDinRange( const size_t n_id, const size_t id_max0, 
-                                   const size_t id_min1,  const size_t id_max1 )
-      {
-	return (n_id < id_max0) || (n_id >= id_min1 && n_id <  id_max1);
-      }
-   };
 #endif
 
    for (i = 0; i < (long) msh->edge_vector.size(); i++)
    {
-	   edge = msh->edge_vector[i];
-	   if (!edge->GetMark())
-		   continue;
-	   edge->GetNodes(e_nodes);
+      edge = msh->edge_vector[i];
+       if (!edge->GetMark())
+           continue;
+       edge->GetNodes(e_nodes);
 
-	   if (this->isPressureBoundaryCondition())
-	   {
-		   area_projection=AreaProjection(edge, this->getProcessPrimaryVariable());
+       if (this->isPressureBoundaryCondition())
+       {
+          area_projection=AreaProjection(edge, this->getProcessPrimaryVariable());
 
-	   }
+       }
 
       if (msh->getOrder())                        // Quadradic shape functions
       {
@@ -1518,17 +1518,17 @@ std::vector<double>&node_value_vector) const
             if (Const && (!msh->isAxisymmetry()))
             {
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
-              if(loc_function::isIDinRange( e_nodes[0]->GetIndex(), id_act_l_max, id_act_h_min, id_act_h_max))
+               if(e_nodes[0]->isNonGhost(id_act_l_max, id_l_max, id_act_h_max))
 #endif
-               NVal[G2L[e_nodes[0]->GetIndex()]] += Jac * v1 / 3.0;
+                NVal[G2L[e_nodes[0]->GetIndex()]] += Jac * v1 / 3.0;
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
-	      if(loc_function::isIDinRange( e_nodes[1]->GetIndex(), id_act_l_max, id_act_h_min, id_act_h_max))
+                if(e_nodes[1]->isNonGhost(id_act_l_max, id_l_max, id_act_h_max))
 #endif
-               NVal[G2L[e_nodes[1]->GetIndex()]] += Jac * v1 / 3.0;
+                NVal[G2L[e_nodes[1]->GetIndex()]] += Jac * v1 / 3.0;
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
-	      if(loc_function::isIDinRange( e_nodes[2]->GetIndex(), id_act_l_max, id_act_h_min, id_act_h_max))
+                if(e_nodes[2]->isNonGhost(id_act_l_max, id_l_max, id_act_h_max))
 #endif
-               NVal[G2L[e_nodes[2]->GetIndex()]] += 4.0 * Jac * v1 / 3.0;
+                NVal[G2L[e_nodes[2]->GetIndex()]] += 4.0 * Jac * v1 / 3.0;
 
             }
             else
@@ -1536,7 +1536,7 @@ std::vector<double>&node_value_vector) const
                for (k = 0; k < 3; k++)            // Three nodes
                {
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
-                 if( !loc_function::isIDinRange(  e_nodes[k]->GetIndex(), id_act_l_max, id_act_h_min, id_act_h_max))
+                 if( !e_nodes[k]->isNonGhost(id_act_l_max, id_l_max, id_act_h_max) )
                     continue;
 #endif
                   // Numerical integration
@@ -1551,6 +1551,9 @@ std::vector<double>&node_value_vector) const
                         radius = 0.0;
                         for (ii = 0; ii < 3; ii++)
                            radius += Shfct[ii] * e_nodes[ii]->getData()[0];
+                        if ( fabs(radius) < DBL_MIN ) // At the symmetric axis.
+                           radius = 1.0;
+
                         Weight *= radius;         //2.0*pai*radius;
                      }
                      NVal[G2L[e_nodes[k]->GetIndex()]] += 0.5 * (v1 + v2
@@ -1573,27 +1576,23 @@ std::vector<double>&node_value_vector) const
                if (Const)
                {
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
-	          if(loc_function::isIDinRange( e_nodes[0]->GetIndex(), id_act_l_max,
-                                            id_act_h_min, id_act_h_max))
+                  if(e_nodes[0]->isNonGhost(id_act_l_max, id_l_max, id_act_h_max))
 #endif
                   NVal[G2L[e_nodes[0]->GetIndex()]] += Jac * v1;
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
-	          if(loc_function::isIDinRange( e_nodes[1]->GetIndex(), id_act_l_max,
-                                            id_act_h_min, id_act_h_max))
+                  if(e_nodes[1]->isNonGhost(id_act_l_max, id_l_max, id_act_h_max))
 #endif
                   NVal[G2L[e_nodes[1]->GetIndex()]] += Jac * v1;
                }
                else
                {
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
-	         if(loc_function::isIDinRange( e_nodes[0]->GetIndex(), id_act_l_max, 
-                                            id_act_h_min, id_act_h_max))
+                  if(e_nodes[0]->isNonGhost(id_act_l_max, id_l_max, id_act_h_max))
 #endif
                   NVal[G2L[e_nodes[0]->GetIndex()]] += Jac * (2.0 * v1
                      + v2) / 3.0;
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
-	         if(loc_function::isIDinRange( e_nodes[1]->GetIndex(), id_act_l_max,
-                                                id_act_h_min, id_act_h_max))
+	         if(e_nodes[1]->isNonGhost(id_act_l_max, id_l_max, id_act_h_max))
 #endif
                   NVal[G2L[e_nodes[1]->GetIndex()]] += Jac * (v1 + 2.0
                      * v2) / 3.0;
@@ -1604,9 +1603,8 @@ std::vector<double>&node_value_vector) const
                for (k = 0; k < 2; k++)            // Three nodes
                {
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
-                  if( !loc_function::isIDinRange( e_nodes[k]->GetIndex(), id_act_l_max, 
-                                                  id_act_h_min, id_act_h_max) )           
-                    continue; 
+                  if( !e_nodes[k]->isNonGhost(id_act_l_max, id_l_max, id_act_h_max) )
+                    continue;
 #endif
                   // Numerical integration
                   for (l = 0; l < 3; l++)         // Gauss points
@@ -1620,6 +1618,9 @@ std::vector<double>&node_value_vector) const
                         radius = 0.0;
                         for (ii = 0; ii < 2; ii++)
                            radius += Shfct[ii] * e_nodes[ii]->getData()[0];
+                        if ( fabs(radius) < DBL_MIN ) // At the symmetric axis.
+                           radius = 1.0;
+
                         Weight *= radius;         //2.0*pai*radius;
                      }
                      NVal[G2L[e_nodes[k]->GetIndex()]] += 0.5 * (v1 + v2
@@ -1633,7 +1634,7 @@ std::vector<double>&node_value_vector) const
    for (i = 0; i < this_number_of_nodes; i++)
    {
       node_value_vector[i] = NVal[i];
-      node = msh->nod_vector[nodes_on_ply[i]];
+      //node = msh->nod_vector[nodes_on_ply[i]];
    }
    for (i = 0; i < (long) msh->edge_vector.size(); i++)
       msh->edge_vector[i]->SetMark(true);
@@ -1673,9 +1674,9 @@ void CSourceTerm::FaceIntegration(CFEMesh* msh, std::vector<long> const &nodes_o
    double nodesFVal[8];
 
    bool Const = false;
-   if (this->getProcessDistributionType() == FiniteElement::CONSTANT 
-		   || this->getProcessDistributionType() == FiniteElement::CONSTANT_NEUMANN
-		   || this->getProcessDistributionType() == FiniteElement::RECHARGE)	//MW
+   if (this->getProcessDistributionType() == FiniteElement::CONSTANT
+       || this->getProcessDistributionType() == FiniteElement::CONSTANT_NEUMANN
+       || this->getProcessDistributionType() == FiniteElement::RECHARGE)	//MW
       //	if (dis_type_name.find("CONSTANT") != std::string::npos)
       Const = true;
    //----------------------------------------------------------------------
@@ -1699,7 +1700,7 @@ void CSourceTerm::FaceIntegration(CFEMesh* msh, std::vector<long> const &nodes_o
 
       for (j = 0; j < Size; j++)
       {
-    	  double const*const pn (msh->nod_vector[nodes_on_sfc[j]]->getData());
+         double const*const pn (msh->nod_vector[nodes_on_sfc[j]]->getData());
 //         pn[0] = msh->nod_vector[nodes_on_sfc[j]]->X();
 //         pn[1] = msh->nod_vector[nodes_on_sfc[j]]->Y();
 //         pn[2] = msh->nod_vector[nodes_on_sfc[j]]->Z();
@@ -1825,7 +1826,7 @@ void CSourceTerm::FaceIntegration(CFEMesh* msh, std::vector<long> const &nodes_o
 
    //filtering elements: elements should have nodes on the surface
    //Notice: node-elements relation has to be constructed beforehand
-   // CB THMBM 
+   // CB THMBM
    //this->getProcess()->CheckMarkedElement(); // CB added to remove bug with deactivated Subdomains
    std::vector<long> vec_possible_elements;
    for (i = 0; i < this_number_of_nodes; i++)
@@ -1842,9 +1843,9 @@ void CSourceTerm::FaceIntegration(CFEMesh* msh, std::vector<long> const &nodes_o
 
    //search elements & face integration
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
-      const size_t id_act_l_max = static_cast<size_t>(msh->getNumNodesLocal());
-      const size_t id_act_h_min = msh-> GetNodesNumber(false);
-      const size_t id_act_h_max = msh->getLargestActiveNodeID_Quadratic();
+   const size_t id_act_l_max = static_cast<size_t>(msh->getNumNodesLocal());
+   const size_t id_max_l = msh->GetNodesNumber(false);
+   const size_t id_act_h_max = msh->getLargestActiveNodeID_Quadratic();
 #endif
 
    int count;
@@ -1895,18 +1896,20 @@ void CSourceTerm::FaceIntegration(CFEMesh* msh, std::vector<long> const &nodes_o
          fem->setOrder(msh->getOrder() + 1);
          fem->ConfigElement(face, this->_pcs->m_num->ele_gauss_points, true);
          fem->FaceIntegration(nodesFVal);
+
          for (k = 0; k < nfn; k++)
          {
             e_node = elem->GetNode(nodesFace[k]);
 
 #if defined(USE_PETSC) // || defined (other parallel linear solver lib). //WW. 05.2013
-            if(     (e_node->GetIndex() < id_act_l_max) 
-                ||  (    e_node->GetIndex() >= id_act_h_min
-			 &&  e_node->GetIndex() < id_act_h_max)
-             )
+            if( !e_node->isNonGhost(id_act_l_max, id_max_l, id_act_h_max) )
+            {
+                continue;
+            }   
 #endif
             NVal[G2L[e_node->GetIndex()]] += fac * nodesFVal[k];
          }
+
       }
    }
 
@@ -2330,14 +2333,14 @@ CNodeValue* cnodev)
    double h_this, h_cond, z_this, z_cond, h_cond_shifted, help;
    double gamma = 1;
    CRFProcess* m_pcs_this = NULL;
-   CRFProcess* m_pcs_cond = NULL;  
+   CRFProcess* m_pcs_cond = NULL;
    m_pcs_this = PCSGet(convertProcessTypeToString(m_st->getProcessType()));
    m_pcs_cond = PCSGet(m_st->pcs_type_name_cond);
    long mesh_node_number, mesh_node_number_conditional;
 
-   if( (mesh_node_number = cnodev->msh_node_number) <  (long)m_pcs_this->m_msh->nod_vector.size())      
-   {     // liquid 
-	   mesh_node_number_conditional = cnodev->msh_node_number_conditional; 
+   if( (mesh_node_number = cnodev->msh_node_number) <  (long)m_pcs_this->m_msh->nod_vector.size())
+   {     // liquid
+	   mesh_node_number_conditional = cnodev->msh_node_number_conditional;
 	   if (m_st->getProcessType() == FiniteElement::RICHARDS_FLOW)
           gamma = mfp_vector[0]->Density() * GRAVITY_CONSTANT;  // liquid pressure as a primary variable
        else if (m_st->getProcessType() == FiniteElement::MULTI_PHASE_FLOW)
@@ -2345,14 +2348,14 @@ CNodeValue* cnodev)
    }
    else
    {       // gas
-	   mesh_node_number -= m_pcs_this->m_msh->nod_vector.size(); 
-	   /*if( m_st->pcs_type_name_cond == "MULTI_PHASE_FLOW") 
-	      mesh_node_number_conditional = cnodev->msh_node_number_conditional - m_pcs_this->m_msh->nod_vector.size(); 
+	   mesh_node_number -= m_pcs_this->m_msh->nod_vector.size();
+	   /*if( m_st->pcs_type_name_cond == "MULTI_PHASE_FLOW")
+	      mesh_node_number_conditional = cnodev->msh_node_number_conditional - m_pcs_this->m_msh->nod_vector.size();
 	   else*/
 	   mesh_node_number_conditional = cnodev->msh_node_number_conditional;
        gamma = mfp_vector[1]->Density() * GRAVITY_CONSTANT; // gas pressure as a primary variable
    }
-   
+
    GetCouplingFieldVariables(m_pcs_this, m_pcs_cond, &h_this, &h_cond, &h_cond_shifted, &help,
       &z_this, &z_cond, m_st, cnodev, mesh_node_number, mesh_node_number_conditional, gamma);   // z_cond shifted for soil columns
 
@@ -2363,59 +2366,59 @@ CNodeValue* cnodev)
 		double head_overland;
         m_pcs_overland = PCSGet(m_st->pcs_type_name_cond);
         head_overland = m_pcs_overland->GetNodeValue(cnodev->msh_node_number_conditional, m_pcs_overland->GetNodeValueIndex("HEAD") + 1);
-	    
+
 		relPerm = m_st->GetRelativeInterfacePermeability(m_pcs_overland, head_overland,
-          cnodev->msh_node_number_conditional);    // overland		
+          cnodev->msh_node_number_conditional);    // overland
 	}
    else
    {  // liquid
      if (h_this < h_cond_shifted)  // flow direction from overland compartment
         relPerm = m_st->GetRelativeInterfacePermeability(m_pcs_cond, h_cond,
-          cnodev->msh_node_number_conditional);   
+          cnodev->msh_node_number_conditional);
      else          // flow direction from subsurface compartment (, where now relPerm = 1)
 	    relPerm = m_st->GetRelativeInterfacePermeability(m_pcs_this, h_this,
-          cnodev->msh_node_number_conditional);    
+          cnodev->msh_node_number_conditional);
    }
 
-		
+
     if( m_st->explicit_surface_water_pressure) { // put hyrostatic surface liquid pressure explicitly in coupling flux
 		    h_cond = m_pcs_cond->GetNodeValue(mesh_node_number_conditional, 0);
 	        h_cond_shifted =  h_cond - z_cond + z_this;
 	}
-  
-   condArea = value * relPerm * m_st->getCoupLeakance();   // area * total interface permeability (m^2/s)        
+
+   condArea = value * relPerm * m_st->getCoupLeakance();   // area * total interface permeability (m^2/s)
 
    if (m_st->channel)                   // wetted perimeter, pcs_cond must be overland flow
       condArea *= m_st->channel_width + (h_cond - z_cond);
-   ///// RHS part (a surface liquid pressure term) of coupling flux (m^3/s)                                            
+   ///// RHS part (a surface liquid pressure term) of coupling flux (m^3/s)
    value = CalcCouplingValue(condArea, h_this, h_cond_shifted, z_cond, m_st);
 
 
    if (m_st->getProcessType() == FiniteElement::GROUNDWATER_FLOW && h_this < z_cond
       && m_st->pcs_type_name_cond == "OVERLAND_FLOW")
 	 condArea = 0;   //  decoupled, only RHS
- 
 
-   if ( m_st->getProcessPrimaryVariable() == FiniteElement::PRESSURE 
+
+   if ( m_st->getProcessPrimaryVariable() == FiniteElement::PRESSURE
 		&& (mesh_node_number == cnodev->msh_node_number) ) // only for liquid phase
       condArea /= gamma; // pressure as a primary variable
-   /////                  
-   MXInc(cnodev->msh_node_number, cnodev->msh_node_number, condArea); 
+   /////
+   MXInc(cnodev->msh_node_number, cnodev->msh_node_number, condArea);
 
-   if(m_st->getProcessType() == FiniteElement::MULTI_PHASE_FLOW &&  m_st->pcs_pv_name_cond == "HEAD"   // 
-		 && m_st->pcs_type_name_cond == "OVERLAND_FLOW" ) // ??? 
-   {   // gas pressure term 
-	   MXInc(cnodev->msh_node_number , cnodev->msh_node_number+ m_pcs_this->m_msh->nod_vector.size(), -condArea); 
+   if(m_st->getProcessType() == FiniteElement::MULTI_PHASE_FLOW &&  m_st->pcs_pv_name_cond == "HEAD"   //
+		 && m_st->pcs_type_name_cond == "OVERLAND_FLOW" ) // ???
+   {   // gas pressure term
+	   MXInc(cnodev->msh_node_number , cnodev->msh_node_number+ m_pcs_this->m_msh->nod_vector.size(), -condArea);
 	   value  -= condArea * m_st->coup_given_value;
    }
-  
-   if (m_st->getProcessType() == FiniteElement::GROUNDWATER_FLOW)                   
-   m_pcs_this->SetNodeValue( mesh_node_number,   // for GW water balance ply / pnt 
-	   m_pcs_this->GetNodeValueIndex("FLUX") + 1, condArea); 
+
+   if (m_st->getProcessType() == FiniteElement::GROUNDWATER_FLOW)
+   m_pcs_this->SetNodeValue( mesh_node_number,   // for GW water balance ply / pnt
+	   m_pcs_this->GetNodeValueIndex("FLUX") + 1, condArea);
 
 
    if (m_st->no_surface_water_pressure)           // neglect hydrostatic surface liquid pressure
-     value = 0; 
+     value = 0;
 
 }
 #endif
@@ -2439,58 +2442,58 @@ CNodeValue* cnodev)
    double h_this, h_cond, z_this, z_cond, h_this_shifted, h_this_averaged;
    double epsilon = 1.e-7, value_jacobi, h_this_epsilon = 0.0,
       relPerm_epsilon, condArea_epsilon;          //OK411 epsilon as in pcs->assembleParabolicEquationNewton
-   
+
    CRFProcess* m_pcs_cond = NULL;
    CRFProcess* m_pcs_this = NULL;
    m_pcs_this = PCSGet(convertProcessTypeToString(m_st->getProcessType()));
    m_pcs_cond = PCSGet(m_st->pcs_type_name_cond);
-   ///// 
+   /////
    if(m_st->pcs_type_name_cond == "RICHARDS_FLOW")
      gamma = mfp_vector[0]->Density() * GRAVITY_CONSTANT; // liquid pressure as a primary variable
    else if(m_st->pcs_type_name_cond == "MULTI_PHASE_FLOW")
      gamma = -mfp_vector[0]->Density() * GRAVITY_CONSTANT; // capillary pressure as a primary variable
 
    GetCouplingFieldVariables(m_pcs_this, m_pcs_cond, &h_this, &h_cond, &h_this_shifted,
-                                // if soil column, z_this, h_this_averaged, h_this_shifted are shifted to the column 
+                                // if soil column, z_this, h_this_averaged, h_this_shifted are shifted to the column
       &h_this_averaged, &z_this, &z_cond, m_st, cnodev, cnodev->msh_node_number, cnodev->msh_node_number_conditional, gamma);
 
    /////   relative coupling interface permeability (calculate ALWAYS implicitly)
    if (h_this_shifted > h_cond)
    { // flow direction from the overland compartment
       relPerm = m_st->GetRelativeInterfacePermeability(m_pcs_this, h_this,
-         cnodev->msh_node_number);               
+         cnodev->msh_node_number);
       relPerm_epsilon = m_st->GetRelativeInterfacePermeability(m_pcs_this, h_this + epsilon, // for jacobian
 		  cnodev->msh_node_number);
    }
    else // flow direction from a subsurface compartment
-      relPerm = relPerm_epsilon = 1; 
+      relPerm = relPerm_epsilon = 1;
 
-   if (m_st->node_averaging) 
+   if (m_st->node_averaging)
    {  // h_this_epsilon for jacobian if multiple overland nodes are coupled to a soil column
       for (long i = 0; i < (long) cnodev->msh_node_numbers_averaging.size(); i++)
          if (cnodev->msh_node_numbers_averaging[i]
          == cnodev->msh_node_number)
             h_this_epsilon = h_this_averaged + epsilon
                * cnodev->msh_node_weights_averaging[i];
-   } 
+   }
    else // h_this_epsilon for jacobian
       h_this_epsilon = h_this + epsilon;
 
    if (m_st->no_surface_water_pressure)  // neglect hydrostatic surface liquid pressure
       h_this_epsilon = z_this;
 
-   if (m_st->explicit_surface_water_pressure)       
+   if (m_st->explicit_surface_water_pressure)
    {    // put hydrostatic surface liquid pressure explicitly in the coupling flux
 	  h_this = m_pcs_this->GetNodeValue(cnodev->msh_node_number, 0);
       h_this_epsilon = h_this; // for jacobian
 
-	   if (m_st->node_averaging)                  
-      {               // shift overland node to soil column 
+	   if (m_st->node_averaging)
+      {               // shift overland node to soil column
          h_this_shifted = h_this - m_pcs_this->m_msh->nod_vector[cnodev->msh_node_number]->getData()[2] + z_cond;
          h_this_averaged = 0;
          for (long i = 0; i
             < (long) cnodev->msh_node_numbers_averaging.size(); i++)
-            h_this_averaged 
+            h_this_averaged
                += cnodev->msh_node_weights_averaging[i]
                * (m_pcs_this->GetNodeValue(
                cnodev->msh_node_numbers_averaging[i],
@@ -2498,33 +2501,33 @@ CNodeValue* cnodev)
                - m_pcs_this->m_msh->nod_vector[cnodev->msh_node_numbers_averaging[i]]->getData()[2]);
 
          h_this_averaged += z_cond;
-      
+
 	   }
 
    } // end explicit
- 
-   area = value;                                 
-   condArea = condArea_epsilon = area * m_st->getCoupLeakance();     
+
+   area = value;
+   condArea = condArea_epsilon = area * m_st->getCoupLeakance();
    condArea *= relPerm;
    condArea_epsilon *= relPerm_epsilon;
 
-   if (m_st->channel)  
+   if (m_st->channel)
    {                           // wetted perimeter
       condArea *= m_st->channel_width + (h_this - z_this);
 	  condArea_epsilon *= m_st->channel_width + (h_this_epsilon - z_this);
    }
-   //////  coupling flux as a source term (m^3/s)   
+   //////  coupling flux as a source term (m^3/s)
    value = CalcCouplingValue(condArea, h_this_averaged, h_cond, z_cond, m_st);
 
    value_jacobi = -condArea_epsilon * (h_cond - h_this_epsilon) + value; // it's a Newton iteration
-   MXInc(cnodev->msh_node_number, cnodev->msh_node_number, value_jacobi 
+   MXInc(cnodev->msh_node_number, cnodev->msh_node_number, value_jacobi
       / epsilon);
-   /////  output 
+   /////  output
    m_pcs_this->SetNodeValue(cnodev->msh_node_number,
    // coupling flux (m/s)
       m_pcs_this->GetNodeValueIndex("COUPLING") + 1, -value/ area);
- 
- 
+
+
 }
 #endif
 
@@ -2543,48 +2546,48 @@ double CSourceTerm::GetRelativeInterfacePermeability(CRFProcess* pcs, double hea
 {
 
    double relPerm, sat, z;
-  
+
    if(pcs->getProcessType() == FiniteElement::OVERLAND_FLOW)
-   {                // flow direction from the overland compartment 
+   {                // flow direction from the overland compartment
 
 	 z = pcs->m_msh->nod_vector[msh_node]->getData()[2];
      sat =  (head - z) / std::max(1.e-6, st_rill_height); // liquid content in an interface
-	       
+
      if( sat > 1 )
 	    relPerm = 1; // liquid-covered surface (interface is filled)
      else if( sat < 0 )
 	    relPerm = 0;  // no liquid on the surface
      else
 	    relPerm = pow(sat, 2*(1- sat)); // interface is partially filled by a liquid
-		 
-	 CRFProcess* m_pcs_multiPhase = NULL;  
+
+	 CRFProcess* m_pcs_multiPhase = NULL;
      m_pcs_multiPhase = PCSGet("MULTI_PHASE_FLOW");
-	
+
 	 if(relPerm == 1 && pcs_pv_name_cond == "PRESSURE2") // surface closed for gas
 	 {
         double capillaryPressure =  m_pcs_multiPhase->GetNodeValue(0, 3);
-		
-	    if( capillaryPressure > air_breaking_capillaryPressure || air_breaking == true ) 
-		{	
+
+	    if( capillaryPressure > air_breaking_capillaryPressure || air_breaking == true )
+		{
 	        relPerm *=  air_breaking_factor; // air-breaking
 		 	air_breaking = true;
-			
-			if( capillaryPressure <  air_closing_capillaryPressure ) 
+
+			if( capillaryPressure <  air_closing_capillaryPressure )
 			{   // and  air-breaking (hysteresis)
 			   air_breaking = false;
 			}
-		} // end air_breaking	
+		} // end air_breaking
 	 } // end relPerm = 1
-	
+
 
 	 if (pcs_pv_name_cond == "PRESSURE2")
 	 {          // gas
-		 relPerm = (1 - relPerm)* (1-  coup_residualPerm) +  coup_residualPerm;    
+		 relPerm = (1 - relPerm)* (1-  coup_residualPerm) +  coup_residualPerm;
 	 }
   } // end overland flow
   else
-    relPerm = 1;  // flow direction not from the overland compartment 
-	
+    relPerm = 1;  // flow direction not from the overland compartment
+
   return relPerm;
 }
 
@@ -2746,7 +2749,7 @@ CNodeValue* cnodev)
             * 2 / (cond0 + cond1);
       // bc_value = supplyRate * gamma * dt;
 
-      MXRandbed(bc_eqs_index, bc_value, m_pcs_this->getEQSPointer()->b); //getEQSPointer. WW 
+      MXRandbed(bc_eqs_index, bc_value, m_pcs_this->getEQSPointer()->b); //getEQSPointer. WW
       value = 0;
 
    }                                              // end Richards
@@ -3003,7 +3006,7 @@ void GetNODHeatTransfer(double& value, CSourceTerm* st, long geo_node){
    m_pcs_this = PCSGet(convertProcessTypeToString(st->getProcessType()));
    //Get Mesh
    CFEMesh* mesh (m_pcs_this->m_msh);
-   
+
    //Get number of conneted elements
    size_t number_of_connected_elements = mesh->nod_vector[geo_node]->getConnectedElementIDs().size();
 
@@ -3022,8 +3025,8 @@ void GetNODHeatTransfer(double& value, CSourceTerm* st, long geo_node){
 
    //if (mesh->isAxisymmetry() && mesh->GetMaxElementDim()!=1) //For axisymmetric 2D meshes geometry area is irrelevant
 	  // geo_area = 1.0;
-   
-   
+
+
 
    //Get index of primary variable
    long nidx1 = m_pcs_this->GetNodeValueIndex(convertPrimaryVariableToString(st->getProcessPrimaryVariable())) + 1;
@@ -3270,7 +3273,7 @@ void CSourceTermGroup::SetPLY(CSourceTerm* st, int ShiftInNodeVector)
 
 		if (st->isCoupled())
 			SetPolylineNodeVectorConditional(st, ply_nod_vector, ply_nod_vector_cond);
-		
+
 		SetPolylineNodeValueVector(st, ply_nod_vector, ply_nod_vector_cond, ply_nod_val_vector);
 
 		if (st->distribute_volume_flux)   // 5.3.07 JOD
@@ -3476,7 +3479,7 @@ void CSourceTerm::SetNOD()
 void CSourceTermGroup::SetSurfaceNodeVector(Surface* m_sfc,
 		std::vector<long>&sfc_nod_vector)
 {
-   const bool for_source = true; 
+   const bool for_source = true;
    m_msh->GetNODOnSFC(m_sfc, sfc_nod_vector, for_source);
 }
 
@@ -3682,7 +3685,7 @@ void CSourceTerm::InterpolatePolylineNodeValueVector(
 				ply_nod_val_vector[i] = st->geo_node_value / (double) number_of_nodes; // distribute flow to nodes along polyline. To do.. 4.10.06
 		}
 	}
-	
+
 	if (st->getProcessDistributionType() == FiniteElement::CONSTANT_NEUMANN
 			|| st->getProcessDistributionType()
 					== FiniteElement::LINEAR_NEUMANN
@@ -3793,11 +3796,11 @@ void CSourceTermGroup::SetPolylineNodeValueVector(CSourceTerm* st,
 		else
 			st->EdgeIntegration(m_msh, ply_nod_vector, st->node_value_vectorArea);
 
-		
+
 		//CNode * a_node; //Fl�che wird hier im Knoten als patch area abgelegt
-		//for (size_t i = 0; i < number_of_nodes; i++) 
-		//{ 
-		//	a_node = m_msh->nod_vector[ply_nod_vector[i]]; 
+		//for (size_t i = 0; i < number_of_nodes; i++)
+		//{
+		//	a_node = m_msh->nod_vector[ply_nod_vector[i]];
 		//	a_node->patch_area  = st->node_value_vectorArea[i];
 		//}
 	}
@@ -3927,18 +3930,18 @@ void CSourceTermGroup::SetSurfaceNodeValueVector(CSourceTerm* st,
 }
 
 /**************************************************************************
- FEMLib-Method: Distributes source term [m^3/s] uniformly on SFC, PLY 
-  use GEO_TYPE CONSTANT_NEUMANN 
+ FEMLib-Method: Distributes source term [m^3/s] uniformly on SFC, PLY
+  use GEO_TYPE CONSTANT_NEUMANN
  12/2012 5.3.07 JOD Implementation
  **************************************************************************/
-void CSourceTermGroup::DistributeVolumeFlux(CSourceTerm* st, std::vector<long> const & nod_vector, 
+void CSourceTermGroup::DistributeVolumeFlux(CSourceTerm* st, std::vector<long> const & nod_vector,
 		                      std::vector<double>& nod_val_vector)
 {
 
 	double area;
     std::vector<double> nod_val_vector_area;
-	    
-	area = 0;    
+
+	area = 0;
     st->geo_node_value = 1;
 
 	if(st->getGeoType () == GEOLIB::POLYLINE)
@@ -3946,7 +3949,7 @@ void CSourceTermGroup::DistributeVolumeFlux(CSourceTerm* st, std::vector<long> c
 	else if(st->getGeoType () == GEOLIB::SURFACE)
 	{
 	   Surface* m_sfc = NULL;
-       m_sfc = GEOGetSFCByName(st->geo_name); 	  
+       m_sfc = GEOGetSFCByName(st->geo_name);
 	   SetSurfaceNodeValueVector(st, m_sfc, nod_vector, nod_val_vector_area);
 	}
 	else
@@ -4194,7 +4197,7 @@ void CSourceTerm::DirectAssign(long ShiftInNodeVector)
 
 		size_t nPoints (points.size());
 		std::cout << points.size() << " nodes found on mesh surface. " << "\n";
-			
+
 		for (size_t i=0; i<nPoints; i++)
 		{
 			size_t node_id (points[i]->getID());
@@ -4208,7 +4211,7 @@ void CSourceTerm::DirectAssign(long ShiftInNodeVector)
 			m_pcs->st_node.push_back(this);
 			m_pcs->m_msh->nod_vector[node_id]->patch_area = node_area_vec[node_id];
 		}
-		
+
 		this->_distances = new MathLib::InverseDistanceInterpolation<GEOLIB::PointWithID*, GEOLIB::Station*>(points, this->_weather_stations);
    }
    else //NB this is the old version, where nodes were read from an separate input file
@@ -4764,7 +4767,7 @@ CSourceTerm* m_st, CNodeValue* cnodev, long msh_node_number, long msh_node_numbe
 {
 
    int nidx, nidx_cond;
-                                    
+
    *z_this = m_pcs_this->m_msh->nod_vector[msh_node_number]->getData()[2];
    *z_cond  = m_pcs_cond->m_msh->nod_vector[msh_node_number_cond]->getData()[2];
 
@@ -4789,18 +4792,18 @@ CSourceTerm* m_st, CNodeValue* cnodev, long msh_node_number, long msh_node_numbe
      *h_cond = m_pcs_cond->GetNodeValue(msh_node_number_cond, nidx_cond); // coupled to a liquid
 
    if(m_st->pcs_pv_name_cond == "PRESSURE1") {
-	
+
 	   if(m_st->pcs_type_name_cond == "MULTI_PHASE_FLOW")
-	   { // capillary pressure as a primary variable in the coupled process 
+	   { // capillary pressure as a primary variable in the coupled process
 	     double gasPressure =  m_pcs_cond->GetNodeValue(msh_node_number_cond, 3);
 	     *h_cond -= (gasPressure - m_st->coup_given_value);
       }
    }
 
-   if (m_st->getProcessType() == FiniteElement::OVERLAND_FLOW 
+   if (m_st->getProcessType() == FiniteElement::OVERLAND_FLOW
 	   || m_st->getProcessType() == FiniteElement::GROUNDWATER_FLOW)
    {
-      if (m_st->node_averaging)                 
+      if (m_st->node_averaging)
       { // average pressures from overland / groundwater (soil column coupled to multiple nodes)
          *h_shifted = *h_this - *z_this + *z_cond;  // shift overland / groundwater node to soil column
          *h_averaged = 0;
@@ -4828,13 +4831,13 @@ CSourceTerm* m_st, CNodeValue* cnodev, long msh_node_number, long msh_node_numbe
           // *h_cond /= -gamma;
 		 //else
 		   *h_cond /= gamma;
-         
+
 		 *h_cond += *z_cond;
       }
       if (m_st->pcs_type_name_cond == "GROUNDWATER_FLOW")
-         h_cond = std::max(h_cond, z_this);       //groundwater level might not reach surface  
+         h_cond = std::max(h_cond, z_this);       //groundwater level might not reach surface
    }          // end overland flow
-   else      
+   else
    {     // subsurface flow
       if (m_st->pcs_pv_name_cond == "PRESSURE1")  // JOD 4.10.01
       { // convert to head
@@ -4845,7 +4848,7 @@ CSourceTerm* m_st, CNodeValue* cnodev, long msh_node_number, long msh_node_numbe
 
          *h_cond += *z_cond;
       }
-      if (m_st->node_averaging)                   
+      if (m_st->node_averaging)
       {             // shift overland / groundwater node to the soil column
          *h_shifted = *h_cond - *z_cond;
          *h_shifted += *z_this;
@@ -4856,7 +4859,7 @@ CSourceTerm* m_st, CNodeValue* cnodev, long msh_node_number, long msh_node_numbe
 
       if (m_st->getProcessPrimaryVariable() == FiniteElement::PRESSURE)
       {   // convert pressure into head
-         *h_this /=  gamma;   
+         *h_this /=  gamma;
          *h_this += *z_this;
       }
    }                                              // end subsurface flow
@@ -4873,7 +4876,7 @@ double z_cond, CSourceTerm* m_st)
 
    if (m_st->getProcessType() == FiniteElement::OVERLAND_FLOW)
    {
-      if (m_st->no_surface_water_pressure)        
+      if (m_st->no_surface_water_pressure)
          return factor * (h_cond - z_cond); // neglect hydrostatic surface liquid pressure
       else
          return factor * (h_cond - h_this);

@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************
    rf_kinreact.cpp
 
@@ -43,6 +52,7 @@
 //#undef SEEK_END
 #include "mpi.h"//Parallel Computing Support
 #include "par_ddc.h"
+#include "SplitMPI_Communicator.h"
 #endif
 
 
@@ -86,8 +96,8 @@ MicrobeData::MicrobeData(void){
  MicrobeName = "Blupp";
  MonodReactionName = "Bluxx";
  steepness = -1.0;
- k_incr = 0.0; 
- k_decr = 0.0; 
+ k_incr = 0.0;
+ k_decr = 0.0;
  G0 = 0;
  dt = 0;
  decayrate = 0.0 ;
@@ -108,7 +118,7 @@ double MicrobeData::GetGibbsEnergy(long node){
 double R = 8.314472; // Gas constant
 double T = 298.25;   // K
 double G = 0, dG = 0; // dummy
-int MonodSpecies = 0; 
+int MonodSpecies = 0;
 double MonodConcentration = 1.0;
 int MonodOrder = 0;
 double Ctot, C = 0;
@@ -129,38 +139,38 @@ m_krd = KinReactData_vector[0];
 if(REACTINT_vec.size()>0) // Get the Temperature
   T = REACTINT_vec[0]->GetTemperature(node);
 
-// G = dG * -µmax*Prod[Ai/(Ai+KAi)] 
-//   = [dG0 + R*T*ln(Q)] * -µmax*Prod[Ai/(Ai+KAi)] 
+// G = dG * -µmax*Prod[Ai/(Ai+KAi)]
+//   = [dG0 + R*T*ln(Q)] * -µmax*Prod[Ai/(Ai+KAi)]
 
 // calculate dG = dG0 + R*T*ln(Q)
 for(int i=0;i<m_kr->number_reactionpartner;i++){
   MonodSpecies = m_kr->ProdStochhelp[i]->speciesnumber;
   scoeff = m_kr->ProductionStoch[MonodSpecies];
   C = cp_vec[MonodSpecies]->getProcess()->GetNodeValue(node, m_krd->sp_varind[MonodSpecies]) ;
-  if(C <=0) 
-    C = 1e-10; 
-  dG += scoeff * log( 1 * C * unitfactor_l); 
-} 
+  if(C <=0)
+    C = 1e-10;
+  dG += scoeff * log( 1 * C * unitfactor_l);
+}
 dG *= R*T;
 dG += m_kr->dG0;
 
 // dS/dt/B term = -µmax*Prod[Ai/(Ai+KAi)]
 for (int i=0; i < m_kr->number_monod; i++) {
-  MonodSpecies       = m_kr->monod[i]->speciesnumber; 
+  MonodSpecies       = m_kr->monod[i]->speciesnumber;
   MonodConcentration = m_kr->monod[i]->concentration;
   MonodOrder         = (int)m_kr->monod[i]->order; // CB higher order Monod terms
-  C = cp_vec[MonodSpecies]->getProcess()->GetNodeValue(node, m_krd->sp_varind[MonodSpecies]); 
-  Ctot = C; // standard case, no iso fractionation 
+  C = cp_vec[MonodSpecies]->getProcess()->GetNodeValue(node, m_krd->sp_varind[MonodSpecies]);
+  Ctot = C; // standard case, no iso fractionation
   // CB Isotope fractionation: here Ctot=C_light+C_heavy must be passed to fct Monod()
   if((m_kr->typeflag_iso_fract==1) && (m_kr->monod[i]->isotopecouplenumber>=0)){
     MonodSpecies = m_kr->monod[i]->isotopecouplenumber;
     Ctot = C + cp_vec[MonodSpecies]->getProcess()->GetNodeValue(node, m_krd->sp_varind[MonodSpecies]);
   }
   Monodterm *= m_kr->Monod(MonodConcentration, C, Ctot, MonodOrder);  // new formulation
-  // now multiply by additional Threshhold Term, if present, 
-  // technically this is the same as an additional Monod term for the same MonodSpecies 
+  // now multiply by additional Threshhold Term, if present,
+  // technically this is the same as an additional Monod term for the same MonodSpecies
   // usually of higher order and lower Monod-Conc = threshConc
-  if(m_kr->monod[i]->threshhold==true){ 
+  if(m_kr->monod[i]->threshhold==true){
     MonodConcentration = m_kr->monod[i]->threshConc;  // CB Threshhold concentration
     MonodOrder         = (int)m_kr->monod[i]->threshOrder; // CB higher order Monod terms
     Monodterm *= m_kr->Monod(MonodConcentration, Ctot, Ctot, MonodOrder); // C should in any case be total C
@@ -173,9 +183,9 @@ for (int i = 0; i < m_kr->number_inhibit; i++)   {
   Monodterm *= m_kr->Inhibition(MonodConcentration, C);
 }
 
-// put together  G = dG * ds/dt/X ; 
+// put together  G = dG * ds/dt/X ;
 // division by X not necessary here, as we calculated the rate explicitly
-G = -m_kr->rateconstant*Monodterm*dG; 
+G = -m_kr->rateconstant*Monodterm*dG;
 //dG = 200000; // dummy
 
 return G;
@@ -193,7 +203,7 @@ return G;
 void MicrobeConfig(void)
 {
 
-   // create vector for _drmc_ level and switsh function and initialization with value 
+   // create vector for _drmc_ level and switsh function and initialization with value
    CFEMesh* m_msh = fem_msh_vector[0];            //SB: ToDo hart gesetzt
    if (m_msh == NULL)
    {
@@ -317,8 +327,8 @@ CKinReact::CKinReact(void)
    T_dependence = false;
    T_model = 0;
    T_params.clear();
-   
-// CB _drmc_   
+
+// CB _drmc_
    _drmc_ = false;
    MicrobeData_idx = -1;
    DormType = "NULL";
@@ -357,14 +367,14 @@ CKinReact::CKinReact(void)
  number_Mech=0;
  minSpeciesIdx.clear();
  Am.clear();                    // initial specific reactive mineral surface area
- Km.clear();               // Equilibrium constant (at node) vector (if Km_uniform == false) 
+ Km.clear();               // Equilibrium constant (at node) vector (if Km_uniform == false)
  Cminini.clear();
  Km_uniform=true;
  Km_CHEMAPP = false;
  Km_HKF = false;
  Am_constant = true;
  Am_model = 0;
- Am_ini = 0; 
+ Am_ini = 0;
  Eta=1.0;
  Theta=1.0;
  precip_baseterm_only = false;
@@ -571,7 +581,7 @@ void KRConfig(const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name)
    MinkinMech * m_mech = NULL;
    MicrobeData * m_md = NULL;
    int k;//i, length, j, ;
-  // int idummy; //idx, 
+  // int idummy; //idx,
    long ll, lm;
    string m_name, sp_name;
 	CompProperties* m_cp = NULL;
@@ -586,7 +596,7 @@ void KRConfig(const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name)
    std::vector <double> helpvec;
 
    // CB reaction deactivation
-   //int annode_idx, lll, llll, lllll, nnodpneigh, duplicate,nn, nnodsneigh 
+   //int annode_idx, lll, llll, lllll, nnodpneigh, duplicate,nn, nnodsneigh
    //int dnele_idx; // ,  pneighnod_idx, snele_idx,
    //  int dnnode, snnode, duplicate2;
 	MeshLib::CElem* m_dnele = NULL;
@@ -706,7 +716,7 @@ void KRConfig(const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name)
 		          ok=false;
 	          }
           }
-        } 
+        }
 
       }                                           // loop over m_krd->NumberReactions
 		//
@@ -841,7 +851,7 @@ void KRConfig(const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name)
          m_kr = KinReact_vector[j];
          if (m_kr->_drmc_)
          {
-           // Set MicrobeData group index 
+           // Set MicrobeData group index
            m_name = m_kr->Microbename;
            for (size_t k = 0; k < MicrobeData_vector.size(); k++)
            {
@@ -869,9 +879,9 @@ void KRConfig(const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name)
            }
            //
          }
-      }                                           //MicrobeData 
+      }                                           //MicrobeData
 
-      
+
 		// Set flags type_monod and type_exchange
 		for (int j = 0; j < m_krd->NumberReactions; j++)
 		{
@@ -895,7 +905,7 @@ void KRConfig(const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name)
 			}
 			if (m_kr->type.compare("NAPLdissolution") == 0)
 				m_kr->typeflag_napldissolution = 1;
-         if(m_kr->type.compare("Mineralkinetics")==0) 
+         if(m_kr->type.compare("Mineralkinetics")==0)
             m_kr->typeflag_mineralkinetics=1;
 		} //typeflags
 
@@ -915,7 +925,7 @@ void KRConfig(const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name)
           cout.flush();
           exit(1);
         }
-      }                       
+      }
 
 		// exchange reactions
 		for (int j = 0; j < m_krd->NumberReactions; j++)
@@ -951,7 +961,7 @@ void KRConfig(const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name)
 							m_kr->ex_species.push_back(k);
 				}
             // Prepare vector Current_Csat for each node
-            for(size_t l=0; l< m_msh->nod_vector.size();l++) 
+            for(size_t l=0; l< m_msh->nod_vector.size();l++)
               m_kr->Current_Csat.push_back(0);
          }
 
@@ -966,7 +976,7 @@ void KRConfig(const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name)
                 if(m_kb->gas_dissolution_flag)
                   m_kr->typeflag_gasdissolution = 1;
               }
-	        } //blob vector size 
+	        } //blob vector size
       }                                           //NAPLdissolution species numbers
 
       //CB Mineralkinetics reaction
@@ -974,7 +984,7 @@ void KRConfig(const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name)
         m_kr = KinReact_vector[j];
         if(m_kr->type.compare("Mineralkinetics")==0){
           if(m_krd->activity_model>0){
-            //initialize help vector for activties, do only once 
+            //initialize help vector for activties, do only once
             if(helpvec.size()==0)
               for(size_t i=0;i<length; i++) // length = no of species
                 helpvec.push_back(0.0);
@@ -989,20 +999,20 @@ void KRConfig(const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name)
           }
           // Prepare Km vector, for each node 1 value, per reaction
           if(m_kr->Km_uniform==false){
-            ww = m_kr->Km[0];              
+            ww = m_kr->Km[0];
             for(size_t l=1; l< m_msh->nod_vector.size();l++) // start at idx 1, as first value has been set already in CKinReact::READ
               m_kr->Km.push_back(ww);
           }
           // Prepare Am vector, for each node 1 value, per reaction
           if(m_kr->Am_constant==false){
-            ww = m_kr->Am[0];              
+            ww = m_kr->Am[0];
             for(size_t l=1; l< m_msh->nod_vector.size();l++) // start at idx 1, as first value has been set already in CKinReact::READ
               m_kr->Am.push_back(ww);
           }
           // Set Omega treshholds from MinReactData
           m_kr->OmegaThreshhold = m_krd->OmegaThresh;
         }
-      } //Mineralkinetics 
+      } //Mineralkinetics
 
       // Set numbers for Mineral species for each reaction
       for(int j=0;j<m_krd->NumberReactions;j++){
@@ -1016,14 +1026,14 @@ void KRConfig(const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name)
                if(cp_vec[k]->transport_phase!=1)
                  cout << "Warning: Mineral is not defined as solid phase species, phase # " << cp_vec[k]->transport_phase << "\n";
                break;
-             }             
+             }
            }
            // water index (this needs to be defined for reactions involving H2O as a species
            for(size_t k=0;k<length;k++){
              if( (cp_vec[k]->compname.compare("H2O") == 0) || (cp_vec[k]->compname.compare("H2O_liquid") == 0) || (cp_vec[k]->compname.compare("water_liquid")==0) ){
                m_kr->water_number = k;
                break;
-             }             
+             }
            }
            // Mineral species
            for(int i=0;i<(int)m_kr->number_reactionpartner;i++){
@@ -1039,7 +1049,7 @@ void KRConfig(const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name)
                 m_name = m_kr->mechvec[i]->mechSpeciesNames[l];
                 for(size_t k=0;k<length;k++)
                   if(m_name.compare(cp_vec[k]->compname) == 0)
-                    m_kr->mechvec[i]->mechSpeciesIdx.push_back(k);  
+                    m_kr->mechvec[i]->mechSpeciesIdx.push_back(k);
               }
            }
          }
@@ -1048,10 +1058,10 @@ void KRConfig(const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name)
       // check for necessary data in Mineral kinetics
       for(int j=0;j<m_krd->NumberReactions;j++){
         m_kr = KinReact_vector[j];
-        if(m_kr->type.compare("Mineralkinetics")==0){        
+        if(m_kr->type.compare("Mineralkinetics")==0){
           // surface area data
           if(m_kr->Am_constant==false){
-            if(m_kr->Am_model>1){ 
+            if(m_kr->Am_model>1){
               if(cp_vec[m_kr->mineral_number]->molar_weight==0){
                 cout << " Warning for surface area model of Mineral " << m_kr->mineral_name << ":" << "\n";
                 cout << "   No molar_weight defined in component properties." << "\n" ;
@@ -1062,9 +1072,9 @@ void KRConfig(const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name)
                 cout << "   No mineral_density defined in component properties." << "\n" ;
                 ok=false;
               }
-            } 
-          } 
-          // node porosities 
+            }
+          }
+          // node porosities
           // water concentrations
           // etc
         }
@@ -1076,7 +1086,7 @@ void KRConfig(const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name)
         }
       }
       //....................................................................
-      if(m_krd->scale_dcdt ){                             // scale dcdt vector in derivs for stabilization of ODE solver 
+      if(m_krd->scale_dcdt ){                             // scale dcdt vector in derivs for stabilization of ODE solver
         for(int j=0;j<m_krd->NumberReactions;j++)
           KinReact_vector[j]->scale_rate=true;
    		}
@@ -1094,7 +1104,7 @@ void KRConfig(const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name)
 				m_krd->NumberMonod++;
 			if (m_kr->type.compare("NAPLdissolution") == 0)
 				m_krd->NumberNAPLdissolution++;
-	        if(m_kr->type.compare("Mineralkinetics")==0) 
+	        if(m_kr->type.compare("Mineralkinetics")==0)
            m_krd->NumberMineralkinetics++;
 		}
       m_krd->NumberMicrobeData = (int)MicrobeData_vector.size();
@@ -1184,7 +1194,7 @@ void KRConfig(const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name)
          //------------------------------------------------------------------
          if (s_geo_type.compare("POLYLINE") == 0)
          {
-            
+
            //CGLPolyline *ply (polyline_vector[s_geo_id]);
            std::vector<GEOLIB::Polyline*> const* const ply_vec(
 						        geo_obj.getPolylineVec(unique_name));
@@ -1229,7 +1239,7 @@ void KRConfig(const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name)
        */
       nodes_vector.clear();
 
-      
+
       // 2) NoReactions, this suppresses reactions on specific geometries
       //    can be used in combination with 1)
 		for (size_t j = 0; j < m_krd->NoReactGeoName.size(); j++)
@@ -1832,8 +1842,8 @@ bool CKinReact::Read(std::ifstream* rfd_file,
   		      T_dependence = false;
           cout << " Warning - Model 0: Reaction assumed independent of Temperature. " << "\n";
         }
-        else if((T_model == 1) || (T_model == 2)){           
-          if(type.compare("monod")==0) {  
+        else if((T_model == 1) || (T_model == 2)){
+          if(type.compare("monod")==0) {
             if(T_model == 1) { // Biomass growth, Ratkowsky2 : Zwietering et al.
               in >> dummy ; // Ratkowsky Tmin
               T_params.push_back(dummy);
@@ -1842,12 +1852,12 @@ bool CKinReact::Read(std::ifstream* rfd_file,
               in >> dummy ; // Ratkowsky b
               T_params.push_back(dummy);
               in >> dummy ; // Ratkowsky c
-              T_params.push_back(dummy);    
+              T_params.push_back(dummy);
             }
             else if(T_model == 2){
               cout << " Unknown model for Temperature Dependence of Reaction " << name << " in CKinReact::Read(). " << "\n" ;
-              cout << " Aborting now!" << "\n";        
-              exit(0);                      
+              cout << " Aborting now!" << "\n";
+              exit(0);
             }
           }
           else if(type.compare("NAPLdissolution")==0) { // NAPL dissolution, Chen et al (1) or Knauss et al (2) model
@@ -1858,19 +1868,19 @@ bool CKinReact::Read(std::ifstream* rfd_file,
             in >> dummy ; // Knauss C
             T_params.push_back(dummy);
           }
-          else if(type.compare("Mineralkinetics")==0) { 
+          else if(type.compare("Mineralkinetics")==0) {
             cout << " Warning in CKinReact::Read() - Arrhenius-Equation is used for Temperature correction of Mineral Reaction " << name << "\n" ;
             cout << " Input values for $TEMPERATURE_DEPENDENCE keyword will be ignored. " << "\n";
           }
-          else { 
+          else {
             cout << " Warning in CKinReact::Read() - Temperature correction of " << type  << " Reaction " << name << " is not implemented. " << "\n" ;
             cout << " Input values for $TEMPERATURE_DEPENDENCE keyword will be ignored. " << "\n";
           }
         }
         else{
           cout << " Unknown model for Temperature Dependence of Reaction " << name << " in CKinReact::Read(). " << "\n" ;
-          cout << " Aborting now!" << "\n";        
-          exit(0);        
+          cout << " Aborting now!" << "\n";
+          exit(0);
         }
 
 		      in.clear();
@@ -1882,11 +1892,11 @@ bool CKinReact::Read(std::ifstream* rfd_file,
          _drmc_= true;
          in.str(GetLineFromFile1(rfd_file));
          in >> Microbename >> DormType;
-         in.clear();         
+         in.clear();
       }
       //....................................................................
-		                                                // subkeyword found 
-      if(line_string.find("$STANDARD_GIBBS_ENERGY")!=string::npos) { 
+		                                                // subkeyword found
+      if(line_string.find("$STANDARD_GIBBS_ENERGY")!=string::npos) {
 		      in.str(GetLineFromFile1(rfd_file));
 		      in >> dG0 ;
 		      in.clear();
@@ -1934,7 +1944,7 @@ bool CKinReact::Read(std::ifstream* rfd_file,
       if (line_string.find("$NAPL_PROPERTIES") != string::npos)
       {
          in.str(GetLineFromFile1(rfd_file));
-         in >> blob_name ; // >> Csat_pure >> Density_NAPL; 
+         in >> blob_name ; // >> Csat_pure >> Density_NAPL;
          in.clear();
       }
       //....................................................................
@@ -2046,14 +2056,14 @@ bool CKinReact::Read(std::ifstream* rfd_file,
 		        line_str1 = GetLineFromFile1(rfd_file);
 		        // Check for end of data block
             if((line_str1.find("#")!=string::npos) || (line_str1.find("$")!=string::npos)) {
-   		        if(line_str1.find("#")!=string::npos) 
+   		        if(line_str1.find("#")!=string::npos)
                 new_keyword = true;
    			      rfd_file->seekg(index1); //Dateipointer zurücksetzen, sonst ist das nächste subkeyword weg
 	            break;
 		        }
-            // Here, read individual species data 
+            // Here, read individual species data
             in.str(line_str1);
-            in >> speciesname >> expo; 
+            in >> speciesname >> expo;
             if((speciesname.compare("NIX")!=0)&&(expo != -99)){ //check for read in
               m_mech->no_mechSpec++;
               m_mech->mechSpeciesNames.push_back(speciesname);
@@ -2259,7 +2269,7 @@ int CKinReact::CheckReactionDataConsistency()
 		}
 	}                                     //end type=NAPLdissolution
 
-	if(type.compare("Mineralkinetics") == 0) {      
+	if(type.compare("Mineralkinetics") == 0) {
 	  //is mineral defined as solid phase species?
       // TODO CB_merge_0513 ??
 
@@ -2517,14 +2527,14 @@ CKinBlob::CKinBlob(void)
 	Interfacial_area.clear();
    Masstransfer_K.clear();
    gas_dissolution_flag = false;
-    //New-Sherwood-Number 
+    //New-Sherwood-Number
  shidx = 0; // SP: Index for different Sherwood calculations
  NContent_expo = 0;
  WContent_expo = 0;
  Pe_expo = 0;
  D50_expo = 0;
  Poro_expo = 0;
- Delta_expo = 0; 
+ Delta_expo = 0;
  UI_expo = 0;
  NContent_ini_expo = 0;
  NContent_res_expo = 0;
@@ -2556,8 +2566,8 @@ CKinBlob::CKinBlob(void)
  Length = -1;
  Tort = -1;
  // CB 12/09 new data structures for parallel computation
- //Exchangeterms.clear();       
- //Volume_old.clear(); 
+ //Exchangeterms.clear();
+ //Volume_old.clear();
 }
 
 /***************************************************************************
@@ -2588,7 +2598,7 @@ bool CKinBlob::Read(ifstream* rfd_file,
 	double d_inivalue;
 	std::stringstream in;
 
-    //STP New-Sherwood-Number 
+    //STP New-Sherwood-Number
 	//========================================================================
 	while (!new_keyword)
 	{
@@ -2866,7 +2876,7 @@ void CKinBlob::Write(std::ostream& rfe_file) const
    rfe_file << " Length_expo       : " << this->Length_expo << "\n";
    rfe_file << " Pfannkuch_constant: " << this->Pfannkuch_constant << "\n";
  }
-	
+
 	rfe_file << "\n";
 }
 
@@ -3064,7 +3074,7 @@ NumberMicrobeData = 0;
    NoReactGeoID.clear();
    is_a_CCBC.clear();
    AllowReactGeoName.clear();
-   AllowReactGeoType.clear();   
+   AllowReactGeoType.clear();
    AllowReactGeoID.clear();
    node_foc.clear();
 cpu_time_krc = 0;  // to measure cpu time
@@ -3108,8 +3118,8 @@ activity_model=0;
 CKinReactData::~CKinReactData(void)
 {
   if(sortnodes){
-   delete [] substeps; 
-   delete [] noderanks; 
+   delete [] substeps;
+   delete [] noderanks;
   }
 }
 
@@ -3321,14 +3331,14 @@ bool CKinReactData::Read(ifstream* rfd_file,
           in.str(GetLineFromFile1(rfd_file));
           in >> dummy ;
           in.clear();
-          if (dummy.compare("RADIAL")==0)  
+          if (dummy.compare("RADIAL")==0)
             radial = true; // default case
-          else if (dummy.compare("BATCH")==0)  
+          else if (dummy.compare("BATCH")==0)
             batch = true;
-          else if (dummy.compare("2DIN3D")==0)  
+          else if (dummy.compare("2DIN3D")==0)
             TwoDinThreeD = true;
           else {
-            cout << "Error in CKinReactData::Read: $COPY_CONCENTRATIONS: No copy mode defined." 
+            cout << "Error in CKinReactData::Read: $COPY_CONCENTRATIONS: No copy mode defined."
               << "\n" << " Define either RADIAL or BATCH or 2DIN3D. Terminating now!" << "\n";
             exit(1);
           }
@@ -3339,11 +3349,11 @@ bool CKinReactData::Read(ifstream* rfd_file,
 		  }
     //....................................................................
     if (line_string.find("$SCALE_DCDT") != string::npos) { //CB 04.2011
-      this->scale_dcdt = true;                             // scale dcdt vector in derivs for stabilization of ODE solver 
+      this->scale_dcdt = true;                             // scale dcdt vector in derivs for stabilization of ODE solver
     }
     //....................................................................
     if (line_string.find("$SORT_NODES") != string::npos) { //CB 04.2011
-      this->sortnodes = true;                             // scale dcdt vector in derivs for stabilization of ODE solver 
+      this->sortnodes = true;                             // scale dcdt vector in derivs for stabilization of ODE solver
   		}
     //.....................................................................
     if (line_string.find("$OMEGA_THRESHOLD") != string::npos) { //CB 11.2011
@@ -3358,9 +3368,9 @@ bool CKinReactData::Read(ifstream* rfd_file,
        in.str(GetLineFromFile1(rfd_file));
        in >> ReactDeactMode >> ReactDeactEpsilon >> ReactDeactPlotFlag >> dummy >> ReactDeactCThresh ;
        in.clear();
-       if (dummy.compare("RELATIVE")==0) 
+       if (dummy.compare("RELATIVE")==0)
 	     ReactDeactRelative = true;
-       else 
+       else
 	     ReactDeactRelative = false;
 		}
 		// subkeyword found
@@ -3371,7 +3381,7 @@ bool CKinReactData::Read(ifstream* rfd_file,
 	    in.str(GetLineFromFile1(rfd_file));
       in >> activity_model;
 	    in.clear();
-    }  
+    }
       //....................................................................
 	}
 	usedt = DMAX(initialTimestep, minTimestep);
@@ -3554,12 +3564,12 @@ void CKinReactData::ExecuteKinReact(void)
   }
 	if (time_vector.size() > 0)
 		dt = time_vector[0]->CalcTimeStep();
-  // This function  prepares 
-  // - flow velocities of PS_GLOBAL 
+  // This function  prepares
+  // - flow velocities of PS_GLOBAL
   // at all nodes
   if(this->NumberNAPLdissolution > 0)
     NAPLDissolutionPreprocessing();
-  // This function  prepares 
+  // This function  prepares
   //  - Ionic streghts
   //  - activity coefficients
   // at all nodes and for all species
@@ -3584,7 +3594,7 @@ void CKinReactData::ExecuteKinReact(void)
   size_t it, node_idx=0;
   int nok = 0, nbad = 0, totsteps = 0;
   double *Concentration;  // HS: concentration of all result
-  int nComponents; 
+  int nComponents;
   bool dry = false;
   //CFEMesh* m_msh = fem_msh_vector[0];            //SB: ToDo hart gesetzt
   //CTimeDiscretization *m_tim = NULL;
@@ -3601,7 +3611,7 @@ void CKinReactData::ExecuteKinReact(void)
   }
   #if defined(USE_MPI) || defined(USE_MPI_KRC)
     if (this->NumberReactions>0) cout << " ExecuteKineticReactions MPI" <<  "\n";
-    double *Concentration_buff; 
+    double *Concentration_buff;
     Concentration_buff = new double[nComponents*nnodes];
     for ( it=0 ; it < (long)(nComponents)*nnodes ; it++ ) Concentration_buff[it]=0.0;
   #else
@@ -3620,20 +3630,20 @@ void CKinReactData::ExecuteKinReact(void)
       // MPI initialization.
       // So here is going to distribute the task.
       long nNodes = (long)nnodes;
-      MPI_Bcast ( &nNodes, 1, MPI_LONG, 0, MPI_COMM_WORLD );
+      MPI_Bcast ( &nNodes, 1, MPI_LONG, 0, comm_DDC );
       // here "myrank" is the index of the CPU Processes, and "mysize" is the number of CPU Processes
       for ( it = myrank; it < nnodes ; it += mysize )	{
   #else
       for(it = 0; it < nnodes; it++){
   #endif
-//      substepping 
+//      substepping
          for(tt=0;tt<tsteps;tt++) {
 
            if(sortnodes) // execute reactions at nodes in sequence according to no of substeps in last time step
              node = noderanks[it];
-           else 
+           else
              node = it;
-           // cout << node << "\n"; 
+           // cout << node << "\n";
 
            // check for dryout
            dry = false; // by default, all nodes are wet
@@ -3664,14 +3674,14 @@ void CKinReactData::ExecuteKinReact(void)
                m_rei->ReactionPreProcessing();
                REACT_CAP_vec[0]->ExecuteReactionsChemApp(-1, it);  // liquid
              }
-             #endif  
+             #endif
                Biodegradation(Concentration + node*nComponents, node, eps, hmin, &usedtneu, &nok, &nbad, tt, tsteps);
 
              #ifdef OGS_FEM_CAP
              if (tt < tsteps-1){ // update equilibrium system by call to chemapp
                REACT_CAP_vec[0]->ExecuteReactionsChemApp(1, it);   // solid+liquid
              }
-             #endif  
+             #endif
 
              #endif
              if(usedtneu<usedttmp) {
@@ -3679,14 +3689,14 @@ void CKinReactData::ExecuteKinReact(void)
                save_nok=nok;
                save_nbad=nbad;
                save_node=node;
-             }	
+             }
              count++;
              totsteps = totsteps + nbad+nok;
              noocalcnodes ++;
              noototnodes ++;
 
              if(sortnodes) substeps[node] = nbad+nok; // no of substeps as indicator for computation time
-           
+
              if (tsteps > 1) usedt = usedtneu; // use last successfull timestep to continue integration over substeps
            }
          } // tt
@@ -3699,13 +3709,13 @@ void CKinReactData::ExecuteKinReact(void)
 
       // Get MPI results
       #if defined(USE_MPI) || defined(USE_MPI_KRC)
-          MPI_Allreduce ( Concentration_buff, Concentration, nnodes*nComponents, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+          MPI_Allreduce ( Concentration_buff, Concentration, nnodes*nComponents, MPI_DOUBLE, MPI_SUM, comm_DDC );
       #endif
       // post-processing
       //PostprocessNAPLDissolution(node);
 /**/
       // update results
-      for(node_idx = 0; node_idx < nnodes; node_idx++){ 
+      for(node_idx = 0; node_idx < nnodes; node_idx++){
         // only update those nodes, where Biodegradation() was executed
 
         dry = false; // by default, all nodes are wet
@@ -3721,25 +3731,25 @@ void CKinReactData::ExecuteKinReact(void)
         }
         else if(dry){
         }
-        else{ 
+        else{
           for(int sp=0 ; sp < (nComponents-1) ; sp++){
             //Notlösung gegen das vollständige Absterben der Bakterien
-            if ((is_a_bacterium[sp]) && (Concentration[node_idx*nComponents+sp+1]<minBactConcentration) ) 
+            if ((is_a_bacterium[sp]) && (Concentration[node_idx*nComponents+sp+1]<minBactConcentration) )
               Concentration[node_idx*nComponents+sp+1]=minBactConcentration;
-            // Konzentrationen aller Substanzen in Datenstruktur zurückschreiben 
+            // Konzentrationen aller Substanzen in Datenstruktur zurückschreiben
             //pcs_vector[sp_pcsind[sp]]->SetNodeValue(node_idx,sp_varind[sp],Concentration[node_idx*nComponents+sp+1]); // CB HS update
-            cp_vec[sp]->getProcess()->SetNodeValue(node_idx,sp_varind[sp],Concentration[node_idx*nComponents+sp+1]); 
+            cp_vec[sp]->getProcess()->SetNodeValue(node_idx,sp_varind[sp],Concentration[node_idx*nComponents+sp+1]);
            	// save exchange term SB todo
           }
         }
-      } // end of concentration update 
+      } // end of concentration update
       cout << "    Kinetic reactions executed at " << count << " of " << nnodes << " nodes." << "\n";
       cout << "    Total no of nodes with reactions so far:            " << noototnodes << "\n";
       cout << "    Total no of nodes with reactions calculated so far: " << noocalcnodes << "\n";
 
 
       // sort noderanks according to computation time
-      if(sortnodes) 
+      if(sortnodes)
         SortIterations ( substeps,noderanks,nnodes );
       //for(node_idx = 0; node_idx < nnodes; node_idx++)
       //  cout << substeps[node_idx] << " " << noderanks[node_idx] << "\n";
@@ -3769,11 +3779,11 @@ void CKinReactData::ExecuteKinReact(void)
 		// cout << "\n" << " Next suggested integration step " << usedt << "\n";
 
   #if defined(USE_MPI) || defined(USE_MPI_KRC)
-  // free_dvector(Concentration_buff,(long)1,(long)nComponents*nnodes); 
-  delete [] Concentration_buff; 
+  // free_dvector(Concentration_buff,(long)1,(long)nComponents*nnodes);
+  delete [] Concentration_buff;
   #endif
   //free_dvector(Concentration,(long)1,(long)nComponents*nnodes);
-  delete [] Concentration; 
+  delete [] Concentration;
 
 
 
@@ -3813,7 +3823,7 @@ void CKinReactData::ExecuteKinReact(void)
 void CKinReactData::Biodegradation( double *m_Conc, long node, double eps, double hmin,
 									double *usedtneu, int *nok, int *nbad, int tt, int tsteps)
 {
-  // double *Concentration; 
+  // double *Concentration;
   double* newVolume = NULL;
   double *oldVolume = NULL;
   double *oldMass = NULL;
@@ -3822,7 +3832,7 @@ void CKinReactData::Biodegradation( double *m_Conc, long node, double eps, doubl
   //  int nok=0, nbad=0, Number_of_Components;
   int Number_of_Components, nreactions, r, Sp1, blob, Number_of_blobs;
   double Csat_max=0, DensityNAPL=0, DensityAQ=0, DiffusionAQ=0, ViscosityAQ=0,
-          PoreVelocity = 0.0, d50=0, Reynolds=0, Schmidt=0, Sherwood=0, NCont_Sh2=0; // NCont_Sh1=0, 
+          PoreVelocity = 0.0, d50=0, Reynolds=0, Schmidt=0, Sherwood=0, NCont_Sh2=0; // NCont_Sh1=0,
    double DarcyVelocity = 0.0;
    double mod_Reynolds;
    double beta_4, grain_var; //, grain_expo;
@@ -3872,7 +3882,7 @@ void CKinReactData::Biodegradation( double *m_Conc, long node, double eps, doubl
 	/* Konzentrationen aller Substanzen aus Datenstruktur auslesen und in neuem Array speichern */
 	for (sp = 0; sp < Number_of_Components; sp++)
 	{
-	   	m_Conc[sp+1] = cp_vec[sp]->getProcess()->GetNodeValue(node, sp_varind[sp]); 
+	   	m_Conc[sp+1] = cp_vec[sp]->getProcess()->GetNodeValue(node, sp_varind[sp]);
         // CB reset concentrations below a threshhold to a minimum value
         // 1e-19 and 0.0 by default
         if(minConcentrationMode>0){
@@ -3880,7 +3890,7 @@ void CKinReactData::Biodegradation( double *m_Conc, long node, double eps, doubl
             Cmin = fabs(m_Conc[sp+1]);
           else if (minConcentrationMode==2)
             Cmin = m_Conc[sp+1] ;
-          if(Cmin < minConcentrationThreshhold) 
+          if(Cmin < minConcentrationThreshhold)
 	          m_Conc[sp+1] = minConcentrationSet;
         }
 		//SB todo - ist abewr gerade eh noch ein dummy
@@ -3898,7 +3908,7 @@ void CKinReactData::Biodegradation( double *m_Conc, long node, double eps, doubl
         debugoutstr << cp_vec[sp]->getProcess()->nod_val_name_vector[0]
 					<< " " << flush;
       debugoutstr << " SATURATION1 " << flush;
-        
+
       //debugoutstr << pcs_vector[sp_pcsind[sp]]->nod_val_name_vector[0] << " " << flush;  // CB HS update
       debugoutstr << "usedt nok nbad" << "\n";
     }
@@ -3930,7 +3940,7 @@ void CKinReactData::Biodegradation( double *m_Conc, long node, double eps, doubl
 	//set all mass(blob)=0, volume(blob)=0
 	Number_of_blobs = (int) KinBlob_vector.size();
    if(Number_of_blobs>0){
-     
+
      for (r=0; r<Number_of_blobs ; r++)
 	 {
        if(KinBlob_vector[r]->gas_dissolution_flag){
@@ -3939,7 +3949,7 @@ void CKinReactData::Biodegradation( double *m_Conc, long node, double eps, doubl
        }
      }
 
-     
+
      if(gassdiss==false)
        DensityAQ = mfp_vector[0]->Density(variables);  // should be returned as temperature dependent value, if required
      if(Tflag){
@@ -3976,7 +3986,7 @@ void CKinReactData::Biodegradation( double *m_Conc, long node, double eps, doubl
 			//DensityNAPL = m_kr->Density_NAPL; // CB: this should be obtained from comp properties
 			m_kb = KinBlob_vector[blob]; // pointer to blob-properties set in the reaction r
            if(m_Conc[Sp1] > 0.)
- 	       {    
+ 	       {
              //new local data structures
  	           oldMass[blob]   += DMAX(m_Conc[Sp1],0.);
              oldVolume[blob] += DMAX(m_Conc[Sp1],0.) / DensityNAPL;
@@ -3986,7 +3996,7 @@ void CKinReactData::Biodegradation( double *m_Conc, long node, double eps, doubl
 	}                                     // end for nreactions
      }
 
-     // 2) Now, calculate current Csat for each species (i.e. reaction) depending on Raoults law for this node. 
+     // 2) Now, calculate current Csat for each species (i.e. reaction) depending on Raoults law for this node.
      //    This requires previously calculated Mass.
      for (r=0; r<nreactions; r++)
 	 {
@@ -4004,20 +4014,20 @@ void CKinReactData::Biodegradation( double *m_Conc, long node, double eps, doubl
           else {
             Sp1			= m_kr->ex_species[0]+1;                //Sp1 = NAPL-species
             Csat_max = m_kr->GetMaxSolubility(node, DensityAQ);
-            //Csat_max = cp_vec[Sp1-1]->max_solubility;       
-            blob		= m_kr->blob_ID; 
-             if (oldMass[blob] > 0.) 
+            //Csat_max = cp_vec[Sp1-1]->max_solubility;
+            blob		= m_kr->blob_ID;
+             if (oldMass[blob] > 0.)
               m_kr->Current_Csat[node] = Csat_max * DMAX(m_Conc[Sp1],0.)
-			  							 / oldMass[blob];   
-            else 
+			  							 / oldMass[blob];
+            else
               //m_kr->current_Csat = Csat_max;              // keine NAPL-Masse vorhanden, NAPL-Bildung möglich wenn c(singleSubstance) > Csat
               m_kr->Current_Csat[node] = Csat_max;          // keine NAPL-Masse vorhanden, NAPL-Bildung möglich wenn c(singleSubstance) > Csat
           }
         }
       } // end for nreactions
 
-      // 3) Next, calculate current Masstransfer-coefficient k for this node 
-      //    First, get the pore velocity for mass transfer coefficient 
+      // 3) Next, calculate current Masstransfer-coefficient k for this node
+      //    First, get the pore velocity for mass transfer coefficient
       for (r=0; r<nreactions; r++)
 	  {
         m_kr = KinReact_vector[r];
@@ -4026,16 +4036,16 @@ void CKinReactData::Biodegradation( double *m_Conc, long node, double eps, doubl
           if(m_kr->switched_off_node[node]== true)
             continue;
         if(m_kr->typeflag_napldissolution){
-          PoreVelocity = m_kr->GetNodePoreVelocity(node); 
+          PoreVelocity = m_kr->GetNodePoreVelocity(node);
           DarcyVelocity = m_kr->GetNodeDarcyVelocity(node); //SP: added for Sherwood calculation after Powers et al. 1992
           break; // do this only once
         }
       }
-      // calculate current Masstransfer-coefficient 
+      // calculate current Masstransfer-coefficient
       if(Tflag == false)
       DiffusionAQ = mfp_vector[0]->PhaseDiffusion(variables); //SP: Implemented to be temperature dependent
       if(gassdiss==false)
-        ViscosityAQ = mfp_vector[0]->Viscosity(variables); // in case of heat transport this T dependent 
+        ViscosityAQ = mfp_vector[0]->Viscosity(variables); // in case of heat transport this T dependent
       //mfp_vector[0]->mode = tmod;
       if(Tflag){
         if(REACTINT_vec.size()>0) // Get the Temperature
@@ -4044,8 +4054,8 @@ void CKinReactData::Biodegradation( double *m_Conc, long node, double eps, doubl
             ViscosityAQ = REACTINT_vec[0]->LiquidViscosity_Yaws_1976(variables[1]);
           //}
       }
- 
-    // calculate current Masstransfer-coefficient 
+
+    // calculate current Masstransfer-coefficient
     m_pcs = PCSGetFlow();
     Poro = KinReact_vector[0]->GetPhaseVolumeAtNode(node, 1, 0);
     idxS = m_pcs->GetNodeValueIndex("SATURATION2")+1; // new timelevel
@@ -4099,14 +4109,14 @@ void CKinReactData::Biodegradation( double *m_Conc, long node, double eps, doubl
         case 7:                                     // Sherwood calculation after Geller&Hunt (1993)
            Sherwood = m_kb->Sh_factor * pow(mod_Reynolds, m_kb->Re_expo) * pow(NAPLcontent, m_kb->NContent_expo) * pow(m_kb->NCont_ini, m_kb->NContent_ini_expo) * pow(Poro, m_kb->Poro_expo) * pow(grain_var, m_kb->grain_expo) ;
            break;
-        default: 
+        default:
 		   break;
 
         }
 	  }
       else if(m_kb->gas_dissolution_flag == true)
-        Sherwood = d50 * (4/d50 + pow((2*PoreVelocity/PI/d50/DiffusionAQ), 0.5));  
-	   
+        Sherwood = d50 * (4/d50 + pow((2*PoreVelocity/PI/d50/DiffusionAQ), 0.5));
+
       if(m_kb->Sherwood_model==false)
         m_kb->Masstransfer_K[node] = Sherwood * DiffusionAQ / d50 ;  //k in m/s
       else if(m_kb->Sherwood_model==true) // modified Sh'= k * (d50)^2 / Daq --> k = Sh*Daq/(d50)^2
@@ -4114,7 +4124,7 @@ void CKinReactData::Biodegradation( double *m_Conc, long node, double eps, doubl
     }
 
     // This step is necessary only for gas dissolution, as saturation changes over time
-    // 4) Finally, save current Interfacial areas for this node. 
+    // 4) Finally, save current Interfacial areas for this node.
     for (r=0; r<Number_of_blobs ; r++)
 	{
 	  m_kb = KinBlob_vector[r];
@@ -4132,7 +4142,7 @@ void CKinReactData::Biodegradation( double *m_Conc, long node, double eps, doubl
   /**********************************************/
 	tstart = DMAX(aktuelle_zeit - dt,0.);
 	tend = aktuelle_zeit;
-   // calculate substep length 
+   // calculate substep length
    tstart += dt * double(tt)/double(tsteps);
    tend   -= dt * double(tsteps-(tt+1))/double(tsteps);
 	/* Aufruf Gleichungsl�ser */
@@ -4154,13 +4164,13 @@ void CKinReactData::Biodegradation( double *m_Conc, long node, double eps, doubl
       if(success==0){
         cout << "  -Trying perturbation of initial time step usedt" << "\n";
         success = odeint(m_Conc, Number_of_Components,tstart,tend,eps,usedt*0.99,hmin,&nexth,nok,nbad,derivs,stifbs,rkqs,node, SolverType);
-        if(success==0){ 
+        if(success==0){
           cout << "   -Trying conversion of C vector from double to float." << "\n";
           for(sp=0;sp<Number_of_Components;sp++) {
             tempstore.push_back(m_Conc[sp+1]);
             garage = float(m_Conc[sp+1]);
             m_Conc[sp+1] = double(garage);
-          } 
+          }
           success = odeint(m_Conc/*_save*/, Number_of_Components,tstart,tend,eps,usedt,hmin,&nexth,nok,nbad,derivs,stifbs,rkqs,node, SolverType);
           //if(success) for(sp=0;sp<Number_of_Components;sp++) m_Conc[sp+1] = m_Conc_save[sp+1] ;
           /*else*/ if(success==0){
@@ -4237,12 +4247,12 @@ void CKinReactData::Biodegradation( double *m_Conc, long node, double eps, doubl
       for (r = 0; r < Number_of_blobs; r++)
       {
           m_kb = KinBlob_vector[r];
-          if ((newVolume[r] > 0.) && (oldVolume[r] > 0.)) 
+          if ((newVolume[r] > 0.) && (oldVolume[r] > 0.))
 	           m_kb->Interfacial_area[node] *= pow( (newVolume[r] / oldVolume[r]), m_kb->Geometry_expo) ;
           else
              m_kb->Interfacial_area[node] = 1.E-20;   //residual interfacial area to allow re-building of phase
       }
-    } 
+    }
     // Free storage
     free_dvector(newVolume,0,Number_of_blobs);
     free_dvector(oldVolume,0,Number_of_blobs);
@@ -4257,7 +4267,7 @@ void CKinReactData::Biodegradation( double *m_Conc, long node, double eps, doubl
 void CKinReactData::Calc_linearized_rates( double *m_Conc, long Number_of_Components, double deltaT, long node)
 {
  double *dydx;
- 
+
  dydx=dvector(1,Number_of_Components);
 	derivs(deltaT, m_Conc,dydx,Number_of_Components,node, deltaT);
  for(long i = 0;i<Number_of_Components;i++)
@@ -4292,7 +4302,7 @@ void derivs(double t, double c[], double dcdt[], int n, long node, double /*step
 {
 	t = t; //OK411
    int i, j, r, nreactions, BacteriaNumber;
-   int Sp1, Sp2, surfaceID = -1, blob; //phase, 
+   int Sp1, Sp2, surfaceID = -1, blob; //phase,
 	double BacteriaMass, BacGrowth, Yield, sumX = 0., maxkap;
 	double porosity1, porosity2, exchange = 0.0, exch, kd, density1,
 	       saturation2, kadsorb, kdesorb, totalSurface, exponent, parameter,
@@ -4330,9 +4340,9 @@ void derivs(double t, double c[], double dcdt[], int n, long node, double /*step
 	dt = m_tim->CalcTimeStep();
 
    if(m_krd->scale_dcdt){
-     for(i=0;i<nreactions;i++) 
+     for(i=0;i<nreactions;i++)
        ratevector.push_back(0);
-     for(i=0;i<n;i++) 
+     for(i=0;i<n;i++)
        ratematrix.push_back(ratevector);
      ratevector.clear();
    }
@@ -4400,23 +4410,23 @@ void derivs(double t, double c[], double dcdt[], int n, long node, double /*step
           continue;
       if(m_kr->typeflag_mineralkinetics){
 
-        // Equilibrium: when rate is zero, division by 0 (1-omega^theta) in fct jacbn is a problem, 
+        // Equilibrium: when rate is zero, division by 0 (1-omega^theta) in fct jacbn is a problem,
         // therefore, do nothing here when in in equilibrium
         omega = m_kr->Omega(c, node);
         if (fabs(1-pow(omega, m_kr->Theta))>0){
-		        MineralNumber = m_kr->mineral_number+1;  
+		        MineralNumber = m_kr->mineral_number+1;
           // This is where growth rate is computed
-          MinGrowth = m_kr->MinRate(c, node, dt, omega); 
+          MinGrowth = m_kr->MinRate(c, node, dt, omega);
           //cout << MinGrowth << " ";
-          // unit: --> mol/s/m³_solid 
+          // unit: --> mol/s/m³_solid
           if(MinGrowth!=0){
             dcdt[MineralNumber] += MinGrowth;
             if(m_krd->scale_dcdt)
               ratematrix[MineralNumber-1][r] = MinGrowth;
-            // mineral species precipitation or dissolution (not for the actual mineral, ProductionStoch[MineralNumber-1]=0) 
+            // mineral species precipitation or dissolution (not for the actual mineral, ProductionStoch[MineralNumber-1]=0)
     		      porosity1	= m_kr->GetReferenceVolume(MineralNumber-1,node);
 	           for (i=0; i<n; i++){
-		            Yield =	m_kr->ProductionStoch[i]; 
+		            Yield =	m_kr->ProductionStoch[i];
                 porosity2	= m_kr->GetReferenceVolume(i,node);
                 if (fabs(Yield) > 1.E-30){
                   // unit conversion: --> mol/s/m³_solid * m³sol/m³Aq * (m³w/m³Aq)^-1 = mol/s/m³w
@@ -4430,11 +4440,11 @@ void derivs(double t, double c[], double dcdt[], int n, long node, double /*step
 		    }// type == mineralkinetics
 	   } //nreactions
   }
-  
+
   if(m_krd->scale_dcdt){
     //cout << "derivs: dt=" << dt << "s, node=" << node << ": " << "\n";
     //for (i=0; i<n; i++)
-    //    cout << c[i+1] << " " << dcdt[i+1]*dt << " " << dcdt[i+1] << " " << c[i+1]+dcdt[i+1]*dt << "\n"; 
+    //    cout << c[i+1] << " " << dcdt[i+1]*dt << " " << dcdt[i+1] << " " << c[i+1]+dcdt[i+1]*dt << "\n";
     //cout << "\n";
 
     // limit total dc/dt to the present amount of species to avoid negative concentrations
@@ -4449,7 +4459,7 @@ void derivs(double t, double c[], double dcdt[], int n, long node, double /*step
             for(j=0; j<n; j++) {
               if(m_krd->SolverType==0) // for linearized rate calculation
                 ratematrix[j][r]*=scale;
-              else                     
+              else
                 ratematrix[j][r]*=scale*0.9;
             }
         // then recompute dcdt
@@ -4460,12 +4470,12 @@ void derivs(double t, double c[], double dcdt[], int n, long node, double /*step
       }
       //scalemin= DMIN(scalemin, scale); // scalemin is obsolete with introduction of ratematrix
     }
-    //if(scalemin<1) 
+    //if(scalemin<1)
     //  for (i=0; i<n; i++) dcdt[i+1]*= (scalemin*0.9);
 
     //cout << "derivs: dt=" << dt << "s, node=" << node << ": " << "\n";
     //for (i=0; i<n; i++)
-    //    cout << c[i+1] << " " << dcdt[i+1]*dt << " " << dcdt[i+1] << " " << c[i+1]+dcdt[i+1]*dt << "\n"; 
+    //    cout << c[i+1] << " " << dcdt[i+1]*dt << " " << dcdt[i+1] << " " << c[i+1]+dcdt[i+1]*dt << "\n";
     //cout << "\n";
   }
    /**********************************************************************************************/
@@ -4521,10 +4531,10 @@ void derivs(double t, double c[], double dcdt[], int n, long node, double /*step
 				if (fabs(kd) < MKleinsteZahl)
 				{
 					//no kd, exchange between two species in solution
-             
+
                // slow down desorption rate by constant factor
                if((c[Sp2] - c[Sp1])<0) exch *= ratefact;
-             
+
 					exchange = exch * (c[Sp2] - c[Sp1]);
 					dcdt[Sp1] += exchange / porosity1;
 					dcdt[Sp2] += -exchange / porosity2;
@@ -4654,7 +4664,7 @@ void derivs(double t, double c[], double dcdt[], int n, long node, double /*step
          //CB now access data for each node directly from node vectors
 	        Csat = m_kr->Current_Csat[node];                                  // Csat externally calculated in Function Biodegradation
          exch	= m_kb->Masstransfer_K[node] * m_kb->Interfacial_area[node];  // k * A externally calculated in Function Biodegradation
-         exponent = m_kr->rateorder;    
+         exponent = m_kr->rateorder;
 
          exchange = 0;
 			if (exch > 0)
@@ -4729,7 +4739,7 @@ double CKinReact::GetReferenceVolume(int comp, long index)
 		CRFProcess* pcs_flow = PCSGetFlow();
 		if(pcs_flow->getProcessType() == FiniteElement::PS_GLOBAL){
 		      idx = pcs_flow->GetNodeValueIndex("SATURATION1"); // Sat of water phase
-		      saturation = pcs_flow->GetNodeValue(index, idx); 
+		      saturation = pcs_flow->GetNodeValue(index, idx);
 		}
 		else if (pcs_flow->getProcessType() == FiniteElement::TWO_PHASE_FLOW)
 		{
@@ -4777,15 +4787,15 @@ double CKinReact::GetReferenceVolume(int comp, long index)
 /*****************************************************************************************/
 double CKinReact::GetSaturation(long node, int theta, int phase)
 {
-   double saturation = 1; // refvol = 0.0, 
+   double saturation = 1; // refvol = 0.0,
    CRFProcess *pcs_flow = PCSGetFlow();
    int idx;
 
-   // 
+   //
    if (phase == 0){ // water
 		    if(pcs_flow->getProcessType() == FiniteElement::PS_GLOBAL){
 		      idx = pcs_flow->GetNodeValueIndex("SATURATION2"); // Sat of NAPL phase
-		      saturation = 1.0 - pcs_flow->GetNodeValue(node, idx+theta); 
+		      saturation = 1.0 - pcs_flow->GetNodeValue(node, idx+theta);
 		    }
       else if (pcs_flow->getProcessType() == FiniteElement::RICHARDS_FLOW)
       {
@@ -4805,7 +4815,7 @@ double CKinReact::GetSaturation(long node, int theta, int phase)
    {
 		    if(pcs_flow->getProcessType() == FiniteElement::PS_GLOBAL){
 		      idx = pcs_flow->GetNodeValueIndex("SATURATION2"); // Sat of NAPL phase
-		      saturation = pcs_flow->GetNodeValue(node, idx+theta); 
+		      saturation = pcs_flow->GetNodeValue(node, idx+theta);
 		    }
       else if (pcs_flow->getProcessType() == FiniteElement::RICHARDS_FLOW)
       {
@@ -4819,7 +4829,7 @@ double CKinReact::GetSaturation(long node, int theta, int phase)
          idx = pcs_flow->GetNodeValueIndex("SATURATION1");
          saturation =1.0 - pcs_flow->GetNodeValue(node, idx+theta);
       }
-   } 
+   }
 
    return saturation;
 }
@@ -4959,10 +4969,10 @@ double CKinReact::GetMaxSolubility(long node, double density){
   int Sp1		= ex_species[0]+1;                //Sp1 = NAPL-species
   double Temperature = 0;
   double logK = 0;
-  double R = 8.314472; // gas constant = R 8.314472(15) J/K/mol  
+  double R = 8.314472; // gas constant = R 8.314472(15) J/K/mol
 
   if(typeflag_gasdissolution==1){
-    if(REACTINT_vec.size()>0) 
+    if(REACTINT_vec.size()>0)
       Csatmax = REACTINT_vec[0]->GetCO2SolubilityDuan(node);
     else{
       cout << " Warning in CKinReact::GetMaxSolubility(): " << "\n";
@@ -4972,27 +4982,27 @@ double CKinReact::GetMaxSolubility(long node, double density){
     }
     return Csatmax;
   }
-  
+
   if(T_dependence == false)
-    Csatmax = cp_vec[Sp1-1]->max_solubility;       
+    Csatmax = cp_vec[Sp1-1]->max_solubility;
   else if (T_dependence == true){
     if(REACTINT_vec.size()>0) // Get the Temperature
       Temperature = REACTINT_vec[0]->GetTemperature(node);
-    if(T_model==1){ // Chen Model : R*ln(K) = A + B/T + C*ln(T); based on molar fraction mol/molw 
-      logK = (T_params[0] + T_params[1]/Temperature +  T_params[2]*log(Temperature) ) / R; // nat log 
+    if(T_model==1){ // Chen Model : R*ln(K) = A + B/T + C*ln(T); based on molar fraction mol/molw
+      logK = (T_params[0] + T_params[1]/Temperature +  T_params[2]*log(Temperature) ) / R; // nat log
       Csatmax = exp(logK) ; // mol/mol wasser
       Csatmax *= (1/0.01801528) * density;   // mol/molw * molw/kgw * kgw/m³
     }
-    else if(T_model==2){ // Knauss Model : R*ln(K) = A + B/T + C*ln(T); based on molality mol/kgw 
-      logK = (T_params[0] + T_params[1]/Temperature +  T_params[2]*log(Temperature) ) / R; // nat log 
+    else if(T_model==2){ // Knauss Model : R*ln(K) = A + B/T + C*ln(T); based on molality mol/kgw
+      logK = (T_params[0] + T_params[1]/Temperature +  T_params[2]*log(Temperature) ) / R; // nat log
       Csatmax = exp(logK) ; // mol/kgw  wasser
       Csatmax *= density;   // mol/kgw * kgw/m³
     }
     else{
       cout << " Unknown model for Temperature Dependence in CKinReact::GetMaxSolubility(). " << "\n" ;
-      cout << " Aborting now!" << "\n";        
-      exit(0);        
-    }  
+      cout << " Aborting now!" << "\n";
+      exit(0);
+    }
   }
   return Csatmax;
 }
@@ -5106,8 +5116,8 @@ double CKinReact::BacteriaGrowth(int r, double *c, double sumX, int exclude, lon
        }
        else{
          cout << " Unknown model for growth dependent on Temperature in CKinReact::BacteriaGrowth(). " << "\n" ;
-         cout << " Aborting now!" << "\n";        
-         exit(0);        
+         cout << " Aborting now!" << "\n";
+         exit(0);
        }
      }
    }
@@ -5115,7 +5125,7 @@ double CKinReact::BacteriaGrowth(int r, double *c, double sumX, int exclude, lon
    if(_drmc_){
      m_md = MicrobeData_vector[MicrobeData_idx];
      theta = 1/(exp((m_md->G0-m_md->Gibbs[node])/(m_md->steepness*m_md->G0))+1);
-      if(theta>1.0) 
+      if(theta>1.0)
         theta=1.0;
      switch(DormTypeIdx){
        case 0:        //GROWTH
@@ -5158,11 +5168,11 @@ double CKinReact::BacteriaGrowth(int r, double *c, double sumX, int exclude, lon
 	   /* Möglichkeit zum Weglassen Monodterm für partielle Ableitungen erforderlich */
 	   if (i != exclude)
 	   {
-	     MonodSpecies       = monod[i]->speciesnumber; 
+	     MonodSpecies       = monod[i]->speciesnumber;
 	     MonodConcentration = monod[i]->concentration;
          MonodOrder         = monod[i]->order; // CB higher order Monod terms
 	     C                  = c[MonodSpecies+1];
-      Ctot               = C; // standard case, no iso fractionation 
+      Ctot               = C; // standard case, no iso fractionation
       // CB Isotope fractionation: here Ctot=C_light+C_heavy must be passed to fct Monod()
       if((typeflag_iso_fract==1) && (monod[i]->isotopecouplenumber
 	  								 >=0))
@@ -5172,11 +5182,11 @@ double CKinReact::BacteriaGrowth(int r, double *c, double sumX, int exclude, lon
       }
       //Growth = Growth * Monod(MonodConcentration,C);  // old formulation without isotope fractionation
       Growth *= Monod(MonodConcentration, C, Ctot, MonodOrder);  // new formulation
-      // now multiply by additional Threshhold Term, if present, 
-      // technically this is the same as an additional Monod term for the same MonodSpecies 
+      // now multiply by additional Threshhold Term, if present,
+      // technically this is the same as an additional Monod term for the same MonodSpecies
       // usually of higher order and lower Monod-Conc = threshConc
       if(monod[i]->threshhold==true)
-	  { 
+	  {
         MonodConcentration = monod[i]->threshConc;  // CB Threshhold concentration
         MonodOrder         = monod[i]->threshOrder; // CB higher order Monod terms
         Growth *= Monod(MonodConcentration, Ctot, Ctot,
@@ -5441,10 +5451,10 @@ if(m_krd->NumberMineralkinetics>0){
          d2X_dtdS[BacteriaNumber] = BacGrowth / BacteriaMass;
          /* d2Xi / dt*dXj = 0 for decay */
        }
-     }		
+     }
      // This is for the case that growth of a specific bacteria is limited by the SPECIFIC bacteria density BacteriaMass & specif_cap
      else if (speccap>1e-30)	{ // bacteria specific capacity term defined
-       maxVelocity=m_kr->rateconstant; 
+       maxVelocity=m_kr->rateconstant;
        /* Wachstumsterm, berücksichtige Kapazitätsterm */
        if (maxVelocity > 1.E-30)				{
          // Erst Berechnen der Ableitungen des Bakterienwachstums nach allen anderen Substanzen
@@ -5457,13 +5467,13 @@ if(m_krd->NumberMineralkinetics>0){
          /* d2Xi / dt*dXi = BacGrowth / Xi */
          d2X_dtdS[BacteriaNumber] = BacGrowth / BacteriaMass;
          /* d2Xi / dt*dXj = 0 for decay */
-       }     
+       }
      }
      // Berechnung der Bakterien Ableitungen für den Fall dass KEINE maximale Kapazität berücksichtigt werden muss
-     // without capacity term, this is identical for growth and decay term; but not if yield coeff is considered (CB) 
-     else { // maxkap = 0 
+     // without capacity term, this is identical for growth and decay term; but not if yield coeff is considered (CB)
+     else { // maxkap = 0
        /* d2Xi / dt*dXi = BacGrowth / Xi */
-         d2X_dtdS[BacteriaNumber] = BacGrowth / BacteriaMass * Yieldcff; // CB 08/12 added yield coeff = 1 for decay;   
+         d2X_dtdS[BacteriaNumber] = BacGrowth / BacteriaMass * Yieldcff; // CB 08/12 added yield coeff = 1 for decay;
      }
 
      /* Schleife f�r Ableitungen nach Substanzen in Monodtermen; unabh�ngig von maxkap */
@@ -5483,12 +5493,12 @@ if(m_krd->NumberMineralkinetics>0){
          //   and multiplicate with partial derivate of Monod-Term
 
          //In case of isotope fractionation of substrate Si,Sj (i,j=l,h ; light,heavy)
-         // - the partial derivative d2X/dtdSi is different: 
-         //   d2X_dtdS[Si] = BacGrowth * (MonodConcentration+CisotopePartner) 
+         // - the partial derivative d2X/dtdSi is different:
+         //   d2X_dtdS[Si] = BacGrowth * (MonodConcentration+CisotopePartner)
          //           / CMonodSpecies / (MonodConcentration+CMonodSpecies+CisotopePartner)
-         // - an additional partial derivative d2X/dtdSj with respect to the isotope partner Sj appears  
+         // - an additional partial derivative d2X/dtdSj with respect to the isotope partner Sj appears
          //   and must be accounted for and added in the vector d2X_dtdS[...] for the current reaction:
-         //   d2X_dtdS[Sj] = BacGrowth * (-1) / (MonodConcentration+CMonodSpecies+CisotopePartner)... 
+         //   d2X_dtdS[Sj] = BacGrowth * (-1) / (MonodConcentration+CMonodSpecies+CisotopePartner)...
 
          if ((m_kr->monod[i]->species == m_kr->Isotope_heavy) || (m_kr->monod[i]->species == m_kr->Isotope_light)) {
            IsotopeSpecies = m_kr->monod[i]->isotopecouplenumber+1;
@@ -5510,18 +5520,18 @@ if(m_krd->NumberMineralkinetics>0){
 									  (
 		   			MonodConcentration
 					+
-					CMonodSpecies+Ciso); 
+					CMonodSpecies+Ciso);
 		   //If a threshhold term exists for the Monod species, the partial derivative is modified for this species
-           //   - the ODE with Monod and threshold term for Monod species C and Isotope fractionation is: 
-           //     dX/dt = my*R * [Cl/(Cl+Ch+K)]^n * [(Cl+Ch)/(Cl+Ch+T)]^m 
+           //   - the ODE with Monod and threshold term for Monod species C and Isotope fractionation is:
+           //     dX/dt = my*R * [Cl/(Cl+Ch+K)]^n * [(Cl+Ch)/(Cl+Ch+T)]^m
            //      - with n and K the Order and Monod-concentration of the Monod term
            //      - with m and T the Order and Threshhold-concentration of the threshhold term
            //   - The partial derivative with respect to Cl (taking into account Division by the Monod and Threshhold term) is
            //     d2X/dtdCl = my*R * [n*(Ch+K)/Cl/(Cl+Ch+K) + p*T/(Cl+Ch)/(Cl+Ch+T)]
            //   - The partial derivative with respect to Ch (taking into account Division by the Monod and Threshhold term) is
            //     d2X/dtdCh = my*R * [-n/(Cl+Ch+K) + p*T/(Cl+Ch)/(Cl+Ch+T)]
-           //   - The latter term is identical for both derivs hence must be added to the previously calculated first terms 
-           if(m_kr->monod[i]->threshhold==true){ 
+           //   - The latter term is identical for both derivs hence must be added to the previously calculated first terms
+           if(m_kr->monod[i]->threshhold==true){
              ThreshConc = m_kr->monod[i]->threshConc;
              ThreshOrder = m_kr->monod[i]->threshOrder;
              d2X_dtdS[MonodSpecies]   += BacGrowth * ThreshOrder * ThreshConc / (CMonodSpecies+Ciso) / (ThreshConc+CMonodSpecies+Ciso); // isofrac
@@ -5538,15 +5548,15 @@ if(m_krd->NumberMineralkinetics>0){
 		   							/ (
 		   			MonodConcentration+CMonodSpecies); // no isofrac
            //If a threshhold term exists for the Monod species, the partial derivative is modified for this species
-           //   - the ODE with Monod and threshold term for Monod species C is: 
-           //     dX/dt = my*R * [C/(C+K)]^n * [C/(C+T)]^m 
+           //   - the ODE with Monod and threshold term for Monod species C is:
+           //     dX/dt = my*R * [C/(C+K)]^n * [C/(C+T)]^m
            //      - with n and K the Order and Monod-concentration of the Monod term
            //      - with m and T the Order and Threshhold-concentration of the threshhold term
            //   - The partial derivative with respect to C (taking into account Division by the Monod and Threshhold term) is
            //     d2X/dtdC = my*R * [n*K/C/(C+K) + p*T/C/(C+T)]
-           //   - The latter term hence must be added to the previously calculated first term 
+           //   - The latter term hence must be added to the previously calculated first term
            if(m_kr->monod[i]->threshhold==true)
-		   { 
+		   {
 		       ThreshConc =
 			   			m_kr->monod[i]->threshConc;
 			   ThreshOrder =
@@ -5675,9 +5685,9 @@ if(m_krd->NumberMineralkinetics>0){
          }                                        // Ende if BacteriaMass > 1e-40*/
       }                                           // Ende if type monod
    }                                              // Ende Schleife �ber nreactions*/
-   
-   
-// Berechnung der Ableitungen der Mineralkinetiken 
+
+
+// Berechnung der Ableitungen der Mineralkinetiken
 for (r=0; r<nreactions; r++){
   m_kr = KinReact_vector[r];
   // CB new reaction switch for individual reactions
@@ -5685,24 +5695,24 @@ for (r=0; r<nreactions; r++){
     if(m_kr->switched_off_node[node]== true)
       continue;
 
-  // Mineral kinetics 
+  // Mineral kinetics
   if(m_kr->typeflag_mineralkinetics){
     //first, compute quantities that are used several times below
     omega = m_kr->Omega(c, node);
     theta = m_kr->Theta;
     BetragArg = 1-pow(omega, theta);
     Betrag = fabs(BetragArg );
-    // Equilibrium: when rate is zero, division by 0 (1-omega^theta) is a problem, 
+    // Equilibrium: when rate is zero, division by 0 (1-omega^theta) is a problem,
     // therefore, do only when not in equilibrium
     if (Betrag>0){
       // get quantities
       eta = m_kr->Eta;
       eta2 = m_kr->precipexponent;
-      MineralNumber = m_kr->mineral_number+1; 
+      MineralNumber = m_kr->mineral_number+1;
       // This is the mineral growth rate, i.e. the basic derivative dM/dt
       MineralGrowth = m_kr->MinRate ( c, node, dt, omega);
       //initialize vector before calculating partial derivs
-      for (i=0; i<n; i++) 
+      for (i=0; i<n; i++)
         d2X_dtdS[i+1]=0.0;
       //(1)
       //
@@ -5710,27 +5720,27 @@ for (r=0; r<nreactions; r++){
       // d2M_dtdCmin = - K * Am * eta * theta * Stoech_i / C_i * |1-Om^theta|^(eta-1) * Om^theta
       //
       // This is complete, if the mineral species is NOT a mech species at the same time;
-      // otherwise, additional terms will apear in 2nd deriv, 
+      // otherwise, additional terms will apear in 2nd deriv,
       // these are automaticaly computed below in loop over mechterms and mechspecies (2)
       // Anyway, we calculate these partial derivatives based on dM/dt = MineralGrowth.
-      // StoechCoeff sign in factor2 must be changed because it is defined negative 
+      // StoechCoeff sign in factor2 must be changed because it is defined negative
       // for species which in the IAP are forming the mineral (there, they are positive, See fct. Omega)
-      
+
       // todo: check root function derivative
 
       for (i=0; i<int(m_kr->minSpeciesIdx.size()); i++) {
         MineralSpecies     = m_kr->minSpeciesIdx[i]+1;
         CMineralSpecies    = c[MineralSpecies];
         StoechMinSpecies   = m_kr->ProductionStoch[MineralSpecies-1];
-        d2X_dtdS[MineralSpecies]  = -fabs(MineralGrowth);                  // get dM/dt and make it negative 
+        d2X_dtdS[MineralSpecies]  = -fabs(MineralGrowth);                  // get dM/dt and make it negative
         d2X_dtdS[MineralSpecies] /= Betrag ;                               // reduce power ^eta -> ^(eta-1)
         d2X_dtdS[MineralSpecies] *= eta * theta * (-StoechMinSpecies);     // factor1 from derivative
         if(BetragArg <= -1)                                                // strong supersaturation
           d2X_dtdS[MineralSpecies] *= 1/eta2;                              //   --> slow down precipitation rate by root fct. (default = 1)
         if( CMineralSpecies>1e-25 || CMineralSpecies<-1e-25 )              // factor2 from derivative
-          d2X_dtdS[MineralSpecies] *= 1 / CMineralSpecies;                       
-        else // for almost zero concentration                                    
-          d2X_dtdS[MineralSpecies] *= 1 / 1e-25;                                 
+          d2X_dtdS[MineralSpecies] *= 1 / CMineralSpecies;
+        else // for almost zero concentration
+          d2X_dtdS[MineralSpecies] *= 1 / 1e-25;
         d2X_dtdS[MineralSpecies] *= pow(omega, theta);                     // factor3 from derivative
       }
 
@@ -5741,7 +5751,7 @@ for (r=0; r<nreactions; r++){
       //
       // calculate these partial derivatives here without using previously calculated dM/dt
       // as only the a term containing Cmech remains from sum after taking derivative.
-      // This partial derviatives adds up to a mineral species p.d. from (1), 
+      // This partial derviatives adds up to a mineral species p.d. from (1),
       // when it is a mech species at the same time; however, no special treatment is required
       // first, get some quantities
 
@@ -5770,31 +5780,31 @@ for (r=0; r<nreactions; r++){
           CMechSpecies    = c[MechSpecies];
           //pH!!!
           //if(m_mech->mechSpeciesNames[j].compare("pH")==0) // pH is -log(gamma*H+)
-          //  CMechSpecies  = pow(10,-CMechSpecies); 
+          //  CMechSpecies  = pow(10,-CMechSpecies);
           ExpoMechSpecies = m_mech->mechSpeciesExpo[j];
           // the next is specific to MechSpecies_j p. deriv
-          // but severeal mechanisms_i may contain the same mech species, 
-          // and it may ALSO be a mineral species from (1) at the same time 
+          // but severeal mechanisms_i may contain the same mech species,
+          // and it may ALSO be a mineral species from (1) at the same time
           // therefore += results
           if( CMechSpecies>1e-25 || CMechSpecies<-1e-25 )
             d2X_dtdS[MechSpecies] += dXdt_Mech*ExpoMechSpecies/CMechSpecies;   // * MechExpo_i/Cmech_i
-          else 
+          else
             d2X_dtdS[MechSpecies] += dXdt_Mech*ExpoMechSpecies/1e-25;          // * MechExpo_i/Cmech_i
         }
       }
 
       //(3)
       //
-      // d2M_dtdM derivative wrt mineral mass is zero always, 
+      // d2M_dtdM derivative wrt mineral mass is zero always,
       // d2M_dtdM = 0
       //
       // ... as activity of mineral in IAP of rate law is 1 always per definition
       d2X_dtdS[MineralNumber]=0.0;
-     
-      // now transfer partial derivatives to dfdc-Array of equation solver 
+
+      // now transfer partial derivatives to dfdc-Array of equation solver
       // rows i of J contain a single species' derivatives wrt all other species d2Ci/dtdCj
       for (j=0; j<n; j++) // for the Mineral, first row of J
-        dfdc[MineralNumber][j+1] += d2X_dtdS[j+1] ; // unit: --> mol/s/m³_solid 
+        dfdc[MineralNumber][j+1] += d2X_dtdS[j+1] ; // unit: --> mol/s/m³_solid
 
       //(4)
       //
@@ -5876,7 +5886,7 @@ for (r=0; r<nreactions; r++){
 				if (fabs(kd) < MKleinsteZahl)
 				{
               // slow down desorption rate by constant factor
-              if((c[Sp2] - c[Sp1])<0) 
+              if((c[Sp2] - c[Sp1])<0)
                 exch *= ratefact;
 
 					//no kd, exchange between two species in solution
@@ -5894,7 +5904,7 @@ for (r=0; r<nreactions; r++){
 					//else
 					//  kd = 0;
                // slow down desorption rate by constant factor
-               if((kd * c[Sp2] - c[Sp1]) < 0) 
+               if((kd * c[Sp2] - c[Sp1]) < 0)
                  exch *= ratefact;
 					dfdc[Sp1][Sp1] += -exch;
 					dfdc[Sp1][Sp2] += exch * kd;
@@ -5962,7 +5972,7 @@ for (r=0; r<nreactions; r++){
               density1 = 1;
 
             // slow down DEsorption rate by constant factor
-            if((parameter * pow(c[Sp2], exponent)-c[Sp1])<0) 
+            if((parameter * pow(c[Sp2], exponent)-c[Sp1])<0)
               exch *= ratefact;
 
 				if (c[Sp2] > residual)
@@ -6007,18 +6017,18 @@ for (r=0; r<nreactions; r++){
          //#ds TODO	    saturation2 = ??
          saturation2 = 1.;
          exponent = m_kr->rateorder;
-         exch	= m_kb->Masstransfer_K[node] * m_kb->Interfacial_area[node]; 
+         exch	= m_kb->Masstransfer_K[node] * m_kb->Interfacial_area[node];
          exch	*= exponent * pow((c[Sp2] ), (exponent - 1.0)); // CB introduced rateorder 06/2012
 
-      // Remark: In function derivs the dissolution velocity can be reduced, if NAPL concentration falls below zero. 
-      //         The partial derivatives should change, too, but this is not considered here. 
-		    //         However, it works fine 
+      // Remark: In function derivs the dissolution velocity can be reduced, if NAPL concentration falls below zero.
+      //         The partial derivatives should change, too, but this is not considered here.
+		    //         However, it works fine
 
          // Case 1 : reduced rate in derivs
          if ((m_kb->Masstransfer_K[node] * m_kb->Interfacial_area[node] * pow((m_kr->Current_Csat[node] - c[Sp2]), exponent)* dt) > c[Sp1]){
            //		dfdc[Sp1][Sp2] = 0     derivatives for water-concentration is zero in case of reduced rate in derivs
            //		dfdc[Sp2][Sp2] = 0
-		         
+
            if ( (m_kr->Current_Csat[node] < c[Sp2]) || (c[Sp1] > MKleinsteZahl) ) {         // no dissolution or NAPL mass present
               // dCNAPL/dt = CNAPL/dt
               // d2CNAPL / dt dCNAPL = 1/dt
@@ -6028,7 +6038,7 @@ for (r=0; r<nreactions; r++){
            }
          }
          // Case 2 : original rate in derivs
-         else{ 
+         else{
            //		dfdc[Sp1][Sp1] = 0     derivatives for NAPL-concentration always zero
            //		dfdc[Sp2][Sp1] = 0
 
@@ -6148,40 +6158,40 @@ void CKinReact::TestWrite(void)
 }
 
 /**************************************************************************
-Reaction-Method: 
+Reaction-Method:
 Task: returns true if NAPL dissolution is modeled
 Programing:
-08/2008 CB Implementation 
+08/2008 CB Implementation
 **************************************************************************/
 bool KNaplDissCheck(void)
 {
   bool NAPLdiss = false;
 
-  CKinReactData *m_krd = NULL;   
+  CKinReactData *m_krd = NULL;
   if(KinReactData_vector.size()==0)
 	  return NAPLdiss;
 
   else{
     m_krd = KinReactData_vector[0];
-    if(m_krd->NumberNAPLdissolution>0) 
+    if(m_krd->NumberNAPLdissolution>0)
       NAPLdiss=true;
 
 	return NAPLdiss;
   }
-}  
+}
 /**************************************************************************
-Reaction-Method: 
+Reaction-Method:
 Task: returns true if mineral kinetics is modeled
 
 Programing:
-12/2010 CB Implementation 
+12/2010 CB Implementation
 **************************************************************************/
 bool KMinKinCheck(void)
 {
 
   bool MinKin = false;
 
-  CKinReactData *m_krd = NULL;   
+  CKinReactData *m_krd = NULL;
 
   if(KinReactData_vector.size()==0)
 	  return MinKin;
@@ -6192,38 +6202,38 @@ bool KMinKinCheck(void)
       MinKin=true;
     return MinKin;
   }
-}  
+}
 
 /**************************************************************************/
 //Task: Calculates and sets the NAPL density for all nodes
 //      in case of NAPL dissolution
 //Programing:
-//   01/2008   CB   Implementation                                          
+//   01/2008   CB   Implementation
 /**************************************************************************/
 void KNaplCalcDensity(void){
 
   CRFProcess *m_pcs=NULL;
   CFluidProperties* m_mfp = NULL;
   //CFEMesh* m_msh = NULL;
-  
+
   double density = 0;
   //double viscosity = 0;
   long i;
-  int ndx_density_phase = -1; 
+  int ndx_density_phase = -1;
   long nnodes = 0;
 
   m_pcs = PCSGetFlow();
   ndx_density_phase = m_pcs->GetNodeValueIndex("DENSITY2");
 
-  nnodes = int(m_pcs->m_msh->nod_vector.size());	
+  nnodes = int(m_pcs->m_msh->nod_vector.size());
   m_mfp = mfp_vector[m_pcs->pcs_type_number+1];
   m_mfp->mode = 1;
 
-  for(i=0;i<nnodes;i++) 
+  for(i=0;i<nnodes;i++)
   {
-    density = CalcNAPLDens(i); 
-    
-    // CB: Density2 reintroduced as secondary variable of PS_GLOBAL, 
+    density = CalcNAPLDens(i);
+
+    // CB: Density2 reintroduced as secondary variable of PS_GLOBAL,
     m_pcs->SetNodeValue(i,ndx_density_phase,density);
 
   }
@@ -6233,7 +6243,7 @@ void KNaplCalcDensity(void){
 
 
 /**************************************************************************
-Task: Postprocessing function calculates the NAPL saturation after 
+Task: Postprocessing function calculates the NAPL saturation after
       Flow, Transport and kinetic NAPL dissolution
 
 Programing:
@@ -6247,7 +6257,7 @@ void CalcNewNAPLSat()
   int  idx1, idx2, idxC;
   long nnodes, nNAPLcomps;
   double conc, conc2, rho_N_new, rho_N_old, rho_N_fluid;
-  double mass, volume; 
+  double mass, volume;
   double satu_N_new, satu_N_old ;
 
   vector<int>pcs_napl_comps_vector;
@@ -6261,7 +6271,7 @@ void CalcNewNAPLSat()
   CFluidProperties* m_mfp = NULL;
 
   m_pcs = PCSGetFlow();
- 
+
   bool psg = false;
   if (m_pcs->getProcessType() == FiniteElement::PS_GLOBAL)
     psg = true;
@@ -6269,14 +6279,14 @@ void CalcNewNAPLSat()
   nnodes = (long) fem_msh_vector[0]->nod_vector.size();
 
 
-  // CB PS_GLOBAL this needs update 
+  // CB PS_GLOBAL this needs update
   m_mfp = mfp_vector[m_pcs->pcs_type_number];
   //m_mfp->mode = 1; // CB ??
 
   // Get indices of node value variables for phase 2
   if(psg)
     idx0 = m_pcs->GetNodeValueIndex("SATURATION2"); // old timelevel
-  idx1 = m_pcs->GetNodeValueIndex("DENSITY2");    // CB PS_GLOBAL this needs update 
+  idx1 = m_pcs->GetNodeValueIndex("DENSITY2");    // CB PS_GLOBAL this needs update
   idx2 = m_pcs->GetNodeValueIndex("SATURATION1"); // old timelevel
 
   i = j = k = l = 0;
@@ -6298,29 +6308,29 @@ void CalcNewNAPLSat()
          }
          l++;
        }
-     }  
+     }
   }
   nNAPLcomps = l;
 
   // do the update
-  for(i = 0; i < nnodes; i++) { 
+  for(i = 0; i < nnodes; i++) {
     conc = rho_N_new = rho_N_old = rho_N_fluid = satu_N_new = satu_N_old = mass = volume = conc2 = 0;
 
     if(KinBlob_vector[0]->gas_dissolution_flag==false){
       // determine the old NAPL DENSITY after flow / transport step
-      for(j = 0; j < nNAPLcomps; j++) { 
+      for(j = 0; j < nNAPLcomps; j++) {
         l=pcs_napl_comps_vector[j];
         idxC = pcs_vector[l]->GetNodeValueIndex(pcs_vector[l]->pcs_primary_function_name[0]);
         conc = pcs_vector[l]->GetNodeValue(i, idxC);// old timelevel
         mass += conc * molar_weights_vector[j];
       }
-      if(mass > 0) 
-        rho_N_old = mass; // [kg/mÂ³REV] 
-      else 
-        rho_N_old = 0; 
+      if(mass > 0)
+        rho_N_old = mass; // [kg/mÂ³REV]
+      else
+        rho_N_old = 0;
       // determine the new NAPL density rho_N_neu at current node
       mass = 0;
-      for(j = 0; j < nNAPLcomps; j++) { 
+      for(j = 0; j < nNAPLcomps; j++) {
         l=pcs_napl_comps_vector[j];
         idxC = pcs_vector[l]->GetNodeValueIndex(pcs_vector[l]->pcs_primary_function_name[0]);
         conc = pcs_vector[l]->GetNodeValue(i, idxC+1);// +1 new timelevel
@@ -6329,19 +6339,19 @@ void CalcNewNAPLSat()
         mass += conc * molar_weights_vector[j];
         volume += conc / molar_densities_vector[j]; // this is required calculating the napl fluid density
       }
-      if(mass > 0) 
-        rho_N_new = mass ; // [kg/mÂ³REV] 
-      else 
-        rho_N_new = 0; 
-   
+      if(mass > 0)
+        rho_N_new = mass ; // [kg/mÂ³REV]
+      else
+        rho_N_new = 0;
+
       // get the old SATURATION2 of NAPL after flow / transport step
       if(psg) //PS_GLOBAL
         satu_N_old = m_pcs->GetNodeValue(i, idx0+1);
       else    // MULTI_PHASE_FLOW
         satu_N_old = 1.0 - m_pcs->GetNodeValue(i, idx2+1);
       // calculate new NAPL Saturation: dSatu = Satu(t+dt)-Satu(t) = Satu(t)*(1-rho(t)/rho(t+dt))
-      if(satu_N_old * rho_N_new * rho_N_old > 0) 
-        satu_N_new = satu_N_old + satu_N_old * (1 - rho_N_old / rho_N_new);   //fast  
+      if(satu_N_old * rho_N_new * rho_N_old > 0)
+        satu_N_new = satu_N_old + satu_N_old * (1 - rho_N_old / rho_N_new);   //fast
       //satu_N_new = satu_N_old + satu_N_old * (rho_N_new / rho_N_old - 1);   //slow
       else
         satu_N_new = satu_N_old ;
@@ -6349,34 +6359,34 @@ void CalcNewNAPLSat()
         cout << " Warning in fct CalcNewNAPLSat: NAPL-Sat: " << satu_N_new << "\n";
         satu_N_new = MRange(0.0, satu_N_new, 1.0);
       }
-      
-      // set new SATURATION2 
+
+      // set new SATURATION2
       //if(satu_N_new > 0.00001)  satu_N_new = 1-0.95; // 0.985 CB 14.01.09 Hansen+Kueper BM
-       
+
       //m_pcs->SetNodeValue(i, idx0, satu_N_new);  // idx0 for timelevel 0 ??
       if(psg)
         m_pcs->SetNodeValue(i, idx0+1, satu_N_new);  // idx0+1 for timelevel 1 ??
-      // set new SATURATION1 
+      // set new SATURATION1
       //m_pcs->SetNodeValue(i, idx2, 1-satu_N_new);     // idx2 for timelevel 0 ??
       m_pcs->SetNodeValue(i, idx2+1, 1-satu_N_new); // idx2+1 for timelevel 1 ??
       // finally determine the new napl fluid density
-      if(mass * volume > 0) 
+      if(mass * volume > 0)
         rho_N_fluid = mass / volume; // [kg/mÂ³N] = [kg/mÂ³REV] / [mÂ³N/mÂ³REV]
-      else 
+      else
         rho_N_fluid = m_mfp->Density(); // use NAPL phase fluid density as defined in .mfp
       // set new DENSITY2
-      m_pcs->SetNodeValue(i, idx1, rho_N_fluid);     
-      // CB PS_GLOBAL this needs update 
+      m_pcs->SetNodeValue(i, idx1, rho_N_fluid);
+      // CB PS_GLOBAL this needs update
     }
     else{ // gas_dissolution
       // get the old SATURATION2 of NAPL after flow / transport step
       if(psg) //PS_GLOBAL
         satu_N_old = m_pcs->GetNodeValue(i, idx0);
       else    // MULTI_PHASE_FLOW only has water satu
-        satu_N_old = 1.0 - m_pcs->GetNodeValue(i, idx2+1); // idx2+1 as in case of Eclipse coupling, Sats are transient. 
+        satu_N_old = 1.0 - m_pcs->GetNodeValue(i, idx2+1); // idx2+1 as in case of Eclipse coupling, Sats are transient.
                                                            // hence the sat before KRC is available only at "new" TL
       // get the old and new CO2 conc in gas phase after flow / transport step
-      for(j = 0; j < nNAPLcomps; j++) { 
+      for(j = 0; j < nNAPLcomps; j++) {
         l=pcs_napl_comps_vector[j];
         idxC = pcs_vector[l]->GetNodeValueIndex(pcs_vector[l]->pcs_primary_function_name[0]);
         conc  += pcs_vector[l]->GetNodeValue(i, idxC);     // old timelevel
@@ -6384,9 +6394,9 @@ void CalcNewNAPLSat()
       }
       satu_N_new = satu_N_old * (conc2 / conc);            // simple scaling
       if(psg) // Set new NAPL SATURATION2
-        m_pcs->SetNodeValue(i, idx0+1, satu_N_new);  
-      // Set new water SATURATION1 in any case 
-      m_pcs->SetNodeValue(i, idx2+1, 1-satu_N_new); 
+        m_pcs->SetNodeValue(i, idx0+1, satu_N_new);
+      // Set new water SATURATION1 in any case
+      m_pcs->SetNodeValue(i, idx2+1, 1-satu_N_new);
     }
   }
   pcs_napl_comps_vector.clear();
@@ -6398,7 +6408,7 @@ void CalcNewNAPLSat()
 
 
 /**************************************************************************
-Task: Postprocessing function calculates the NAPL saturation after 
+Task: Postprocessing function calculates the NAPL saturation after
       Flow, Transport and kinetic NAPL dissolution
 
 Programing:
@@ -6412,7 +6422,7 @@ void CalcNewPhasePressure()
   double Cgn2, Cln2;
   double Vg= 0, Vl = 1;//, delta = 0;
   double NumberReactions; //, scale=0;
-  
+
   //int idx0=0;
   int idxCg, idxCl, idxP, idxS, sp;
   long nnodes;
@@ -6424,7 +6434,7 @@ void CalcNewPhasePressure()
   if(m_pcs->getProcessType() != FiniteElement::MULTI_PHASE_FLOW){
     if(m_pcs->getProcessType() == FiniteElement::PS_GLOBAL)
       // this is for NAPL only, for CO2 use the routine below
-      CalcNewNAPLSat();  
+      CalcNewNAPLSat();
     return;
   }
 
@@ -6436,10 +6446,10 @@ void CalcNewPhasePressure()
 
   idxP = m_pcs->GetNodeValueIndex("PRESSURE2") + 1;   // Pnw new TL
   idxS = m_pcs->GetNodeValueIndex("SATURATION1") + 1; // Sw new TL
-  
+
   NumberReactions = KinReact_vector.size();
 
-  // Get dissolution Reaction  
+  // Get dissolution Reaction
   CKinReact *m_kr = NULL;
   for (i=0; i<NumberReactions; i++){
     m_kr = KinReact_vector[i];
@@ -6455,7 +6465,7 @@ void CalcNewPhasePressure()
   nnodes = (long) fem_msh_vector[0]->nod_vector.size();
 
   // do the Pressure update
-  for(i = 0; i < nnodes; i++) { 
+  for(i = 0; i < nnodes; i++) {
     Cgo = Cgn = Clo = Cln = TT = Po = Pn = H2O = rho = Cgn2 = Cln2 = 0;
     //Get Sw
     Satu =  m_pcs->GetNodeValue(i, idxS);
@@ -6477,9 +6487,9 @@ void CalcNewPhasePressure()
     Cgn = g_pcs->GetNodeValue(i, idxCg+1);
 
     sp = m_kr->ex_species[1];
-    l_pcs = cp_vec[sp]->getProcess(); 
-    idxCl = l_pcs->GetNodeValueIndex(m_kr->ex_species_names[1]); 
-    Clo = l_pcs->GetNodeValue(i, idxCl); 
+    l_pcs = cp_vec[sp]->getProcess();
+    idxCl = l_pcs->GetNodeValueIndex(m_kr->ex_species_names[1]);
+    Clo = l_pcs->GetNodeValue(i, idxCl);
     Cln = l_pcs->GetNodeValue(i, idxCl+1);
     Clo *= poro * Satu;
     Cln *= poro * Satu;
@@ -6491,22 +6501,22 @@ void CalcNewPhasePressure()
 
     // P & S update
     Pn = Po ;
-   
+
     VLE_CalcNewPressure(TT, Pn, Vg, Vl, Cgo, Cgn, Clo, Cln, H2O, H2O, rho);
     Pn *= 1.0e+5; // bar --> Pa
-    m_pcs->SetNodeValue(i, idxP, Pn); 
+    m_pcs->SetNodeValue(i, idxP, Pn);
 
     Vl *= 1e-6/poro;
     Vg *= 1e-6/poro;
     Satu = 1-Vg /(Vg+Vl);
-    m_pcs->SetNodeValue(i, idxS, Satu); 
+    m_pcs->SetNodeValue(i, idxS, Satu);
 
-    // as pressure and vol have changed, density and thus gas conc. is different now 
+    // as pressure and vol have changed, density and thus gas conc. is different now
     Cgn2 = rho*1000*poro*(1-Satu)/(44.009/1000);
-    g_pcs->SetNodeValue(i, idxCg+1, Cgn2); 
+    g_pcs->SetNodeValue(i, idxCg+1, Cgn2);
     // put the residual to water phase
     Cln2 = (Cln /*+ (Cgn-Cgn2)*/) / (poro*Satu);
-    l_pcs->SetNodeValue(i, idxCl+1, Cln2); 
+    l_pcs->SetNodeValue(i, idxCl+1, Cln2);
   }
 
 }
@@ -6515,10 +6525,10 @@ void CalcNewPhasePressure()
 
 
 /**************************************************************************/
-//Task: Calculates the NAPL mass flux across Model boundary 
+//Task: Calculates the NAPL mass flux across Model boundary
 //      in case of NAPL infiltration
 //Programing:
-//   01/2008   CB   Implementation                                          
+//   01/2008   CB   Implementation
 /**************************************************************************/
 void CalcNAPLCompMasses()
 {
@@ -6528,7 +6538,7 @@ void CalcNAPLCompMasses()
   double conc=0;
   double sat=0;
   double maxconc = 0;
-  double mass, volume; 
+  double mass, volume;
   ofstream _dump;
   double time ;
   int no_processes;
@@ -6564,12 +6574,12 @@ void CalcNAPLCompMasses()
   i = j = k=l = 0;
   no_processes =(int)pcs_vector.size();
   nnodes = (long) fem_msh_vector[0]->nod_vector.size();
-  volume = fem_msh_vector[0]->ele_vector[0]->GetVolume(); 
+  volume = fem_msh_vector[0]->ele_vector[0]->GetVolume();
 
   m_pcs = PCSGetFlow();
   // get the indices of velocity of flow process
-  idxVx = m_pcs->GetNodeValueIndex("VELOCITY_X1"); 
-  //idxVy = m_pcs->GetNodeValueIndex("VELOCITY_Y1"); 
+  idxVx = m_pcs->GetNodeValueIndex("VELOCITY_X1");
+  //idxVy = m_pcs->GetNodeValueIndex("VELOCITY_Y1");
   //idxVz = m_pcs->GetNodeValueIndex("VELOCITY_Z1");
   idxS = m_pcs->GetNodeValueIndex("SATURATION1")+1; // new timelevel
 
@@ -6592,40 +6602,40 @@ void CalcNAPLCompMasses()
          l++;
        }
        else if(cp_vec[j]->transport_phase==0){
-         pcs_comps_vector.push_back(i); 
-         conc_comps_vector.push_back(0); 
-         mf_vector.push_back(0); 
+         pcs_comps_vector.push_back(i);
+         conc_comps_vector.push_back(0);
+         mf_vector.push_back(0);
          k++;
        }
-     }  
+     }
   }
   nNAPLcomps = l;
   nDisscomps = k;
 
   // integrate NAPL masses
-  for(j = 0; j < nNAPLcomps; j++) { 
+  for(j = 0; j < nNAPLcomps; j++) {
     conc = mass = 0;
     l=pcs_napl_comps_vector[j];
     idxC = pcs_vector[l]->GetNodeValueIndex(pcs_vector[l]->pcs_primary_function_name[0]) + 1; // new timelevel
-    for(i = 0; i < nnodes; i++) { 
+    for(i = 0; i < nnodes; i++) {
       conc = pcs_vector[l]->GetNodeValue(i, idxC);
       sat = m_pcs->GetNodeValue(i, idxS); // should be napl sat
       if(mpf) // in case of MULTI_PHASE_FLOW, it is water sat
         sat = 1-sat;
-      if(sat>1e-3) 
+      if(sat>1e-3)
         mass += conc *volume;
     }
     conc_napl_comps_vector[j]=mass;
   }
 
   // get downgrad  model boundary x coordinate
-  for(i = 0; i < nnodes; i++) { 
+  for(i = 0; i < nnodes; i++) {
     m_nod =  m_msh->nod_vector[i];
     coord = m_nod->getData();
     if(coord[0]>xmax)
       xmax = coord[0];
   }
-  
+
   // get ele flux area
   m_ele =  m_msh->ele_vector[0];
   area = m_ele->GetFluxArea();
@@ -6642,11 +6652,11 @@ void CalcNAPLCompMasses()
   area*=(ymax-ymin);
 
   //maximum C
-  for(j = 0; j < nDisscomps; j++) { 
+  for(j = 0; j < nDisscomps; j++) {
     conc = maxconc = 0;
     l=pcs_comps_vector[j];
     idxC = 1+pcs_vector[l]->GetNodeValueIndex(pcs_vector[l]->pcs_primary_function_name[0]);
-    for(i = 0; i < nnodes; i++) { 
+    for(i = 0; i < nnodes; i++) {
       conc = pcs_vector[l]->GetNodeValue(i, idxC);// new timelevel
       if(conc>maxconc)
         maxconc = conc ;
@@ -6655,12 +6665,12 @@ void CalcNAPLCompMasses()
   }
 
   //Mass flux across model boundary
-  for(j = 0; j < nDisscomps; j++) { 
+  for(j = 0; j < nDisscomps; j++) {
     mass = conc = 0;
-    for(i = 0; i < nnodes; i++) { 
+    for(i = 0; i < nnodes; i++) {
       m_nod =  m_msh->nod_vector[i];
       coord=m_nod->getData();
-      if(coord[0]==xmax){  
+      if(coord[0]==xmax){
         // Get the velocity components
         vel_nod = m_pcs->GetNodeValue(i, idxVx);
         //vel_nod[1] = m_pcs->GetNodeValue(i, idxVy);
@@ -6687,30 +6697,30 @@ void CalcNAPLCompMasses()
     //header
     _dump << "TITLE = \"Masses and concentrations over time\" " << "\n";
     _dump << "VARIABLES  = \"TIME [a]\",\"TIME [s]\"" ;
-    for(j = 0; j < nNAPLcomps; j++) { 
+    for(j = 0; j < nNAPLcomps; j++) {
       l=pcs_napl_comps_vector[j];
-      _dump << "\"" << pcs_vector[l]->pcs_primary_function_name[0] << "\"," ;   
+      _dump << "\"" << pcs_vector[l]->pcs_primary_function_name[0] << "\"," ;
     }
-    for(j = 0; j < nDisscomps; j++) { 
+    for(j = 0; j < nDisscomps; j++) {
       l=pcs_comps_vector[j];
-      _dump << "\"" << pcs_vector[l]->pcs_primary_function_name[0] << "\"," ;   
-    }    
-    for(j = 0; j < nDisscomps; j++) { 
+      _dump << "\"" << pcs_vector[l]->pcs_primary_function_name[0] << "\"," ;
+    }
+    for(j = 0; j < nDisscomps; j++) {
       l=pcs_comps_vector[j];
-      _dump << "\"" << pcs_vector[l]->pcs_primary_function_name[0] << "_mf\"," ;   
-    }    
+      _dump << "\"" << pcs_vector[l]->pcs_primary_function_name[0] << "_mf\"," ;
+    }
     _dump << "\n"<< flush;
     _dump << "ZONE T=\"Source Zone\"" << "\n";
   }
-  else 
+  else
     _dump.open(file.c_str(),ios::app);
   //data
   _dump <<  time/86400/365 << " " <<  time << " ";
-  for(j = 0; j < nNAPLcomps; j++)  
+  for(j = 0; j < nNAPLcomps; j++)
     _dump <<  conc_napl_comps_vector[j] << " " ;
-  for(j = 0; j < nDisscomps; j++)  
+  for(j = 0; j < nDisscomps; j++)
     _dump <<  conc_comps_vector[j] << " " ;
-  for(j = 0; j < nDisscomps; j++)  
+  for(j = 0; j < nDisscomps; j++)
     _dump <<  mf_vector[j] << " " ;
   _dump <<  "\n";
   _dump.close();
@@ -6728,14 +6738,14 @@ void CalcNAPLCompMasses()
 //Task: Calculates the NAPL density for a node
 //      in case of NAPL dissolution
 //Programing:
-//   01/2008   CB   Implementation                                          
+//   01/2008   CB   Implementation
 /**************************************************************************/
 double CalcNAPLDens(int node)
 {
   long i, j, k, l;
   int idxC; // idx1
   int nNAPLcomps;
-  double conc, rho_N_new, mass, volume; 
+  double conc, rho_N_new, mass, volume;
   string var_name;
 
   vector<int>pcs_napl_comps_vector;
@@ -6769,33 +6779,33 @@ double CalcNAPLDens(int node)
          molar_densities_vector.push_back(cp_vec[j]->molar_density); // get the corresponding densities
          l++;
        }
-     }  
+     }
   }
   nNAPLcomps = l;
 
   // determine the NAPL density rho_N_neu at current node
   conc = rho_N_new = mass = volume = 0;
-  for(j = 0; j < nNAPLcomps; j++) { 
+  for(j = 0; j < nNAPLcomps; j++) {
     l=pcs_napl_comps_vector[j];
-    idxC = pcs_vector[l]->GetNodeValueIndex(pcs_vector[l]->pcs_primary_function_name[0]);    
+    idxC = pcs_vector[l]->GetNodeValueIndex(pcs_vector[l]->pcs_primary_function_name[0]);
     conc = pcs_vector[l]->GetNodeValue(node, idxC);
     if(fabs(conc)<1e-19)
       conc = 0.0;
     mass += conc * molar_weights_vector[j]; // [kg/m³REV] = [molN/m³REV] * [kg/molN]
     volume += conc / molar_densities_vector[j]; // [m³N/m³REV] = [molN/m³REV] / [molN/m³REV]
   }
-  if(mass * volume > 0) 
+  if(mass * volume > 0)
     rho_N_new = mass / volume; // [kg/m³N] = [kg/m³REV] / [m³N/m³REV]
-  else 
+  else
     rho_N_new = m_mfp->Density(); // use NAPL phase fluid density as defined in .mfp
     // This may be not possible if new spatially distributed density model will be implemented..
-    // What to do in case of no NAPL? Set a default density? 
-  
+    // What to do in case of no NAPL? Set a default density?
+
   pcs_napl_comps_vector.clear();
   molar_weights_vector.clear();
   molar_densities_vector.clear();
 
-  return rho_N_new; 
+  return rho_N_new;
 }
 
 /**************************************************************************
@@ -6831,12 +6841,12 @@ double CKinReact::GetNodePoreVelocity(long node_number)
    if (pcs->getProcessType () == FiniteElement::PS_GLOBAL)
    {
     idxs1 = pcs->GetNodeValueIndex("SATURATION1"); // Sat of water phase
-    satu = pcs->GetNodeValue(node_number, idxs1); 
+    satu = pcs->GetNodeValue(node_number, idxs1);
    }
    else if (pcs->getProcessType () == FiniteElement::MULTI_PHASE_FLOW)
    {
     idxs1 = pcs->GetNodeValueIndex("SATURATION1"); // Sat of water phase
-    satu = pcs->GetNodeValue(node_number, idxs1); 
+    satu = pcs->GetNodeValue(node_number, idxs1);
    }
 	else if (pcs->getProcessType() == FiniteElement::TWO_PHASE_FLOW)
 	{
@@ -6854,28 +6864,28 @@ double CKinReact::GetNodePoreVelocity(long node_number)
 		satu = pcs->GetNodeValue(node_number, idxs1);
 	}
 
- // Get the porosity as average from neighbouring elements from 
+ // Get the porosity as average from neighbouring elements from
  poro = GetPhaseVolumeAtNode(node_number, theta, 0);
- 
+
  // initialize data structures
  for(int i=0;i<3;i++)
   vel_nod[i]=0;
  PoreVel = 0;
 
  // get the indices of velocity of flow process
- idxVx = pcs->GetNodeValueIndex("VELOCITY_X1"); 
- idxVy = pcs->GetNodeValueIndex("VELOCITY_Y1"); 
- idxVz = pcs->GetNodeValueIndex("VELOCITY_Z1"); 
+ idxVx = pcs->GetNodeValueIndex("VELOCITY_X1");
+ idxVy = pcs->GetNodeValueIndex("VELOCITY_Y1");
+ idxVz = pcs->GetNodeValueIndex("VELOCITY_Z1");
  // Get the velocity components
  vel_nod[0] = pcs->GetNodeValue(node_number, idxVx);
  vel_nod[1] = pcs->GetNodeValue(node_number, idxVy);
  vel_nod[2] = pcs->GetNodeValue(node_number, idxVz);
- // absolute value of velocity vector 
+ // absolute value of velocity vector
  for(int i=0;i<3;i++)
-   PoreVel += pow(vel_nod[i],2); 
- PoreVel = sqrt(PoreVel); 
+   PoreVel += pow(vel_nod[i],2);
+ PoreVel = sqrt(PoreVel);
  //divide by porosity and saturation to obtain transport velocity
- PoreVel /= (poro * satu); 
+ PoreVel /= (poro * satu);
 
 	return PoreVel;
 }
@@ -6942,9 +6952,9 @@ void CKinReactData::ReactionDeactivation(long nonodes)
 	int react_t = 10;                     // reactions are calculated at all nodes every react_t timesteps
 	size_t sp;
 	const size_t Number_of_Components (cp_vec.size());
-   if(ReactDeactRelative) 
+   if(ReactDeactRelative)
      cout << " Reaction deactivation mode " << ReactDeactMode << " with relative concentration change! " << "\n";
-   else 
+   else
      cout << " Reaction deactivation  mode " << ReactDeactMode << " with absolute concentration change! " << "\n";
 
 	// reactivate all nodes every n time steps
@@ -6981,9 +6991,9 @@ void CKinReactData::ReactionDeactivation(long nonodes)
               double Concentration_old = concentrationmatrix[node][sp];
               // relative concentration change
 					double maxi = 1;
-              if(ReactDeactRelative) 
+              if(ReactDeactRelative)
 			    maxi = DMAX(Concentration_old, Concentration);
-              if (maxi < ReactDeactCThresh) 
+              if (maxi < ReactDeactCThresh)
 			    React_dCdT[node] += 0.0;
 			  else
 					{
@@ -7029,9 +7039,9 @@ void CKinReactData::ReactionDeactivation(long nonodes)
 					//This is C of previous time step after transport only
 					double Concentration_old = concentrationmatrix[node][sp];
                   double maxi = 1;
-                  if(ReactDeactRelative) 
+                  if(ReactDeactRelative)
 				    maxi = DMAX(Concentration_old, Concentration);
-                  if(maxi > ReactDeactCThresh) 
+                  if(maxi > ReactDeactCThresh)
 				    sumReact_dCdT += fabs( (Concentration - Concentration_old)/maxi);
                   // and now prepare the concentrationmatrix for the next time step, i.e. save the current concentrations after Transport
                   concentrationmatrix[node][sp] = Concentration;
@@ -7051,9 +7061,9 @@ void CKinReactData::ReactionDeactivation(long nonodes)
 					                                                        sp]
 					                                                - 1));
                   double maxi = 1;
-                  if(ReactDeactRelative) 
+                  if(ReactDeactRelative)
 				    maxi = DMAX(Concentration_old, Concentration);
-                  if(maxi > ReactDeactCThresh) 
+                  if(maxi > ReactDeactCThresh)
 				    sumReact_dCdT += fabs((Concentration - Concentration_old)/maxi);
 				}
 				break;
@@ -7062,7 +7072,7 @@ void CKinReactData::ReactionDeactivation(long nonodes)
 			}
 
 			// check if deactivation criterion is met
-         if(ReactDeactRelative) 
+         if(ReactDeactRelative)
 		   sumReact_dCdT /= double(Number_of_Components);
 			if (sumReact_dCdT < ReactDeactEpsilon)
 				ReactDeact[node] = true;  // negligible change, deactivate the node for the next time step
@@ -7184,7 +7194,7 @@ void CKinReactData::ReactDeactPlotFlagsToTec()
 /**************************************************************************
  Reaction-Method:
  Task: This function calculates decay of Aromaticum bacteria species
-       independent from other kinetic reactions, 
+       independent from other kinetic reactions,
        reqiured for some model tests only
  Programing:
  //CB 01.2011 CB First implementation
@@ -7226,17 +7236,17 @@ void CKinReactData::Aromaticum(long nonodes)
  Reaction-Method:
  Task: This function prepares
    - node velocities
-   - vector of nodes for which NAPL dissolution shall be switched 
+   - vector of nodes for which NAPL dissolution shall be switched
      off once saturation drops below hard coded thereshhold
  Programing:
  //CB 01.2011 CB First implementation
  **************************************************************************/
 void CKinReactData::NAPLDissolutionPreprocessing(){
 
-  CKinReact *m_kr = NULL;  
+  CKinReact *m_kr = NULL;
   CRFProcess *m_pcs = NULL;
   CFEMesh* m_msh = fem_msh_vector[0]; //SB: ToDo hart gesetzt
-  
+
   int i, j,  sp; // idx0,
   bool mpf = false;
   bool psg = false;
@@ -7268,7 +7278,7 @@ void CKinReactData::NAPLDissolutionPreprocessing(){
       sp = m_kr->ex_species[0];
       cp_vec[sp]->getProcess()->CopyTimestepNODValues(true); // true: new->old
       // saturation
-      m_pcs->CopyTimestepNODValues(true);   
+      m_pcs->CopyTimestepNODValues(true);
     }
   }
 
@@ -7283,7 +7293,7 @@ void CKinReactData::NAPLDissolutionPreprocessing(){
     if(m_kr->typeflag_napldissolution){
       // Initialize vector if not yet done in KRConfig()
       if(m_kr->NotThisReactGeoType.size()==0)
-        for(j=0; j< (long)m_msh->nod_vector.size();j++) 
+        for(j=0; j< (long)m_msh->nod_vector.size();j++)
           m_kr->switched_off_node.push_back(false);
       // Go through all nodes
       //for(j=0;j<(long)m_msh->nod_vector.size();j++){
@@ -7301,7 +7311,7 @@ void CKinReactData::NAPLDissolutionPreprocessing(){
  Reaction-Method:
  Task: This function prepares
    - node velocities
-   - vector of nodes for which NAPL dissolution shall be switched 
+   - vector of nodes for which NAPL dissolution shall be switched
      off once saturation drops below hard coded thereshhold
  Programing:
  //CB 01.2011 CB First implementation
@@ -7321,18 +7331,18 @@ void CKinReactData::PreprocessMicrobe_drmc_(double steplength){
       G = m_md->GetGibbsEnergy(j);
       m_md->Gibbs[j] = G;
       theta = 1/(exp((m_md->G0-G)/(m_md->steepness*m_md->G0))+1);
-      if(theta>1.0) 
+      if(theta>1.0)
         theta=1.0;
-      // variable dt is updated only after the first time step and is initialized with zero before 
+      // variable dt is updated only after the first time step and is initialized with zero before
       // the first time step, update of S in the first time step hence is Snew = Sold * exp(0)
       // this is an analytical approximtion of dS/dt = [kincr*theta*(1-theta_s)-kdecr*(1-theta)] * S
       S = m_md->_drmc_level[j] * exp((m_md->k_incr*theta*(1-theta) - m_md->k_decr*(1-theta))*m_md->dt);
       if(S>1.0) S=1.0;
-      m_md->_drmc_level[j] = S; 
+      m_md->_drmc_level[j] = S;
     }
     // store time step length for next time step update
     m_md->dt = steplength;
-  
+
   }
 
 }
@@ -7342,7 +7352,7 @@ void CKinReactData::PreprocessMicrobe_drmc_(double steplength){
  Reaction-Method:
  Task: This function prepares
    - activity cooeffcient matrix (coupling to Chemapp reqiuired for model 3)
-   - Equilibrium constant matrix (coupling to Chemapp reqiuired in case of 
+   - Equilibrium constant matrix (coupling to Chemapp reqiuired in case of
      non-uniform models CAP or HKF)
    - reactive surface areas
  Programing:
@@ -7351,7 +7361,7 @@ void CKinReactData::PreprocessMicrobe_drmc_(double steplength){
 void CKinReactData::PreprocessMinKin(){
 
 
-  int i, j, k=0, nnode=0, ncomp, widx=0;//node, 
+  int i, j, k=0, nnode=0, ncomp, widx=0;//node,
   double val, conc, A0, poro;
   //double fact;
   double A=0, B=0, a0, I, Imin, Imax, dens;
@@ -7362,10 +7372,10 @@ void CKinReactData::PreprocessMinKin(){
   double unitfactor_l = 1;
 
   CFEMesh* m_msh = fem_msh_vector[0]; //SB: ToDo hart gesetzt
-  CKinReact *m_kr = NULL;  
+  CKinReact *m_kr = NULL;
   nnode = (long) m_msh->nod_vector.size();
   ncomp = (int)cp_vec.size();
-  //CB merge CAP 0311     
+  //CB merge CAP 0311
   #ifdef OGS_FEM_CAP // CAP_REACT
     REACT_CAP *m_cap;
   #endif
@@ -7379,7 +7389,7 @@ void CKinReactData::PreprocessMinKin(){
   // get ChemApp data structure
   if(activity_model==3){
 #ifdef OGS_FEM_CAP // CAP_REACT
-    if(REACT_CAP_vec.size()>0) m_cap = REACT_CAP_vec[0]; 
+    if(REACT_CAP_vec.size()>0) m_cap = REACT_CAP_vec[0];
 #else
     cout << " Warning: in PreprocessMinKin: Activity model = 3, but CAP is not defined. " << "\n";
 #endif
@@ -7391,9 +7401,9 @@ void CKinReactData::PreprocessMinKin(){
 #ifdef OGS_FEM_CAP // CAP_REACT
         m_cap = REACT_CAP_vec[0];
         break;
-#else       
+#else
         cout << " Warning: in PreprocessMinKin: Km is not uniform, but CAP is not defined. " << "\n";
-#endif      
+#endif
       }
     }
   }
@@ -7410,7 +7420,7 @@ void CKinReactData::PreprocessMinKin(){
 
   if(activity_model==1 || activity_model==2){
     // first calculate ionic strength at each node
-    // I = 0.5SUM(z_i^2 * Moles_i / MassWater) = 0.5SUM(z_i^2 * C_i) 
+    // I = 0.5SUM(z_i^2 * Moles_i / MassWater) = 0.5SUM(z_i^2 * C_i)
     Imin=1000;
     Imax = 0;
     for (j=0;j<nnode;j++){
@@ -7418,7 +7428,7 @@ void CKinReactData::PreprocessMinKin(){
       // get the unit conversion factor: mol/m³l --> molality
       if(m_rei) {
         if(m_rei->unitconversion)
-          unitfactor_l = MOLH2OPERKG / m_rei->water_conc[j] ; 
+          unitfactor_l = MOLH2OPERKG / m_rei->water_conc[j] ;
       }
 
       for (i=0;i<ncomp;i++){
@@ -7454,7 +7464,7 @@ void CKinReactData::PreprocessMinKin(){
           DisplayMsgLn("Unknown activity model in CKinReactData::PreprocessMinkin()!");
           break;
     }
-    
+
     // then calculate T dependent parameters A & B, from Groundwater Geochemistry, Broder Merkel
     // Todo: get T
     TC = T-273.15;
@@ -7477,7 +7487,7 @@ void CKinReactData::PreprocessMinKin(){
           a0  = cp_vec[j]->a_zero;         //  a0;
           for (i=0;i<nnode;i++){
             I = IonicStrengths[i];
-            if(I>0){ 
+            if(I>0){
               if(fabs(val)>0) // charged species
                 ActivityCoefficients[i][j] = pow(10, -A*val*val*sqrt(I)/(1+B*a0*sqrt(I)));
               else{            // uncharged species
@@ -7488,11 +7498,11 @@ void CKinReactData::PreprocessMinKin(){
               }
             }
             else{
-              ActivityCoefficients[i][j]=1;     
+              ActivityCoefficients[i][j]=1;
               if(i==0 && j==0) cout << "Warning in KinReactData: zero Ionic strength in PreprocessMinKin; using gamma = 1.0" << "\n";
             }
           }
-        }      
+        }
       }
       break;
  	case 2:                      /* DAVIS*/
@@ -7501,7 +7511,7 @@ void CKinReactData::PreprocessMinKin(){
           val = double(cp_vec[j]->valence);//  Valenz;
           for (i=0;i<nnode;i++){
             I = IonicStrengths[i];
-            if(I>0){ 
+            if(I>0){
               if(fabs(val)>0) // charged species
                 ActivityCoefficients[i][j] = pow(10, -A*val*val*   (  sqrt(I)/(1+sqrt(I)) -0.3*I)  );
               else{            // uncharged species
@@ -7512,12 +7522,12 @@ void CKinReactData::PreprocessMinKin(){
               }
             }
             else{
-              ActivityCoefficients[i][j]=1;     
+              ActivityCoefficients[i][j]=1;
               if(i==0 && j==0) cout << "Warning in KinReactData: zero Ionic strength in PreprocessMinKin; using gamma = 1.0" << "\n";
             }
           }
         }
-      }      
+      }
       break;
  	case 3:                      /* CHEMAPP*/
 #ifdef OGS_FEM_CAP // CAP_REACT
@@ -7543,7 +7553,7 @@ void CKinReactData::PreprocessMinKin(){
           if(m_cap->node_ac[i].size()>0){   //CB merge CAP 0311
             if ( /*conc>0 && */ k < m_cap->mass_num)
               ActivityCoefficients[i][j] = m_cap->node_ac[i][k] /*/ conc*/  ;
-            else 
+            else
               ActivityCoefficients[i][j] = 1.0;
           }
           else{   //CB merge CAP 0311
@@ -7554,7 +7564,7 @@ void CKinReactData::PreprocessMinKin(){
             }
           }     //CB merge CAP 0311
         }
-      }      
+      }
 #else
       cout << " Warning: in PreprocessMinKin: Km is not uniform, but CAP is not defined. " << "\n";
 #endif
@@ -7580,12 +7590,12 @@ void CKinReactData::PreprocessMinKin(){
                 cout << " Warning in CKinReactData::PreprocessMinkin:" << "\n";
                 cout << "    No Chemapp-log(K) data available for reaction " << m_kr->chemapp_name ;
                 cout << " at node "<< k <<  "\n";
-                if(k>0) m_kr->Km[k] = m_kr->Km[k-1];    // use neighbour node value 
+                if(k>0) m_kr->Km[k] = m_kr->Km[k-1];    // use neighbour node value
                 else    m_kr->Km[k] = m_kr->Km_default; // use default input value
               }
             }
             break;
-          }    
+          }
         }
       }
       else if(m_kr->Km_HKF==true){ // find the matching HKF Kinetic reaction
@@ -7598,12 +7608,12 @@ void CKinReactData::PreprocessMinKin(){
                 cout << " Warning in CKinReactData::PreprocessMinkin:" << "\n";
                 cout << "    No HKF-log(K) data available for reaction " << m_kr->chemapp_name ;
                 cout << " at node "<< k <<  "\n";
-                if(k>0) m_kr->Km[k] = m_kr->Km[k-1];    // use neighbour node value 
+                if(k>0) m_kr->Km[k] = m_kr->Km[k-1];    // use neighbour node value
                 else    m_kr->Km[k] = m_kr->Km_default; // use default input value
               }
             }
             break;
-          }    
+          }
         }
       }
 #else
@@ -7628,23 +7638,23 @@ void CKinReactData::PreprocessMinKin(){
               // A0/C0  to multiply with C(t) before each time step
               A0 = m_kr->Am[0]; // save area
               if(conc>0)
-                m_kr->Am[k] = A0 / conc; 
+                m_kr->Am[k] = A0 / conc;
               break;
             case 2:
               // store thi initial mineral concentration for surface updating in postprocessing
               m_kr->Cminini.push_back(conc);
               break;
             case 3:
-              // do nothing  
+              // do nothing
               break;
             case 4:
-              // do nothing  
+              // do nothing
               break;
             case 5:
-              // do nothing  
+              // do nothing
               break;
             default:
-              // do nothing  
+              // do nothing
               break;
           }
 
@@ -7658,7 +7668,7 @@ void CKinReactData::PreprocessMinKin(){
     m_kr = KinReact_vector[i];
     if(m_kr->typeflag_mineralkinetics && m_kr->Am_constant == false){
       MV = cp_vec[m_kr->mineral_number]->molar_weight / cp_vec[m_kr->mineral_number]->mineral_density;
-      
+
       for (k=0;k<nnode;k++){
         // A0/C0 here is multiplied with C(t) before current time step
         // conc = pcs_vector[sp_pcsind[m_kr->mineral_number]]->GetNodeValue(k,sp_varind[m_kr->mineral_number]);  // CB HS update
@@ -7669,37 +7679,37 @@ void CKinReactData::PreprocessMinKin(){
         switch (m_kr->Am_model) {
           case 1:
             if(conc>0)
-              m_kr->Am[k] *= conc; 
+              m_kr->Am[k] *= conc;
             if(m_kr->Am[k] < 1e-6){
-              m_kr->Am[k] = 1e-6; //minimum allowed surface area to allow regrowth of a mineral 
+              m_kr->Am[k] = 1e-6; //minimum allowed surface area to allow regrowth of a mineral
               warning = true;
               //node = k;
             }
             break;
           case 2:
-            // do nothing here, update is done in preprocessing function 
+            // do nothing here, update is done in preprocessing function
             break;
           case 3:
-            // do nothing here, update is done in preprocessing function 
+            // do nothing here, update is done in preprocessing function
             break;
           case 4:
-            // do nothing here, update is done in preprocessing function 
+            // do nothing here, update is done in preprocessing function
             break;
           case 5:
-            // SA is proportional to mineral volume fraction 
+            // SA is proportional to mineral volume fraction
             if(conc>0){
               if(REACTINT_vec.size()>0)
-                poro = REACTINT_vec[0]->node_porosity[k]; 
+                poro = REACTINT_vec[0]->node_porosity[k];
               else
-                poro = m_kr->GetPhaseVolumeAtNode(k, 1, 0); // no poro update when RACINT does not exist          
-              phi = conc * MV * (1-poro);            
+                poro = m_kr->GetPhaseVolumeAtNode(k, 1, 0); // no poro update when RACINT does not exist
+              phi = conc * MV * (1-poro);
             }
-            phi = DMAX(1e-7, phi); // guarantee a minimum surface area 
+            phi = DMAX(1e-7, phi); // guarantee a minimum surface area
             //else  phi = 1e-6;
-            m_kr->Am[k] = phi * m_kr->Am_ini * cp_vec[m_kr->mineral_number]->molar_weight / MV;         
+            m_kr->Am[k] = phi * m_kr->Am_ini * cp_vec[m_kr->mineral_number]->molar_weight / MV;
             break;
           default:
-            // do nothing here, update is done in preprocessing function 
+            // do nothing here, update is done in preprocessing function
             break;
         }
 
@@ -7712,7 +7722,7 @@ void CKinReactData::PreprocessMinKin(){
    CTimeDiscretization *m_tim = NULL;
    m_tim = time_vector[0];
    int steps = int(m_tim->time_step_vector.size());
-   bool plot = false;   
+   bool plot = false;
    if(aktueller_zeitschritt == 1 || aktueller_zeitschritt % 10 == 0 || steps == int(aktueller_zeitschritt))
       plot = true;
 
@@ -7729,7 +7739,7 @@ void CKinReactData::PreprocessMinKin(){
     c_dump << "\n";
     //data
     for(int j = 0; j < nnode; j++){
-      c_dump << j << " " << IonicStrengths[j] << " " ; 
+      c_dump << j << " " << IonicStrengths[j] << " " ;
         for (i=0;i<ncomp;i++)  c_dump << ActivityCoefficients[j][i] << " " ;
       c_dump << "\n" << flush;
     }
@@ -7750,7 +7760,7 @@ void CKinReactData::PreprocessMinKin(){
     c_dump << "\n";
     //data
     for(int j = 0; j < nnode; j++){
-      c_dump << j << " "; 
+      c_dump << j << " ";
       for (i=0;i<this->NumberReactions;i++)  {
          m_kr = KinReact_vector[i];
          if(m_kr->typeflag_mineralkinetics!=0){
@@ -7759,7 +7769,7 @@ void CKinReactData::PreprocessMinKin(){
            else
              c_dump << m_kr->Km[0] << " " ;
          }
-      }  
+      }
       c_dump << "\n" << flush;
     }
     c_dump.close();
@@ -7785,7 +7795,7 @@ void CKinReactData::PostprocessMinKin(){
 
   CFEMesh* m_msh = fem_msh_vector[0]; //SB: ToDo hart gesetzt
   nnode = (long) m_msh->nod_vector.size();
-  CKinReact *m_kr = NULL;  
+  CKinReact *m_kr = NULL;
 
   // update or reset mineral reactive surface areas for next time step
   for (i=0; i<NumberReactions; i++){
@@ -7804,9 +7814,9 @@ void CKinReactData::PostprocessMinKin(){
         switch (m_kr->Am_model) {
           case 1: // restore A0/C0 from A0*C(t)/C0 by division with C(t) after transport
             if(conc0>0)
-              m_kr->Am[k] /= conc0; 
+              m_kr->Am[k] /= conc0;
             else
-              m_kr->Am[k] = 1e-6; // minimum allowed surface area to allow regrowth of a mineral            
+              m_kr->Am[k] = 1e-6; // minimum allowed surface area to allow regrowth of a mineral
             break;
           case 2: // for primary minerals, volume fraction weighted
             if(REACTINT_vec.size()>0){
@@ -7814,9 +7824,9 @@ void CKinReactData::PostprocessMinKin(){
               n1 = REACTINT_vec[0]->node_porosity[k];
             }
             else
-              n0 = n1 = m_kr->GetPhaseVolumeAtNode(k, 1, 0); // no poro update when RACINT does not exist          
+              n0 = n1 = m_kr->GetPhaseVolumeAtNode(k, 1, 0); // no poro update when RACINT does not exist
             if(conc0>conc1){ // dissolution
-              mv = cp_vec[m_kr->mineral_number]->molar_weight / cp_vec[m_kr->mineral_number]->mineral_density ; 
+              mv = cp_vec[m_kr->mineral_number]->molar_weight / cp_vec[m_kr->mineral_number]->mineral_density ;
               phi0 = m_kr->Cminini[k] * (1-n0) * mv;
               phi1 = conc1 * (1-n1) * mv;
             }
@@ -7830,9 +7840,9 @@ void CKinReactData::PostprocessMinKin(){
               n1 = REACTINT_vec[0]->node_porosity[k];
             }
             else
-              n0 = n1 = m_kr->GetPhaseVolumeAtNode(k, 1, 0); // no poro update when RACINT does not exist          
+              n0 = n1 = m_kr->GetPhaseVolumeAtNode(k, 1, 0); // no poro update when RACINT does not exist
             if(conc0>conc1){ // dissolution
-              mv = cp_vec[m_kr->mineral_number]->molar_weight / cp_vec[m_kr->mineral_number]->mineral_density ; 
+              mv = cp_vec[m_kr->mineral_number]->molar_weight / cp_vec[m_kr->mineral_number]->mineral_density ;
               phi1 = conc1 * (1-n1) * mv;
             }
             else             // precipitation
@@ -7845,9 +7855,9 @@ void CKinReactData::PostprocessMinKin(){
               n1 = REACTINT_vec[0]->node_porosity[k];
             }
             else
-              n0 = n1 = m_kr->GetPhaseVolumeAtNode(k, 1, 0); // no poro update when RACINT does not exist          
+              n0 = n1 = m_kr->GetPhaseVolumeAtNode(k, 1, 0); // no poro update when RACINT does not exist
             if(conc0>conc1){ // dissolution
-              mv = cp_vec[m_kr->mineral_number]->molar_weight / cp_vec[m_kr->mineral_number]->mineral_density ; 
+              mv = cp_vec[m_kr->mineral_number]->molar_weight / cp_vec[m_kr->mineral_number]->mineral_density ;
               phi1 = conc1 * (1-n1) * mv;
               m_kr->Am[k] = m_kr->Am_ini * phi1 * cp_vec[m_kr->mineral_number]->molar_weight / mv;
             }
@@ -7857,10 +7867,10 @@ void CKinReactData::PostprocessMinKin(){
             }
             break;
           case 5:
-            // do nothing  
+            // do nothing
             break;
           default:
-            // do nothing  
+            // do nothing
             break;
         }
 
@@ -7872,7 +7882,7 @@ void CKinReactData::PostprocessMinKin(){
   CTimeDiscretization *m_tim = NULL;
   m_tim = time_vector[0];
   int steps = int(m_tim->time_step_vector.size());
-  bool plot = false;   
+  bool plot = false;
   if(aktueller_zeitschritt == 1 || aktueller_zeitschritt % 10 == 0 || steps == int(aktueller_zeitschritt))
     plot = true;
 
@@ -7883,7 +7893,7 @@ void CKinReactData::PostprocessMinKin(){
     string file= FileName + "_reactivesurfaceareas.dump";
     aus.setf(ios::scientific,ios::floatfield);
     aus.precision(12);
-    aus.open(file.c_str()); 
+    aus.open(file.c_str());
 
     for(i=0;i<nnode;i++) {
       if(i==0){
@@ -7900,7 +7910,7 @@ void CKinReactData::PostprocessMinKin(){
       for (int j=0; j<NumberReactions; j++){
           m_kr = KinReact_vector[j];
           if(m_kr->typeflag_mineralkinetics && m_kr->Am_constant == false)
-            aus << m_kr->Am[i] << " "; 
+            aus << m_kr->Am[i] << " ";
       }
       aus << "\n";
     }
@@ -7929,12 +7939,12 @@ double CKinReact::Omega(double *c, int node){
 
   CKinReactData *m_krd = NULL;
   m_krd = KinReactData_vector[0];
-     
+
   if(REACTINT_vec.size()>0){
     REACTINT *m_rei = NULL;
     m_rei = REACTINT_vec[0];
     if(m_rei->unitconversion)
-      unitfactor_l = MOLH2OPERKG / m_rei->water_conc[node] ; 
+      unitfactor_l = MOLH2OPERKG / m_rei->water_conc[node] ;
   }
   // get K equi at given P and T
   if (Km_uniform==true)
@@ -7944,45 +7954,45 @@ double CKinReact::Omega(double *c, int node){
 
   // ion activity product
   // -ProductionStoch[idx] is exponent in IAP; sign must be changed here
-  // negative, because the kinetic reaction is formulated for precipitation 
-  // --> removal of dissolved species from solution --> negative StoechCoeff, 
-  // but they are positive in IAP for educts of a mineral 
+  // negative, because the kinetic reaction is formulated for precipitation
+  // --> removal of dissolved species from solution --> negative StoechCoeff,
+  // but they are positive in IAP for educts of a mineral
   for(i=0;i<number_reactionpartner;i++){
     idx = minSpeciesIdx[i];
     conc = c[idx+1]  ;
-    if(c[idx+1]<0) conc = 1e-20; 
-    if(idx==mineral_number ) 
+    if(c[idx+1]<0) conc = 1e-20;
+    if(idx==mineral_number )
       omega /= 1 ; // Mineral activity = 1 by definition
     else if (idx==water_number){
         if(m_krd->activity_model>0) // in case of water, this contains the activity directly
-          omega *= pow( m_krd->ActivityCoefficients[node][idx], -ProductionStoch[idx]); 
-        else    
-          omega /= 1 ; 
+          omega *= pow( m_krd->ActivityCoefficients[node][idx], -ProductionStoch[idx]);
+        else
+          omega /= 1 ;
     }
     else{
       //if(reactionpartner[i].compare("pH")!=0){
         if(m_krd->activity_model>0)
-          omega *= pow( m_krd->ActivityCoefficients[node][idx] * conc * unitfactor_l, -ProductionStoch[idx]); 
+          omega *= pow( m_krd->ActivityCoefficients[node][idx] * conc * unitfactor_l, -ProductionStoch[idx]);
         else
-          omega *= pow( 1 * conc * unitfactor_l, -ProductionStoch[idx]); 
+          omega *= pow( 1 * conc * unitfactor_l, -ProductionStoch[idx]);
       //}
       //else // pH is -log(gamma*H+)
-      //  omega *= pow( exp(-conc), -ProductionStoch[idx]); 
+      //  omega *= pow( exp(-conc), -ProductionStoch[idx]);
     }
   }
   // divide by equilibrium constant
   if (number_reactionpartner==0)
     omega = 0;
   else
-    omega/=K_pt; 
+    omega/=K_pt;
   return omega;
 }
 
 
 /**************************************************************************
  Reaction-Method:
- Task: This function calculates the mineral dissolution / precipitation 
-    rate as a function of the rate constant Ktot, the surface area 
+ Task: This function calculates the mineral dissolution / precipitation
+    rate as a function of the rate constant Ktot, the surface area
     and the IAP
  Programing:
  //CB 01.2011 CB First implementation
@@ -8006,7 +8016,7 @@ double CKinReact::MinRate(double *c, int node, double dt, double Om){
   //DMIN(H1, 11.0);
   // total rate
   if(H1<1 && c[mineral_number+1]<=1.1e-7)  // undersaturated, but no mineral present, no dissolution
-    rate = 0;                        
+    rate = 0;
   else{                               // supersat.-->precip, or undersat. & mineral present
     H2 = fabs(1-H1);
     if(H2<OmegaThreshhold)                       // very close to equilibrium, do nothing
@@ -8019,9 +8029,9 @@ double CKinReact::MinRate(double *c, int node, double dt, double Om){
       else
         ktot = -MinRateConstant(c, node, (1-H1)); // default negative rate: dissolution of mineral
       // sign function:, positive rate for supersat, and slow it down by precipfactor (defaulfactor = 1)
-      if((1-H1)<=0)                     
+      if((1-H1)<=0)
         rate = -1.0*precipfactor*ktot*A/vol;  // precipfactor used to slow down precipitation by constant factor
-      else       
+      else
         rate = ktot*A/vol;
       //some modification for Lagneau Benchmark probably required here
 
@@ -8037,25 +8047,25 @@ double CKinReact::MinRate(double *c, int node, double dt, double Om){
         rate *= Betrag;
     }
   }
-  
+
   // limit rates to the present amount of mineral and dissolved species to avoid overshoot
   if(scale_rate && rate != 0){
     maxrate = rate;
     poro1 = GetReferenceVolume(mineral_number,node); // mineral (solid phase volume)
-    if(rate<0){ // dissolution  
+    if(rate<0){ // dissolution
       //only limited by left hand side reaction equation species, i.e. Stcoef>0 or mineral itself
       for(i=0;i<int(ProductionStoch.size());i++){
         if(ProductionStoch[i]>0 || i==mineral_number){
           conc = DMAX(0,c[i+1]);         // do not evaluate negative conc
           if(mineral_number==i)          // this is the mineral
             maxrate = -conc / dt;        // max amount that can be dissolved
-          else if(ProductionStoch[i]>0){ // this is other species consumed by dissolution, Stcoef > 0 
+          else if(ProductionStoch[i]>0){ // this is other species consumed by dissolution, Stcoef > 0
             poro2	= GetReferenceVolume(i,node);         // dissolved phase volume
-            maxrate = -conc / dt * poro2 / poro1 / ProductionStoch[i]; 
+            maxrate = -conc / dt * poro2 / poro1 / ProductionStoch[i];
           }
           // update maxrate,the larger, the more negative, so find maximum here
-          rate = DMAX(rate,maxrate);   
-        }          
+          rate = DMAX(rate,maxrate);
+        }
       }
     }
     else if (rate>0){ // precipitation, not limited by mineral concentration
@@ -8066,7 +8076,7 @@ double CKinReact::MinRate(double *c, int node, double dt, double Om){
           maxrate = -conc / dt * poro2 / poro1 / ProductionStoch[i]; // - before conc is necessary here
         }
         // update maxrate, the larger, the more positive, so find minimum here
-        rate = DMIN(rate,maxrate);             
+        rate = DMIN(rate,maxrate);
       }
     }
   }
@@ -8074,18 +8084,18 @@ double CKinReact::MinRate(double *c, int node, double dt, double Om){
   //if(scale_rate){
   //  maxrate = rate;
   //  poro1 = GetReferenceVolume(mineral_number,node); // mineral (solid phase volume)
-  //  if(rate<0){ // dissolution  
+  //  if(rate<0){ // dissolution
   //    //only limited by left hand side reaction equation species, i.e. Stcoef>0 or mineral itself
   //    for(i=0;i<int(minSpeciesIdx.size());i++){
   //      conc = DMAX(0,c[minSpeciesIdx[i]+1]);         // do not evaluate negative conc
   //      if(mineral_number==minSpeciesIdx[i])          // this is the mineral
   //        maxrate = -conc / dt;                      // max amount that can be dissolved
-  //      else if(ProductionStoch[minSpeciesIdx[i]]>0){ // this is other species consumed by dissolution, Stcoef > 0 
+  //      else if(ProductionStoch[minSpeciesIdx[i]]>0){ // this is other species consumed by dissolution, Stcoef > 0
   //        poro2	= GetReferenceVolume(minSpeciesIdx[i],node);         // dissolved phase volume
-  //        maxrate = -conc / dt * poro2 / poro1 / ProductionStoch[minSpeciesIdx[i]]; 
+  //        maxrate = -conc / dt * poro2 / poro1 / ProductionStoch[minSpeciesIdx[i]];
   //      }
   //      // update maxrate,the larger, the more negative, so find maximum here
-  //      rate = DMAX(rate,maxrate);             
+  //      rate = DMAX(rate,maxrate);
   //    }
   //  }
   //  else if (rate>0){ // precipitation, not limited by mineral concentration
@@ -8096,7 +8106,7 @@ double CKinReact::MinRate(double *c, int node, double dt, double Om){
   //        maxrate = -conc / dt * poro2 / poro1 / ProductionStoch[minSpeciesIdx[i]]; // - before conc is necessary here
   //      }
   //      // update maxrate, the larger, the more positive, so find minimum here
-  //      rate = DMIN(rate,maxrate);             
+  //      rate = DMIN(rate,maxrate);
   //    }
   //  }
   //}
@@ -8108,7 +8118,7 @@ double CKinReact::MinRate(double *c, int node, double dt, double Om){
 
 /**************************************************************************
  Reaction-Method:
- Task: This function resturns the mineral disoolution / precipitation 
+ Task: This function resturns the mineral disoolution / precipitation
     rate constant as a sum over all reaction mechanisms
     Ktot = Sum(Mech)
  Programing:
@@ -8118,9 +8128,9 @@ double CKinReact::MinRateConstant(double *c, int node, double disso){
 
   int i;
   double ktot = 0;
- 
+
   // calc the rate constant
-  for(i=0;i<number_Mech;i++){    
+  for(i=0;i<number_Mech;i++){
     if(disso<0 && precip_baseterm_only == true){   //for precipitation, consider only base mechanism, if set in inputfile
       if(mechvec[i]->no_mechSpec==0)
         ktot += mechvec[i]->Mech(c, node);
@@ -8129,7 +8139,7 @@ double CKinReact::MinRateConstant(double *c, int node, double disso){
       ktot += mechvec[i]->Mech(c, node);
     }
   }
-  
+
   return ktot;
 }
 
@@ -8165,7 +8175,7 @@ MinkinMech::~MinkinMech (void){
 
 /**************************************************************************
  Reaction-Method:
- Task: This function returns the contribution of a single mineral 
+ Task: This function returns the contribution of a single mineral
     precipitation / dissolution mechanism to the total rate constant
     Ktot = Sum(Mech)
  Programing:
@@ -8178,7 +8188,7 @@ double MinkinMech::Mech (double *c, int node){
 
   int i, idx, actmodel;
   double kmech=0, conc = 0;
-  double R = 8.314472; // gas constant = R 8.314472(15) J/K/mol  
+  double R = 8.314472; // gas constant = R 8.314472(15) J/K/mol
   CKinReactData *m_krd = NULL;
   m_krd = KinReactData_vector[0];
   double unitfactor_l = 1;
@@ -8188,8 +8198,8 @@ double MinkinMech::Mech (double *c, int node){
     REACTINT *m_rei = NULL;
     m_rei = REACTINT_vec[0];
     if(m_rei->unitconversion)
-      unitfactor_l = MOLH2OPERKG / m_rei->water_conc[node] ; 
-    T = m_rei->GetTemperature(node); 
+      unitfactor_l = MOLH2OPERKG / m_rei->water_conc[node] ;
+    T = m_rei->GetTemperature(node);
   }
   actmodel = m_krd->activity_model;
 
@@ -8206,14 +8216,14 @@ double MinkinMech::Mech (double *c, int node){
     if(mechSpeciesNames[i].compare("pH")!=0){
       if(actmodel>0)
         kmech *= pow((m_krd->ActivityCoefficients[node][idx]*conc*unitfactor_l), mechSpeciesExpo[i]);
-      else 
+      else
         kmech *= pow((1*conc*unitfactor_l), mechSpeciesExpo[i]); // all activity coefficients are 1.0
     }
     else{ // pH is -log(gamma*H+)
       if(actmodel>0)
-        kmech *= pow(pow(10,m_krd->ActivityCoefficients[node][idx]*(-conc*unitfactor_l)), mechSpeciesExpo[i]); 
+        kmech *= pow(pow(10,m_krd->ActivityCoefficients[node][idx]*(-conc*unitfactor_l)), mechSpeciesExpo[i]);
       else
-        kmech *= pow(pow(10,1*(-conc*unitfactor_l)), mechSpeciesExpo[i]); 
+        kmech *= pow(pow(10,1*(-conc*unitfactor_l)), mechSpeciesExpo[i]);
     }
   }
 
@@ -8247,37 +8257,37 @@ void CKinReactData::CopyConcentrations(void){
   int nidx0;
   long nidx = 0;
 
-  if(copy_concentrations == false) 
+  if(copy_concentrations == false)
     return;
-  
-  cout << " CopyConcentrations " << "\n"; 
+
+  cout << " CopyConcentrations " << "\n";
   // get number of nodes
   nnodes = (long) m_msh->nod_vector.size();
   nele = (long) m_msh->ele_vector.size();
 
   // first time called, Check if mesh is appropriate
-  if(copy_nodes.size() < 1){ 
+  if(copy_nodes.size() < 1){
     // BATCH
     if(batch){
       if(nnodes==2 && nele == 1 && m_msh->ele_vector[0]->GetElementType() == 1){
         // for a single line element
-        if(is_a_CCBC[0] == true && is_a_CCBC[1] == false ) 
-          batch = true;              
-        else if(is_a_CCBC[0] == false && is_a_CCBC[1] == true ) 
-          batch = true;              
+        if(is_a_CCBC[0] == true && is_a_CCBC[1] == false )
+          batch = true;
+        else if(is_a_CCBC[0] == false && is_a_CCBC[1] == true )
+          batch = true;
         else{
 		 cout << "\n" << " Copy Concentrations only for a single (batch) line element with one deactivated node!"
-                << " - Option switched off " << "\n";	
+                << " - Option switched off " << "\n";
          batch = copy_concentrations = false;
-        }    
-      } 
+        }
+      }
     }
     // RADIAL
     else if ((radial) || (TwoDinThreeD)){
       // Only for hex-elements
 	  for(i=0;i<nele;i++) {
 	    if(m_msh->ele_vector[i]->GetElementType() != 3){
-	      cout << "\n" << " Copy Cons only for hex elements ! - Option switched off " << "\n";	
+	      cout << "\n" << " Copy Cons only for hex elements ! - Option switched off " << "\n";
           radial = TwoDinThreeD = copy_concentrations = false;
           break;
         }
@@ -8294,19 +8304,19 @@ void CKinReactData::CopyConcentrations(void){
 
 /*       *3-----*2
          |\     |\
-         | *0---+-*1   
+         | *0---+-*1
          *-|----* |
-          \|     \| 
-           *------*        */     
-      
+          \|     \|
+           *------*        */
+
       // check orientation of element: all should have same z-value
       if((coord0[2] != coord1[2]) || (coord0[2] != coord2[2]) || (coord0[2] != coord3[2])){
 	    cout << " Error: Not identical z coordinates of element nodes of element 0 " << "\n";
-        err_flag = false; 
+        err_flag = false;
       }
       // node0 and node3 should have same x value, as well as node1 and node2
       if((coord0[0] != coord3[0]) || (coord1[0] != coord2[0])){
- 	    cout << " Error: Not identical x coordinates of element nodes (0/3) or (1/2) of element 0 " << "\n"; 
+ 	    cout << " Error: Not identical x coordinates of element nodes (0/3) or (1/2) of element 0 " << "\n";
 	    err_flag = false;
       }
       // this is different for radial and TwoDinThreeD
@@ -8349,7 +8359,7 @@ void CKinReactData::CopyConcentrations(void){
         if(err_flag == false) {
           cout << "\n" << " Copy Cons - Please switch off one model side for reaction calculation ! - Option switched off " << "\n";
           radial = TwoDinThreeD = copy_concentrations = false;
-        } 
+        }
       }
     }// ((radial) || (TwoDinThreeD)){
 
@@ -8362,20 +8372,20 @@ void CKinReactData::CopyConcentrations(void){
 
 
   // first time called, build data structures and set up index vector
-  if(copy_nodes.size() < 1){ 
-    
+  if(copy_nodes.size() < 1){
+
     // Make vector for all nodes for mapping
-    for(i=0;i<nnodes;i++) 
+    for(i=0;i<nnodes;i++)
       copy_nodes.push_back(i); // map each node to itself by default
 
     // Now, prepare copy node relations
     if(batch){
-      for(i=0;i<nnodes;i++) 
+      for(i=0;i<nnodes;i++)
         if(is_a_CCBC[i] == true && i>0 ) copy_nodes[i]=i-1;
         else if(is_a_CCBC[i] == true) copy_nodes[i]=i+1;
     }// batch
     else if(radial){
-      // Go through all elements and set copy values respectively 
+      // Go through all elements and set copy values respectively
       for(i=0;i<nele;i++) {
         m_ele = m_msh->ele_vector[i]; // get element
 	    m_ele->GetNodeIndeces(vec_nod_index);
@@ -8422,9 +8432,9 @@ void CKinReactData::CopyConcentrations(void){
       }
     } // radial
     else if(TwoDinThreeD ){
-      for(i=0;i<nnodes;i++){ 
+      for(i=0;i<nnodes;i++){
         if(is_a_CCBC[i] == false){ // reactions are quantified at this node
-          // get node coordinates  
+          // get node coordinates
           coord0 = m_msh->nod_vector[i]->getData();
           // check all neighbour nodes
           for(j=0;j<m_msh->nod_vector[i]->getNumConnectedNodes();j++){
@@ -8432,7 +8442,7 @@ void CKinReactData::CopyConcentrations(void){
             coord1 = m_msh->nod_vector[nidx]->getData();
             // check orientation of nodes: should have same x + z and y of neighbour should be larger
             if((coord0[0] == coord1[0]) && (coord0[2] == coord1[2]) && (coord0[1] < coord1[1])){
-              // Found! 
+              // Found!
               // Check if reaction is really switched off at this neighbour
               if(is_a_CCBC[nidx] == true) //set the neighbour index
                 //copy_nodes[i]=nidx;
@@ -8442,7 +8452,7 @@ void CKinReactData::CopyConcentrations(void){
           } // done
           // now check for success:
           if(copy_nodes[nidx]==nidx)
-            cout << "Warning in CKinReactData::CopyConcentrations:!" 
+            cout << "Warning in CKinReactData::CopyConcentrations:!"
                  <<  " No Neighbour found for copy nodes " << i << "\n";
         }// is_a_CCBC[i] == false -> node with reactions
       }// node loop
@@ -8465,7 +8475,7 @@ void CKinReactData::CopyConcentrations(void){
 	    for(k=0;k<nnodes;k++){
 	      i_copy_to = k;
 	      i_copy_from = copy_nodes[i_copy_to];
-          if(i_copy_to != i_copy_from){ // only do for differing node indicess 
+          if(i_copy_to != i_copy_from){ // only do for differing node indicess
             m_pcs->SetNodeValue(i_copy_to,nidx0,m_pcs->GetNodeValue(i_copy_from,nidx0));
             l++;
           }
@@ -8473,7 +8483,7 @@ void CKinReactData::CopyConcentrations(void){
       }
     }
   }
-  cout << "     at " << l << " of " << nnodes << " nodes." << "\n"; 
+  cout << "     at " << l << " of " << nnodes << " nodes." << "\n";
   // end function
 }
 

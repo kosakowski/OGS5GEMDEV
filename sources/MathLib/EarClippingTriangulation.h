@@ -3,6 +3,11 @@
  *
  *  Created on: Feb 23, 2011
  *      Author: TF
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
  */
 
 #ifndef EARCLIPPINGTRIANGULATION_H_

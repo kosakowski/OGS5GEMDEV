@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************
    FEMLib - Object: Boundary Conditions
    Task: class implementation
@@ -25,6 +34,7 @@ class BoundaryConditionIO;
 #include "LinearFunctionData.h" // TF
 #include "ProcessInfo.h"                          // KR
 #include "Constrained.h"
+#include "SwitchBC.h"
 
 // GEOLib
 //#include "geo_ply.h"
@@ -145,6 +155,9 @@ public:
 	Constrained const & getConstrainedBC(std::size_t i) const { return _constrainedBC[i]; }
 	std::size_t getNumberOfConstrainedBCs() const { return _constrainedBC.size(); }
 	bool isSeepageBC() const { return _isSeepageBC; }
+	bool isSwitchBC() const {return _isSwitchBC;}
+	SwitchBC const & getSwitchBC() const { return _switchBC; }
+
 
 private:
 	std::vector<std::string> _PointsFCTNames;
@@ -218,6 +231,9 @@ private:
 	std::vector<Constrained> _constrainedBC;
 	bool _isSeepageBC;
 
+	bool _isSwitchBC;
+	SwitchBC _switchBC;
+
 };
 
 class CBoundaryConditionNode                      //OK raus
@@ -228,7 +244,7 @@ public:
 	long msh_node_number_subst;           //WW
 
 	double node_value;
-	double node_value_last_calc;
+	double node_value_pre_calc;
 	int CurveIndex;                       // Time dependent function index
 	std::string pcs_pv_name;              //YD/WW
 	//

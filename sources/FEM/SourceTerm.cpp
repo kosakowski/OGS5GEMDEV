@@ -2,6 +2,11 @@
  * \file SourceTerm.cpp
  * 2011/08/30 KR inital implementation
  *
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
  */
 
 #include "SourceTerm.h"

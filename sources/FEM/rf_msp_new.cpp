@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************
    FEMLib - Object: MSP Solid Properties
    Task:
@@ -30,14 +39,15 @@
 #include "files0.h"                               // GetLineFromFile1
 #include "tools.h"                                // GetLineFromFile
 
-using namespace std;
+std::vector<SolidProp::CSolidProperties*> msp_vector;
+std::vector<std::string> msp_key_word_vector;               //OK
 
-vector<SolidProp::CSolidProperties*> msp_vector;
-vector<string> msp_key_word_vector;               //OK
-
-using FiniteElement::ElementValue_DM;
 namespace SolidProp
 {
+	using namespace std;
+	using FiniteElement::ElementValue_DM;
+	using Math_Group::Matrix;
+
 /**************************************************************************
    FEMLib-Method:
    Task: OBJ read function
@@ -303,12 +313,12 @@ std::ios::pos_type CSolidProperties::Read(std::ifstream* msp_file)
 					in_sd.clear();
 				}
 				break;
-			case 5:       // DECOVALEX2015, Task B2, Buffer: f(S,T) by matrix function 
+			case 5:       // DECOVALEX2015, Task B2, Buffer: f(S,T) by matrix function
 				in_sd >> T_0;
 				in_sd.clear();
 				conductivity_pcs_name_vector.push_back("TEMPERATURE1");
  				conductivity_pcs_name_vector.push_back("SATURATION1");
-				break; 
+				break;
 			}
 			in_sd.clear();
 		}
@@ -515,9 +525,9 @@ std::ios::pos_type CSolidProperties::Read(std::ifstream* msp_file)
 			}
 			//TN..................................................................
 			if(line_string.find("BGRB")!=string::npos)
-			{           
+			{
 				Creep_mode=3;
-				// data_Creep: 
+				// data_Creep:
 				//  0: A1,  coefficient A1
 				//  1: n1,   exponential n1
 				//  2: Q1,   activation energy Q1
@@ -532,12 +542,12 @@ std::ios::pos_type CSolidProperties::Read(std::ifstream* msp_file)
 				in_sd>>(*data_Creep)(3);
 				in_sd>>(*data_Creep)(4);
 				in_sd>>(*data_Creep)(5);
-				in_sd.clear();           
+				in_sd.clear();
 			}
 			if(line_string.find("BGRSF")!=string::npos)
 			{
 				Creep_mode=4;
-				// data_Creep: 
+				// data_Creep:
 				//  0: A,   coefficient A
 				//  1: n,   exponential
 				//  2: Q,   activation energy
@@ -548,7 +558,7 @@ std::ios::pos_type CSolidProperties::Read(std::ifstream* msp_file)
 				in_sd>>(*data_Creep)(1);
 				in_sd>>(*data_Creep)(2);
 				in_sd>>(*data_Creep)(3);
-				in_sd.clear();           
+				in_sd.clear();
 			}
 			//....................................................................
 			if(line_string.find("LUBBY2") != string::npos)
@@ -603,9 +613,9 @@ std::ios::pos_type CSolidProperties::Read(std::ifstream* msp_file)
 			case 2: //pow(Se, parameter)
 				in_sd >> bishop_model_value;
 				break;
-			case 3:              // JM model 3:    if p<bishop_model_value -> bishop_parameter=0.0;  else -> bishop_parameter=1.0  
-				in_sd >> bishop_model_value;                       
-				break;              
+			case 3:              // JM model 3:    if p<bishop_model_value -> bishop_parameter=0.0;  else -> bishop_parameter=1.0
+				in_sd >> bishop_model_value;
+				break;
 			default:
 				break;
 			}
@@ -774,7 +784,10 @@ std::ios::pos_type CSolidProperties::Read(std::ifstream* msp_file)
 				   3   sigci
 				 */
 			}
-			data_Plasticity = new Matrix(Size);
+			if (Plasticity_type == 1)
+				data_Plasticity = new Matrix(Size + 1);
+			else
+				data_Plasticity = new Matrix(Size);
 			for(i = 0; i < Size; i++)
 			{
 				in_sd.str(GetLineFromFile1(msp_file));
@@ -782,7 +795,7 @@ std::ios::pos_type CSolidProperties::Read(std::ifstream* msp_file)
 				in_sd.clear();
 			}
 		}
-		 //Solid reaction system 
+		 //Solid reaction system
 		 if(line_string.find("$REACTIVE_SYSTEM")!=string::npos)
          {
 	         in_sd.str(GetLineFromFile1(msp_file));
@@ -795,7 +808,7 @@ std::ios::pos_type CSolidProperties::Read(std::ifstream* msp_file)
 				in_sd.clear();
 			 }
 			 SetSolidReactiveSystemProperties();
-			
+
          }
 
 		 //Solid non reactive fraction
@@ -804,7 +817,7 @@ std::ios::pos_type CSolidProperties::Read(std::ifstream* msp_file)
 	         in_sd.str(GetLineFromFile1(msp_file));
 			 in_sd >> non_reactive_solid_volume_fraction >> non_reactive_solid_density;
 			 in_sd.clear();
-			
+
          }
 
 		 if(line_string.find("$SPECIFIC_HEAT_SOURCE")!=string::npos)
@@ -918,12 +931,12 @@ CSolidProperties::CSolidProperties()
 	Youngs_mode = -1;
 	Capacity_mode = -1;
 	Conductivity_mode = -1;
-	T_0 = 0.0; 
+	T_0 = 0.0;
 	Creep_mode = -1;
 	grav_const = 9.81;                    //WW
 	excavation = -1;                      //12.2009. WW
 	excavated = false;                    //To be .....  12.2009. WW
-	E_Function_Model = -1;						//WX:06.2012 E dependence	  
+	E_Function_Model = -1;						//WX:06.2012 E dependence
 	threshold_dev_str = -1.;						//WX:12.2012
 	Time_Dependent_E_nv_mode = -1;//WX:01.2013
 	Time_Dependent_E_nv_value[0] = -1;//WX:01.2013
@@ -995,7 +1008,7 @@ CSolidProperties::CSolidProperties()
 	  //Reactive system
 	reaction_system = "INERT";
 	_reactive_system = FiniteElement::INERT;
-	lower_solid_density_limit = 0.0; 
+	lower_solid_density_limit = 0.0;
 	upper_solid_density_limit = 0.0;
 	reaction_enthalpy = 0.0;
 	reaction_entropy = 0.0;
@@ -1191,11 +1204,6 @@ double CSolidProperties::Density(double refence )
 	}
 	return val;
 }
-// Initialize density
-void CSolidProperties::NullDensity()
-{
-	(*data_Density) = 0.0;
-}
 
 /**************************************************************************
    FEMLib-Method: CSolidProperties::Heat_Capacity(const double refence = 0.0) const
@@ -1384,7 +1392,7 @@ double CSolidProperties::Heat_Conductivity(double refence)
 		val = (*data_Conductivity)(0);
 		break;
 	case 2:
-		{  
+		{
 		const double *k_T = data_Conductivity->getEntryArray();
 
 		// 0. Wet conductivity
@@ -1406,7 +1414,7 @@ double CSolidProperties::Heat_Conductivity(double refence)
 		break;
 	case 30:  // Another model for bentonite. 10.2013. WW
 		{
-		//val = k_max-k_min/(1+10.0*exp(refence-S0));  
+		//val = k_max-k_min/(1+10.0*exp(refence-S0));
 		const double *k_T = data_Conductivity->getEntryArray();
 //		val = k_T[0] - (k_T[0]-k_T[1]) / (1 + exp(10.0 * (refence - k_T[2])));
 		val = k_T[0] + k_T[1]* (refence - k_T[2]);
@@ -1415,10 +1423,10 @@ double CSolidProperties::Heat_Conductivity(double refence)
 	case 4:                               //21.12.2009. WW
 		val = CalulateValue(data_Conductivity, refence);
 		break;
-	case 5:                               // DECOVALEX2015, TaskB2 JM            
+	case 5:                               // DECOVALEX2015, TaskB2 JM
 		CalPrimaryVariable(capacity_pcs_name_vector);
 		val = GetMatrixValue(primary_variable[0]+T_0,primary_variable[1],name,&gueltig);
-		break; 
+		break;
 	}
 	return val;
 }
@@ -1452,7 +1460,7 @@ void CSolidProperties::HeatConductivityTensor(const int dim, double* tensor, int
 	//--------------------------------------------------------------------
 	//There are a number of cases where the heat conductivity tensor is defined by the capacity model;
 	double base_thermal_conductivity = .0;
-	int gueltig=1; 
+	int gueltig=1;
 	switch (Conductivity_mode)
 	{
 	case 0:
@@ -1471,9 +1479,9 @@ void CSolidProperties::HeatConductivityTensor(const int dim, double* tensor, int
 		saturation = primary_variable[1];
 		base_thermal_conductivity = Heat_Conductivity(saturation);
 		break;
-	case 5:                      
-		base_thermal_conductivity = GetMatrixValue(primary_variable[1],primary_variable[0]+T_0,name,&gueltig);  
-		break;  
+	case 5:
+		base_thermal_conductivity = GetMatrixValue(primary_variable[1],primary_variable[0]+T_0,name,&gueltig);
+		break;
 	default:                              //Normal case
 		cout <<
 		"***Error in CSolidProperties::HeatConductivityTensor(): conductivity mode is not supported "
@@ -1679,7 +1687,7 @@ void CSolidProperties::ElasticConstitutiveTransverseIsotropic(const int Dimensio
 			Ea *= GetCurveValue(Time_Dependent_E_nv_value[1],0,aktuelle_zeit,&valid);
 			ni *= GetCurveValue(Time_Dependent_E_nv_value[2],0,aktuelle_zeit,&valid);
 			nia *= GetCurveValue(Time_Dependent_E_nv_value[3],0,aktuelle_zeit,&valid);
-			Ga *= GetCurveValue(Time_Dependent_E_nv_value[4],0,aktuelle_zeit,&valid);			  
+			Ga *= GetCurveValue(Time_Dependent_E_nv_value[4],0,aktuelle_zeit,&valid);
 			break;
 		default:
 			cout<<"ERROR: not valid TIME_DEPENDENT_YOUNG_POISSON mode."<<endl;
@@ -3056,8 +3064,8 @@ void CSolidProperties::TangentialDPwithTensionCorner(Matrix* Dep, double /*mm*/)
 }
 
 /*******************************************************
-WX: Mohr coulomb, 
-directe stress integration, also for aniso. 
+WX: Mohr coulomb,
+directe stress integration, also for aniso.
 *******************************************************/
 int CSolidProperties::StressIntegrationMOHR_Aniso(const int GPiGPj, const ElementValue_DM *ele_val,
                                                   double* TryStress, const int Update, Matrix* Dep )
@@ -3089,7 +3097,7 @@ int CSolidProperties::StressIntegrationMOHR_Aniso(const int GPiGPj, const Elemen
 
 	//ConstitutiveMatrix->resize(Size,Size);		//in head already defined, and is used for later as global variable
 
-	*ConstitutiveMatrix = (0.);	
+	*ConstitutiveMatrix = (0.);
 
 	ep = (*ele_val->pStrain)(GPiGPj);			//get eff plas strain
 
@@ -3141,7 +3149,7 @@ int CSolidProperties::StressIntegrationMOHR_Aniso(const int GPiGPj, const Elemen
 	//}
 //
 
-		*TmpMatrix = (0.);					
+		*TmpMatrix = (0.);
 		*TmpMatrix2 = (0.);
 		CalPrinStrDir(TmpStress, tmp_prin_str, tmp_prin_dir, Dim);
 		CalTransMatrixA(tmp_prin_dir, TmpMatrix, Size);
@@ -3160,7 +3168,7 @@ int CSolidProperties::StressIntegrationMOHR_Aniso(const int GPiGPj, const Elemen
 		TmpMatrix2->multi(TmpPrinStrTens,TmpStrTens);
 		AnisoParaComp = CalAnisoPara(TmpStrComp,MicroStruTensor);
 		AnisoParaTens = CalAnisoPara(TmpStrTens,MicroStruTensor);
-		CalculateCoefficent_MOHR(ep, AnisoParaComp, AnisoParaTens);		
+		CalculateCoefficent_MOHR(ep, AnisoParaComp, AnisoParaTens);
 	}
 
 	double Kronecker[6]={1,1,1,0,0,0};
@@ -3171,13 +3179,13 @@ int CSolidProperties::StressIntegrationMOHR_Aniso(const int GPiGPj, const Elemen
 	J2 = 0.5*TensorMutiplication2(devStr,devStr,Dim);
 	sqrtJ2 = sqrt(J2);
 	J3 = TensorMutiplication3(devStr,devStr,devStr,Dim);
-	
+
 	if (J2 == 0)
 	{
 		LodeAngle = 0 ;//avoid error
 		lode_out_range = true;
 	}
-	else 
+	else
 	{
 		if((-3*sqrt3/2.*J3/pow(sqrtJ2,3))>1-1e-6)
 		{
@@ -3210,7 +3218,7 @@ int CSolidProperties::StressIntegrationMOHR_Aniso(const int GPiGPj, const Elemen
 		bool first_step;
 		double shearsurf_k1, tensionsurf_k1 /*, local_damp, tmp_pos = 1., tmp_neg=1.*/; //Newton downhill
 		double lamda_pos=0., lamda_neg=0., shearsurf_pos, shearsurf_neg, tensionsurf_pos, tensionsurf_neg;
-		if(tensionsurf>MKleinsteZahl)//if tension 
+		if(tensionsurf>MKleinsteZahl)//if tension
 		{
 			// dlamda = 0, dlamda_1=1;
 			counter = 0;
@@ -3238,7 +3246,7 @@ int CSolidProperties::StressIntegrationMOHR_Aniso(const int GPiGPj, const Elemen
 
 					dlode_dsig[2]=sqrt3/(2.*MathLib::fastpow(sqrtJ2,3)*cos(3.*LodeAngle))*(3.*J3/2./J2*devStr[2]
 					-(devStr[4]*devStr[4]+devStr[5]*devStr[5]+devStr[2]*devStr[2])+2.*J2*Kronecker[2]/3.0);
-				
+
 					dlode_dsig[3]=sqrt3/(2.*MathLib::fastpow(sqrtJ2,3)*cos(3.*LodeAngle))*(3.*J3/2./J2*devStr[3]
 					-(devStr[0]*devStr[3]+devStr[3]*devStr[1]+devStr[4]*devStr[5])+2.*J2*Kronecker[3]/3.0);
 
@@ -3311,10 +3319,10 @@ int CSolidProperties::StressIntegrationMOHR_Aniso(const int GPiGPj, const Elemen
 						//-dcsn_dsig[i];
 					}
 				}
-				
+
 				//
 				if(counter == 0)
-				{					
+				{
 					if(tensionsurf_k1 > 0)
 					{
 						lamda_pos = dlamda;
@@ -3338,7 +3346,7 @@ int CSolidProperties::StressIntegrationMOHR_Aniso(const int GPiGPj, const Elemen
 						else
 							dlamda = tensionsurf / TmpValue1;
 						tensionsurf_pos=tensionsurf_k1;
-						dlamda += lamda_pos; 
+						dlamda += lamda_pos;
 					}
 					else
 					{
@@ -3351,7 +3359,7 @@ int CSolidProperties::StressIntegrationMOHR_Aniso(const int GPiGPj, const Elemen
 				{
 					counter ++;
 					if(fabs(tensionsurf_k1)<1e-3)
-					{						
+					{
 						//for(i=0;i<Size;i++)
 						//	dsig_dlamda[i]=0.;
 						//Dep->multi(dgt_dsig,dsig_dlamda,-1);
@@ -3369,7 +3377,7 @@ int CSolidProperties::StressIntegrationMOHR_Aniso(const int GPiGPj, const Elemen
 							break;
 						//dlamda = (lamda_pos+lamda_neg)/2.;
 					}
-					else 
+					else
 					{
 						//for(i=0;i<Size;i++)
 						//	dsig_dlamda[i]=0.;
@@ -3411,22 +3419,22 @@ int CSolidProperties::StressIntegrationMOHR_Aniso(const int GPiGPj, const Elemen
 					TmpMatrix2->multi(TmpPrinStrTens,TmpStrTens);
 					AnisoParaComp = CalAnisoPara(TmpStrComp,MicroStruTensor);
 					AnisoParaTens = CalAnisoPara(TmpStrTens,MicroStruTensor);
-					CalculateCoefficent_MOHR(ep, AnisoParaComp, AnisoParaTens);		
+					CalculateCoefficent_MOHR(ep, AnisoParaComp, AnisoParaTens);
 				}
-				
+
 				I1 = TmpStress[0]+TmpStress[1]+TmpStress[2];
 				for (i=0;i<Size;i++)
 					devStr[i] = TmpStress[i]-I1/3.0*Kronecker[i];
 				J2 = 0.5*TensorMutiplication2(devStr,devStr,Dim);
 				sqrtJ2 = sqrt(J2);
 				J3 = TensorMutiplication3(devStr,devStr,devStr,Dim);
-				
+
 				if (J2 == 0)
 				{
 					LodeAngle = 0 ;//avoid error
 					lode_out_range = true;
 				}
-				else 
+				else
 				{
 					if((-3*sqrt3/2.*J3/pow(sqrtJ2,3))>1-1e-6)
 					{
@@ -3513,7 +3521,7 @@ int CSolidProperties::StressIntegrationMOHR_Aniso(const int GPiGPj, const Elemen
 
 					dlode_dsig[2]=sqrt3/(2.*MathLib::fastpow(sqrtJ2,3)*cos(3.*LodeAngle))*(3.*J3/2./J2*devStr[2]
 					-(devStr[4]*devStr[4]+devStr[5]*devStr[5]+devStr[2]*devStr[2])+2.*J2*Kronecker[2]/3.0);
-				
+
 					dlode_dsig[3]=sqrt3/(2.*MathLib::fastpow(sqrtJ2,3)*cos(3.*LodeAngle))*(3.*J3/2./J2*devStr[3]
 					-(devStr[0]*devStr[3]+devStr[3]*devStr[1]+devStr[4]*devStr[5])+2.*J2*Kronecker[3]/3.0);
 
@@ -3589,7 +3597,7 @@ int CSolidProperties::StressIntegrationMOHR_Aniso(const int GPiGPj, const Elemen
 				}
 				//
 				if(counter == 0)
-				{					
+				{
 					if(shearsurf_k1 > 0)
 					{
 						lamda_pos = dlamda;
@@ -3615,7 +3623,7 @@ int CSolidProperties::StressIntegrationMOHR_Aniso(const int GPiGPj, const Elemen
 						shearsurf_pos=shearsurf_k1;
 						if(first_step)
 						{
-							dlamda = lamda_pos + dlamda; 
+							dlamda = lamda_pos + dlamda;
 							first_step=false;
 						}
 						else
@@ -3627,7 +3635,7 @@ int CSolidProperties::StressIntegrationMOHR_Aniso(const int GPiGPj, const Elemen
 						lamda_neg = dlamda;
 						counter++;
 					}
-					
+
 				}
 				else
 				{
@@ -3651,7 +3659,7 @@ int CSolidProperties::StressIntegrationMOHR_Aniso(const int GPiGPj, const Elemen
 							break;
 						//dlamda = (lamda_pos+lamda_neg)/2.;
 					}
-					else 
+					else
 					{
 						//for(i=0;i<Size;i++)
 						//	dsig_dlamda[i]=0.;
@@ -3693,22 +3701,22 @@ int CSolidProperties::StressIntegrationMOHR_Aniso(const int GPiGPj, const Elemen
 					TmpMatrix2->multi(TmpPrinStrTens,TmpStrTens);
 					AnisoParaComp = CalAnisoPara(TmpStrComp,MicroStruTensor);
 					AnisoParaTens = CalAnisoPara(TmpStrTens,MicroStruTensor);
-					CalculateCoefficent_MOHR(ep, AnisoParaComp, AnisoParaTens);		
+					CalculateCoefficent_MOHR(ep, AnisoParaComp, AnisoParaTens);
 				}
-				
+
 				I1 = TmpStress[0]+TmpStress[1]+TmpStress[2];
 				for (i=0;i<Size;i++)
 					devStr[i] = TmpStress[i]-I1/3.0*Kronecker[i];
 				J2 = 0.5*TensorMutiplication2(devStr,devStr,Dim);
 				sqrtJ2 = sqrt(J2);
 				J3 = TensorMutiplication3(devStr,devStr,devStr,Dim);
-				
+
 				if (J2 == 0)
 				{
 					LodeAngle = 0 ;//avoid error
 					lode_out_range = true;
 				}
-				else 
+				else
 				{
 					if((-3*sqrt3/2.*J3/pow(sqrtJ2,3))>1-1e-6)
 					{
@@ -3772,7 +3780,7 @@ int CSolidProperties::StressIntegrationMOHR_Aniso(const int GPiGPj, const Elemen
 		for (i=0;i<Size;i++)
 			TryStress[i]=0;
 		TransMicroStru_T->multi(TmpStress,TryStress);
-		
+
 		*ConstitutiveMatrix = (0.);
 		TransMicroStru_T->multi(*TmpDe, *TransMicroStru, *ConstitutiveMatrix);
 		//TEST
@@ -3796,7 +3804,7 @@ int CSolidProperties::StressIntegrationMOHR_Aniso(const int GPiGPj, const Elemen
 	return yield;
 }
 /*******************************************************
-WX: calculate aniso. plas. parameters 
+WX: calculate aniso. plas. parameters
 *******************************************************/
 double CSolidProperties::CalAnisoPara(double *Stress, double *MicroStruTensor )
 {
@@ -3817,13 +3825,13 @@ double CSolidProperties::CalAnisoPara(double *Stress, double *MicroStruTensor )
 	AnisoPara = 0;
 	for(int i=0; i<3; i++)
 		AnisoPara += MicroStruTensor[i]*l[i]*l[i];
-	
+
 	return AnisoPara;
 }
 //*/
 /*******************************************************
-WX: Mohr coulomb, 
-return mapping (not direct stress integ.) also for aniso. 
+WX: Mohr coulomb,
+return mapping (not direct stress integ.) also for aniso.
 *******************************************************/
 int CSolidProperties::DirectStressIntegrationMOHR(const int GPiGPj, ElementValue_DM *ele_val,
 		double *TryStress, const int Update, Matrix *Dep, int itesteps )
@@ -3923,7 +3931,7 @@ int CSolidProperties::DirectStressIntegrationMOHR(const int GPiGPj, ElementValue
 				tmp_load_dir_major += Bedding_Norm[i]*prin_dir[3*i+2];
 				tmp_load_dir_minor += Bedding_Norm[i]*prin_dir[3*i];
 			}*/
-			
+
 			double Stress_Bedding_comp[6]={0.},Stress_Bedding_tens[6]={0.}; //Stress_Bedding[6]={0.}
 			double prin_str_comp[6]={0.}, prin_str_tens[6]={0.};
 			double TmpStress_comp[6]={0.}, TmpStress_tens[6]={0.};
@@ -3964,11 +3972,11 @@ int CSolidProperties::DirectStressIntegrationMOHR(const int GPiGPj, ElementValue
 			//for(i=0;i<6;i++)
 			//{
 			//	 tr_sig_comp += Stress_Bedding_comp[i]*Stress_Bedding_comp[i];
-			//	 tr_sig_tens += Stress_Bedding_tens[i]*Stress_Bedding_tens[i];				 
-			//}	
+			//	 tr_sig_tens += Stress_Bedding_tens[i]*Stress_Bedding_tens[i];
+			//}
 			L_sqr_comp[0] = Stress_Bedding_comp[0]*Stress_Bedding_comp[0]
 							+Stress_Bedding_comp[3]*Stress_Bedding_comp[3]
-							+Stress_Bedding_comp[4]*Stress_Bedding_comp[4];							
+							+Stress_Bedding_comp[4]*Stress_Bedding_comp[4];
 			L_sqr_comp[1] = Stress_Bedding_comp[1]*Stress_Bedding_comp[1]
 							+Stress_Bedding_comp[3]*Stress_Bedding_comp[3]
 							+Stress_Bedding_comp[5]*Stress_Bedding_comp[5];
@@ -3979,7 +3987,7 @@ int CSolidProperties::DirectStressIntegrationMOHR(const int GPiGPj, ElementValue
 
 			L_sqr_tens[0] = Stress_Bedding_tens[0]*Stress_Bedding_tens[0]
 							+Stress_Bedding_tens[3]*Stress_Bedding_tens[3]
-							+Stress_Bedding_tens[4]*Stress_Bedding_tens[4];							
+							+Stress_Bedding_tens[4]*Stress_Bedding_tens[4];
 			L_sqr_tens[1] = Stress_Bedding_tens[1]*Stress_Bedding_tens[1]
 							+Stress_Bedding_tens[3]*Stress_Bedding_tens[3]
 							+Stress_Bedding_tens[5]*Stress_Bedding_tens[5];
@@ -3992,8 +4000,8 @@ int CSolidProperties::DirectStressIntegrationMOHR(const int GPiGPj, ElementValue
 				tr_a_sig_comp += MicroStruTensor[i]*L_sqr_comp[i];
 				tr_a_sig_tens += MicroStruTensor[i]*L_sqr_tens[i];
 			}
-			
-			//			 
+
+			//
 				 //tr_a_sig_comp += MicroStruTensor[i]*(Stress_Bedding_comp[i]*Stress_Bedding_comp[i]
 				 //+);
 				 //tr_a_sig_tens += MicroStruTensor[i]*Stress_Bedding_tens[i]*Stress_Bedding_tens[i];
@@ -4134,7 +4142,7 @@ int CSolidProperties::DirectStressIntegrationMOHR(const int GPiGPj, ElementValue
 		P_74 = CalVarP(rtp, l3R, prin_str, sig1R);
 		//P_85 = 0;
 		//P_85 = CalVarP(rtp, l1, prin_str, sig1R);
-		P_85 = P_74;		
+		P_85 = P_74;
 		P_78 = CalVarP(rtp, l1R, prin_str, sig1R);
 		//P_98 = 0;
 		P_98 = CalVarP(rtp, l2R, prin_str, sig2R);
@@ -8040,7 +8048,7 @@ FiniteElement::SolidReactiveSystem CSolidProperties::getSolidReactiveSystem () c
    01/2005 OK Boolean type
    01/2005 OK Destruct before read
 **************************************************************************/
-bool MSPRead(std::string file_base_name)
+bool MSPRead(const std::string& given_file_base_name)
 {
 	//----------------------------------------------------------------------
 	//OK  MSPDelete();
@@ -8052,7 +8060,7 @@ bool MSPRead(std::string file_base_name)
 	std::ios::pos_type position;
 	//========================================================================
 	// File handling
-	std::string msp_file_name = file_base_name + MSP_FILE_EXTENSION;
+	std::string msp_file_name = given_file_base_name + MSP_FILE_EXTENSION;
 	std::ifstream msp_file (msp_file_name.data(),std::ios::in);
 	if (!msp_file.good())
 		return false;
@@ -8071,7 +8079,7 @@ bool MSPRead(std::string file_base_name)
 		if(line_string.find("#SOLID_PROPERTIES") != std::string::npos)
 		{
 			m_msp = new SolidProp::CSolidProperties();
-			m_msp->file_base_name = file_base_name;
+			m_msp->file_base_name = given_file_base_name;
 			position = m_msp->Read(&msp_file);
 			msp_vector.push_back(m_msp);
 			msp_file.seekg(position,std::ios::beg);
@@ -8235,7 +8243,7 @@ void MSPDelete()
    FEMLib-Method:
    01/2006 OK Implementation
 **************************************************************************/
-void MSPWrite(std::string base_file_name)
+void MSPWrite(const std::string& base_file_name)
 {
 	SolidProp::CSolidProperties* m_msp = NULL;
 	//----------------------------------------------------------------------
@@ -8259,34 +8267,3 @@ void MSPWrite(std::string base_file_name)
 	msp_file.close();
 	//----------------------------------------------------------------------
 }
-
-/**************************************************************************
-   FEMLib-Method:
-   07/2007 OK Implementation
-**************************************************************************/
-void MSPStandardKeywords()
-{
-	msp_key_word_vector.clear();
-	string in;
-	in = "POISSON_RATIO";
-	msp_key_word_vector.push_back(in);
-	in = "YOUNGS_MODULUS";
-	msp_key_word_vector.push_back(in);
-}
-
-/**************************************************************************
-   FEMLib-Method:
-   07/2007 OK Implementation
-**************************************************************************/
-SolidProp::CSolidProperties* MSPGet(std::string mat_name)
-{
-	SolidProp::CSolidProperties* m_msp = NULL;
-	for(int i = 0; i < (int)msp_vector.size(); i++)
-	{
-		m_msp = msp_vector[i];
-		if(mat_name.compare(m_msp->name) == 0)
-			return m_msp;
-	}
-	return NULL;
-}
-

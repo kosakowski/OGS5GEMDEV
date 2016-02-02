@@ -3,6 +3,11 @@
  * 05/04/2011 LB Refactoring: Moved from rf_out_new.h
  *
  * Implementation of Output class
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
  */
 
 // ** INCLUDES **
@@ -105,7 +110,7 @@ void COutput::setMPI_Info(const int rank, const int size, std::string rank_str)
 	mrank = rank;
 	msize = size;
 	mrank_str = rank_str;
-}  
+}
 #endif
 
 /*!
@@ -156,7 +161,7 @@ void COutput::init()
     {
       //dat_type_name = "BINARY";
        setDataArrayDisp();
-    }  
+    }
 #endif
 
 }
@@ -486,7 +491,7 @@ ios::pos_type COutput::Read(std::ifstream& in_str,
 		// For teplot zone share. 10.2012. WW
 		if (line_string.find("$TECPLOT_ZONE_SHARE") != string::npos)
 		{
-			tecplot_zone_share = true; 
+			tecplot_zone_share = true;
 			continue;
 		}
 	}
@@ -733,7 +738,7 @@ void COutput::NODWriteDOMDataTEC()
 		// 08.2012. WW
         if(tecplot_zone_share)
 		{
-	     	if(!_new_file_opened)  
+	     	if(!_new_file_opened)
 	           WriteTECElementData(tec_file,te);
 		}
 		else
@@ -872,7 +877,7 @@ void COutput::NODWriteDOMDataTEC()
 
 /*
    Set data array displacement for parallel output
-  
+
     WW  12.2013
 */
 #if defined(USE_PETSC) // || defined(other solver libs)//01.2014. WW
@@ -890,30 +895,30 @@ void COutput::setDataArrayDisp()
 
    for(int i=0; i<msize; i++)
    {
-     i_cnt[i] = 1; 
+     i_cnt[i] = 1;
      i_disp[i] = i;
    }
 
    int size_local =  fem_msh_vector[0]->getNumNodesLocal();
 
    MPI_Allgatherv(&size_local, 1, MPI_INT, i_recv, i_cnt, i_disp,
-                   MPI_INT, MPI_COMM_WORLD);  
-  
+                   MPI_INT, MPI_COMM_WORLD);
+
    int_disp = 0;
    for(int i=0; i<mrank; i++)
    {
-       int_disp += i_recv[i]; 
+       int_disp += i_recv[i];
    }
 
    delete [] i_cnt;
    delete [] i_disp;
    delete [] i_recv;
    //   MPI_Barrier (MPI_COMM_WORLD);
-} 
+}
 
 /*
     Write variable informations of the domain
-  
+
     WW  12.2013
 */
 void COutput::NODDomainWriteBinary_Header()
@@ -930,7 +935,6 @@ void COutput::NODDomainWriteBinary_Header()
    file_name = file_base_name +  "_" + convertProcessTypeToString(getProcessType()) + "_domain_" + "node_value_header.txt";
    std::cout << "Name of the header file: " << file_name << "\n";
 
-
    ofstream os (file_name.data(), ios::trunc | ios::out);
    if (!os.good())
    {
@@ -938,11 +942,11 @@ void COutput::NODDomainWriteBinary_Header()
    }
 
    os << msize << "\n";
-  
+
    m_pcs =  GetPCS();
 
    os  << domain_output_counter  <<  "\n";
- 
+
    const size_t num_prim_unknowns = m_pcs->GetPrimaryVNumber();
    const size_t num_2nd_unknowns = m_pcs->GetSecondaryVNumber();
 
@@ -952,13 +956,13 @@ void COutput::NODDomainWriteBinary_Header()
    for(size_t i=0; i < num_prim_unknowns; i++)
    {
       os <<  m_pcs->GetPrimaryVName(i) << " ";
-   } 
+   }
    for(size_t i=0; i < num_2nd_unknowns; i++)
    {
        os << m_pcs->GetSecondaryVName(i) << " ";
-   } 
+   }
    os << "\n";
-   
+
    // Write number of unknowns
    os << m_pcs->m_msh->getNumNodesGlobal()  << "\n";
 
@@ -975,21 +979,21 @@ void COutput::NODDomainWriteBinary()
    file_name = file_base_name + "_" + convertProcessTypeToString(getProcessType()) + "_domain_variables" + ".bin";
    std::cout << "Name of the binary file for node and element data: " << file_name << "\n";
 
-   domain_output_counter++;  
+   domain_output_counter++;
 
    if(!_new_file_opened)
    {
-      remove(file_name.c_str());      
+      remove(file_name.c_str());
    }
 
    m_pcs =  GetPCS();
-  
+
    MPI_Barrier (MPI_COMM_WORLD);
 
    MPI_Offset offset_new;
    MPI_File fh;
    int rc = 0;
-   
+
    if(!_new_file_opened)
    {
       rc = MPI_File_open(MPI_COMM_WORLD, &file_name[0], MPI_MODE_WRONLY | MPI_MODE_CREATE,  MPI_INFO_NULL, &fh);
@@ -999,27 +1003,27 @@ void COutput::NODDomainWriteBinary()
    {
        rc = MPI_File_open(MPI_COMM_WORLD, &file_name[0], MPI_MODE_WRONLY | MPI_MODE_APPEND,  MPI_INFO_NULL, &fh);
    }
-   
-   if (rc ) 
-   {	   
+
+   if (rc )
+   {
        MPI_Finalize();
        cout<<"Cannot open "<<file_name<<"does not exist." <<"\n";
        exit(0);
    }
- 
-   //MPI_File_get_position( fh, &offset ); 
+
+   //MPI_File_get_position( fh, &offset );
    // Write time and remember the number of processes#
    string ftype = "native";
-  
-   offset_new = offset + mrank*sizeof(double); 
+
+   offset_new = offset + mrank*sizeof(double);
    MPI_File_set_view(fh, offset_new, MPI_DOUBLE, MPI_DOUBLE,  &ftype[0], MPI_INFO_NULL);
    MPI_File_write(fh, &_time, 1, MPI_DOUBLE, MPI_STATUS_IGNORE); //_all
-   offset += msize*sizeof(double); 
+   offset += msize*sizeof(double);
 
    const size_t num_prim_unknowns = m_pcs->GetPrimaryVNumber();
    const size_t num_2nd_unknowns = m_pcs->GetSecondaryVNumber();
    // Write unknowns
-   size_t n_unknowns = 0; 
+   size_t n_unknowns = 0;
    n_unknowns = m_pcs->m_msh->getNumNodesLocal();
    const int nn = m_pcs->m_msh->getNumNodesGlobal();
 
@@ -1030,8 +1034,8 @@ void COutput::NODDomainWriteBinary()
       offset_new = offset + int_disp*sizeof(double);
       MPI_File_set_view(fh, offset_new, MPI_DOUBLE, MPI_DOUBLE,  &ftype[0], MPI_INFO_NULL);
       MPI_File_write(fh, node_values, n_unknowns, MPI_DOUBLE, MPI_STATUS_IGNORE); //_all
-      offset += nn * sizeof(double);  
-   } 
+      offset += nn * sizeof(double);
+   }
 
    // Write secondary unknowns
    for(size_t i=0; i < num_2nd_unknowns; i++)
@@ -1040,12 +1044,12 @@ void COutput::NODDomainWriteBinary()
        offset_new = offset + int_disp*sizeof(double);
        MPI_File_set_view(fh, offset_new, MPI_DOUBLE, MPI_DOUBLE,  &ftype[0], MPI_INFO_NULL);
        MPI_File_write(fh, node_values, n_unknowns, MPI_DOUBLE, MPI_STATUS_IGNORE); //_all
-       offset += nn * sizeof(double);  
-   } 
+       offset += nn * sizeof(double);
+   }
 
-   MPI_File_sync( fh ) ; 
+   MPI_File_sync( fh ) ;
    MPI_Barrier( MPI_COMM_WORLD ) ;
-   MPI_File_sync( fh ) ; 
+   MPI_File_sync( fh ) ;
    MPI_File_close(&fh);
 }
 #endif //  end of USE_PETSC
@@ -1083,7 +1087,7 @@ void COutput::WriteTECNodeData(fstream &tec_file)
             if(     (m_pcs->getProcessType() == FiniteElement::DEFORMATION)
                  || (m_pcs->getProcessType() == FiniteElement::DEFORMATION_DYNAMIC)
                  ||  (m_pcs->getProcessType() == FiniteElement::DEFORMATION_FLOW)
-                 ||  (m_pcs->getProcessType() == FiniteElement::DEFORMATION_H2)			
+                 ||  (m_pcs->getProcessType() == FiniteElement::DEFORMATION_H2)
                )
             {
                 deform_pcs = m_pcs;
@@ -1107,7 +1111,7 @@ void COutput::WriteTECNodeData(fstream &tec_file)
 	for (size_t j = 0; j < m_msh->GetNodesNumber(false); j++)
 	{
        node = m_msh->nod_vector[j];  // 23.01.2013. WW
-       const size_t n_id = node->GetIndex(); 
+       const size_t n_id = node->GetIndex();
 
 	   if(out_coord) // 08.2012. WW
 	   {
@@ -1127,7 +1131,7 @@ void COutput::WriteTECNodeData(fstream &tec_file)
 	         for (size_t i = 0; i < 3; i++)
 		        tec_file << x[i] << " ";
 		  }
-	   }  
+	   }
 		// NOD values
 		// Mass transport
 		//     if(pcs_type_name.compare("MASS_TRANSPORT")==0){
@@ -1175,15 +1179,15 @@ void COutput::WriteTECNodeData(fstream &tec_file)
 				if (m_pcs != NULL) { //WW
 
 					if (NodeIndex[k] > -1) {
-						if (_nod_value_vector[k].find("DELTA") == 0) // JOD 2014-11-10 
+						if (_nod_value_vector[k].find("DELTA") == 0) // JOD 2014-11-10
 							val_n = m_pcs->GetNodeValue(n_id, 1) - m_pcs->GetNodeValue(n_id, NodeIndex[k]);
-					    else 
+					    else
 							val_n = m_pcs->GetNodeValue(n_id, NodeIndex[k]); //WW
 						tec_file << val_n << " ";
 						if ((m_pcs->type == 1212 || m_pcs->type == 42)
 							&& _nod_value_vector[k].find("SATURATION") != string::npos) //WW
 							tec_file << 1. - val_n << " ";
-						
+
 					}
 				}
 			}
@@ -1457,7 +1461,7 @@ void COutput::WriteELEValuesTECData(fstream &tec_file)
           tec_file
            << m_pcs_2->GetElementValue(i, ele_value_index_vector[j])
            << " ";
-        }           
+        }
       }
 		/*
 		   int j;
@@ -2010,7 +2014,7 @@ void COutput::NODWritePNTDataTEC(double time_current,int time_step_number)
 			{
 				//-----------------------------------------WW
 				double val_n;
-				
+
 				if (_nod_value_vector[i].find("DELTA") == 0) //JOD 2014-11-10
 					val_n = m_pcs->GetNodeValue(msh_node_number, 1) - m_pcs->GetNodeValue(msh_node_number, NodeIndex[i]);
 				else
@@ -2202,10 +2206,10 @@ void COutput::NODWriteSFCDataTEC(int number)
    //std::string tec_file_name = convertProcessTypeToString (getProcessType()) + "_sfc_" + geo_name + "_t"
    //   + number_string + TEC_FILE_EXTENSION;
    // AB SB Use Model name for output file name
-   // std::string tec_file_name = convertProcessTypeToString (getProcessType()) 
-   std::string tec_file_name = file_base_name 
+   // std::string tec_file_name = convertProcessTypeToString (getProcessType())
+   std::string tec_file_name = file_base_name
 		                        + "_sfc_" + geo_name + "_t"
-	                            + number_string + TEC_FILE_EXTENSION;   
+	                            + number_string + TEC_FILE_EXTENSION;
 	if (!_new_file_opened)
 		remove(tec_file_name.c_str());  //WW
 	fstream tec_file(tec_file_name.data(), ios::app | ios::out);
@@ -2537,7 +2541,7 @@ void COutput::GetELEValuesIndexVector(vector<int>&ele_value_index_vector)
    //m_pcs = GetPCS_ELE(_ele_value_vector[0]);   // CB this is buggy: not all ele vals are defined with the same (or any) process
    for (size_t i = 0; i < _ele_value_vector.size(); i++)
    {
-     m_pcs = GetPCS_ELE(_ele_value_vector[i]);   // CB 
+     m_pcs = GetPCS_ELE(_ele_value_vector[i]);   // CB
      ele_value_index_vector[i] = m_pcs->GetElementValueIndex(_ele_value_vector[i]);
    }
 }
@@ -3691,13 +3695,13 @@ void COutput::addInfoToFileName (std::string& file_name, bool geo, bool process,
 }
 
 
-	
+
 /**************************************************************************
 FEMLib-Method:
 10/2014 JOD Calculates flux rectangular to polyline or surface,
-			the fluxes through element edges are stagged on a vector 
-			
-            
+			the fluxes through element edges are stagged on a vector
+
+
 **************************************************************************/
 
 void COutput::CalculateTotalFlux(CFEMesh* msh, vector<long>&nodes_on_geo,
@@ -3808,7 +3812,7 @@ void COutput::CalculateTotalFlux(CFEMesh* msh, vector<long>&nodes_on_geo,
 				flux[1] = m_pcs_flow->GetNodeValue(e_node->GetIndex(), m_pcs_flow->GetNodeValueIndex("VELOCITY_Y1"));
 				flux[2] = m_pcs_flow->GetNodeValue(e_node->GetIndex(), m_pcs_flow->GetNodeValueIndex("VELOCITY_Z1"));
 				nodesFVal[k] = PointProduction(flux, face->normal_vector); // fabs(PointProduction(flux, face->normal_vector));
-		
+
 				if (m_pcs->getProcessType() == FiniteElement::MASS_TRANSPORT)
 					nodesFVal_adv[k] = nodesFVal[k] * m_pcs->GetNodeValue(e_node->GetIndex(), 1);
 				else if (m_pcs->getProcessType() == FiniteElement::HEAT_TRANSPORT)   // first fluid property for liquid
@@ -3905,7 +3909,7 @@ void COutput::NODWritePointsCombined(double time_current)
 
 /**************************************************************************
 FEMLib-Method:
-Task:   
+Task:
 Use:
 Programing:
 10/2014 JOD Implementation
@@ -3990,7 +3994,7 @@ void COutput::NODWritePrimaryVariableList(double time_current)
 		tec_file << "#STOP";
 		tec_file.close();
 	}
-	
+
 }
 
 /**************************************************************************
@@ -4020,12 +4024,12 @@ void COutput::NODWriteTotalFlux(double time_current, int time_step_number)
 	if (time_step_number == 0)
 	{
 		remove(tec_file_name.c_str());
-		
+
 	}
 
 	//if (!_new_file_opened)
 	//	remove(tec_file_name.c_str());  //WW
-	
+
 	fstream tec_file(tec_file_name.data(), ios::app | ios::out);
 	tec_file.setf(ios::scientific, ios::floatfield);
 	tec_file.precision(12);
@@ -4034,7 +4038,7 @@ void COutput::NODWriteTotalFlux(double time_current, int time_step_number)
 
 	if (time_step_number == 0)
 	{
-		
+
 
 		tec_file << "TIME                   ";
 		if (m_pcs->getProcessType() == FiniteElement::HEAT_TRANSPORT)
@@ -4132,7 +4136,7 @@ void COutput::SetTotalFluxNodesSURF(std::vector<long>& nodes_vector)
 {
 
 	Surface* m_sfc = NULL;
-	m_sfc = GEOGetSFCByName(geo_name);     
+	m_sfc = GEOGetSFCByName(geo_name);
 
 	if (m_sfc)
 		m_msh->GetNODOnSFC(m_sfc, nodes_vector);
@@ -4153,7 +4157,7 @@ void COutput::SetTotalFluxNodesDOM(std::vector<long>& nodes_vector)
 	nodes_vector.resize(m_msh->nod_vector.size());
 	for (std::size_t i = 0; i < m_msh->nod_vector.size(); i++)
 		nodes_vector[i] = m_msh->nod_vector[i]->GetIndex();
-	
+
 
 }
 

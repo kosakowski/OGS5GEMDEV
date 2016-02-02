@@ -1,12 +1,20 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
 
 #include "conversion_rate.h"
 #include <cmath>
 
-#include "physical_constants.h"
+#include "PhysicalConstant.h"
 
 //#define SIMPLE_KINETICS //wenn definiert, dann einfache Kinetik, sonst Schaube
 
-conversion_rate::conversion_rate(double T_solid, 
+conversion_rate::conversion_rate(double T_solid,
                                  double T_gas,
                                  double p_gas,
                                  double x_reactive,
@@ -14,7 +22,7 @@ conversion_rate::conversion_rate(double T_solid,
                                  double phi_S,
                                  double delta_t,
                                  FiniteElement::SolidReactiveSystem system)
-    : R(Phys::R),
+    : R(PhysicalConstant::IdealGasConstant),
       rho_s_0(rho_s_initial),
       p_eq(1.0),
       tol_l (1.0e-4),
@@ -29,16 +37,16 @@ conversion_rate::conversion_rate(double T_solid,
 		rho_up = 2200.0;
 		reaction_enthalpy = -1.12e+05; //in J/mol; negative for exothermic composition reaction
 		reaction_entropy = -143.5; //in J/mol K
-		M_carrier = Phys::MolMass::N2;
-		M_react   = Phys::MolMass::Water;
+		M_carrier = PhysicalConstant::MolarMass::N2;
+		M_react   = PhysicalConstant::MolarMass::Water;
 	}
 	else if (system == FiniteElement::Mn3O4){//Definition auch in void CSolidProperties::SetSolidReactiveSystemProperties()
 		rho_low = 4500.0;
 		rho_up = 4860.0;
 		reaction_enthalpy = -1.376e+05; //in J/mol; negative for exothermic composition reaction
 		reaction_entropy = -114.1; //in J/mol K
-		M_carrier = Phys::MolMass::N2;
-		M_react   = Phys::MolMass::O2;
+		M_carrier = PhysicalConstant::MolarMass::N2;
+		M_react   = PhysicalConstant::MolarMass::O2;
 	}
 	else if (system == FiniteElement::Z13XBF){//Definition auch in void CSolidProperties::SetSolidReactiveSystemProperties()
 		// TODO [CL] read those values from some input file
@@ -46,8 +54,8 @@ conversion_rate::conversion_rate(double T_solid,
 		rho_up = -1.0; //not needed
 		reaction_enthalpy = 0.0; //see CalcEnthalpy13XBF()
 		reaction_entropy = 0.0; //see CalcEntropy13XBF()
-		M_carrier = Phys::MolMass::N2; //consider switch to air
-		M_react   = Phys::MolMass::Water;
+		M_carrier = PhysicalConstant::MolarMass::N2; //consider switch to air
+		M_react   = PhysicalConstant::MolarMass::Water;
 		W0 = 0.291/1.e3; //in m^3/kg
 		p_min = 0.0; //in Pa
 	}
@@ -57,20 +65,20 @@ conversion_rate::~conversion_rate(void)
 {
 }
 
-void conversion_rate::update_param(double T_solid, 
-	                            double T_gas,  
+void conversion_rate::update_param(double T_solid,
+	                            double T_gas,
 								double p_gas,
-								double x_reactive, 
+								double x_reactive,
 								double rho_s_initial,
 								double phi_S,
 								double delta_t,
 								FiniteElement::SolidReactiveSystem system)
 {
 	conversion_rate::T_s     = T_solid;
-	conversion_rate::T       = T_gas; 
+	conversion_rate::T       = T_gas;
 	conversion_rate::p_gas   = p_gas; // should be in unit bar
-	conversion_rate::x_react   = x_reactive; 
-	conversion_rate::rho_s   = rho_s_initial; 
+	conversion_rate::x_react   = x_reactive;
+	conversion_rate::rho_s   = rho_s_initial;
 	x(0)                  = rho_s_initial;
 	conversion_rate::phi_solid = phi_S;
 	conversion_rate::dt      = delta_t;
@@ -91,7 +99,7 @@ void conversion_rate::set_chemical_equilibrium()
 	//Alternative: Use T_s as T_eq and calculate p_eq - for Schaube kinetics
 	p_eq = exp((reaction_enthalpy/R)/T_s - (reaction_entropy/R));
 }
-	
+
 //determine equilibrium loading according to Dubinin
 void conversion_rate::set_sorption_equilibrium()
 {
@@ -151,17 +159,17 @@ void conversion_rate::calculate_qR()
 
 void conversion_rate::set_rho_s(double new_rho_s)
 {
-	rho_s = new_rho_s; 
+	rho_s = new_rho_s;
 }
 
 double conversion_rate::get_qR()
 {
-	return qR; 
+	return qR;
 }
 
 void conversion_rate::get_x(Eigen::VectorXd& output_x)
 {
-	output_x = x; 
+	output_x = x;
 }
 
 

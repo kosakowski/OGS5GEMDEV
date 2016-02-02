@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /*========================================================================
    GeoSys - class Matrix (Definition)
           class vec
@@ -146,8 +155,7 @@ void MatrixBase::Write_BIN(std::fstream& os)
 **************************************************************************/
 void MatrixBase::Read_BIN(std::fstream& is)
 {
-	for(size_t i = 0; i < size; i++)
-		is.read((char*)(&data[i]), sizeof(data[i]));
+	is.read((char*)data, size * sizeof(double));
 }
 
 // Constructors
@@ -270,7 +278,7 @@ void Matrix::multi(const double* vec, double* vec_result, double fac)
 {
     for(size_t  i = 0; i < nrows; i++)
     {
-        double val = 0.; 
+        double val = 0.;
         const double *row_data = &data[i * ncols] ;
         for(size_t j = 0; j < ncols; j++)
         {
@@ -410,7 +418,7 @@ void SymMatrix::multi(const SymMatrix& m1, const Matrix& m2, Matrix& m_result)
             double val = 0.;
 			for(size_t k = 0; k < ncols; k++)
 			{
-                const double entry_of_this = data[getArrayIndex(i,k)]; 
+                const double entry_of_this = data[getArrayIndex(i,k)];
 				for(size_t l = 0; l < m2.Rows(); l++)
 					val += entry_of_this * m1(k,l) * m2(l,j);
 			}
@@ -423,7 +431,7 @@ void SymMatrix::multi(const double* vec, double* vec_result, double fac)
 {
     for(size_t  i = 0; i < nrows; i++)
     {
-        double val = 0.; 
+        double val = 0.;
 
         const double *row_data = &data[static_cast<size_t>(i * (i + 1) / 2)] ;
         for(size_t j = 0; j <= i; j++)
@@ -1642,7 +1650,7 @@ void CSparseMatrix::Diagonize(const long idiag, const double b_given, double* b)
 		vdiag = entry[(ii * DOF + ii) * size_entry_column + j];
 		/// Row where the diagonal entry exists
 		for(jj = 0; jj < DOF; jj++)
-		{ 
+		{
 			const long ij = (ii * DOF + jj) * size_entry_column;
 			for(k = num_column_entries[id]; k < row_end; k++)
 			{
@@ -1678,7 +1686,7 @@ void CSparseMatrix::Diagonize(const long idiag, const double b_given, double* b)
 	}
 	else if(storage_type == JDS)
 	{
-        const long kk = ii * DOF; 
+        const long kk = ii * DOF;
 		long row_in_parse_table, counter;
 
 		// Row is zero
@@ -1698,7 +1706,7 @@ void CSparseMatrix::Diagonize(const long idiag, const double b_given, double* b)
 					else
 					{
 						entry[(kk + jj) * size_entry_column + counter] = 0.;
-					} 
+					}
 				}
 				counter += num_column_entries[k];
 			}

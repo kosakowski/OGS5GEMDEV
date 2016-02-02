@@ -1,4 +1,13 @@
-/**************************************************************************
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
+ /**************************************************************************
    FEMLib - Object: Source Terms ST
    Task: class implementation
    Programing:
@@ -109,7 +118,7 @@ public:
 	void DirectAssign(const long ShiftInNodeVector);
 
 	// KR / NB
-	
+
 	// including climate data into source terms
 	const MathLib::InverseDistanceInterpolation<GEOLIB::PointWithID*, GEOLIB::Station*> *getClimateStationDistanceInterpolation() const { return this->_distances; };
 	const std::vector<GEOLIB::Station*>& getClimateStations() const { return this->_weather_stations; }; //NB
@@ -133,11 +142,11 @@ public:
 	int CurveIndex;
 	std::vector<int> element_st_vector;
 
-	double st_rill_height, coup_given_value, coup_residualPerm; // JOD 
+	double st_rill_height, coup_given_value, coup_residualPerm; // JOD
 	double sorptivity, constant, rainfall, rainfall_duration, moistureDeficit /*1x*/;
-	bool node_averaging, distribute_volume_flux; // JOD 
-	bool no_surface_water_pressure, explicit_surface_water_pressure; // JOD 
-	
+	bool node_averaging, distribute_volume_flux; // JOD
+	bool no_surface_water_pressure, explicit_surface_water_pressure; // JOD
+
 	bool isCoupled () const { return _coupled; }
 	double getNormalDepthSlope () const { return normaldepth_slope; }
 
@@ -376,7 +385,7 @@ private:
 	                                std::vector<double>&sfc_nod_val_vector);
 	void AreaAssembly(const CSourceTerm* const st, const std::vector<long>& ply_nod_vector_cond,
 	                  std::vector<double>&  ply_nod_val_vector) const;
-	void DistributeVolumeFlux(CSourceTerm* st, std::vector<long> const & ply_nod_vector, // 5.3.07 
+	void DistributeVolumeFlux(CSourceTerm* st, std::vector<long> const & ply_nod_vector, // 5.3.07
 		                      std::vector<double>& ply_nod_val_vector);
 };
 
@@ -436,7 +445,7 @@ extern double CalcCouplingValue(double factor,
 // JOD
 extern void GetCouplingNODValueMixed(double& value, CSourceTerm* m_st, CNodeValue* cnodev);
 // JOD
-extern void GetCouplingFieldVariables(CRFProcess* m_pcs_this,  
+extern void GetCouplingFieldVariables(CRFProcess* m_pcs_this,
                                       CRFProcess* m_pcs_cond,
 									  double* h_this,
                                       double* h_cond,
@@ -445,9 +454,9 @@ extern void GetCouplingFieldVariables(CRFProcess* m_pcs_this,
                                       double* z_this,
                                       double* z_cond,
                                       CSourceTerm* m_st,
-                                      CNodeValue* cnodev, 
-									  long msh_node_number, 
-									  long msh_node_number_cond, 
+                                      CNodeValue* cnodev,
+									  long msh_node_number,
+									  long msh_node_number_cond,
 									  double gamma);
 
 // JOD

@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************
    ROCKFLOW - Object: Process PCS
    Programing:
@@ -37,7 +46,7 @@
 #include <cfloat>
 #include <iomanip>                                //WW
 #include <iostream>
-//#include <algorithm> // header of transform. WW
+#include <algorithm>
 #include <set>
 
 #include "isnan.h"
@@ -73,7 +82,6 @@
 #include "rf_node.h"
 #include "rf_kinreact.h"
 #include "fem_ele_vec.h"//WX:08.2011
-#include "StepperBulischStoer.h"
 
 #ifdef MFC                                        //WW
 #include "rf_fluid_momentum.h"
@@ -268,6 +276,7 @@ CRFProcess::CRFProcess(void) :
 	num_notsatisfied = 0;
 	num_diverged = 0;
     cpl_max_relative_error = 0.0;
+	cpl_max_relative_error_overall = 0.0;
 	//
 	// PCS designations
 	isPCSDeformation = false;
@@ -370,7 +379,6 @@ CRFProcess::CRFProcess(void) :
 	PCS_ExcavState = -1;                  //WX
 	Neglect_H_ini = -1;                   //WX
    m_conversion_rate = NULL;                         //WW
-   m_solver  = NULL;                              //WW
 	isRSM = false; //WW
 	eqs_x = NULL;
 	_hasConstrainedBC=false;
@@ -521,8 +529,6 @@ CRFProcess::~CRFProcess(void)
     // HS, 11.2011
 	if (m_conversion_rate) 
 		delete m_conversion_rate; 
-	if (m_solver)
-		delete m_solver;
 
 #if defined(USE_PETSC) // || defined(other parallel libs)//10.3012. WW
         PetscPrintf(PETSC_COMM_WORLD,"\n>>PETSc solver info for %s :\n",\
@@ -622,7 +628,7 @@ void CRFProcess::Create()
 	if (Write_Matrix)
 	{
 		std::cout << "->Write Matrix" << '\n';
-#if defined(USE_MPI)
+#if defined(USE_MPI) || defined(USE_PETSC)
 		char stro[32];
 		sprintf(stro, "%d",myrank);
 		string m_file_name = FileName + "_" + pcs_type_name + (string)stro +
@@ -1277,7 +1283,7 @@ void CRFProcess:: WriteSolution()
 		return;
 	
 	std::string pcs_type_name (convertProcessTypeToString(this->getProcessType()));
-#if defined(USE_PETSC)  //|| defined(other parallel libs)//03.3012. WW
+#if defined(USE_PETSC) || defined(USE_MPI) //|| defined(other parallel libs)//03.3012. WW
 	int rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	std::string m_file_name = FileName + "_" + pcs_type_name + "_"
@@ -1327,7 +1333,7 @@ void CRFProcess:: WriteSolution()
 void CRFProcess:: ReadSolution()
 {
 	std::string pcs_type_name (convertProcessTypeToString(this->getProcessType()));
-#if defined(USE_PETSC)  //|| defined(other parallel libs)//03.3012. WW
+#if defined(USE_PETSC) || defined(USE_MPI)
 	int rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	std::string m_file_name = FileName + "_" + pcs_type_name + "_"
@@ -1761,6 +1767,7 @@ CRFProcess* CRFProcess::CopyPCStoDM_PCS()
 	dm_pcs->Memory_Type = Memory_Type;
 	dm_pcs->NumDeactivated_SubDomains = NumDeactivated_SubDomains;
 	dm_pcs->reload = reload;
+	dm_pcs->nwrite_restart = nwrite_restart;
 	dm_pcs->isPCSDeformation = true;
 	dm_pcs->isPCSFlow = this->isPCSFlow; //JT
 	dm_pcs->isPCSMultiFlow = this->isPCSMultiFlow; //JT
@@ -4230,36 +4237,10 @@ void CRFProcess::ConfigTNEQ()
    for(size_t i=0; i<GetPrimaryVNumber(); i++)
       Shift[i] = i*m_msh->GetNodesNumber(false);
 
-   //// HS
-   //// initialize the pointers for rho_s ODE calculation
-   //rho_s = Eigen::VectorXd::Zero(1); // HS, temp storage for density of the solid phase
-   //qR = Eigen::VectorXd::Zero(1);    // HS, temp storage for solid density change rate
-   //this->m_hydration  = new conversion_rate(400/*solid temperature*/, 
-	  //                                   600/*gass temperature*/,
-			//							 2.0/*pressure of gas phase*/, 
-			//							 0.2/*mass fraction of H2O in gas*/,
-			//							 1700/*initial solid density*/,
-			//							 0.0/*delta_time*/);
-   //this->m_ode_solver = new StepperBulischStoer<conversion_rate>(rho_s/*y value vector*/,
-	  //                                                        qR/*dydx value vector*/, 
-			//												  this->GetTimeStepping()->time_current/*t0 value*/,
-			//												  1e-12 /*relative tolerance*/, 
-			//												  1e-12 /*relative tolerance*/, 
-			//												  false /*if dense output*/);
-
-
-	// HS, thermal storage case-------------------------------------------------------------------
-
-   //Loop material group - TN
-   //for (long group_count = 0; group_count < mmp_vector.size(); group_count ++){
 	long group_count = 0;
 	m_rho_s_0 = msp_vector[group_count]->Density();      // get initial solid density
 	double poro = mmp_vector[group_count]->porosity;
 	FiniteElement::SolidReactiveSystem react_syst = msp_vector[group_count]->getSolidReactiveSystem();
-	//if (group_count != 0) break;
-   // if (this->m_num->reaction_scaling!=.0) {
-	double start_t = 0.0;
-	// now initialize the conversion_rate class
 	m_conversion_rate = new conversion_rate(573.0,     // T_solid, Kelvin
 			                          573.0,     // T_gas, Kelvin
 			                          0.0,       // p_gas
@@ -4268,21 +4249,6 @@ void CRFProcess::ConfigTNEQ()
 									  1.0-poro, //solid volume fraction
 			                          1.0,   // delta_t
 									  react_syst);      
-
-	// TODO [CL] eliminate this, rewirte stepper bulirsch stoer
-	yy_rho_s    = Eigen::VectorXd::Zero(1);
-	dydxx_rho_s = Eigen::VectorXd::Zero(1);
-	// initial value for y
-	yy_rho_s(0) = m_rho_s_0;
-
-	// evaluate inital value of dydt
-	//m_conversion_rate->eval(start_t, yy_rho_s, dydxx_rho_s);
-	dydxx_rho_s(0) = 0.0;
-	// initialize the solver
-	m_solver = new StepperBulischStoer<conversion_rate>(yy_rho_s, dydxx_rho_s, start_t, 1e-6, 1e-6, true);
-	// }
-	// HS, end of thermal storage case-------------------------------------------------------------   
-   //}
 }
 
 
@@ -4358,36 +4324,10 @@ void CRFProcess::ConfigTES()
 	for(size_t i=0; i<GetPrimaryVNumber(); i++)
 		Shift[i] = i*m_msh->GetNodesNumber(false);
 
-	//// HS
-	//// initialize the pointers for rho_s ODE calculation
-	//rho_s = Eigen::VectorXd::Zero(1); // HS, temp storage for density of the solid phase
-	//qR = Eigen::VectorXd::Zero(1);    // HS, temp storage for solid density change rate
-	//this->m_hydration  = new conversion_rate(400/*solid temperature*/,
-	//                                   600/*gass temperature*/,
-	//							 2.0/*pressure of gas phase*/,
-	//							 0.2/*mass fraction of H2O in gas*/,
-	//							 1700/*initial solid density*/,
-	//							 0.0/*delta_time*/);
-	//this->m_ode_solver = new StepperBulischStoer<conversion_rate>(rho_s/*y value vector*/,
-	//                                                        qR/*dydx value vector*/,
-	//												  this->GetTimeStepping()->time_current/*t0 value*/,
-	//												  1e-12 /*relative tolerance*/,
-	//												  1e-12 /*relative tolerance*/,
-	//												  false /*if dense output*/);
-
-
-	// HS, thermal storage case-------------------------------------------------------------------
-
-	//Loop material group - TN
-	//for (long group_count = 0; group_count < mmp_vector.size(); group_count ++){
 	long group_count = 0;
 	m_rho_s_0 = msp_vector[group_count]->Density();      // get initial solid density
 	double poro = mmp_vector[group_count]->porosity;
 	FiniteElement::SolidReactiveSystem react_syst = msp_vector[group_count]->getSolidReactiveSystem();
-	//if (group_count != 0) break;
-	// if (this->m_num->reaction_scaling!=.0) {
-	double start_t = 0.0;
-	// now initialize the conversion_rate class
 	m_conversion_rate = new conversion_rate(573.0,     // T_solid, Kelvin
 	                                        573.0,     // T_gas, Kelvin
 	                                        0.0,       // p_gas
@@ -4396,20 +4336,6 @@ void CRFProcess::ConfigTES()
 	                                        1.0-poro,  // solid volume fraction
 	                                        1.0,       // delta_t
 	                                        react_syst);
-
-	yy_rho_s    = Eigen::VectorXd::Zero(1);
-	dydxx_rho_s = Eigen::VectorXd::Zero(1);
-	// initial value for y
-	yy_rho_s(0) = m_rho_s_0;
-
-	// evaluate inital value of dydt
-	//m_conversion_rate->eval(start_t, yy_rho_s, dydxx_rho_s);
-	dydxx_rho_s(0) = 0.0;
-	// initialize the solver
-	m_solver = new StepperBulischStoer<conversion_rate>(yy_rho_s, dydxx_rho_s, start_t, 1e-6, 1e-6, true);
-	// }
-	// HS, end of thermal storage case-------------------------------------------------------------
-	//}
 }
 
 
@@ -5968,13 +5894,11 @@ void CRFProcess::CalIntegrationPointValue()
 			else 
 			fem->Cal_Velocity();
 
-			/* TODO [CL]: keep that or use the value calculated during solving the equation system?
 			//moved here from additional lower loop
 			if (getProcessType() == FiniteElement::TNEQ || getProcessType() == FiniteElement::TES)
 			{
 				fem->CalcSolidDensityRate(); // HS, thermal storage reactions
 		}
-			*/
 	}
 	}
    } else { //NW
@@ -6158,13 +6082,12 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 	double a_ij;
 	double b_i = 0.0;
 	b_i = b_i;                            //OK411
-	int no_domains = (int)dom_vector.size();
 	long no_dom_nodes;
 	dof = pcs_number_of_primary_nvals;    //WW
 	ncol = 0;                             //WW
 #ifndef USE_MPI
-	int k;
-	for(k = 0; k < no_domains; k++)
+	int no_domains = (int)dom_vector.size();
+	for(int k = 0; k < no_domains; k++)
 	{
 		m_dom = dom_vector[k];
 #else
@@ -6543,15 +6466,9 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 
 		// WW
 		double Scaling = 1.0;
-#if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
-		bool quadr = false;
-#endif
 		if(type == 4 || type / 10 == 4)
 		  {   
 			fac = Scaling;
-#if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
-		        quadr = true;
-#endif
 		  }
 		long begin = 0;
 		long end = 0;
@@ -6589,6 +6506,15 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 			end = rank_bc_node_value_in_dom[rank];
 		}
 #endif //END: #if !defined(USE_PETSC) // && !defined(other parallel libs)
+
+		// update nod velocity before eval of constrained BC
+		if ( (this->hasConstrainedBC() || this->hasConstrainedST())
+			&& (this->getProcessType() == FiniteElement::RICHARDS_FLOW
+				|| this->getProcessType() == FiniteElement::LIQUID_FLOW) )
+		{
+			this->CalIntegrationPointValue();
+			this->Extropolation_GaussValue();
+		}
 
 		for(i = begin; i < end; i++)
 		{
@@ -6674,17 +6600,13 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
 			bc_msh_node  = m_bc_node->geo_node_number;
 			// Check whether the node is in this subdomain
-			if(quadr)
-			  {
-			    if(bc_msh_node > m_msh->loc_NodesNumber_Quadratic)
+			const long id_act_l_max = m_msh->getNumNodesLocal();
+			const long id_h = static_cast<long>( m_msh->GetNodesNumber(false) );
+			const long id_act_h_max = static_cast<long>( m_msh->getLargestActiveNodeID_Quadratic() );
+			// If ghost node
+			if( !( (bc_msh_node < id_act_l_max) ||
+			     ( (bc_msh_node >= id_h) && (bc_msh_node <  id_act_h_max) ) ) )
 			      continue;
-			  }
-			else
-			  {
-			    if(bc_msh_node > m_msh->loc_NodesNumber_Linear)
-			      continue;
-			  }
-
 
 			int dof_per_node = 0;
 			if (m_msh->NodesNumber_Linear == m_msh->NodesNumber_Quadratic)
@@ -6698,10 +6620,15 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 			      dof_per_node = pcs_number_of_primary_nvals;
 			    else
 			      dof_per_node =  m_msh->GetCoordinateFlag() / 10;
+				if(type == 4 || type / 10 == 4)
+				{
 			    shift = m_bc_node->msh_node_number / m_msh->NodesNumber_Quadratic;
 			  }
- 
-
+				else
+				{
+						shift = m_bc_node->msh_node_number / m_msh->NodesNumber_Linear;
+				}
+			}
 #else
 			shift = m_bc_node->msh_node_number - m_bc_node->geo_node_number;
 			if(rank > -1)
@@ -6813,8 +6740,6 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 				}
 				else
 				{
-
-					//MW calculate pressure from given head at bc with density, gravity constant and geodetic height for PRESSURE as primary variable
 					if (m_bc->getPressureAsHeadModel() == -1)	//this is the default case
 					{
 					// time_fac*fac*PCSGetNODValue(bc_msh_node,"PRESSURE1",0);
@@ -6822,28 +6747,12 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 					}
 					else	//this is the PressureAsHead case
 					{
-						double local_density;
-						switch (m_bc->getPressureAsHeadModel())
-						{
-						case 0:
-							//use current density at node
-							local_density = MFPGetNodeValue(m_bc_node->msh_node_number, "DENSITY", 0);
-							break;
-						case 1:
-							//use given density
-							local_density = m_bc->getPressureAsHeadDensity();
-							break;
-						default:
-							std::cout << "Warning! No PressureAsHeadDensity specified. Calculating density (i.e. PressureAsHeadModel 0)!" << std::endl;
-							local_density = MFPGetNodeValue(m_bc_node->msh_node_number, "DENSITY", 0);
-							break;
+						bc_value = calcPressureFromHead(*m_bc, m_bc_node->msh_node_number, m_bc_node->node_value, time_fac, fac);
 						}
-						
-						const double local_node_elevation = this->m_msh->nod_vector[m_bc_node->msh_node_number]->Z();
-
-						// pressure = gravitational_constant * density * ( head - geodetic_height )
-						bc_value = fac * gravity_constant * local_density * ( time_fac * m_bc_node->node_value - local_node_elevation );
 					}
+				if(m_bc->isSwitchBC())
+				{
+					bc_value = evaluteSwitchBC(*m_bc, *m_bc_node, time_fac, fac);
 				}
 				//----------------------------------------------------------------
 				// MSH
@@ -6977,7 +6886,7 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 
 
 				//save last bc_value for later usage (in constrained BC)
-				m_bc_node->node_value_last_calc = bc_value;
+				m_bc_node->node_value_pre_calc = bc_value;
 
 				if(m_bc->isConstrainedBC())
 				{
@@ -7570,6 +7479,9 @@ bool CRFProcess::checkConstrainedST(std::vector<CSourceTerm*> & st_vector, CSour
 					//value of PrimVar of other process at current node
 					double local_value = pcs->GetNodeValue(st_node.geo_node_number, 2*k+1);
 
+					// FIXME: if getPressureAsHead != -1, then the head is expected
+					// however, getPressureAsHead is part of CBoundaryCondition (m_bc in IncorporateBoundaryConditions)
+
 					if (local_constrained.constrainedDirection == ConstrainedType::GREATER)	//exclude greater and equal values
 					{
 						if (local_value >= local_constrained.constrainedValue) 		//check if calculated value (eg of other process) meets criterium
@@ -7595,7 +7507,7 @@ bool CRFProcess::checkConstrainedST(std::vector<CSourceTerm*> & st_vector, CSour
 	return return_value;
 }
 
-bool CRFProcess::checkConstrainedBC(CBoundaryCondition const & bc, CBoundaryConditionNode const & bc_node, double & bc_value)
+bool CRFProcess::checkConstrainedBC(CBoundaryCondition const & bc, CBoundaryConditionNode & bc_node, double & bc_value)
 {
 	for (std::size_t i=0; i < bc.getNumberOfConstrainedBCs(); i++)
 	{
@@ -7644,12 +7556,12 @@ bool CRFProcess::checkConstrainedBC(CBoundaryCondition const & bc, CBoundaryCond
 			double const scalar_prod(MathLib::scpr(&(vel)[0], bc_node.GetNormalVector(), 3));
 
 			//select case to handle BC
-			if (scalar_prod < 0 && scalar_prod >= -1.01
+			if (scalar_prod < 0.05 && scalar_prod >= -1.01	// small tolerance of ~5°
 					&& local_constrained.constrainedDirection == ConstrainedType::NEGATIVE)	// velocity vector and bc surface normal point in opposite directions
 			{
 				return true;	//do not apply BC (maybe later implementation: change BC to ST at this node)
 			}
-			else if(scalar_prod <= 1.01 && scalar_prod >= 0
+			else if(scalar_prod <= 1.01 && scalar_prod >= -0.05	// small tolerance of ~5°
 					&& local_constrained.constrainedDirection == ConstrainedType::POSITIVE)	// velocity vector points in same direction as bc surface normal
 			{
 				return true;	//do not apply BC (maybe later implementation: change BC to ST at this node)
@@ -7668,34 +7580,46 @@ bool CRFProcess::checkConstrainedBC(CBoundaryCondition const & bc, CBoundaryCond
 			{
 				if (pcs->GetPrimaryVName(k) == FiniteElement::convertPrimaryVariableToString(local_constrained.constrainedPrimVar))
 				{
-					//value of PrimVar of other process at current node
-					double local_value = pcs->GetNodeValue(bc_node.geo_node_number, 2*k+1);
 
+					// TODO: check case GREATER - maybe not thoroughly enough evaluated
 					if (local_constrained.constrainedDirection == ConstrainedType::GREATER)	//exclude greater and equal values
 					{
-						if (local_value >= local_constrained.constrainedValue 		//check if calculated value (eg of other process) meets criterium
-								|| bc_node.node_value_last_calc >= local_constrained.constrainedValue)		//check if BC value meets criterium
+						//value of PrimVar of other process at current node
+						double local_value ( 0.1 * pcs->GetNodeValue(bc_node.geo_node_number, 2*k+1)
+								+ 0.9 * pcs->GetNodeValue(bc_node.geo_node_number, 2*k) );
+						if (local_value >= local_constrained.constrainedValue)		//check if calculated value (eg of other process) meets criterium
+							return true;
+						if (bc.getProcessType() == local_constrained.constrainedProcessType
+								&& bc_node.node_value_pre_calc >= local_constrained.constrainedValue)		//check if BC value meets criterium
 							return true;
 					}
 					else if (local_constrained.constrainedDirection == ConstrainedType::SMALLER) // exclude smaller values
 					{
-						if (local_value < local_constrained.constrainedValue
-								|| bc_node.node_value_last_calc < local_constrained.constrainedValue)
+						if (bc.getProcessType() == local_constrained.constrainedProcessType)	// check if correct process type
 						{
-							if (bc.isSeepageBC()		//this probably only makes sense if constrained primary variable is pressure
-									&& local_value > bc_node.node_value_last_calc	//could add a check, but don't want to limit it
-									&& local_value > local_constrained.constrainedValue)
+							if(bc_node.node_value_pre_calc < local_constrained.constrainedValue)		//limit BC if constrained below BC value
+							{
+								if(local_constrained._isSeepageBC)
+								{
+									//value of PrimVar of other process at current node
+									double local_value ( 0.1 * pcs->GetNodeValue(bc_node.geo_node_number, 2*k+1)	//slight averaging with last time step for stability
+											+ 0.9 * pcs->GetNodeValue(bc_node.geo_node_number, 2*k) );
+
+									if(local_value < local_constrained.constrainedValue)
+										return true;
+									else
 								bc_value = local_constrained.constrainedValue;
+								}
 							else
 								return true;
 						}
 					}
-					/*else	is already checked when reading
-						return false;*/
 				}
 			}
 		}
 	}
+	}
+	std::cout << "Non existing combination for constrained BC direction given. Using normal BC." << std::endl;
 	return false;
 }
 
@@ -7785,10 +7709,93 @@ std::valarray<double> CRFProcess::getNodeVelocityVector(const long node_id)
 	}
 
 
+//MW if set, calculate pressure from given head at bc with density, gravity constant and geodetic height for PRESSURE as primary variable
+double CRFProcess::calcPressureFromHead(CBoundaryCondition const & bc, std::size_t node_number, double head_value,
+		 double const & time_fac, double const & fac)
+{
+	double local_density;
+	switch (bc.getPressureAsHeadModel())
+	{
+	case 0:
+		//use current density at node
+		local_density = MFPGetNodeValue(node_number, "DENSITY", 0);
+		break;
+	case 1:
+		//use given density
+		local_density = bc.getPressureAsHeadDensity();
+		break;
+	default:
+		std::cout << "Warning! No PressureAsHeadDensity specified. Calculating density (i.e. PressureAsHeadModel 0)!" << std::endl;
+		local_density = MFPGetNodeValue(node_number, "DENSITY", 0);
+		break;
+	}
+
+	const double local_node_elevation = this->m_msh->nod_vector[node_number]->Z();
+
+	// pressure = gravitational_constant * density * ( head - geodetic_height )
+	double pressure_value( fac * gravity_constant * local_density * ( time_fac * head_value - local_node_elevation ) );
+
+	return pressure_value;
+}
 
 
+double CRFProcess::calcHeadFromPressure(CBoundaryCondition const & bc, std::size_t node_number, double pressure_value,
+		 double const & time_fac, double const & fac)
+{
+	double local_density;
+	switch (bc.getPressureAsHeadModel())
+	{
+	case 0:
+		//use current density at node
+		local_density = MFPGetNodeValue(node_number, "DENSITY", 0);
+		break;
+	case 1:
+		//use given density
+		local_density = bc.getPressureAsHeadDensity();
+		break;
+	default:
+		std::cout << "Warning! No PressureAsHeadDensity specified. Calculating density (i.e. PressureAsHeadModel 0)!" << std::endl;
+		local_density = MFPGetNodeValue(node_number, "DENSITY", 0);
+		break;
+	}
+
+	const double local_node_elevation = this->m_msh->nod_vector[node_number]->Z();
+
+	// pressure = gravitational_constant * density * ( head - geodetic_height )
+	double head_value( fac * ( pressure_value * time_fac / ( gravity_constant * local_density ) + local_node_elevation ) );
+
+	return head_value;
+}
 
 
+double CRFProcess::evaluteSwitchBC(CBoundaryCondition const & bc, CBoundaryConditionNode const & bc_node, double time_fac, double fac)
+{
+
+	const SwitchBC &localSwitchBC(bc.getSwitchBC());
+	// assume, normally to use on value
+	double returnValue ( time_fac * fac * localSwitchBC.switchOnValue );
+
+	CRFProcess* pcs(PCSGet(localSwitchBC.switchProcessType));
+
+	//other variable
+	for (std::size_t i(0); i < pcs->GetPrimaryVNumber(); i++)
+	{
+		if (pcs->GetPrimaryVName(i) == FiniteElement::convertPrimaryVariableToString(localSwitchBC.switchPrimVar))
+		{
+			//value of PrimVar of other process at current node
+			double localValue ( 0.1 * pcs->GetNodeValue(bc_node.geo_node_number, 2*i+1)
+					+ 0.9 * pcs->GetNodeValue(bc_node.geo_node_number, 2*i) );
+
+			if ( localValue < localSwitchBC.switchValue )
+			{
+				// set off value, if other value lower than switchValue
+				returnValue = ( time_fac * fac * localSwitchBC.switchOffValue );
+			}
+			break;
+		}
+	}
+	return returnValue;
+}
 
 
 /**************************************************************************
@@ -7832,16 +7839,9 @@ std::valarray<double> CRFProcess::getNodeVelocityVector(const long node_id)
 		long i;                   //, group_vector_length;
 
 		double Scaling = 1.0;
-#if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
-		bool quadr = false;
-#endif
 		if(type == 4 || type / 10 == 4)
 		  {
 		    fac = Scaling;
-
-#if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
-		    quadr = true;
-#endif
 		  }
 
 		CNodeValue* cnodev = NULL;
@@ -7951,12 +7951,9 @@ std::valarray<double> CRFProcess::getNodeVelocityVector(const long node_id)
 			}
 		}
 
-
 		m_st=NULL;
 
-
 //#####################
-
 
 		if (rank == -1)
 		{
@@ -8012,16 +8009,14 @@ std::valarray<double> CRFProcess::getNodeVelocityVector(const long node_id)
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
 			msh_node = cnodev->geo_node_number;
 			// Check whether the node is in this subdomain
-			if(quadr)
-			  {
-			    if(msh_node > m_msh->loc_NodesNumber_Quadratic)
+			const long id_act_l_max = m_msh->getNumNodesLocal();
+			const long id_h = static_cast<long>( m_msh->GetNodesNumber(false) );
+			const long id_act_h_max = static_cast<long>( m_msh->getLargestActiveNodeID_Quadratic() );
+
+			// If ghost node
+			if( !( (msh_node < id_act_l_max) ||
+			      ( (msh_node >= id_h) && (msh_node <  id_act_h_max)) ) )
 			      continue;
-			  }
-			else
-			  {
-			    if(msh_node > m_msh->loc_NodesNumber_Linear)
-			      continue;
-			  }
 
 			int dof_per_node = 0;
 			if (m_msh->NodesNumber_Linear == m_msh->NodesNumber_Quadratic)
@@ -8035,10 +8030,16 @@ std::valarray<double> CRFProcess::getNodeVelocityVector(const long node_id)
 			      dof_per_node = pcs_number_of_primary_nvals;
 			    else
 			      dof_per_node =  m_msh->GetCoordinateFlag() / 10;
+				if(type == 4 || type / 10 == 4)
+				{
 			    shift = cnodev->msh_node_number / m_msh->NodesNumber_Quadratic;
 			  }
+				else
+				{
+						shift = cnodev->msh_node_number / m_msh->NodesNumber_Linear;
+				}
+			}
  
-
 #else
 			shift = cnodev->msh_node_number - cnodev->geo_node_number;
 			if (rank > -1)
@@ -8776,7 +8777,7 @@ std::valarray<double> CRFProcess::getNodeVelocityVector(const long node_id)
          CalcSecondaryVariablesTNEQ();        //HS
          break;
 		case FiniteElement::TES:
-			CalcSecondaryVariablesTES(initial);        //HS
+			CalcSecondaryVariablesTES();        //HS
 			break;
 		case FiniteElement::LIQUID_FLOW:
             if(aktueller_zeitschritt>0)
@@ -10817,7 +10818,7 @@ Task: Updating rho_s values in TES
 Programming: 
 11/2011 HS Implementation for thermal storage project
 **************************************************************************/
-void CRFProcess::CalcSecondaryVariablesTES(const bool initial)
+void CRFProcess::CalcSecondaryVariablesTES()
 {
 	// TODO [CL] merge with TNEQ
 	// loop over all the nodes,
@@ -10840,7 +10841,7 @@ void CRFProcess::CalcSecondaryVariablesTES(const bool initial)
 		if (elem->GetMark())                        // Marked for use
 		{
 			fem->ConfigElement(elem, m_num->ele_gauss_points);
-			fem->UpdateSolidDensity(i, initial);          // HS, thermal storage reactions
+			fem->UpdateSolidDensity(i);          // HS, thermal storage reactions
 			fem->ExtrapolateGauss_ReactRate_TNEQ_TES( this ); // HS added 19.02.2013
 		}
 	}
@@ -13757,19 +13758,18 @@ CRFProcess* PCSGetMass(size_t component_number)
 		int dof_DM = 0;  //WW 02.2023. Pardiso
 		CRFProcess* m_pcs = NULL;
 		CFEMesh* a_msh = NULL;
-		SparseTable* sp = NULL;
-		SparseTable* spH = NULL;
-		Linear_EQS* eqs = NULL;
-        Linear_EQS* eqs_dof = NULL; //WW 02.2023. Pardiso
-		Linear_EQS* eqsH = NULL;
 
-        bool need_eqs = false;      //WW 02.2023. Pardiso
-        bool need_eqs_dof = false;  //WW 02.2023. Pardiso
+#ifndef USE_MPI
+		bool need_eqs = false;      //WW 02.2013. Pardiso
+		bool need_eqs_dof = false;  //WW 02.2013. Pardiso
+#endif
 		int dof = 1;
 		//
-        //size_t dof_nonDM (1);     //WW 02.2023. Pardiso
+		//size_t dof_nonDM (1);     //WW 02.2013. Pardiso
         size_t dof_nonDM (0);    
 
+		int dof_max = 0;
+		size_t dof_nonDM_max = 0;         
 		for(i = 0; i < pcs_vector.size(); i++)
 		{
 			m_pcs = pcs_vector[i];
@@ -13804,15 +13804,20 @@ CRFProcess* PCSGetMass(size_t component_number)
               {
                 dof_nonDM =  m_pcs->GetPrimaryVNumber();
                 dof = dof_nonDM;
+#ifndef USE_MPI
                 need_eqs_dof = true;
+#endif
               }
               else
               {
                 dof = 1;
+#ifndef USE_MPI
                 need_eqs = true;
+#endif
               } //WW 02.2023. Pardiso
             }
-
+			dof_max = std::max(dof_max, dof);
+			dof_nonDM_max = std::max(dof_nonDM_max, dof_nonDM);
 		}
 		//Check whether the JFNK method is employed for deformation problem 04.08.2010 WW
 		CNumerics* num = NULL;
@@ -13829,12 +13834,19 @@ CRFProcess* PCSGetMass(size_t component_number)
 			}
 		}
 
+#ifndef USE_MPI
+		SparseTable* sp = NULL;
+		SparseTable* spH = NULL;
+		Linear_EQS* eqs_dof = NULL; //WW 02.2023. Pardiso
+		Linear_EQS* eqsH = NULL;
+#endif
 		//
+		Linear_EQS* eqs = NULL;
 		for(i = 0; i < fem_msh_vector.size(); i++)
 		{
 			a_msh = fem_msh_vector[i];
 #if defined(USE_MPI)
-			eqs = new Linear_EQS(a_msh->GetNodesNumber(true) * dof);
+			eqs = new Linear_EQS(a_msh->GetNodesNumber(true) * dof_max);
 			EQS_Vector.push_back(eqs);
 			EQS_Vector.push_back(eqs);
 #else
@@ -13857,7 +13869,7 @@ CRFProcess* PCSGetMass(size_t component_number)
 	          }
               if(need_eqs_dof)
 	          {
-                eqs_dof = new Linear_EQS(*sp, dof_nonDM);
+					eqs_dof = new Linear_EQS(*sp, dof_nonDM_max);
 	          }
             }//WW 02.2023. Pardiso
             if(spH)
@@ -13943,13 +13955,18 @@ CRFProcess* PCSGetMass(size_t component_number)
 			for (size_t i = 0; i < size_bc; i++)
 			{
 				nindex = bc_node_value[i]->geo_node_number;
+#ifdef USE_PETSC
+				std::size_t id_in_eqs = m_msh->nod_vector[nindex]->GetEquationIndex();
+#else
+				std::size_t id_in_eqs = nindex; 
+#endif
 //         anode = m_msh->nod_vector[nindex];
 //         os << nindex << "  " << bc_node_value[i]->pcs_pv_name << " "
 //            << std::setw(14) << anode->X() << " " << std::setw(14) << anode->Y()
 //            << " " << std::setw(14) << anode->Z() << " " << std::setw(14)
 //            << bc_node_value[i]->node_value << "\n";
 				double const* const pnt (m_msh->nod_vector[nindex]->getData());
-				os << nindex << "  " << bc_node_value[i]->pcs_pv_name << " "
+				os << id_in_eqs << "  " << bc_node_value[i]->pcs_pv_name << " "
 				   << std::setw(14) << pnt[0] << " " << std::setw(14) << pnt[1]
 				   << " " << std::setw(14) << pnt[2] << " " << std::setw(14)
 				   << bc_node_value[i]->node_value << "\n";
@@ -13964,6 +13981,11 @@ CRFProcess* PCSGetMass(size_t component_number)
 			for (size_t i = 0; i < size_st; i++)
 			{
 				nindex = st_node_value[i]->geo_node_number;
+#ifdef USE_PETSC
+				std::size_t id_in_eqs = m_msh->nod_vector[nindex]->GetEquationIndex();
+#else
+				std::size_t id_in_eqs = nindex; 
+#endif
 //         anode = m_msh->nod_vector[nindex];
 //         os << nindex << "  " << convertPrimaryVariableToString(
 //            st_node[i]->getProcessPrimaryVariable()) << " " << std::setw(14)
@@ -13971,7 +13993,7 @@ CRFProcess* PCSGetMass(size_t component_number)
 //            << std::setw(14) << anode->Z() << " " << std::setw(14)
 //            << st_node_value[i]->node_value << "\n";
 				double const* const pnt (m_msh->nod_vector[nindex]->getData());
-				os << nindex << "  " << convertPrimaryVariableToString(
+				os << id_in_eqs << "  " << convertPrimaryVariableToString(
 				        st_node[i]->getProcessPrimaryVariable()) << " " <<
 				std::setw(14)
 				<< pnt[0] << " " << std::setw(14) << pnt[1] << " "
@@ -14098,8 +14120,8 @@ CRFProcess* PCSGetMass(size_t component_number)
 				}
 			}
 #if defined(USE_MPI)
-			MPI_Allreduce(&norm_e_rank, &norm_e, 1, MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-			MPI_Allreduce(&norm_en_rank, &norm_en, 1, MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+			MPI_Allreduce(&norm_e_rank, &norm_e, 1, MPI_DOUBLE,MPI_SUM,comm_DDC);
+			MPI_Allreduce(&norm_en_rank, &norm_en, 1, MPI_DOUBLE,MPI_SUM,comm_DDC);
 #else                                    //USE_MPI
 			norm_e += norm_e_rank;
 			norm_en += norm_en_rank;

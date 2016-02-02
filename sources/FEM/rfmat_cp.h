@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************/
 /* ROCKFLOW - Modul: rfmat_cp.h
  */
@@ -48,7 +57,7 @@ public:
 	double omega;                // accentric factor [-]
 	double Tc;					// Critical temperature [K]
 	int fluid_id;			// Requred to detect a particular fluid from *.mcp files: 0 for CO2; 1 for H2O; 2 for CH4; 3 for N2
-	double Vm;                // Vm [m3/kmol]: Molar volume used in interation parameter calculation 
+	double Vm;                // Vm [m3/kmol]: Molar volume used in interation parameter calculation
 	double Vd;                 //[cm3/mol] diffusion volume
 	int OutputMassOfComponentInModel;		// 05/2012 BG
 

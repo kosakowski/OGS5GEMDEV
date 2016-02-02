@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 #include "fem_ele_std.h"
 
 #include "rf_mmp_new.h"
@@ -21,16 +30,7 @@ using Math_Group::CSparseMatrix;
 #endif
 
 
-#define GAS_MASS_FORM
-#ifdef GAS_MASS_FORM
-const bool GasMassForm = true;
-#else
-const bool GasMassForm = false;
-#endif
-
-#include "physical_constants.h"
-
-
+#include "PhysicalConstant.h"
 
 namespace
 {
@@ -156,9 +156,9 @@ double CFiniteElementStd::CalCoefMassTNEQ(const int dof_index)
 		dxn_dxm /= (M0 * X + M1 * (1.0 - X)) * (M0 * X + M1 * (1.0 - X));
 
 		if (GasMassForm) {
-			val = (M1-M0) * p / (Phys::R * T) * dxn_dxm * poro;
+			val = (M1-M0) * p / (PhysicalConstant::IdealGasConstant * T) * dxn_dxm * poro;
 		} else {
-			val = (M1-M0) * p / (Phys::R * T) * dxn_dxm * poro
+			val = (M1-M0) * p / (PhysicalConstant::IdealGasConstant * T) * dxn_dxm * poro
 			       / FluidProp->Density(eos_arg);
 		}
 		break;
@@ -445,28 +445,32 @@ double CFiniteElementStd::CalCoefAdvectionTNEQ(const int dof_index)
 
 	double val = 0.0;
 
+	if (!GasMassForm)
+	{
+		switch(dof_index)
+		{
+		case 0:
+			val = 1.0/p;
+			break;
+
+		case 1:
+			T = ipol(T0, T1, theta, this);
+			// T = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_t0) + pcs->m_num->ls_theta*interpolate(NodalVal_t1); //NW include theta
+			val = -1.0/T;
+
+			break;
+
+			// case 2:
+
+		case 3:
+			poro = MediaProp->Porosity(Index,pcs->m_num->ls_theta);
+			val = 0.0;
+			break;
+		}
+	}
+
 	switch(dof_index)
 	{
-#ifndef GAS_MASS_FORM
-	case 0:
-		val = 1.0/p;
-		break;
-
-	case 1:
-		T = ipol(T0, T1, theta, this);
-		// T = (1-pcs->m_num->ls_theta)*interpolate(NodalVal_t0) + pcs->m_num->ls_theta*interpolate(NodalVal_t1); //NW include theta
-		val = -1.0/T;
-
-		break;
-
-		// case 2:
-
-	case 3:
-		poro = MediaProp->Porosity(Index,pcs->m_num->ls_theta);
-		val = 0.0;
-		break;
-#endif
-
 	case 4:
 		if (FluidProp->beta_T == 0.0)
 		{

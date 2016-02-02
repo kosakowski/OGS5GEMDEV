@@ -3,6 +3,11 @@
  *
  *  Created on: Aug 9, 2010
  *      Author: TF
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
  */
 
 // Base
@@ -78,7 +83,7 @@ MeshNodesAlongPolyline::MeshNodesAlongPolyline(
 			} // end node loop
 		} // end line segment loop
 
-		//We need exactly defined polyline for DDC. 
+		//We need exactly defined polyline for DDC.
 		//Therefore, the following two line should be dropped.
 		//if (_msh_node_ids.empty())
 		//	search_radius *= 2.0;

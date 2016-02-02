@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************
    GeoLib - Object: Volume
    Task:
@@ -48,7 +57,7 @@ public:
 	void Write(std::string); //CC
 	// GEO
 	bool PointInVolume(CGLPoint*,int);
-	// kg44 needed for domain decomposition with PETSC	
+	// kg44 needed for domain decomposition with PETSC
 	void SetConditionTypeIC(const bool value) { for_ic=value;} ;
 	bool GetConditionTypeIC() const {return for_ic;} ;
 	//----------------------------------------------------------------------

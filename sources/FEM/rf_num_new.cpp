@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************
    FEMLib - Object: NUM
    Task:
@@ -101,7 +110,7 @@ CNumerics::CNumerics(string name)
     //Local picard1                                //NW
     local_picard1_tolerance = 1.0e-3;
     local_picard1_max_iterations = 1;
-    update_velocity_within_nonlinear = 0; 
+    update_velocity_within_nonlinear = 0;
 
 	for(size_t i=0; i<DOF_NUMBER_MAX; i++)	//JT2012
 		cpl_error_tolerance[i] = -1.0;			//JT2012: should not default this. Should always be entered by user!
@@ -452,7 +461,7 @@ ios::pos_type CNumerics::Read(ifstream* num_file)
 #ifdef USE_PETSC
 			if(str_buf.find("petsc") != string::npos) //03.2012. WW
 			{
-				line >> str_buf 
+				line >> str_buf
 				>> lsover_name
 				>> pres_name
 				>> ls_error_tolerance

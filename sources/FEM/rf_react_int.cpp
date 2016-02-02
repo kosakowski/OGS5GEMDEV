@@ -1,4 +1,13 @@
-/*
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
+ /*
    rf_react_int.cpp
    Reaction interface
  */
@@ -48,7 +57,7 @@ vector <REACTINT*> REACTINT_vec;
 
 /**************************************************************************
  ReacInt-Method:
- Task: Constructor 
+ Task: Constructor
  Programing:
  //CB 01.2011 CB First implementation
  **************************************************************************/
@@ -74,15 +83,15 @@ REACTINT::REACTINT(void){
   icSolidUpdate = false;
   readNodePoro = false;
   vle_flag = false;
-  pcs_rename_init_flag = false;	
-  pcs_rename_pre_flag = false;	
-  pcs_rename_post_flag = false;	
+  pcs_rename_init_flag = false;
+  pcs_rename_pre_flag = false;
+  pcs_rename_post_flag = false;
   poroupdate_flag = false;
   heatpump_2DhTO2Dv = false;
   heatpump_Z = -9999;
     //0-Li, 1-Na, 2-K, 3-Mg, 4-Ca, 5-Cl, 6-SO4, 7-CO3
   //double mv[8];
-  //mv[0]=0; mv[1]=2.71; mv[2]=0; mv[3]=0; mv[4]=0; mv[5]=2.71; mv[6]=0; mv[7]=0; 
+  //mv[0]=0; mv[1]=2.71; mv[2]=0; mv[3]=0; mv[4]=0; mv[5]=2.71; mv[6]=0; mv[7]=0;
   //double test = Density_CO2brine(393.15, 202, 2.71, 0.0);
   //test = Density_CO2_MultiBrine(393.15, 202, mv, 0);
   this->node_porosity.clear();
@@ -97,7 +106,7 @@ REACTINT::REACTINT(void){
 }
 /**************************************************************************
  ReacInt-Method:
- Task: Destructor 
+ Task: Destructor
  Programing:
  //CB 01.2011 CB First implementation
  **************************************************************************/
@@ -106,7 +115,7 @@ REACTINT::~REACTINT(void){
 
 /**************************************************************************
  ReacInt-Method:
- Task: general global Read function 
+ Task: general global Read function
  Programing:
  //CB 01.2011 CB First implementation
  **************************************************************************/
@@ -123,10 +132,10 @@ bool REACINTRead(string file_base_name){
   // File handling
   rei_file_name = file_base_name + REI_FILE_EXTENSION;
   ifstream rei_file (rei_file_name.data(),ios::in);
-  if (!rei_file.good()) 
+  if (!rei_file.good())
     return false;
 
-  REACTINT *m_rei = NULL; 
+  REACTINT *m_rei = NULL;
 
   rei_file.seekg(0L,ios::beg); // rewind?
   //========================================================================
@@ -157,7 +166,7 @@ bool REACINTRead(string file_base_name){
 
 /**************************************************************************
  ReacInt-Method:
- Task: ReacInt Read function 
+ Task: ReacInt Read function
  Programing:
  //CB 01.2011 CB First implementation
  **************************************************************************/
@@ -180,12 +189,12 @@ bool REACTINT::Read(ifstream *rfd_file)
   VLE_type condition, condition_p;
   VLE_conditions.clear();
   VLE_pressure.clear();
-		
+
 
   //========================================================================
   while (!new_keyword) {
 	  index = rfd_file->tellg();
-    if(!GetLineFromFile(line,rfd_file)) 
+    if(!GetLineFromFile(line,rfd_file))
       break;
     line_string = line;
     if(line_string.find(hash)!=string::npos) {
@@ -221,17 +230,17 @@ bool REACTINT::Read(ifstream *rfd_file)
 		      line_str1 = GetLineFromFile1(rfd_file);
 		      // Check for end of data block
 	        if((line_str1.find(hash)!=string::npos) || (line_str1.find(dollar)!=string::npos)) {
-   		      if(line_str1.find(hash)!=string::npos) 
+   		      if(line_str1.find(hash)!=string::npos)
               new_keyword = true;
    			    rfd_file->seekg(index1); //Dateipointer zurücksetzen, sonst ist das nächste subkeyword weg
 	          break;
 		      }
-          // Here, read individual species data 
+          // Here, read individual species data
           in.str(line_str1);
-          in >> speciesname ; 
+          in >> speciesname ;
           if(speciesname.compare("NIX")!=0){ //check for read in
             water_conc_species.push_back(speciesname);
-            // store in osme vector 
+            // store in osme vector
             speciesname = "NIX";
           }
           else
@@ -271,7 +280,7 @@ bool REACTINT::Read(ifstream *rfd_file)
         constantpressure  = false;
       else
         cout << " Warning in REACTINT::Read - No valid keyword for $PRESSURE." << "\n";
-      in.clear();     
+      in.clear();
     }
     if(line_string.find("$TEMPERATURE")!=string::npos) { // subkeyword found
 	    in.str(GetLineFromFile1(rfd_file));
@@ -323,7 +332,7 @@ bool REACTINT::Read(ifstream *rfd_file)
     }
 	if(line_string.find("$VLE")!=string::npos){ // subkeyword found
 		vle_flag = true;
-        cout << " VLE load..." << "\n";		
+        cout << " VLE load..." << "\n";
 		in.str(GetLineFromFile1(rfd_file));
 		in >> ncomp_x;  condition.vp_name=ncomp_x;
 		in >> ncomp_x; 	condition.aq_name=ncomp_x;
@@ -333,7 +342,7 @@ bool REACTINT::Read(ifstream *rfd_file)
 
 	if(line_string.find("$P_VLE")!=string::npos){ // subkeyword found
 		vle_p_flag = true;
-        cout << " P_VLE load..." << "\n";		
+        cout << " P_VLE load..." << "\n";
 		in.str(GetLineFromFile1(rfd_file));
 		in >> ncomp_x;  condition_p.vp_name=ncomp_x;
 		in >> ncomp_x; 	condition_p.aq_name=ncomp_x;
@@ -356,7 +365,7 @@ bool REACTINT::Read(ifstream *rfd_file)
 
 	//for pcs rename init, pre, post position
 	if(line_string.find("$PCS_RENAME_INIT")!=string::npos){ // subkeyword found
-  pcs_rename_init_flag = true;	
+  pcs_rename_init_flag = true;
 		this->pcs_rename0_init.clear();
 		this->pcs_rename1_init.clear();
 		this->pcs_rename1_stoi_init.clear();
@@ -370,7 +379,7 @@ bool REACTINT::Read(ifstream *rfd_file)
 			if(!ncomp_x.find("END")) {
 				in.clear();
 				break;
-			}			
+			}
 			this->pcs_rename0_init.push_back(ncomp_x);
 			for(j=1;j<(int)string2vector(line_str2).size();j+=2){
 				in >> ncomp_x;
@@ -385,7 +394,7 @@ bool REACTINT::Read(ifstream *rfd_file)
 				else if(ncomp_x=="log10")
 					pcs_stoi.push_back(-999996);
 				else if(ncomp_x=="delta")
-					pcs_stoi.push_back(-999990);				
+					pcs_stoi.push_back(-999990);
 				else if(ncomp_x.substr(0,3)=="pow"){
 					pcs_stoi.push_back(-999995);
 					this->pow_stoi_init.push_back((double)atof(ncomp_x.substr(3).c_str()));
@@ -397,11 +406,11 @@ bool REACTINT::Read(ifstream *rfd_file)
 			}
 			this->pcs_rename1_init.push_back(pcs_name);
 			this->pcs_rename1_stoi_init.push_back(pcs_stoi);
-			in.clear();				
+			in.clear();
 		}
 	}
 	if(line_string.find("$PCS_RENAME_PRE")!=string::npos){ // subkeyword found
-		pcs_rename_pre_flag = true;	
+		pcs_rename_pre_flag = true;
   this->pcs_rename0_pre.clear();
 		this->pcs_rename1_pre.clear();
 		this->pcs_rename1_stoi_pre.clear();
@@ -414,7 +423,7 @@ bool REACTINT::Read(ifstream *rfd_file)
 			if(!ncomp_x.find("END")) {
 				in.clear();
 				break;
-			}			
+			}
 			this->pcs_rename0_pre.push_back(ncomp_x);
 			for(j=1;j<(int)string2vector(line_str2).size();j+=2){
 				in >> ncomp_x;
@@ -441,11 +450,11 @@ bool REACTINT::Read(ifstream *rfd_file)
 			}
 			this->pcs_rename1_pre.push_back(pcs_name);
 			this->pcs_rename1_stoi_pre.push_back(pcs_stoi);
-			in.clear();				
+			in.clear();
 		}
 	}
 	if(line_string.find("$PCS_RENAME_POST")!=string::npos){ // subkeyword found
-  pcs_rename_post_flag = true;	
+  pcs_rename_post_flag = true;
   this->pcs_rename0_post.clear();
 		this->pcs_rename1_post.clear();
 		this->pcs_rename1_stoi_post.clear();
@@ -458,7 +467,7 @@ bool REACTINT::Read(ifstream *rfd_file)
 			if(!ncomp_x.find("END")) {
 				in.clear();
 				break;
-			}			
+			}
 			this->pcs_rename0_post.push_back(ncomp_x);
 			for(j=1;j<(int)string2vector(line_str2).size();j+=2){
 				in >> ncomp_x;
@@ -485,7 +494,7 @@ bool REACTINT::Read(ifstream *rfd_file)
 			}
 			this->pcs_rename1_post.push_back(pcs_name);
 			this->pcs_rename1_stoi_post.push_back(pcs_stoi);
-			in.clear();				
+			in.clear();
 		}
 	}
   }
@@ -496,7 +505,7 @@ bool REACTINT::Read(ifstream *rfd_file)
 
 /**************************************************************************
  ReacInt-Method:
- Task: return the ReacInt object 
+ Task: return the ReacInt object
  Programing:
  //CB 01.2011 CB First implementation
  **************************************************************************/
@@ -515,14 +524,14 @@ REACTINT* REACTINT::GetREACTINT(void)
    - set initial poro and perm as element values of the flow pcs
    - prepare nodal poro vector
    - prepare water concentration vector
-   - 
+   -
  Programing:
  //CB 01.2011 CB First implementation
  **************************************************************************/
 void REACTINT::InitREACTINT(void){
 
   long i,j;
-  double poro = 0;  
+  double poro = 0;
   int nc = (int)cp_vec.size();
   vector<int> id;
   string sp_name;
@@ -536,7 +545,7 @@ void REACTINT::InitREACTINT(void){
 
   //CompProperties *m_cp = NULL;
   CRFProcess *m_pcs = NULL;
-  CFEMesh* m_msh = fem_msh_vector[0]; 
+  CFEMesh* m_msh = fem_msh_vector[0];
   long nnodes = (long) m_msh->nod_vector.size();
 
   m_pcs = PCSGetFlow();
@@ -548,14 +557,14 @@ void REACTINT::InitREACTINT(void){
   // AB & CB
   // Porosity & permeability preprocessing function
   SetInitialPorosityAndPermToElementValue();
-  
+
   // set up vector for nodal porosities
   for(i=0;i<nnodes;i++){
     poro = GetNodePhaseVolume(i, 0, 0);
     node_porosity.push_back(poro);
     node_ini_porosity.push_back(poro);
   }
-  
+
   if(this->readNodePoro)
     ReadRestartNodePoro(nnodes);
 
@@ -577,21 +586,21 @@ void REACTINT::InitREACTINT(void){
            //variables[2] = GetConcentration(0);
            break;
          case 4:                                  // rho(T) = rho_0*(1+beta_T*(T-T_0))
-            variables[1] = GetTemperature(0);            
+            variables[1] = GetTemperature(0);
             break;
          case 5:                                  // rho(C,T) = rho_0*(1+beta_C*(C-C_0)+beta_T*(T-T_0))
-           variables[1] = GetTemperature(0);            
+           variables[1] = GetTemperature(0);
            //variables[2] = GetConcentration(0);
             break;
          case 6:                                  // rho(p,T) = rho_0*(1+beta_p*(p-p_0)+beta_T*(T-T_0))
            variables[0] = GetPressure(0);
-           variables[1] = GetTemperature(0);            
+           variables[1] = GetTemperature(0);
             break;
          case 7:                                  // Pefect gas. WW
             break;
          case 8:                                  // M14 von JdJ // 25.1.12 Added by CB for density output AB-model
            variables[0] = GetPressure(0);
-           variables[1] = GetTemperature(0);            
+           variables[1] = GetTemperature(0);
            //variables[2] = GetConcentration(0);
             break;
          default:
@@ -637,9 +646,9 @@ void REACTINT::InitREACTINT(void){
         }
 
         // Test
-        if(cp_vec[i]->iupac_formula[0]) cout << cp_vec[i]->iupac_formula << ": " << "\n"; 
-        else  cout << cp_vec[i]->compname << ": " << "\n"; 
-        for(j=0;j<(int)id.size();j++) cout << " " << j ;    cout << "\n"; 
+        if(cp_vec[i]->iupac_formula[0]) cout << cp_vec[i]->iupac_formula << ": " << "\n";
+        else  cout << cp_vec[i]->compname << ": " << "\n";
+        for(j=0;j<(int)id.size();j++) cout << " " << j ;    cout << "\n";
         for(j=0;j<(int)id.size();j++) cout << " " << id[j]; cout << "\n";
 
         // now store the id vector
@@ -654,7 +663,7 @@ void REACTINT::InitREACTINT(void){
   // prepare vector for reaction deactivation due to dry out from eclipse
   if(s_water_limit && WaterSatLimit>0)
      for(i=0;i<nnodes;i++) dried_out_nodes.push_back(false); // initialize for eclipse coupling
-  
+
   // clean up
   id.clear();
   //DL 2012.2.17 for VLE conditions, set aq_idx and vp_idx
@@ -673,7 +682,7 @@ void REACTINT::InitREACTINT(void){
 	    if(cond==0){
 		    cout << " VLE aq_name is not a pcs name " << "\n";
 		    exit(0);
-	    }		  
+	    }
 	    cond=0;
 	    for(j=0;j<(int)pcs_vector.size();j++){
 		    if(pcs_vector[j]->pcs_primary_function_name[0] == VLE_conditions[i].vp_name){
@@ -707,7 +716,7 @@ void REACTINT::InitREACTINT(void){
 	  if(cond==0){
 		  cout << " VLE_P aq_name is not a pcs name " << "\n";
 		  exit(0);
-	  }		  
+	  }
 	  cond=0;
 	  for(j=0;j<(int)pcs_vector.size();j++){
 		  if(pcs_vector[j]->pcs_primary_function_name[0] == VLE_pressure[i].vp_name){
@@ -733,9 +742,9 @@ void REACTINT::InitREACTINT(void){
 	double value;
 	vector<int> idx_tmp;
  no_pcs = (int)pcs_vector.size();
- 
- if(pcs_rename_init_flag == true) {	
-		  cout << "\n" << " PCS_RENAME_INIT " << "\n";	
+
+ if(pcs_rename_init_flag == true) {
+		  cout << "\n" << " PCS_RENAME_INIT " << "\n";
 	  this->pcs_rename0_idx_init.clear();
 	  this->pcs_rename1_idx_init.clear();
 	  for(j=0;j<(int)pcs_rename0_init.size();j++){
@@ -765,7 +774,7 @@ void REACTINT::InitREACTINT(void){
 		  if(is_idx==0){
 			  cout << " Warning!!!, line " << i+1 << " can not be found in PCS list ! " << "\n";
 			  exit(0);
-		  }	
+		  }
 		  cout << " " << setw(12) << pcs_rename0_init[i] << " <--- ";
 		  for(jx=0;jx<(int)pcs_rename1_init[i].size();jx++)
 			  cout << "    "  << pcs_rename1_stoi_init[i][jx] << "  " << pcs_rename1_init[i][jx];
@@ -774,8 +783,8 @@ void REACTINT::InitREACTINT(void){
  }
 
 
- if(pcs_rename_pre_flag == true) {	
-	  cout << "\n" << " PCS_RENAME_PRE " << "\n";	
+ if(pcs_rename_pre_flag == true) {
+	  cout << "\n" << " PCS_RENAME_PRE " << "\n";
 	  this->pcs_rename0_idx_pre.clear();
 	  this->pcs_rename1_idx_pre.clear();
 	  for(j=0;j<(int)pcs_rename0_pre.size();j++){
@@ -805,7 +814,7 @@ void REACTINT::InitREACTINT(void){
 		  if(is_idx==0){
 			  cout << " Warning!!!, line " << i+1 << " can not be found in PCS list ! " << "\n";
 			  exit(0);
-		  }	
+		  }
 		  cout << " " << setw(12) << pcs_rename0_pre[i] << " <--- ";
 		  for(jx=0;jx<(int)pcs_rename1_pre[i].size();jx++)
 			  cout << "    "  << pcs_rename1_stoi_pre[i][jx] << "  " << pcs_rename1_pre[i][jx];
@@ -813,9 +822,9 @@ void REACTINT::InitREACTINT(void){
 	  }
  }
 
- 
- if(pcs_rename_post_flag == true) {	
-   cout << "\n" << " PCS_RENAME_POST " << "\n";	
+
+ if(pcs_rename_post_flag == true) {
+   cout << "\n" << " PCS_RENAME_POST " << "\n";
 	  this->pcs_rename0_idx_post.clear();
 	  this->pcs_rename1_idx_post.clear();
 	  for(j=0;j<(int)pcs_rename0_post.size();j++){
@@ -845,7 +854,7 @@ void REACTINT::InitREACTINT(void){
 		  if(is_idx==0){
 			  cout << " Warning!!!, line " << i+1 << " can not be found in PCS list ! " << "\n";
 			  exit(0);
-		  }	
+		  }
 		  cout << " " << setw(12) << pcs_rename0_post[i] << " <--- ";
 		  for(jx=0;jx<(int)pcs_rename1_post[i].size();jx++)
 			  cout << "    "  << pcs_rename1_stoi_post[i][jx] << "  " << pcs_rename1_post[i][jx];
@@ -860,7 +869,7 @@ void REACTINT::InitREACTINT(void){
 			// elenumber = (long) m_pcs->m_msh->ele_vector.size();
 		}
 	}
- 
+
  if(pcs_rename_init_flag == true){
 	  int f=1, ic;
 	  //return pcs rename init, do rename operation
@@ -959,19 +968,19 @@ void REACTINT::ReactionPreProcessing(void){
  //CB 01.2011 CB First implementation
  **************************************************************************/
 void REACTINT::ReactionPostProcessing(bool initial){
-	 
+
   int i, ii, ix, f=1, ic;
 	 double value;
 	 CRFProcess *m_pcs = NULL;
 
   if(initial) // only after initial reactions, i.e. before first real time step
-    this->CopyAllConcentrationsToOtherTimeLevel(true); 
+    this->CopyAllConcentrationsToOtherTimeLevel(true);
   else {
     //  CopySymmetricConcentrationsInRadialModel();
     if(poroupdate_flag==true){
       PorosityVolumetricReactionUpdate(); // porosity change
-      PermeabilityPorosityUpdate();       // resulting permeability change 
-    }       
+      PermeabilityPorosityUpdate();       // resulting permeability change
+    }
     if(dump_min_moles==true)
       DumpSolidSpeciesMoles();
     if(dump_all_pcs==true)
@@ -1059,12 +1068,12 @@ double REACTINT::GetPressure(long node){
   double factor = 1, z;
   int	idxp=0, idxp2=0, timelevel = 1;
   bool ppmodel = false;
-  
+
   CRFProcess *m_pcs_p = NULL;
-  CFEMesh* m_msh = fem_msh_vector[0]; 
+  CFEMesh* m_msh = fem_msh_vector[0];
   CFluidProperties* m_mfp = NULL;
 
-  if(constantpressure) 
+  if(constantpressure)
     return c_PP;
 
 	m_mfp = MFPGet( "LIQUID" );
@@ -1106,7 +1115,7 @@ double REACTINT::GetPressure(long node){
     case 1313: // PS_GLOBAL
       idxp = m_pcs_p->GetNodeValueIndex ("PRESSURE1") + timelevel;
       factor = 1 / 1.0e+5 ;
-      break;    
+      break;
     case 22: // Richards flow
       idxp = m_pcs_p->GetNodeValueIndex ("PRESSURE1") + timelevel;
       factor = 1 / 1.0e+5 ;
@@ -1114,7 +1123,7 @@ double REACTINT::GetPressure(long node){
     default:
       break;
   }
-  
+
   // get pressure    todo CB
   if(flowtype==1){ //Groundwater flow head --> Pressure
     z = m_msh->nod_vector[node]->getData()[2]; // CB_merge_0513 ?? check
@@ -1143,8 +1152,8 @@ double REACTINT::GetTemperature(long node){
   double TT=298.15;
   int	idxt=0, timelevel = 1;
 //  bool heattransport = false;
-  
-  if(constanttemperature) 
+
+  if(constanttemperature)
     return c_TT;
 
   if(aktueller_zeitschritt<1) timelevel = 0;
@@ -1156,7 +1165,7 @@ double REACTINT::GetTemperature(long node){
 	idxt = m_pcs_t->GetNodeValueIndex ("TEMPERATURE1") + timelevel;
     TT = m_pcs_t->GetNodeValue (node, idxt);
   }
-  else 
+  else
     TT = c_TT;
 
   return TT;
@@ -1169,20 +1178,20 @@ double REACTINT::GetTemperature(long node){
  //CB 11.2011 CB First implementation
  **************************************************************************/
 void REACTINT::CheckForDriedOutNodes(void){
-  
+
   long i, nnode;
 
-  CFEMesh* m_msh = fem_msh_vector[0]; 
+  CFEMesh* m_msh = fem_msh_vector[0];
   nnode = (long) m_msh->nod_vector.size();
 
   if(aktueller_zeitschritt>1){
     for (i=0;i<nnode;i++){
-      if(GetWaterSaturation(i) < WaterSatLimit) 
+      if(GetWaterSaturation(i) < WaterSatLimit)
         dried_out_nodes[i] = true;
-      else 
+      else
         dried_out_nodes[i] = false;
     }
-  }    
+  }
 
   return;
 }
@@ -1200,7 +1209,7 @@ void REACTINT::CopyAllConcentrationsToOtherTimeLevel(bool forward){
 
   int i;
   //CRFProcess *m_pcs = NULL;
-  
+
   for (i=0;i<int(cp_vec.size());i++)
     cp_vec[i]->getProcess()->CopyTimestepNODValues(forward); // true: new->old
 
@@ -1220,7 +1229,7 @@ void REACTINT::Heatpump_2DhTO2Dv_Mapping(bool forward){
   long i=0;
   double const *coord; //[3]={0,0,0};
 
-   
+
   CRFProcess *m_pcs_t = NULL;
   long nnode = long(fem_msh_vector[0]->nod_vector.size());
 
@@ -1229,12 +1238,12 @@ void REACTINT::Heatpump_2DhTO2Dv_Mapping(bool forward){
 	  idxt = m_pcs_t->GetNodeValueIndex("TEMPERATURE1") + timelevel;
   else
     return;
- 
-  // backward mapping 
-  if(!forward){ 
+
+  // backward mapping
+  if(!forward){
     if(aktueller_zeitschritt==1)
       return;
-    else 
+    else
       for(i=0;i<nnode;i++){
         m_pcs_t->SetNodeValue(i, idxt, Temp_store[i]);   // new TL
         m_pcs_t->SetNodeValue(i, idxt-1, Temp_store[i]); // old TL
@@ -1242,14 +1251,14 @@ void REACTINT::Heatpump_2DhTO2Dv_Mapping(bool forward){
   }
 
   // forward mapping
-  
+
   //check output
   //if(aktueller_zeitschritt==25) return;
-  
+
   std::vector<std::vector<double> > Temp_GHP_xyz;
   std::vector<std::vector<double> > XYZ;
   std::vector <long> Temp_GHP_nod_idx;
-  std::vector <double> xyz;  
+  std::vector <double> xyz;
 
   if(aktueller_zeitschritt==1){
     for(i=0;i<3;i++) xyz.push_back(0);
@@ -1276,7 +1285,7 @@ void REACTINT::Heatpump_2DhTO2Dv_Mapping(bool forward){
   }
   else{ // after 1st time step
     for(i=0;i<nnode;i++)
-      Temp_store[i]= m_pcs_t->GetNodeValue(i, idxt);  
+      Temp_store[i]= m_pcs_t->GetNodeValue(i, idxt);
   }
 
   // now map center line to xz plane
@@ -1284,7 +1293,7 @@ void REACTINT::Heatpump_2DhTO2Dv_Mapping(bool forward){
     m_pcs_t->SetNodeValue(i, idxt, Temp_store[Temp_GHP_mapidx[i]]);
 
   // clean up
-  xyz.clear(); 
+  xyz.clear();
   Temp_GHP_xyz.clear();
   Temp_GHP_nod_idx.clear();
   XYZ.clear();
@@ -1316,7 +1325,7 @@ int node_idx;
 	   cout << " Input file not found in ReadRestartNodePoro" << "\n";
 	   exit(0);
   }
-  
+
 //  ein.str(GetLineFromFile1(rfd_file));
   for (i=0;i< nnodes;i++){
     ein >> this->node_porosity[i];
@@ -1354,18 +1363,18 @@ void REACTINT::CalcWaterConc(void){
 
   long i,j,k=0;
   double cv[8], cv_CO2, TT=298.15, PP = 1;
-  double conc;//factor = 1, 
-  int	idxCO2=0, widx=-1; // timelevel = 1, idxp=0, idxp2=0, idxt=0, 
+  double conc;//factor = 1,
+  int	idxCO2=0, widx=-1; // timelevel = 1, idxp=0, idxp2=0, idxt=0,
   //bool heattransport = false;
   //bool ppmodel = false;
   bool CO2 = false;
   //bool timeflag  = false;
   int nc = (int)cp_vec.size();
-  
+
   CompProperties *m_cp = NULL;
   //CRFProcess *m_pcs_t = NULL;
   //CRFProcess *m_pcs_p = NULL;
-  CFEMesh* m_msh = fem_msh_vector[0]; 
+  CFEMesh* m_msh = fem_msh_vector[0];
   //MeshLib::CNode* m_nod = NULL;
   long nnodes = (long) m_msh->nod_vector.size();
   CFluidProperties* m_mfp = NULL;
@@ -1376,36 +1385,36 @@ void REACTINT::CalcWaterConc(void){
 
   // Get water concentration index
   for(j=0;j<nc;j++){
-    m_cp = cp_vec[j];    
+    m_cp = cp_vec[j];
     if(m_cp->compname.compare(WaterSpeciesName)==0 || m_cp->compname.compare("H2O")==0 || m_cp->compname.compare("H2O_liquid")==0  || m_cp->compname.compare("water_liquid")==0){
       widx = j;
       break;
     }
   }
 
-  if(constantdensity) {   
+  if(constantdensity) {
     for(i=0;i<nnodes;i++){
       water_conc[i] =   m_mfp->Density() * MOLH2OPERKG;  // here density of pure H2O phase must be used
       //water_conc[i] =   4.54912323E+04;
-      if(widx > -1) 
+      if(widx > -1)
         //pcs_vector[sp_pcsind[widx]]->SetNodeValue(i,1,water_conc[i]);
-        cp_vec[widx]->getProcess()->SetNodeValue(i,1,water_conc[i]); 
+        cp_vec[widx]->getProcess()->SetNodeValue(i,1,water_conc[i]);
     }
     return;
   }
 
   // Get CO2_in_water concentration index
-  // this should be CO2_dissolved, not total CO2, 
+  // this should be CO2_dissolved, not total CO2,
   // so get secondary species CO2, not C(4) if you are using Phreeqc
   for(j=0;j<nc;j++){
-    m_cp = cp_vec[j];    
-    if(m_cp->compname.compare(this->NeutralCO2name)==0 ||  m_cp->compname.compare("CO2_w")==0 || m_cp->compname.compare("CO2")==0 ){ 
+    m_cp = cp_vec[j];
+    if(m_cp->compname.compare(this->NeutralCO2name)==0 ||  m_cp->compname.compare("CO2_w")==0 || m_cp->compname.compare("CO2")==0 ){
       CO2 = true;
       idxCO2 = j;
       break;
     }
   }
-  
+
   //if(aktueller_zeitschritt==0 || aktueller_zeitschritt==1) timeflag = true;
 
   // node loop to calculate water concentration
@@ -1422,9 +1431,9 @@ void REACTINT::CalcWaterConc(void){
       //conc = pcs_vector[sp_pcsind[j]]->GetNodeValue(i,sp_varind[j]);// CB HS update
       //if(timeflag &! cp_vec[j]->mobil)
       //  conc = cp_vec[j]->getProcess()->GetNodeValue(i,sp_varind[j]-1);
-      //else 
+      //else
         conc = cp_vec[j]->getProcess()->GetNodeValue(i,sp_varind[j]); // all concentrations are available at new TL
-      if(conc<0) 
+      if(conc<0)
         conc = 0;
       // distribute to density species
       for(k=0;k<8;k++)
@@ -1435,7 +1444,7 @@ void REACTINT::CalcWaterConc(void){
       //cv_CO2 = pcs_vector[sp_pcsind[idxCO2]]->GetNodeValue(i,sp_varind[idxCO2]);// CB HS update
       //if(timeflag &! cp_vec[idxCO2]->mobil)
       //  cv_CO2 = cp_vec[idxCO2]->getProcess()->GetNodeValue(i,sp_varind[idxCO2]-1);
-      //else 
+      //else
         cv_CO2 = cp_vec[idxCO2]->getProcess()->GetNodeValue(i,sp_varind[idxCO2]); // all concentrations are available at new TL
     }
     else
@@ -1444,8 +1453,8 @@ void REACTINT::CalcWaterConc(void){
 	water_conc[i] = density::concentration_water(TT,PP,cv,cv_CO2); // CB removed from ifdef OGS_FEM_CAP
     // set the corrsponding node value of H2O transport process
     //pcs_vector[sp_pcsind[widx]]->SetNodeValue(i,1,water_conc[i]);// CB HS update
-    cp_vec[widx]->getProcess()->SetNodeValue(i,1,water_conc[i]); 
-  }  
+    cp_vec[widx]->getProcess()->SetNodeValue(i,1,water_conc[i]);
+  }
 
   return;
 }
@@ -1457,16 +1466,16 @@ void REACTINT::CalcWaterConc(void){
  //CB 01.2012 CB First implementation
  **************************************************************************/
 void REACTINT::CalcUnitConversionFactors(long index, double *fl, double *fs, bool molal){
-   
+
   if(molal){ // mol/m³-->mol/kgw
     *fl = MOLH2OPERKG / water_conc[index]; // mol/kgH2O * m³liquid/mol = m³l/kg
     *fs = (1 - node_porosity[index]) * MOLH2OPERKG / (water_conc[index] * node_porosity[index] * GetWaterSaturation(index) );
-    if(*fs == 0) 
+    if(*fs == 0)
       *fs = (1 - node_porosity[index]) * MOLH2OPERKG / (water_conc[index] * node_porosity[index] * 1 );
   }
   else{      // Total moles mol/m³liquid -> mol/m³REV
     *fl = node_porosity[index] * GetWaterSaturation(index);
-	if(*fl == 0.0) 
+	if(*fl == 0.0)
       *fl = node_porosity[index] * 1;
 	*fs = 1 - node_porosity[index];
   }
@@ -1486,7 +1495,7 @@ double REACTINT::GetCO2SolubilityDuan(long node){
 
   long j;
   double TT=298.15, PP = 1, Sal = 0, Sol = 0;
-  int Naidx=-1;  
+  int Naidx=-1;
   int nc = (int)cp_vec.size();
   double unitfactor_l = 1;
   CompProperties *m_cp = NULL;
@@ -1497,7 +1506,7 @@ double REACTINT::GetCO2SolubilityDuan(long node){
   //unitfactor_l = MOLH2OPERKG / 55335.831251734664;
   // Get water concentration index
   for(j=0;j<nc;j++){
-    m_cp = cp_vec[j];    
+    m_cp = cp_vec[j];
     if(m_cp->compname.compare(SodiumSpeciesName)==0 ){
       Naidx = j;
       break;
@@ -1505,10 +1514,10 @@ double REACTINT::GetCO2SolubilityDuan(long node){
   }
   if(Naidx >= 0)
     Sal = cp_vec[Naidx]->getProcess()->GetNodeValue(node,sp_varind[Naidx]); // mol/m³l
-  Sal *= unitfactor_l ;                          // mol/kgw 
+  Sal *= unitfactor_l ;                          // mol/kgw
 
   Sol = VLE::solubility_CO2(TT,PP,Sal) ; // mol/kgw
-  Sol /= unitfactor_l;  
+  Sol /= unitfactor_l;
   return Sol ;
 }
 
@@ -1518,7 +1527,7 @@ double REACTINT::GetCO2SolubilityDuan(long node){
 /**************************************************************************
 FEMLib-Method: SettingInitialPorosityToElementValue()
 Task: Initially, material parameters are not set for ele_value; and all the
-      functions which needs porosity and permeability are adjusted to get 
+      functions which needs porosity and permeability are adjusted to get
       the value from ele_value, especially when PoroAndPerm is required. Thus
       preprocessing - SettingInitialPorosityAndPermToElementValue is necessary
 
@@ -1549,7 +1558,7 @@ void REACTINT::SetInitialPorosityAndPermToElementValue()
         long n_group = m_msh->ele_vector[n]->GetPatchIndex();
         m_mat_mp = mmp_vector[n_group];
         if (m_mat_mp->porosity_model==13){
-          poroupdate_flag = true; 
+          poroupdate_flag = true;
           break;
         }
     }
@@ -1561,16 +1570,16 @@ void REACTINT::SetInitialPorosityAndPermToElementValue()
     // first check if necessary component properties is defined
     k=kk=0;
     for(i=0;i<int(cp_vec.size());i++){
-		  if(cp_vec[i]->transport_phase==1){ 
+		  if(cp_vec[i]->transport_phase==1){
         if(cp_vec[i]->molar_weight>0) k++;
         if(cp_vec[i]->mineral_density>0) kk++;
 		  }
 	  }
-    if(k==0){ 
+    if(k==0){
       cout << " Warning in REACINT: molar_weight has not been defined for ANY solid phase species." << "\n";
       cout << "  No porosity update possible." << "\n";
     }
-    if(kk==0){ 
+    if(kk==0){
       cout << " Warning in REACINT: mineral_density has not been defined for ANY solid phase species." << "\n";
       cout << "  No porosity update possible. " << "\n";
     }
@@ -1598,7 +1607,7 @@ void REACTINT::SetInitialPorosityAndPermToElementValue()
 
             //Isotropic permeability
             if (m_mat_mp->permeability_tensor_type == 0){
-                
+
                 k_initial_xx = m_mat_mp->permeability_tensor[0];
                 m_pcs_flow->SetElementValue( n, idx_k,   k_initial_xx ); // old time level
                 m_pcs_flow->SetElementValue( n, idx_k+1, k_initial_xx ); // new time level
@@ -1610,7 +1619,7 @@ void REACTINT::SetInitialPorosityAndPermToElementValue()
 
                     k_initial_xx = m_mat_mp->permeability_tensor[0];
                     k_initial_yy = m_mat_mp->permeability_tensor[1];
-                
+
                     m_pcs_flow->SetElementValue( n, idx_k,   k_initial_xx ); // old time level
                     m_pcs_flow->SetElementValue( n, idx_k+1, k_initial_xx ); // new time level
 
@@ -1652,8 +1661,8 @@ void REACTINT::PorosityVolumetricReactionUpdate()
 {
 
   double porosity = 0.0; // n_init=0;
-	double conc_old = 0.0; 
-	double conc_new = 0.0; 
+	double conc_old = 0.0;
+	double conc_new = 0.0;
 	double change_in_conc;
 	double mineral_volume_fraction, n_previous;
   long node_idx, nnodes;
@@ -1663,14 +1672,14 @@ void REACTINT::PorosityVolumetricReactionUpdate()
 	int  ns;//,no_processes,
 	i = j = k = l = idxC = idx_n = nImmobileComp = 0;
 
-  // the factors depend on units of concentration, molweight and mineraldensity 
+  // the factors depend on units of concentration, molweight and mineraldensity
   // I presume SI units, mol, kg, m³
   //this converts mol/m³ to m³ porosity change
-  if(unitconversion) 
-    unitfactor = 1;  // V=C*MW/rho*unitfactor : [-] = [mol/m³] * [kg/mol] * [m³/kg]  
+  if(unitconversion)
+    unitfactor = 1;  // V=C*MW/rho*unitfactor : [-] = [mol/m³] * [kg/mol] * [m³/kg]
   //this converts mol/L (or mol/kg) to L porosity change
-  else 
-    unitfactor = 1000; // V=C*MW/rho*unitfactor : [-] = [mol/kg] * [kg/mol] * [m³/kg] * [kg/cm³] 
+  else
+    unitfactor = 1000; // V=C*MW/rho*unitfactor : [-] = [mol/kg] * [kg/mol] * [m³/kg] * [kg/cm³]
 
   MeshLib::CElem* m_ele = NULL;
 	CFEMesh* m_msh = fem_msh_vector[0];
@@ -1690,18 +1699,18 @@ void REACTINT::PorosityVolumetricReactionUpdate()
   // get the component data
   for(i=0;i<int(cp_vec.size());i++)
 	{
-		if(cp_vec[i]->transport_phase==1){ 
+		if(cp_vec[i]->transport_phase==1){
       //pcs_transport_comps_vector.push_back(sp_pcsind[i]);
       immob_comps_vector.push_back(i);
-      mineral_molecular_weights_vector.push_back(cp_vec[i]->molar_weight); 
+      mineral_molecular_weights_vector.push_back(cp_vec[i]->molar_weight);
       mineral_densities_vector.push_back(cp_vec[i]->mineral_density);
 			k ++;
 		}
 	}
 	nImmobileComp = k;
 
-  // CB: Instead of using the initial porosity always, we have to properly rescale concentrations 
-  //     of species by the new porosity or solid phase volume after each time step. 
+  // CB: Instead of using the initial porosity always, we have to properly rescale concentrations
+  //     of species by the new porosity or solid phase volume after each time step.
   //     see below ###
   //if(unitconversion) // mineral species are defined in mol/volume solid
   //  phasevolume = 1-n_init;
@@ -1723,18 +1732,18 @@ void REACTINT::PorosityVolumetricReactionUpdate()
       // Here the porosity is updated for a component
       for(i = 0; i < nImmobileComp; i++) {
           change_in_conc = 0.0;
-          l=immob_comps_vector[i]; 
+          l=immob_comps_vector[i];
           idxC = cp_vec[l]->getProcess()->GetNodeValueIndex(cp_vec[l]->getProcess()->pcs_primary_function_name[0]);
           conc_old = cp_vec[l]->getProcess()->GetNodeValue(n, idxC);// old timelevel
           conc_new = cp_vec[l]->getProcess()->GetNodeValue(n, (idxC+1));// new timelevel
           change_in_conc = conc_new - conc_old;
           //mineral_volume_fraction = change_in_conc[mol/m³solid]*molar_volume[m³min/mol]
-          // the last factor depends on units of concentration, molweight and mineraldensity 
+          // the last factor depends on units of concentration, molweight and mineraldensity
           if(mineral_densities_vector[i]>0)
-            mineral_volume_fraction += change_in_conc* (mineral_molecular_weights_vector[i]/mineral_densities_vector[i]) *unitfactor;   
+            mineral_volume_fraction += change_in_conc* (mineral_molecular_weights_vector[i]/mineral_densities_vector[i]) *unitfactor;
           else{
             cout << " Warning: mineral_density = 0 for a species in REACTINT::PorosityVolumetricReactionUpdate()" << "\n";
-            cout << "  PorosityVolumetricReactionUpdate() not possible" << "\n";                  
+            cout << "  PorosityVolumetricReactionUpdate() not possible" << "\n";
           }
       }
       porosity = n_previous - (phasevolume * mineral_volume_fraction);
@@ -1749,7 +1758,7 @@ void REACTINT::PorosityVolumetricReactionUpdate()
           int sp=0;
           for(sp=0;sp<int(cp_vec.size());sp++){
             if (cp_vec[sp]->mobil==0){
-              //l = sp_pcsind[sp]; 
+              //l = sp_pcsind[sp];
               idxC = this->sp_varind[sp];
               break;
             }
@@ -1758,11 +1767,11 @@ void REACTINT::PorosityVolumetricReactionUpdate()
           conc_old = cp_vec[sp]->getProcess()->GetNodeValue(n, idxC-1);// old timelevel
           conc_new = cp_vec[sp]->getProcess()->GetNodeValue(n, (idxC));// new timelevel
           change_in_conc = conc_new - conc_old;
-          mineral_volume_fraction = change_in_conc * (cp_vec[sp]->molar_weight/cp_vec[sp]->mineral_density) * unitfactor;   
+          mineral_volume_fraction = change_in_conc * (cp_vec[sp]->molar_weight/cp_vec[sp]->mineral_density) * unitfactor;
           node_porosity[n] = n_previous - (phasevolume * mineral_volume_fraction);
         }
       }
-      // ### 
+      // ###
       // CB: Here, we should include a rescaling of concentrations in the phases,
       //     at least for solid phase concentrations
       ns = cp_vec.size();
@@ -1774,7 +1783,7 @@ void REACTINT::PorosityVolumetricReactionUpdate()
             if(cp_vec[i]->transport_phase==1)
               conc_new *= (1-n_previous)/(1-node_porosity[n]);
             // for dissolved species, is this handled by dn/dt term in transport equation??
-            // then comment out next two lines 
+            // then comment out next two lines
             else if(cp_vec[i]->transport_phase==0)
               conc_new *= n_previous/node_porosity[n];
           }
@@ -1801,17 +1810,17 @@ void REACTINT::PorosityVolumetricReactionUpdate()
     //set the element value
     m_pcs_flow->SetElementValue( n, idx_n+1, porosity );
   }
-  
+
   //pcs_transport_comps_vector.clear();
   immob_comps_vector.clear();
   mineral_densities_vector.clear();
   mineral_molecular_weights_vector.clear();
 
-  
+
    CTimeDiscretization *m_tim = NULL;
    m_tim = time_vector[0];
    int steps = int(m_tim->time_step_vector.size());
-   bool plot = false;   
+   bool plot = false;
    if(aktueller_zeitschritt == 1 || aktueller_zeitschritt % 10 == 0 || steps == int(aktueller_zeitschritt))
       plot = true;
 
@@ -1822,7 +1831,7 @@ void REACTINT::PorosityVolumetricReactionUpdate()
       string file = FileName + "_node_porosities.dump";
       aus.setf(ios::scientific,ios::floatfield);
       aus.precision(12);
-      aus.open(file.c_str()); 
+      aus.open(file.c_str());
       for(i=0;i<nnodes;i++) aus << node_porosity[i] << "\n";
       aus.close();
     }
@@ -1832,7 +1841,7 @@ void REACTINT::PorosityVolumetricReactionUpdate()
 }
 
 /**************************************************************************
-FEMLib-Method: 
+FEMLib-Method:
 Task: not used at the moment, functionality is currently implemented in
    CKinReactData::CopyConcentrations
 Programing:
@@ -1871,7 +1880,7 @@ void REACTINT::CopySymmetricConcentrationsInRadialModel()
 }
 
 /**************************************************************************
-FEMLib-Method: 
+FEMLib-Method:
 Task: not used at the moment, functionality is currently implemented in
    CKinReactData::CopyConcentrations
 Programing:
@@ -1901,16 +1910,16 @@ void REACTINT::DumpSolidSpeciesMoles(void){
    nele = (long) m_msh->ele_vector.size();
 
   CMediumProperties *m_mat_mp = NULL;
-  
+
   for(long n = 0; n < nele; n++){
       long n_group = m_msh->ele_vector[n]->GetPatchIndex();
       m_mat_mp = mmp_vector[n_group];
       if (m_mat_mp->porosity_model==13){
-        plot = true; 
+        plot = true;
         break;
       }
   }
-  
+
   if(plot == true){
     if(aktueller_zeitschritt == 1 || aktueller_zeitschritt % ssp_outstep == 0 || steps == int(aktueller_zeitschritt))
       plot = true;
@@ -1941,7 +1950,7 @@ void REACTINT::DumpSolidSpeciesMoles(void){
     //Header
     aus << "VARIABLES = " << "\"x\"" << " " << "\"y\"" << " " << "\"z\"" << " " ;
     for (i = 0; i < long(cp_vec.size()); i++)
-      if(cp_vec[i]->transport_phase==1) 
+      if(cp_vec[i]->transport_phase==1)
         aus << "\"" << cp_vec[i]->compname << "\" ";
     aus << "\"" << "nodeporosity" << "\" " << "\n";
     aus << "ZONE T=" << "\"aktueller_zeitschritt=" << aktueller_zeitschritt
@@ -1958,7 +1967,7 @@ void REACTINT::DumpSolidSpeciesMoles(void){
        aus << coord[0] << " " << coord[1] << " " << coord[2] << " ";
        for (j = 0; j < long(cp_vec.size()); j++){
          if(cp_vec[j]->transport_phase==1) // plot total mol / m³ aquifer = c*(1-n)
-           aus << cp_vec[j]->getProcess()->GetNodeValue(i, sp_varind[j]) * (1-node_porosity[i]) << " "; 
+           aus << cp_vec[j]->getProcess()->GetNodeValue(i, sp_varind[j]) * (1-node_porosity[i]) << " ";
        }
        aus << node_porosity[i] << "\n";
     }
@@ -1972,8 +1981,8 @@ void REACTINT::DumpSolidSpeciesMoles(void){
 }
 
 /**************************************************************************
-FEMLib-Method: 
-Task: 
+FEMLib-Method:
+Task:
 
 Programing:
 2.2011 CB Implementation
@@ -1983,11 +1992,11 @@ void REACTINT::DumpAllVariables()
 {
 
   int idx;
-  long nnodes; 
+  long nnodes;
   string file;
   ofstream _dump;
   bool plot = false;
-  
+
   if(dump_all_pcs==false)
    return;
 
@@ -2039,10 +2048,10 @@ void REACTINT::DumpMassIntegrals()
   long j, i;
   long nod;
   double  volume ;//mass,
-  long nelems, nnodes; 
+  long nelems, nnodes;
   string file;
   ofstream _dump;
- 
+
   CFEMesh* m_msh = NULL;
 
  std::vector<double> massintegrals;
@@ -2067,7 +2076,7 @@ if(aktueller_zeitschritt == 1){ // new file
 
   // header
   _dump << "VARIABLES  = \"TIME\",\"" ;
-  for(k = 0; k < cp_vec.size(); k++) 
+  for(k = 0; k < cp_vec.size(); k++)
     _dump << cp_vec[k]->compname << "\",\"";
   _dump << "\n"<< flush;
 
@@ -2085,7 +2094,7 @@ if(aktueller_zeitschritt == 1){ // new file
   }
   // output of initial masses
   _dump << 0.0  ;
-  for(k = 0; k < cp_vec.size(); k++) 
+  for(k = 0; k < cp_vec.size(); k++)
     _dump << " " << massintegrals[k] ;
   _dump << "\n"<< flush;
 
@@ -2095,7 +2104,7 @@ else { // running model, append
 }
 
 // integrate and output for current time step
-for(k = 0; k < cp_vec.size(); k++) 
+for(k = 0; k < cp_vec.size(); k++)
   massintegrals[k] = 0;
 // integrate
 for(i = 0; i < nelems; i++){
@@ -2112,7 +2121,7 @@ for(i = 0; i < nelems; i++){
 
 // output
 _dump << aktuelle_zeit  ;
-for(k = 0; k < cp_vec.size(); k++) 
+for(k = 0; k < cp_vec.size(); k++)
   _dump << " " << massintegrals[k] ;
 _dump << "\n"<< flush;
 
@@ -2131,7 +2140,7 @@ massintegrals.clear();
 
 /**************************************************************************
 FEMLib-Method:
-Task: Permeability will be calculated using either Kozeny-Carman or 
+Task: Permeability will be calculated using either Kozeny-Carman or
       Verma-Pruess formulation. And obviously it writes the new permeability
       on ele_value. It will be called in post coupling process thereby
       it will be executed once.
@@ -2175,7 +2184,7 @@ void REACTINT::PermeabilityPorosityUpdate()
         // Permeability updating is not required
         if (((m_mat_mp->permeability_tensor_type!= 0) || (m_mat_mp->permeability_tensor_type!= 1))&& m_mat_mp->permeability_model != 8 )
             return;
-            
+
         if(n==0) cout <<"Updating Permeability:" << "\n";
 
             // get current & initial porosity: n_t, n_init.
@@ -2185,16 +2194,16 @@ void REACTINT::PermeabilityPorosityUpdate()
             //if(n==1)
             //  cout << test1 << " " << n_init << " " << n_t << "\n";
 
-            
+
             if (m_mat_mp->permeability_tensor_type == 0){
 
                 k_init = m_mat_mp->permeability_tensor[0];
-                
+
                 // get and save old permeability
                 k_t = m_pcs_flow->GetElementValue( n, idx_k + 1 );
                 m_pcs_flow->SetElementValue( n, idx_k, k_t);
                 //double test = m_pcs_flow->GetElementValue( n, idx_k);
-            
+
 
                 /*/ ***************************************************** /*/
                 // If Kozeny-Carman formulation is choosen
@@ -2203,7 +2212,7 @@ void REACTINT::PermeabilityPorosityUpdate()
                     // Calculate for the new perm. k_t_new
                     k_t_new = m_mat_mp->KozenyCarmanNew( k_init,n_init,n_t );
                 }
-                
+
                 // If Verma-Pruess formulation is choosen
                 else if(m_mat_mp->permeability_porosity_updating_type == 1){
 
@@ -2215,7 +2224,7 @@ void REACTINT::PermeabilityPorosityUpdate()
                 // save new permeability: in index+1
                 m_pcs_flow->SetElementValue( n, idx_k+1, k_t_new	);
                 //double test_2 = m_pcs_flow->GetElementValue( n, idx_k+1);
-            
+
                 /*/ ***************************************************** /*/
             }
 
@@ -2240,7 +2249,7 @@ void REACTINT::PermeabilityPorosityUpdate()
                         k_t_new = m_mat_mp->KozenyCarmanNew( k_init,n_init,n_t );
                         k_t_new_yy = m_mat_mp->KozenyCarmanNew( k_init_yy,n_init,n_t );
                     }
-                    
+
                     // If Verma-Pruess formulation is choosen
                     else if(m_mat_mp->permeability_porosity_updating_type == 1){
 
@@ -2252,7 +2261,7 @@ void REACTINT::PermeabilityPorosityUpdate()
                     // save new permeability: in index+1
                     m_pcs_flow->SetElementValue( n, idx_k+1, k_t_new	);
                     m_pcs_flow->SetElementValue( n, idx_k_yy+1, k_t_new_yy	);
-                
+
                     /*/ ***************************************************** /*/
                 }
 
@@ -2279,7 +2288,7 @@ void REACTINT::PermeabilityPorosityUpdate()
                         k_t_new_yy = m_mat_mp->KozenyCarmanNew( k_init_yy,n_init,n_t );
                         k_t_new_zz = m_mat_mp->KozenyCarmanNew( k_init_zz,n_init,n_t );
                     }
-                    
+
                     // If Verma-Pruess formulation is choosen
                     else if(m_mat_mp->permeability_porosity_updating_type == 1){
 
@@ -2293,7 +2302,7 @@ void REACTINT::PermeabilityPorosityUpdate()
                     m_pcs_flow->SetElementValue( n, idx_k+1, k_t_new	);
                     m_pcs_flow->SetElementValue( n, idx_k_yy+1, k_t_new_yy	);
                     m_pcs_flow->SetElementValue( n, idx_k_zz+1, k_t_new_zz	);
-                
+
                     /*/ ***************************************************** /*/
                 }
             }
@@ -2326,12 +2335,12 @@ std::vector<int> REACTINT::formula2index(std::string formula){
 	id_iz.clear();
 	type_x.clear();
 	n=int(formula.size());
-	
+
 	element_ia.clear();
 	element_ib.clear();
 	element_iz.clear();
 	element_name.clear();
-	
+
 	number_ia.clear();
 	number_ib.clear();
 	number_iz.clear();
@@ -2356,7 +2365,7 @@ std::vector<int> REACTINT::formula2index(std::string formula){
 			type_x.push_back(3);
 		else if(symb_asc==41 || symb_asc==93)  // ])
 			type_x.push_back(4);
-		else 
+		else
 			type_x.push_back(5);
 	}
 	type_x.push_back(-1); //set string end mark
@@ -2398,7 +2407,7 @@ std::vector<int> REACTINT::formula2index(std::string formula){
 			}
 			else{
 				if(bracket_ib0[j]>bracket_ia0[i] && bracket_ib0[j]<bracket_ia0[i+1])
-					is_bracket=1;	
+					is_bracket=1;
 			}
 		}
 		if(is_bracket==1)
@@ -2413,7 +2422,7 @@ std::vector<int> REACTINT::formula2index(std::string formula){
 			}
 			else{
 				if(bracket_ia0[j]<bracket_ib0[i] && bracket_ia0[j]>bracket_ib0[i-1])
-					is_bracket=1;	
+					is_bracket=1;
 			}
 		}
 		if(is_bracket==1)
@@ -2471,7 +2480,7 @@ vector<std::string> REACTINT::string2vector(std::string line){
 	while(1){
 		if(in.eof()) break;
 		sp="";
-		in >> sp;	
+		in >> sp;
 		if(sp!="") pies.push_back(sp);
 	}
 	return pies;
@@ -2507,7 +2516,7 @@ double GetNodePhaseVolume(long node, double theta, int phase){
       case 1: //solid phase
         // Get VOL_MAT index
         for(idx=0;idx<(int)_mmesh->mat_names_vector.size();idx++){
-            if(_mmesh->mat_names_vector[idx].compare("VOL_MAT")==0) break;        
+            if(_mmesh->mat_names_vector[idx].compare("VOL_MAT")==0) break;
         }
         break;
       case 2: //bio phase
@@ -2516,7 +2525,7 @@ double GetNodePhaseVolume(long node, double theta, int phase){
           if(_mmesh->mat_names_vector[idx].compare("VOL_BIO")==0) break;
         }
         break;
-      default: 
+      default:
         break;
     }
   }
@@ -2530,12 +2539,12 @@ double GetNodePhaseVolume(long node, double theta, int phase){
 
   for(el=0;el<(int)m_nod->getConnectedElementIDs().size();el++){
     // initialize for each connected element
-    distance = weight = poro = 0; 
+    distance = weight = poro = 0;
     // Get the connected element
     elem = m_nod->getConnectedElementIDs()[el]; // element index
-    m_ele = m_msh->ele_vector[elem];  
+    m_ele = m_msh->ele_vector[elem];
     //get the phase volume of current element elem
-    group = m_ele->GetPatchIndex(); 
+    group = m_ele->GetPatchIndex();
     m_mat_mp = mmp_vector[group];
     switch(phase) {
       case 0: //pore space
@@ -2564,7 +2573,7 @@ double GetNodePhaseVolume(long node, double theta, int phase){
         cout << "Error in CKinReact::GetPhaseVolumeAtNode: no valid phase" << "\n";
         break;
     }
-    // calculate distance node <-> element center of gravity  
+    // calculate distance node <-> element center of gravity
     grav_c = m_ele->GetGravityCenter();
     for(i=0;i<3;i++)
       distance += pow((coord[i]-grav_c[i]),2);
@@ -2578,7 +2587,7 @@ double GetNodePhaseVolume(long node, double theta, int phase){
 
   // normalize weighted sum by sum_of_weights sum_w
   vol *= 1/sum_w;
-  if(sum_w==0) 
+  if(sum_w==0)
 	  vol = 0.99;
   return vol;
 }
@@ -2599,10 +2608,10 @@ double REACTINT::GetWaterSaturation( long index ){
   int idx;
   // special case for initial computation
   // saturation is not yet set for new time level
-  if(aktueller_zeitschritt==0) timelevel = 0; 
-  
+  if(aktueller_zeitschritt==0) timelevel = 0;
+
   switch(flowtype){
-    case 0: 
+    case 0:
       break;
     case 1: //Groundwater Flow //Liquid_Flow
       break;
@@ -2615,22 +2624,22 @@ double REACTINT::GetWaterSaturation( long index ){
     case 1212: //Multiphase Flow
       m_pcs = PCSGetFlow();
       idx = m_pcs->GetNodeValueIndex("SATURATION1"); // Sat of water phase
-      saturation = m_pcs->GetNodeValue(index, idx + timelevel); 
+      saturation = m_pcs->GetNodeValue(index, idx + timelevel);
       break;
     case 12: // Two_phase_Flow
       m_pcs = PCSGetFlow();
       idx = m_pcs->GetNodeValueIndex("SATURATION1"); // Sat of water phase
-      saturation = m_pcs->GetNodeValue(index, idx + timelevel); 
+      saturation = m_pcs->GetNodeValue(index, idx + timelevel);
       break;
     case 1313: // PS_GLOBAL
       m_pcs = PCSGetFlow();
       idx = m_pcs->GetNodeValueIndex("SATURATION1"); // Sat of water phase
-      saturation = m_pcs->GetNodeValue(index, idx + timelevel); 
-      break;    
+      saturation = m_pcs->GetNodeValue(index, idx + timelevel);
+      break;
     case 22: // Richards flow
       m_pcs = PCSGetFlow();
       idx = m_pcs->GetNodeValueIndex("SATURATION1"); // Sat of water phase
-      saturation = m_pcs->GetNodeValue(index, idx + timelevel); 
+      saturation = m_pcs->GetNodeValue(index, idx + timelevel);
       break;
     default:
       break;
@@ -2695,7 +2704,7 @@ double REACTINT::LiquidDensity_Busch(double T)
 void VLE_CalcNewPressure(double T, double &P, double &V_gas, double &V_liquid, double CO2_gas_old, double CO2_gas_new, double CO2_liquid_old, double CO2_liquid_new, double H2O_liquid_old, double H2O_liquid_new, double &rho){
 	Phase_Properties2 gas,liquid,solid;
 	int f=1;
-	
+
 	gas.CO2=CO2_gas_old;
 	gas.H2O=0.0;
 	gas.NaCl=0.0;
@@ -2768,7 +2777,7 @@ void VLE_isochoric_fixphase(double T, double &P, Phase_Properties2 &vapor, Phase
 		V=vapor.volume+liquid.volume;
 		if(abs(V0-V)<err)
 			break;
-		else if(V<V0) 
+		else if(V<V0)
 			P2=P;
 		else if(V>V0)
 			P1=P;

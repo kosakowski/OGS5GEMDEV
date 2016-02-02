@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /*************************************************************************
    ROCKFLOW - Modul: solver.c
 
@@ -764,144 +773,6 @@ void Gauss(double* matrix, double* vecb, double* vecx, int g)
 		vecx[k] = vecb[k];
 	/* Speicher freigeben */
 	s = (int*) Free(s);
-}
-
-/*************************************************************************
-   ROCKFLOW - Funktion: LU_Decomposition
-
-   Aufgabe:
-   Gleichungsloeser:
-   Quelle: Press, Numerical Recipes, 1991
-
-   Formalparameter: (E: Eingabe; R: Rueckgabe; X: Beides)
-   E double *matrix: Linke Seite Gleichungssystem
-   E double *vecb: Rechte Seite Gleichungssystem
-   X double *vecx: Ergebnisvektor, Speicher muss bereits reserviert sein
-   E int g: Dimension des Gleichungssystems
-
-   Ergebnis:
-   - void -
-
-   Programmaenderungen:
-   08/1995     cb         Erste Version
-
-*************************************************************************/
-#ifdef LU_Decomposition
-void LU_Decomposition (double* matrix, double* vecb, double* vecx, int g)
-{
-	/* Matrizen sind in C zeilenweise abgespeichert:
-	   matrix[i][j] -> matrix[i*g+j] */
-	long n, i;
-	long* indx = NULL;
-	puts("!!! Funktioniert noch nicht !!! ");
-	abort();
-	n = (long) g;
-	/* Speicher reservieren */
-	indx = (long*) Malloc(n * sizeof(long));
-	/* Umspeichern der rechten Seite von vecb nach vecx */
-	for (i = 0l; i < n; i++)
-		vecx[i] = vecb[i];
-	/* implicit pivoting */
-	ludcmp_3(matrix, n, indx);
-	/* substitution */
-	lubksb_3(matrix, n, indx, vecx);
-	/* Speicher freigeben */
-	indx = (long*) Free(indx);
-}
-#endif
-
-void ludcmp_3(double* a, long n, long* indx)
-{
-	double d;
-	long i, imax = 0, j, k;
-	double aamax, dum, sum, * vv;
-	vv = MMachVec(n);
-	d = 1.0;
-	for (i = 0l; i < n; i++)
-	{
-		aamax = 0.0;
-		for (j = 0l; j < n; j++)
-			/* if (fabs(a[i*n+j])>aamax)
-			   aamax = fabs(a[i*n+j]); */
-			aamax = max(aamax, fabs(a[i * n + j]));
-		if (aamax < MKleinsteZahl)
-		{
-			DisplayMsgLn("Matrix singulaer");
-			abort();
-		}
-		vv[i] = 1.0 / aamax;
-	}
-	for (j = 0l; j < n; j++)
-	{
-		for (i = 0l; i < (j - 1l); i++)
-		{
-			sum = a[i * n + j];
-			for (k = 0l; k < (i - 1l); k++)
-				sum -= (a[i * n + k] * a[k * n + j]);
-			a[i * n + j] = sum;
-		}
-		aamax = 0.0;
-		for (i = j; i < n; i++)
-		{
-			sum = a[i * n + j];
-			for (k = 0l; k < (j - 1l); k++)
-				sum -= (a[i * n + k] * a[k * n + j]);
-			a[i * n + j] = sum;
-			dum = vv[i] * fabs(sum);
-			if (dum >= aamax)
-			{
-				imax = i;
-				aamax = dum;
-			}
-		}
-		if (j != imax)
-		{
-			for (k = 0l; k < n; k++)
-			{
-				dum = a[imax * n + k];
-				a[imax * n + k] = a[j * n + k];
-				a[j * n + k] = dum;
-			}
-			d = -d;
-			vv[imax] = vv[j];
-		}
-		indx[j] = imax;
-		if (fabs(a[j * n + j]) < MKleinsteZahl)
-			a[j * n + j] = MKleinsteZahl;
-		if (j != n)
-		{
-			dum = 1.0 / a[j * n + j];
-			for (i = (j + 1l); i < n; i++)
-				a[i * n + j] *= dum;
-		}
-	}
-	vv = (double*) Free(vv);
-}
-
-void lubksb_3(double* a, long n, long* indx, double* b)
-{
-	long i, ii, j, ll;
-	double sum;
-	ii = 0l;
-	for (i = 0l; i < n; i++)
-	{
-		ll = indx[i];
-		sum = b[ll];
-		b[ll] = b[i];
-		if (ii != 0l)
-			for (j = ii; j < (i - 1l); j++)
-				sum -= (a[i * n + j] * b[j]);
-		else if (fabs(sum) > MKleinsteZahl)
-			ii = i;
-		b[i] = sum;
-	}
-	for (i = (n - 1l); i >= 0l; i--)
-	{
-		sum = b[i];
-		for (j = (i + 1l); j < n; j++)
-			sum -= (a[i * n + j] * b[j]);
-		b[i] = sum / a[i * n + i];
-	}
 }
 
 /*************************************************************************

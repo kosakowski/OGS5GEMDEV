@@ -3,10 +3,26 @@ include(SetDefaultBuildType)
 include(DisableCompilerFlag)
 SET_DEFAULT_BUILD_TYPE(Release)
 include(MSVCMultipleProcessCompile) # /MP Switch for VS
+set(CMAKE_OSX_ARCHITECTURES "x86_64")
+
+if(OGS_CPU_ARCHITECTURE STREQUAL "generic")
+	set(CPU_FLAGS "-mtune=generic")
+else()
+	set(CPU_FLAGS "-march=${OGS_CPU_ARCHITECTURE}")
+endif()
+
+if(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+	set(COMPILER_IS_CLANG TRUE)
+elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+	set(COMPILER_IS_GCC TRUE)
+elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+	set(COMPILER_IS_INTEL TRUE)
+elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
+	set(COMPILER_IS_MSVC TRUE)
+endif() # CMAKE_CXX_COMPILER_ID
 
 if (WIN32)
-	## For Visual Studio compiler
-	if (MSVC)
+	if (COMPILER_IS_MSVC)
 		add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_WARNINGS
 			-D_CRT_XNONSTDC_NO_WARNINGS)
 		# Sets warning level 3 and ignores some warnings
@@ -15,27 +31,20 @@ if (WIN32)
 
 		DisableCompilerFlag(DEBUG /RTC1)
 
-    # Set $PATH to Visual Studio bin directory. Needed for finding dumpbin.exe
-    if (MSVC80)
-      set(ENV{PATH} "$ENV{PATH};$ENV{VS80COMNTOOLS}..\\..\\VC\\bin")
-    endif ()
-    if (MSVC90)
-      set(ENV{PATH} "$ENV{PATH};$ENV{VS90COMNTOOLS}..\\..\\VC\\bin")
-    endif ()
-    if (MSVC10)
-      set(ENV{PATH} "$ENV{PATH};$ENV{VS100COMNTOOLS}..\\..\\VC\\bin")
-    endif ()
-
-	else ()
-#FOR CYGWIN.  25.02.2010. WW
-		message (STATUS "Might be GCC under cygwin.")
-		set(GCC ON)
-#		message (FATAL_ERROR "Aborting: On Windows only the Visual Studio compiler is supported!")
+		# Set $PATH to Visual Studio bin directory. Needed for finding dumpbin.exe
+		if(MSVC80)
+			set(ENV{PATH} "$ENV{PATH};$ENV{VS80COMNTOOLS}..\\..\\VC\\bin")
+		endif ()
+		if(MSVC90)
+			set(ENV{PATH} "$ENV{PATH};$ENV{VS90COMNTOOLS}..\\..\\VC\\bin")
+		endif ()
+		if(MSVC10)
+			set(ENV{PATH} "$ENV{PATH};$ENV{VS100COMNTOOLS}..\\..\\VC\\bin")
+		endif ()
 	endif ()
 endif ()
 
-### For GNU C/CXX. WW
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_GNUCC)
+if(COMPILER_IS_GCC)
 	set(GCC ON)
 	if( NOT CMAKE_BUILD_TYPE STREQUAL "Debug" )
 		if (OGS_FEM_PETSC_GEMS)
@@ -44,8 +53,8 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_GNUCC)
 			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG")
 		endif()
 	endif()
-	# -g
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -Wall -Wextra -fno-nonansi-builtins")
+
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CPU_FLAGS} -Wno-deprecated -Wall -Wextra -fno-nonansi-builtins")
 
 	execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
 	string(REPLACE "\n" "" GCC_VERSION ${GCC_VERSION})
@@ -64,7 +73,11 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_GNUCC)
 		set(PROFILE_FLAGS "-pg -fno-omit-frame-pointer -O2 -DNDEBUG -fno-inline-functions -fno-inline-functions-called-once -fno-optimize-sibling-calls")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PROFILE_FLAGS}")
 	endif ()
-endif() # CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_GNUCC
+endif()
+
+if(COMPILER_IS_CLANG)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CPU_FLAGS}")
+endif()
 
 if(BLUE_G)
 	add_definitions(-O3 -qstrict -qarch=qp -qtune=qp)

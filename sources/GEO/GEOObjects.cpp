@@ -3,6 +3,11 @@
  *
  *  Created on: Jan 21, 2010
  *      Author: TF / KR
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
  */
 
 #include "GEOObjects.h"
@@ -500,7 +505,7 @@ int GEOObjects::exists(const std::string &geometry_name) const
 			return i;
 
 	// HACK for enabling conversion of files without loading the associated geometry
-	if (size>0 && _pnt_vecs[0]->getName().compare("conversionTestRun#1")==0)	
+	if (size>0 && _pnt_vecs[0]->getName().compare("conversionTestRun#1")==0)
 		return 1;
 
 	return -1;

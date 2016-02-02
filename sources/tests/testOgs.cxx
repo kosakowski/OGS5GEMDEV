@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 #ifndef OGS_CL_TESTS_H
 #define OGS_CL_TESTS_H
 
@@ -11,7 +20,7 @@
 #include <unistd.h>
 
 namespace {
-	
+
 std::string tmpStr = ( OGS_EXECUTABLE ); // passed by CMakeLists.txt
 
 // The fixture for testing class Ogs.
@@ -33,7 +42,7 @@ class OgsTest : public ::testing::Test {
   {
     int outfd[2];
     int infd[2];
-  
+
     pipe(outfd); // ogs writes to
     pipe(infd); //  gtest reads from
 
@@ -42,7 +51,7 @@ class OgsTest : public ::testing::Test {
     if( ! pid )    // the child process
       {
 
-	close(STDOUT_FILENO);     // close the file descriptors inherited 
+	close(STDOUT_FILENO);     // close the file descriptors inherited
 	close(STDIN_FILENO);      //   from the parent
 
 	dup2(outfd[0], STDIN_FILENO);  // reassign the new fd

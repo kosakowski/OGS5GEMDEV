@@ -1,11 +1,22 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 #include <iostream>
 #include <math.h>
 #include <cmath>
 #include <limits>
 #include "VLE.h"
-#include "PITZdata.h" 
+#include "PITZdata.h"
 #include "NR.h"
 #include "IAPWS-IF97.h"
+#include "Brent/brent.hpp"
+
 using namespace std;
 
 double VLE::TT;
@@ -59,42 +70,42 @@ double VLE::solubilityNEW_CO2(double T, double P, double mNaCl){
 
 double VLE::u0_CO2(double T, double P){
 	double c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11;
-	c1 =  2.89447706e+01;	
-	c2 = -3.54581768e-02;	
-	c3 = -4.77067077e+03;	
+	c1 =  2.89447706e+01;
+	c2 = -3.54581768e-02;
+	c3 = -4.77067077e+03;
 	c4 =  1.02782768e-05;
-	c5 =  3.38126098e+01;	
-	c6 =  9.04037140e-03;	
-	c7 = -1.14934031e-03;	
+	c5 =  3.38126098e+01;
+	c6 =  9.04037140e-03;
+	c7 = -1.14934031e-03;
 	c8 = -3.07405726e-01;
-	c9 = -9.07301486e-02;	
-	c10=  9.32713393e-04;	
+	c9 = -9.07301486e-02;
+	c10=  9.32713393e-04;
 	c11=  0.0;
 	return c1+c2*T+c3/T+c4*pow(T,2)+c5/(630-T)+c6*P+c7*P*log(T)+c8*P/T+c9*P/(630-T)+c10*pow(P,2)/pow((630-T),2)+c11*T*log(P);
 }
 double VLE::lnrCO2(double T, double P, double mNaCl){
 	double c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,d1,d2,d3,d4,d5,d6,d7,d8,d9,d10,d11,res;
-    c1 = -4.11370585e-01;	
-	c2 =  6.07632013e-04;	
-	c3 =  97.5347708;		
-	c4 =  0.0;	
-	c5 =  0.0;	            
-	c6 =  0.0;				
-	c7 =  0.0;				
-	c8 = -2.37622469e-02;	
-	c9 =  1.70656236e-02;	
-	c10=  0.0;				
+    c1 = -4.11370585e-01;
+	c2 =  6.07632013e-04;
+	c3 =  97.5347708;
+	c4 =  0.0;
+	c5 =  0.0;
+	c6 =  0.0;
+	c7 =  0.0;
+	c8 = -2.37622469e-02;
+	c9 =  1.70656236e-02;
+	c10=  0.0;
 	c11=  1.41335834e-05;
-	d1 =  3.36389723e-04;	
-	d2 = -1.98298980e-05;	
-	d3 =  0.0;				
+	d1 =  3.36389723e-04;
+	d2 = -1.98298980e-05;
+	d3 =  0.0;
 	d4 =  0.0;
-	d5 =  0.0;				
-	d6 =  0.0;				
-	d7 =  0.0;				
+	d5 =  0.0;
+	d6 =  0.0;
+	d7 =  0.0;
 	d8 =  2.12220830e-03;
-	d9 = -5.24873303e-03;	
-	d10=  0.0;				
+	d9 = -5.24873303e-03;
+	d10=  0.0;
 	d11=  0.0;
 	res =   2.0*mNaCl* (c1+c2*T+c3/T+c4*pow(T,2)+c5/(630-T)+c6*P+c7*P*log(T)+c8*P/T+c9*P/(630-T)+c10*pow(P,2)/pow((630-T),2)+c11*T*log(P));
 	res+= mNaCl*mNaCl* (d1+d2*T+d3/T+d4*pow(T,2)+d5/(630-T)+d6*P+d7*P*log(T)+d8*P/T+d9*P/(630-T)+d10*pow(P,2)/pow((630-T),2)+d11*T*log(P));
@@ -114,22 +125,22 @@ double VLE::solubility_CH4(double T, double P, double mNaCl){
 }
 double VLE::u0_CH4(double T, double P){
 	double c1,c2,c3,c4,c5,c6,c7,c8,c9;
-    c1 =  0.83143711e+01;	
-	c2 = -0.72772168e-03;	
-	c3 =  0.21489858e+04;	
+    c1 =  0.83143711e+01;
+	c2 = -0.72772168e-03;
+	c3 =  0.21489858e+04;
 	c4 = -0.14019672e-04;
-	c5 = -0.66743449e+06;	
-	c6 =  0.76985890e-02;	
-	c7 = -0.50253331e-05;	
+	c5 = -0.66743449e+06;
+	c6 =  0.76985890e-02;
+	c7 = -0.50253331e-05;
 	c8 = -0.30092013e+01;
 	c9 =  0.48468502e+03;
-    return c1+c2*T+c3/T+c4*T*T+c5/T/T+c6*P+c7*P*T+c8*P/T+c9*P/T/T;    
+    return c1+c2*T+c3/T+c4*T*T+c5/T/T+c6*P+c7*P*T+c8*P/T+c9*P/T/T;
 }
 double VLE::lnrCH4(double T, double P, double mNaCl){
 	double c1,c2,c3,c4,c5;
-	c1 = -0.81222036e+00;	
-	c2 =  0.10635172e-02;	
-	c3 =  0.18894036e+03;	
+	c1 = -0.81222036e+00;
+	c2 =  0.10635172e-02;
+	c3 =  0.18894036e+03;
 	c4 =  0.44105635e-04;
 	c5 = -0.46797718e-10;
 	return 2.0*(c1+c2*T+c3/T+c4*P+c5*P*P*T)*mNaCl-0.29903571e-02*mNaCl*mNaCl;
@@ -176,7 +187,9 @@ double VLE::density_CO2(double T, double P){
 	}
 	TT=T;
 	PP=P;
-	return 44.01/NR::zbrent(dZ_CO2, x1, x2, 1.0e-8);
+	double result;
+	brent::local_min(x1, x2, 1.0e-8, dZ_CO2, result);
+	return 44.01 / result;
 }
 double VLE::density_CH4(double T, double P){ // g/cm^3
 	double x1,x2;
@@ -192,7 +205,9 @@ double VLE::density_CH4(double T, double P){ // g/cm^3
 	}
 	TT=T;
 	PP=P;
-	return 16.04/NR::zbrent(dZ_CH4, x1, x2, 1.0e-8);
+	double result;
+	brent::local_min(x1, x2, 1.0e-8, dZ_CH4, result);
+	return 16.04 / result;
 }
 double VLE::density_H2O(double T, double P){ // g/cm^3
 	double x1,x2,Ps;
@@ -220,7 +235,9 @@ double VLE::density_H2O(double T, double P){ // g/cm^3
 	}
 	TT=T;
 	PP=P;
-	return  18.015/NR::zbrent(dZ_H2O, x1, x2, 1.0e-8);
+	double result;
+	brent::local_min(x1, x2, 1.0e-8, dZ_H2O, result);
+	return  18.015 / result;
 }
 
 double VLE::dZ_CO2(double V){
@@ -242,7 +259,7 @@ double VLE::dZ_CH4(double V){
 	Vc = R*Tc/Pc;
 	Tr = TT/Tc;
 	Pr = PP/Pc;
-	Vr = V/Vc;	
+	Vr = V/Vc;
 	return Z_CH4(TT,PP,V)-Pr*Vr/Tr;
 }
 double VLE::dZ_H2O(double V){
@@ -253,28 +270,28 @@ double VLE::dZ_H2O(double V){
 	Vc = R*Tc/Pc;
 	Tr = TT/Tc;
 	Pr = PP/Pc;
-	Vr = V/Vc;	
+	Vr = V/Vc;
 	return Z_H2O(TT,PP,V)-Pr*Vr/Tr;
 }
 
 
 double VLE::Z_CO2(double T, double /*P*/, double V){ //K, bar, cm^3
     double a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15;
-	double R,Tc,Pc,Vc,Tr,Vr,B,C,D,E,F;	
-	a1 =  8.99288497E-2;    
-	a2 = -4.94783127E-1;	
-	a3 =  4.77922245E-2;	
+	double R,Tc,Pc,Vc,Tr,Vr,B,C,D,E,F;
+	a1 =  8.99288497E-2;
+	a2 = -4.94783127E-1;
+	a3 =  4.77922245E-2;
 	a4 =  1.03808883E-2;
-	a5 = -2.82516861E-2;	
-	a6 =  9.49887563E-2;	
-	a7 =  5.20600880E-4;	
+	a5 = -2.82516861E-2;
+	a6 =  9.49887563E-2;
+	a7 =  5.20600880E-4;
 	a8 = -2.93540971E-4;
-	a9 = -1.77265112E-3;	
-	a10= -2.51101973E-5;	
-	a11=  8.93353441E-5;	
+	a9 = -1.77265112E-3;
+	a10= -2.51101973E-5;
+	a11=  8.93353441E-5;
 	a12=  7.88998563E-5;
-	a13= -1.66727022E-2;	
-	a14=  1.39800000E-0;	
+	a13= -1.66727022E-2;
+	a14=  1.39800000E-0;
 	a15=  2.96000000E-2;
 	R  = 83.14467;
 	Tc = 304.2;
@@ -286,7 +303,7 @@ double VLE::Z_CO2(double T, double /*P*/, double V){ //K, bar, cm^3
 	C= a4 +a5/pow(Tr,2) +a6/pow(Tr,3);
 	D= a7 +a8/pow(Tr,2) +a9/pow(Tr,3);
 	E= a10 +a11/pow(Tr,2) +a12/pow(Tr,3);
-	F= a13/pow(Tr,3);	
+	F= a13/pow(Tr,3);
     return 1.0 + B/Vr + C/pow(Vr,2) + D/pow(Vr,4) + E/pow(Vr,5) + F/pow(Vr,2)*(a14+a15/pow(Vr,2))*exp(-a15/pow(Vr,2));
 }
 double VLE::LnPHI_CO2(double T, double P){
@@ -294,20 +311,20 @@ double VLE::LnPHI_CO2(double T, double P){
 	double R,V,Tc,Pc,Vc,Tr,Vr,B,C,D,E,Z;
 	V  = 44.01/density_CO2(T,P);
 	Z  = Z_CO2(T,P,V);
-	a1 =  8.99288497E-2;    
-	a2 = -4.94783127E-1;	
-	a3 =  4.77922245E-2;	
+	a1 =  8.99288497E-2;
+	a2 = -4.94783127E-1;
+	a3 =  4.77922245E-2;
 	a4 =  1.03808883E-2;
-	a5 = -2.82516861E-2;	
-	a6 =  9.49887563E-2;	
-	a7 =  5.20600880E-4;	
+	a5 = -2.82516861E-2;
+	a6 =  9.49887563E-2;
+	a7 =  5.20600880E-4;
 	a8 = -2.93540971E-4;
-	a9 = -1.77265112E-3;	
-	a10= -2.51101973E-5;	
-	a11=  8.93353441E-5;	
+	a9 = -1.77265112E-3;
+	a10= -2.51101973E-5;
+	a11=  8.93353441E-5;
 	a12=  7.88998563E-5;
-	a13= -1.66727022E-2;	
-	a14=  1.39800000E-0;	
+	a13= -1.66727022E-2;
+	a14=  1.39800000E-0;
 	a15=  2.96000000E-2;
 	R  = 83.14467;
 	Tc = 304.2;
@@ -325,20 +342,20 @@ double VLE::LnPHI_CO2(double T, double P){
 double VLE::Z_CH4(double T, double /*P*/, double V){
     double a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15;
 	double R,Tc,Pc,Vc,Tr,Vr,B,C,D,E,F;
-    a1  =  8.72553928E-2;	
-	a2  = -7.52599476E-1;	
-	a3  =  3.75419887E-1;	
+    a1  =  8.72553928E-2;
+	a2  = -7.52599476E-1;
+	a3  =  3.75419887E-1;
 	a4  =  1.07291342E-2;
-	a5  =  5.49626360E-3;	
-	a6  = -1.84772802E-2;	
-	a7  =  3.18993183E-4;	
+	a5  =  5.49626360E-3;
+	a6  = -1.84772802E-2;
+	a7  =  3.18993183E-4;
 	a8  =  2.11079375E-4;
-	a9  =  2.01682801E-5;	
-	a10 = -1.65606189E-5;	
-	a11 =  1.19614546E-4;	
+	a9  =  2.01682801E-5;
+	a10 = -1.65606189E-5;
+	a11 =  1.19614546E-4;
 	a12 = -1.08087289E-4;
-	a13 =  4.48262295E-2;	
-	a14 =  7.53970000E-1;	
+	a13 =  4.48262295E-2;
+	a14 =  7.53970000E-1;
 	a15 =  7.71670000E-2;
 	R  = 83.14467;
 	Tc = 190.6;
@@ -350,7 +367,7 @@ double VLE::Z_CH4(double T, double /*P*/, double V){
 	C= a4 +a5/pow(Tr,2) +a6/pow(Tr,3);
 	D= a7 +a8/pow(Tr,2) +a9/pow(Tr,3);
 	E= a10 +a11/pow(Tr,2) +a12/pow(Tr,3);
-	F= a13/pow(Tr,3);	
+	F= a13/pow(Tr,3);
     return 1.0 + B/Vr + C/pow(Vr,2) + D/pow(Vr,4) + E/pow(Vr,5) + F/pow(Vr,2)*(a14+a15/pow(Vr,2))*exp(-a15/pow(Vr,2));
 }
 double VLE::LnPHI_CH4(double T, double P){
@@ -358,20 +375,20 @@ double VLE::LnPHI_CH4(double T, double P){
 	double R,V,Tc,Pc,Vc,Tr,Vr,B,C,D,E,Z;
 	V  = 16.04/density_CH4(T,P);
 	Z  = Z_CH4(T,P,V);
-    a1 =  8.72553928E-2;	
-	a2 = -7.52599476E-1;	
-	a3 =  3.75419887E-1;	
+    a1 =  8.72553928E-2;
+	a2 = -7.52599476E-1;
+	a3 =  3.75419887E-1;
 	a4 =  1.07291342E-2;
-	a5 =  5.49626360E-3;	
-	a6 = -1.84772802E-2;	
-	a7 =  3.18993183E-4;	
+	a5 =  5.49626360E-3;
+	a6 = -1.84772802E-2;
+	a7 =  3.18993183E-4;
 	a8 =  2.11079375E-4;
-	a9 =  2.01682801E-5;	
-	a10= -1.65606189E-5;	
-	a11=  1.19614546E-4;	
+	a9 =  2.01682801E-5;
+	a10= -1.65606189E-5;
+	a11=  1.19614546E-4;
 	a12= -1.08087289E-4;
-	a13=  4.48262295E-2;	
-	a14=  7.53970000E-1;	
+	a13=  4.48262295E-2;
+	a14=  7.53970000E-1;
 	a15=  7.71670000E-2;
 	R  = 83.14467;
 	Tc = 190.6;
@@ -389,20 +406,20 @@ double VLE::LnPHI_CH4(double T, double P){
 double VLE::Z_H2O(double T, double /*P*/, double V){
     double a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15;
 	double R,Tc,Pc,Vc,Tr,Vr,B,C,D,E,F;
-	a1 = 8.64449220E-2;		
-	a2 =-3.96918955E-1;		
-	a3 =-5.73334886E-2;		
+	a1 = 8.64449220E-2;
+	a2 =-3.96918955E-1;
+	a3 =-5.73334886E-2;
 	a4 =-2.93893000E-4;
-	a5 =-4.15775512E-3;		
-	a6 = 1.99496791E-2;		
-	a7 = 1.18901426E-4;		
+	a5 =-4.15775512E-3;
+	a6 = 1.99496791E-2;
+	a7 = 1.18901426E-4;
 	a8 = 1.55212063E-4;
-	a9 =-1.06855859E-4;		
-	a10=-4.93197687E-6;		
-	a11=-2.73739155E-6;		
+	a9 =-1.06855859E-4;
+	a10=-4.93197687E-6;
+	a11=-2.73739155E-6;
 	a12= 2.65571238E-6;
-	a13= 8.96079018E-3;		
-	a14= 4.02000000;		
+	a13= 8.96079018E-3;
+	a14= 4.02000000;
 	a15= 2.57000000E-2;
 	R  = 83.14467;
 	Tc = 647.25;
@@ -414,7 +431,7 @@ double VLE::Z_H2O(double T, double /*P*/, double V){
 	C= a4 +a5/pow(Tr,2) +a6/pow(Tr,3);
 	D= a7 +a8/pow(Tr,2) +a9/pow(Tr,3);
 	E= a10 +a11/pow(Tr,2) +a12/pow(Tr,3);
-	F= a13/pow(Tr,3);	
+	F= a13/pow(Tr,3);
     return 1.0 + B/Vr + C/pow(Vr,2) + D/pow(Vr,4) + E/pow(Vr,5) + F/pow(Vr,2)*(a14+a15/pow(Vr,2))*exp(-a15/pow(Vr,2));
 }
 double VLE::LnPHI_H2O(double T, double P){
@@ -422,20 +439,20 @@ double VLE::LnPHI_H2O(double T, double P){
 	double R,V,Tc,Pc,Vc,Tr,Vr,B,C,D,E,Z;
 	V  = 18.015/density_H2O(T,P);
 	Z  = Z_H2O(T,P,V);
-	a1 = 8.64449220E-2;		
-	a2 =-3.96918955E-1;		
-	a3 =-5.73334886E-2;		
+	a1 = 8.64449220E-2;
+	a2 =-3.96918955E-1;
+	a3 =-5.73334886E-2;
 	a4 =-2.93893000E-4;
-	a5 =-4.15775512E-3;		
-	a6 = 1.99496791E-2;		
-	a7 = 1.18901426E-4;		
+	a5 =-4.15775512E-3;
+	a6 = 1.99496791E-2;
+	a7 = 1.18901426E-4;
 	a8 = 1.55212063E-4;
-	a9 =-1.06855859E-4;		
-	a10=-4.93197687E-6;		
-	a11=-2.73739155E-6;		
+	a9 =-1.06855859E-4;
+	a10=-4.93197687E-6;
+	a11=-2.73739155E-6;
 	a12= 2.65571238E-6;
-	a13= 8.96079018E-3;		
-	a14= 4.02000000;		
+	a13= 8.96079018E-3;
+	a14= 4.02000000;
 	a15= 2.57000000E-2;
 	R  = 83.14467;
 	Tc = 647.25;
@@ -462,7 +479,7 @@ double VLE::PF(double TT, double PP){
 	C = -0.38986                 +0.00228*TT   -0.0000026679*TT*TT;
 	D =  6.6623328249993  -0.057517079835*TT+0.0000643503862*TT*TT;
 	E = -0.445272747863  +0.0130486543901*TT -0.000015177905*TT*TT;
-    
+
 	M = A+4.0*B+16.0*C;
 	N = D+5.0*E;
 	P = B+8.0*C;
@@ -477,7 +494,7 @@ double VLE::PF(double TT, double PP){
 	if (lnP >= 5.0) cPFphi=D+E*lnP;
     if (lnP <= 4.0) cPFphi=A+B*lnP+C*lnP*lnP;
 	if (lnP > 4.0 && lnP < 5.0) cPFphi=d1+d2*lnP+d3*lnP*lnP+d4/lnP;
-	
+
 	return cPFphi;
 }
 

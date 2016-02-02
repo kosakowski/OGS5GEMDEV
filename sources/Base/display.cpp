@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************/
 /* ROCKFLOW - Modul: display.c
  */
@@ -46,7 +55,7 @@ void DisplayMsg ( const char* s )
 /**************************************************************************
  Task: Output message to screen. Helps to remove so many IFDEFS
  Programming:
-  03/2012 JT                                                           
+  03/2012 JT
 **************************************************************************/
 void ScreenMessage(const char* message)
 {

@@ -1,4 +1,13 @@
-#include <vector>
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
+ #include <vector>
 //using namespace std;
 
 #ifdef OGS_FEM_CAP // CAP_REACT
@@ -18,9 +27,9 @@ class REACT_PRQ{
 	bool flag_prq;    /* flag if *.prq file exists   DL 28,10,08*/
 	bool check_no_reaction_nodes; /* flag if CheckNoReactionNodes has been performed */
 	int  kin_no_steps;
-	
+
 	std::vector<int> id_key, idx_key, phrq_id, phrq_id_pcs, phrq_id_pos;
-	
+
 	std::vector<std::string> pcs_name;
 
 
@@ -33,7 +42,7 @@ class REACT_PRQ{
 	static std::vector<std::string> string2vector(std::string line);	//split string line to pieces, and store in a vector
 	int isKey(std::string); //return the no. in Key words list
 
-	void CreateREACT(void);	 
+	void CreateREACT(void);
 	void SetInterface(void);
 
 

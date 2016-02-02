@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 #ifndef VTK_INC
 #define VTK_INC
 
@@ -49,13 +58,14 @@ public:
 #if defined(USE_PETSC) || defined(USE_MPI) //|| defined(other parallel libs)//03.3012. WW
   CVTK(const int rank, std::string rank_str)
   {
+    isInitialized = false;
     mrank = rank;
     mrank_str = rank_str;
   }
 #else
   CVTK(void)
   {
-    isInitialized = false; 
+    isInitialized = false;
   }
 #endif
 	virtual ~CVTK(void){}

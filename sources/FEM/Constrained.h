@@ -1,3 +1,11 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
 
 #ifndef CONSTRAINED_H_
 #define CONSTRAINED_H_
@@ -14,6 +22,7 @@ struct Constrained {
 	bool _completeConstrainedStateOff;
 	std::vector<bool>_constrainedNodes;
 	bool _isConstrainedVelStable;
+	bool _isSeepageBC;
 
 	Constrained () :
 		constrainedValue(0.0),
@@ -23,7 +32,8 @@ struct Constrained {
 		constrainedVariable(ConstrainedVariable::INVALID_CONSTRAINED_VARIABLE),
 		_isCompleteConstrained(false),
 		_completeConstrainedStateOff(false),
-		_isConstrainedVelStable(false)
+		_isConstrainedVelStable(false),
+		_isSeepageBC(false)
 	{}
 
 };

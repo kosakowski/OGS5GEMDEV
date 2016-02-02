@@ -1,6 +1,11 @@
 /**
  * \file SensorData.cpp
  * 2012/08/01 KR Initial implementation
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
  */
 
 #include "SensorData.h"
@@ -38,13 +43,13 @@ SensorData::~SensorData()
 }
 
 
-void SensorData::addTimeSeries( const std::string &data_name, std::vector<float> *data, const std::string &data_unit_string ) 
+void SensorData::addTimeSeries( const std::string &data_name, std::vector<float> *data, const std::string &data_unit_string )
 {
 	this->addTimeSeries(SensorData::convertString2SensorDataType(data_name), data, data_unit_string);
 }
 
-void SensorData::addTimeSeries( SensorDataType::type data_name, std::vector<float> *data, const std::string &data_unit_string ) 
-{ 
+void SensorData::addTimeSeries( SensorDataType::type data_name, std::vector<float> *data, const std::string &data_unit_string )
+{
 	if (_step_size>0)
 	{
 		if (((_end-_start)/_step_size) != data->size())
@@ -100,12 +105,12 @@ int SensorData::readDataFromFile(const std::string &file_name)
 	std::list<std::string> fields = splitString(line, '\t');
 	std::list<std::string>::const_iterator it (fields.begin());
 	size_t nFields = fields.size();
-		
+
 	if (nFields<2)
 		return 0;
-	
+
 	size_t nDataArrays(nFields-1);
-	
+
 	//create vectors necessary to hold the data
 	for (size_t i=0; i<nDataArrays; i++)
 	{
@@ -161,7 +166,7 @@ float SensorData::getData(SensorDataType::type t, double time, bool lin_int) con
 
 			if (lin_int)
 				return static_cast<float>(data[idx] + (data[idx+1]-data[idx])/(_time_steps[idx+1]-this->_time_steps[idx]) * (time-this->_time_steps[idx]));
-			else 
+			else
 				return data[idx];
 		}
 	}

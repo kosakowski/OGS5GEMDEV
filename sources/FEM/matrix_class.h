@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /*========================================================================
    GeoSys - class Matrix, Sparse matrix (Declaration)
    Task:       Matrix object for full matrices.  If the size of matrix is
@@ -46,7 +55,6 @@ public:
 	virtual ~MatrixBase();
 
 	void ReleaseMemory();
-
 	size_t Rows() const {return nrows; }
 	size_t Cols() const {return ncols; }
 	size_t Size() const {return size; }

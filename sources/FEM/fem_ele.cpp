@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /*
    The members of class Element definitions.
    Designed and programmed by WW, 06/2004
@@ -8,7 +17,7 @@
 #include "fem_ele_std.h"
 #include <cfloat>
 /* Objekte */
-#include "rf_pcs.h" 
+#include "rf_pcs.h"
 
 #include "femlib.h"
 #include "mathlib.h"
@@ -99,11 +108,11 @@ CElement::CElement(int CoordFlag, const int order)
 	MCF_Flag = MULTI_COMPONENTIAL_FLOW_Process;
 
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
-	idxm = NULL;  //> global indices of local matrix rows 
-	idxn = NULL;  //> global indices of local matrix columns 
+	idxm = NULL;  //> global indices of local matrix rows
+	idxn = NULL;  //> global indices of local matrix columns
 	local_idx = NULL; //> local index for local assemble
-	//local_matrix = NULL; //>  local matrix 
-	//local_vec = NULL; //>  local vector  
+	//local_matrix = NULL; //>  local matrix
+	//local_vec = NULL; //>  local vector
 #endif
 
 
@@ -126,9 +135,9 @@ CElement::~CElement()
 
 #if defined(USE_PETSC) // || defined(other parallel libs)//03~04.3012. WW
 	if(idxm)
-	  delete [] idxm;  
+	  delete [] idxm;
 	if(idxn)
-	  delete [] idxn;  
+	  delete [] idxn;
 	if (local_idx)
 	  delete [] local_idx;
 	//if (local_idx)
@@ -363,7 +372,7 @@ void CElement::ConfigNumerics(MshElemType::type ele_type, const int nquadrature_
 		extrapo_method = ExtrapolationMethod::EXTRAPO_LINEAR;
 		return;
 	case MshElemType::HEXAHEDRON:
-		ele_dim = 3;        
+		ele_dim = 3;
 		nGauss = nquadrature_points;
 		nGaussPoints = nGauss * nGauss * nGauss;
 		ShapeFunction = ShapeFunctionHex;
@@ -467,7 +476,7 @@ double CElement::interpolate(const int idx, CRFProcess* m_pcs, const int order)
 	for(int i = 0; i < nn; i++)
 		val += node_val[i] * inTerpo[i];
 	return val;
-} 
+}
 /**************************************************************************
    FEMLib-Method:
    Task:
@@ -1433,22 +1442,22 @@ void CElement::FaceNormalFluxIntegration(long /*element_index*/, double *NodeVal
 		}
 		//---------------------------------------------------------
 		ComputeShapefct(Order);
-		
+
 		normal_diff_flux_interpol = 0.0;
-		
+
 		if ((m_pcs->getProcessType() == FiniteElement::GROUNDWATER_FLOW) || (m_pcs->getProcessType() == FiniteElement::LIQUID_FLOW)) {
 
-			for (int i = 0; i < nNodes; i++) 	// Darcy flux 
+			for (int i = 0; i < nNodes; i++) 	// Darcy flux
 				normal_diff_flux_interpol += NodeVal[i] * sf[i];
 
 			for (int i = 0; i < nNodes; i++)  // Integration
 				dbuff[i] += normal_diff_flux_interpol * sf[i] * fkt;
 		}
-		else if ((m_pcs->getProcessType() == FiniteElement::HEAT_TRANSPORT) || (m_pcs->getProcessType() == FiniteElement::MASS_TRANSPORT)) { 
+		else if ((m_pcs->getProcessType() == FiniteElement::HEAT_TRANSPORT) || (m_pcs->getProcessType() == FiniteElement::MASS_TRANSPORT)) {
 
 			normal_adv_flux_interpol = 0.0;
 
-			for (int i = 0; i < nNodes; i++) 	
+			for (int i = 0; i < nNodes; i++)
 				normal_adv_flux_interpol += NodeVal_adv[i] * sf[i];
 
 			for (int i = 0; i < nNodes; i++) { // Integration

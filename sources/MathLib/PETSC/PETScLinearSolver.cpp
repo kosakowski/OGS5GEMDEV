@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /*!
    \brief Definition of member functions of class PETScLinearSolver
 
@@ -178,8 +187,10 @@ void PETScLinearSolver::VectorCreate(PetscInt m)
   //VecSetSizes(b, m_size_loc, m);
   VecSetSizes(b, PETSC_DECIDE, m);
   VecSetFromOptions(b);
+  VecSetOption(b, VEC_IGNORE_NEGATIVE_INDICES,PETSC_TRUE);
   VecSetUp(b); //kg44 for PETSC 3.3 
   VecDuplicate(b, &x);
+  VecSetOption(x, VEC_IGNORE_NEGATIVE_INDICES,PETSC_TRUE);
 
   VecGetLocalSize(x, &m_size_loc);
 
@@ -293,12 +304,11 @@ int PETScLinearSolver::Solver()
 
    time_elapsed += v2-v1;
 
-   
-#define aTEST_OUT
+#define nonTEST_OUT
 #ifdef TEST_OUT
   //TEST
    PetscViewer viewer;
-   PetscViewerASCIIOpen(PETSC_COMM_WORLD, "x2.txt", &viewer);
+   PetscViewerASCIIOpen(PETSC_COMM_WORLD, "matrix_vector.txt", &viewer);
    PetscViewerPushFormat(viewer,PETSC_VIEWER_ASCII_MATLAB);
    PetscObjectSetName((PetscObject)A,"Matrix");
    MatView(A, viewer);
@@ -306,17 +316,17 @@ int PETScLinearSolver::Solver()
    VecView(x, viewer);
    PetscObjectSetName((PetscObject)b,"RHS");
    VecView(b, viewer);   
+   /*
     VecDestroy(&b);
   VecDestroy(&x);
   MatDestroy(&A);
   if(lsolver) KSPDestroy(&lsolver);
-  // if(prec) PCDestroy(&prec);
-  if(global_x0)
-    delete []  global_x0;
-  if(global_x1)
-    delete []  global_x1;
+   if(global_x)
+     delete []  global_x;
+
    PetscFinalize();
    exit(0);
+    */
 #endif
 
 

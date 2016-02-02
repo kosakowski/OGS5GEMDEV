@@ -4,6 +4,11 @@
  *  Created on: Jun 16, 2010
  *      Author: KR Initial implementation (in header file)
  *      TF moved implementation to source file
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
  */
 
 #include "DateTools.h"

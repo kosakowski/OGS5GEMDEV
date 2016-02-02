@@ -1,6 +1,11 @@
 /**
  * \file FEM/Output.h
  * 05/04/2011 LB Refactoring: Moved from rf_out_new.h
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
  */
 
 #ifndef OUTPUT_H
@@ -149,7 +154,7 @@ public:
     //------------------------------------------------------
 #if defined(USE_PETSC) || defined(USE_MPI) //|| defined(other parallel libs)//03.3012. WW
 	void setMPI_Info(const int rank, const int size, std::string rank_str);
-	/// Head for binary output for parallel computing. 01.2014. WW 
+	/// Head for binary output for parallel computing. 01.2014. WW
 	void NODDomainWriteBinary_Header();
 	/// Binary output for parallel computing. 01.2014. WW
 	void NODDomainWriteBinary();
@@ -257,9 +262,9 @@ private:
 	int int_disp;
 	MPI_Offset offset;
 
-	unsigned domain_output_counter; // WW 04.2014 
+	unsigned domain_output_counter; // WW 04.2014
 
-	void setDataArrayDisp();    
+	void setDataArrayDisp();
 #endif
 };
 #endif // OUTPUT_H

@@ -1,6 +1,11 @@
 /**
  * \file DateTools.h
  * 22/01/2010 KR Initial implementation
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
  */
 
 #ifndef DATETOOLS_H
@@ -16,7 +21,7 @@
 int date2int(int y, int m, int d);
 
 /**
- * Converts an integer to a string date "dd.mm.yyyy" 
+ * Converts an integer to a string date "dd.mm.yyyy"
  * Note: (Almost) no checks are performed if the int makes sense as a date.
  */
 std::string int2date(int date);

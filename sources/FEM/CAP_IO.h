@@ -1,16 +1,25 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 #include <vector>
 //using namespace std;
 
 #ifndef OGS_FEM_CAP // CAP_REACT
  #ifdef UNIX
-  #define LI  long            	
-  #define LIP long*       	
-  #define LNT long        	
-  #define DB  double		
-  #define DBP double*		
-  #define CHP char*		
-  #define CMT extern int		
-  #define VDP void*		
+  #define LI  long
+  #define LIP long*
+  #define LNT long
+  #define DB  double
+  #define DBP double*
+  #define CHP char*
+  #define CMT extern int
+  #define VDP void*
   #define ftnlen long		/* FORTRAN string length type */
  #else
   #define LI  long         	/* unsigned int		*/
@@ -94,7 +103,7 @@ extern int CAP_tqgtlc(LI INDEXP, LI INDEXL, LI INDEXC, DBP VAL, LIP NOERR);
 extern int CAP_tqgopn (CHP FILE,LI LUN,CHP FFORM,CHP FSTAT,CHP FACC,LI RECL,
 	    LIP IOSTAT,LIP NOERR);
 */
-extern int CAP_tqbond(LI INDEXP, LI INDEXA, LI INDEXB, LI INDEXC, LI INDEXD, 
+extern int CAP_tqbond(LI INDEXP, LI INDEXA, LI INDEXB, LI INDEXC, LI INDEXD,
 	   DBP VAL, LIP NOERR);
 extern int CAP_tqused(LIP NA,LIP NB,LIP NC,LIP ND,LIP NE,LIP NF,LIP NG,LIP NH,LIP NI,
 	   LIP NJ,LIP NK,LIP NOERR);

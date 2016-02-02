@@ -1,4 +1,13 @@
-/*
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
+ /*
 rf_react_phrq.cpp phrq
 Reaction package to go with PHREEQC
 Dedong Li
@@ -56,7 +65,7 @@ vector <REACT_PRQ*> REACT_PRQ_vec;
 /* Constructor */
 REACT_PRQ::REACT_PRQ(void){
 	flag_prq = false; /* DL 28,10,08*/
-	check_no_reaction_nodes = false; // ToDo 
+	check_no_reaction_nodes = false; // ToDo
 	nodenumber = 0;
 	}
 /* Destructor */
@@ -74,7 +83,7 @@ vector<std::string> REACT_PRQ::string2vector(std::string line){
 	while(1){
 		if(in.eof()) break;
 		sp="";
-		in >> sp;	
+		in >> sp;
 		if(sp!="") pies.push_back(sp);
 	}
 	return pies;
@@ -83,7 +92,7 @@ vector<std::string> REACT_PRQ::string2vector(std::string line){
 void REACT_PRQ::CreateREACT(void){
 	int i, vector_size;
 	CRFProcess *m_pcs = NULL;
-	
+
 	vector_size = (int) pcs_vector.size();
 	for(i=0;i<vector_size;i++){
 		m_pcs = pcs_vector[i];
@@ -98,16 +107,16 @@ void REACT_PRQ::CreateREACT(void){
 
 vector<vector<std::string> > REACT_PRQ::file2vec(std::string phrq_file){
 	int i;
-	ifstream in;	
+	ifstream in;
 	std::string instr;
 	vector<std::string> pies,piesr;
 	vector<vector<std::string> > res;
 	in.open(phrq_file.c_str(), ios::in);
-	
+
 	res.clear();
 	if(in.good()){
 		while(1){
-			if(in.eof()) 
+			if(in.eof())
 				break;
 			getline(in, instr);
 			pies=REACT_PRQ::string2vector(instr);
@@ -143,7 +152,7 @@ void REACT_PRQ::SetInterface(void){
 	vector<int> idx,ipx,ipcs,id;
 	CRFProcess* m_pcs = NULL;
 	no_pcs = (int)pcs_vector.size();
-	
+
 	this->kin_no_steps=1;
 	this->pcs_name.clear();
 	for(i=0;i<no_pcs;i++){
@@ -201,7 +210,7 @@ void REACT_PRQ::SetInterface(void){
 		}
 		ipx.push_back(ips);
 		//cout << " " << id_key[i] << " " << idx[i] << " " << ipcs[i] << " " << ipx[i] << "\n";
-		//  idx-id_KEY, ipcs process, ipx position 
+		//  idx-id_KEY, ipcs process, ipx position
 	}
 
 	this->phrq_id.clear();
@@ -210,7 +219,7 @@ void REACT_PRQ::SetInterface(void){
 			this->phrq_id.push_back(2);
 		else if(idx[i]==0 || idx[i]==1 || idx[i]==2 ||idx[i]==6)
 			this->phrq_id.push_back(1);
-		else 
+		else
 			this->phrq_id.push_back(0);
 	}
 	this->phrq_id_pos=ipx;
@@ -241,7 +250,7 @@ void REACT_PRQ::vec2file(int f){
 	CTimeDiscretization *m_tim = NULL;
 	if(time_vector.size()>0){
 		m_tim = time_vector[0];
-		dt = m_tim->this_stepsize;	
+		dt = m_tim->this_stepsize;
 		//cout << " dt 0 " << dt << "\n";
 	}
 
@@ -292,15 +301,15 @@ void REACT_PRQ::vec2file(int f){
 							}
 						}
 						else if(this->phrq_id_pcs[i]==-2) //mark for current time step
-							pcs_node_value=dt;						
+							pcs_node_value=dt;
 
 						//idx = pcs_vector[pqc_process[j]]->GetProcessComponentNumber();
 						////mi,w = Ci,w * n *55.5 / CH2O
 						////mi,s = Ci,w * (1-n) *55.5 / CH2O
 						//if(cp_vec[idx]->transport_phase==0)                   // liquid phase
-						//dval /= unitfactor_l;       
+						//dval /= unitfactor_l;
 						//else if(cp_vec[idx]->transport_phase==1)              // solid phase
-						//dval /= unitfactor_s; 
+						//dval /= unitfactor_s;
 
 						if(this->phrq_id_pcs[i]>=0){
 						if(idx_key[i]==0){
@@ -310,19 +319,19 @@ void REACT_PRQ::vec2file(int f){
 
 							//----for PHREEQC precision----
 							if(pcs_node_value < 1.0e-9)
-								pcs_node_value=1.0e-9; 
+								pcs_node_value=1.0e-9;
 							//-----------------------------
 						}
 							else if(idx_key[i]==1 || idx_key[i]==2){
 								pcs_node_value *= unitfactor_s;
-								if (pcs_node_value< 0) //1.0e-16) 
+								if (pcs_node_value< 0) //1.0e-16)
 									pcs_node_value=0;
 							}
 						}
 						out << pcs_node_value << " ";
 					}
 					else
-						out << PHREEQC_TEMPLATE[i][j] << " ";	
+						out << PHREEQC_TEMPLATE[i][j] << " ";
 				}
 				}
 				out << "\n";
@@ -342,7 +351,7 @@ int REACT_PRQ::Call_Phreeqc(void){
   }
    else {
     DisplayMsgLn("Warnung: Phreeqc doesn't run properly!!! ");
-    exit(0);   
+    exit(0);
   }
 }
 
@@ -351,7 +360,7 @@ void REACT_PRQ::file2pcs(int f){
 
 	int i,ii,j,idx,iout_length=0,iout_step;
 	double pcs_node_value;
-	ifstream in, in0;	
+	ifstream in, in0;
 	std::string instr;
 	vector<int> pcs_id;
 	vector<std::string> pies;
@@ -400,8 +409,8 @@ void REACT_PRQ::file2pcs(int f){
 			}
 
 			for(i=0;i<iout_step;/*i<this->kin_no_steps;*/i++)
-			getline(in, instr);	
-			getline(in, instr);	
+			getline(in, instr);
+			getline(in, instr);
 			pies=string2vector(instr);
 			for(i=0;i<(int)pies.size();i++){
 				if(pcs_id[i]!=-1){
@@ -413,20 +422,20 @@ void REACT_PRQ::file2pcs(int f){
 					//mi,w = Ci,w * n *55.5 / CH2O
 					//mi,s = Ci,w * (1-n) *55.5 / CH2O
 					if(cp_vec[idx]->transport_phase==0)                   // liquid phase
-						pcs_node_value /= unitfactor_l;      
+						pcs_node_value /= unitfactor_l;
 					else if(cp_vec[idx]->transport_phase==1)              // solid phase
 						pcs_node_value /= unitfactor_s;
 
 					if(cp_vec[idx]->transport_phase ==0)          // liquid phase
-						m_pcs->SetNodeValue(ii,1,pcs_node_value); 
+						m_pcs->SetNodeValue(ii,1,pcs_node_value);
 					else if(cp_vec[idx]->transport_phase ==1){    // solid phase
 						if(f ==1)// for full system
-							m_pcs->SetNodeValue(ii,1,pcs_node_value); 
+							m_pcs->SetNodeValue(ii,1,pcs_node_value);
 						else if( f==0 && m_rei->icSolidUpdate)
-							m_pcs->SetNodeValue(ii,1,pcs_node_value); 
+							m_pcs->SetNodeValue(ii,1,pcs_node_value);
 					}
 				}
-			}			
+			}
 		}
 	}
 	else
@@ -446,7 +455,7 @@ void REACT_PRQ::ExecuteReactionsPHRQ_new(int f){
 		//cin.get();
 		this->file2pcs(f);
 	}
-	if(f==1 || f==-1){		
+	if(f==1 || f==-1){
 		this->vec2file(f);
 		this->Call_Phreeqc();
 		//cin.get();
@@ -466,8 +475,8 @@ bool REACT_PRQ_Read(std::string file_base_name){
 	char line[MAX_ZEILE];
 	std::string file_name_prq, line_string;
 	ios::pos_type position;
-	
-	REACT_PRQ *rc_prq = new REACT_PRQ(); 
+
+	REACT_PRQ *rc_prq = new REACT_PRQ();
     // look if file is there
 	file_name_prq = file_base_name + REACTION_EXTENSION_PHRQ;
 	ifstream prq_file (file_name_prq.data(),ios::in);
@@ -476,7 +485,7 @@ bool REACT_PRQ_Read(std::string file_base_name){
 		rc_prq =NULL;
 	}
 	else
-	{ // file is there - use NEW PHREEQC  
+	{ // file is there - use NEW PHREEQC
 		if(REACT_vec.capacity() > 0){  //Test, if OLD PHREEQC is used also
 			cout << "\n" << " Warning!  PHREEQC is actived. NEW PHREEQC will NOT be used ! " << "\n";
 			delete rc_prq;
@@ -486,14 +495,14 @@ bool REACT_PRQ_Read(std::string file_base_name){
 			rc_prq->flag_prq = true;
 			// Read input file *.prq
 			prq_file.clear();
-			prq_file.seekg(0,ios::beg); 
+			prq_file.seekg(0,ios::beg);
 			cout << "PRQ_Read" << "\n";
 			prq_file.getline(line,MAX_ZEILE); // first line
 			prq_file.getline(line,MAX_ZEILE); // second line ToDo
 			line_string = line;
-			if(line_string.find("#STOP")!=string::npos) 
+			if(line_string.find("#STOP")!=string::npos)
 				return true;
-			
+
 			// Call the object read function
 			position = rc_prq->Read(&prq_file);
 			// store data in global vector
@@ -506,7 +515,7 @@ bool REACT_PRQ_Read(std::string file_base_name){
 }
 
 ios::pos_type REACT_PRQ::Read(ifstream *prq_file){
- 
+
   bool new_keyword = false;
   std::string hash("#");
   std::string line_string;

@@ -3,6 +3,11 @@
  * 05/04/2011 LB Initial implementation
  *
  * Implementation of LegacyVtkInterface class
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
  */
 
 // ** INCLUDES **

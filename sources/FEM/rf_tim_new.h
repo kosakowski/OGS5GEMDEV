@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************
    FEMLib - Object: TIM
    Task: class implementation
@@ -125,7 +134,7 @@ public:
 	//Begin of function section for PI Time control ------------------------
 	int GetPITimeStepCrtlType() const {return PI_tsize_ctrl_type; }
 	double GetTimeStep() const {return this_stepsize; }
-	double GetEndTime() const { return time_end; }	
+	double GetEndTime() const { return time_end; }
 	void SetTimeStep( double hnew)  {this_stepsize = hnew; }
 	double GetRTol() const { return relative_error; }
 	double GetATol() const { return absolute_error; }

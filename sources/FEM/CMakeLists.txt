@@ -1,5 +1,6 @@
 set( HEADERS
 	BoundaryCondition.h
+	PhysicalConstant.h
 	Constrained.h
 	conversion_rate.h
 	DistributionInfo.h
@@ -20,7 +21,6 @@ set( HEADERS
 	matrix_class.h
 	Output.h
 	pcs_dm.h
-	physical_constants.h
 	problem.h
 	ProcessInfo.h
 	prototyp.h
@@ -45,7 +45,6 @@ set( HEADERS
 	solver.h
 	SourceTerm.h
 	SparseMatrixDOK.h
-	StepperBulischStoer.h
 	Stiff_Bulirsch-Stoer.h
 	tools.h
 	vtk.h
@@ -172,6 +171,14 @@ if(OGS_FEM_PQC)
    target_link_libraries(FEM PQC)
 endif()
 
+if(PARALLEL_USE_MPI)
+	target_link_libraries(FEM ${MPI_CXX_LIBRARIES})
+endif()
+
+if(OGS_FEM_MKL)
+	target_link_libraries( FEM ${MKL_LIBRARIES} )
+endif()
+
 if (WIN32)
 	if (OGS_FEM_GEMS)
 		target_link_libraries( FEM GEM ) 
@@ -179,9 +186,6 @@ if (WIN32)
 	if (LIS)
 		target_link_libraries( FEM ${LIS_LIBRARIES} ) 
 		set_target_properties( FEM PROPERTIES LINK_FLAGS "/NODEFAULTLIB:libcmt" )
-	endif ()
-	if (MKL)
-		target_link_libraries( FEM ${MKL_LIBRARIES} )
 	endif ()
 	if (OGS_FEM_BRNS)
 		target_link_libraries( FEM BrnsDll )
@@ -193,17 +197,13 @@ endif ()
 
 if (UNIX)
 	if (OGS_FEM_BRNS)
-		target_link_libraries( FEM dl ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+		target_link_libraries( FEM ${CMAKE_DL_LIBS} ${LAPACK_LIBRARIES} )
 	endif ()
 
 	if (LIS)
 		target_link_libraries( FEM ${LIS_LIBRARIES} )
 	endif ()
-
-	if (MKL)
-		target_link_libraries( FEM ${MKL_LIBRARIES} )
 	endif ()
-endif ()
 
 if (OGS_FEM_CHEMAPP)
 	include_directories ( ${CMAKE_SOURCE_DIR}/EQL )
@@ -228,4 +228,9 @@ if (OGS_FEM_CAP)
 	endif ()
 endif ()
 
-
+if(OGS_USE_CVODE)
+	target_link_libraries(FEM
+		sundials_cvode_static
+		sundials_nvecserial_static
+	)
+endif()

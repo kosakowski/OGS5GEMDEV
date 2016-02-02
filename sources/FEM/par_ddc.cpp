@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************
    PARLib - Object:
    Task:
@@ -23,6 +32,7 @@
 //#undef SEEK_END  //WW
 //#undef SEEK_CUR  //WW
 #include <mpi.h>
+#include "SplitMPI_Communicator.h"
 char t_fname[3];
 double time_ele_paral;
 #endif
@@ -1149,8 +1159,6 @@ void DOMCreate()
  **************************************************************************/
 	void CPARDomain::ConfigEQS(CNumerics* m_num, const long n, bool quad)
 	{
-		int i;
-		long dim = 0;
 		i_start[0] = 0;
 		i_end[0] = num_inner_nodes; //Number of interior nodes
 		b_start[0] = 0;
@@ -1160,7 +1168,9 @@ void DOMCreate()
 		long border_size = num_boundary_nodes;
 		quadratic = quad;
 		//
+#if defined(NEW_BREDUCE)
 		double cpu_time_local = -MPI_Wtime();
+#endif
 
 		/*
 
@@ -1208,7 +1218,7 @@ void DOMCreate()
 		//  Concatenate index
 		inner_size *= dof;
 		border_size *= dof;
-		for(i = 0; i < mysize; i++)
+		for(int i = 0; i < mysize; i++)
 		{
 			receive_cnt[i] = 1;
 			receive_disp[i] = i;
@@ -1216,9 +1226,9 @@ void DOMCreate()
 		//
 		// receive_cnt_i[]: number of subdomain inner nodes in the concatenated array
 		MPI_Allgatherv ( &inner_size, 1, MPI_INT, receive_cnt_i, receive_cnt, receive_disp,
-		                 MPI_INT, MPI_COMM_WORLD );
+		                 MPI_INT, comm_DDC );
 		inner_size = 0;
-		for(i = 0; i < mysize; i++)
+		for(int i = 0; i < mysize; i++)
 		{
 			receive_disp_i[i] = inner_size;
 			inner_size += receive_cnt_i[i];
@@ -1226,7 +1236,7 @@ void DOMCreate()
 #if defined(NEW_BREDUCE)
 		// receive_cnt_b[]: number of subdomain border nodes in the concatenated array
 		MPI_Allgatherv ( &border_size, 1, MPI_INT, receive_cnt_b, receive_cnt, receive_disp,
-		                 MPI_INT, MPI_COMM_WORLD );
+		                 MPI_INT, comm_DDC );
 		border_size = 0;
 		for(i = 0; i < mysize; i++)
 		{
@@ -1247,7 +1257,7 @@ void DOMCreate()
 		}
 #endif
 		//
-		// dim = n_loc*dof;
+		// long dim = n_loc*dof;
 		// MPI_Allreduce(&dim,  &max_dimen, 1, MPI_INT,  MPI_MAX, MPI_COMM_WORLD);
 	}
 
@@ -1260,19 +1270,15 @@ void DOMCreate()
  **************************************************************************/
 	double CPARDomain::Dot_Border_Vec(const double* vec_x, const double* vec_y)
 	{
-		long i, l_buff;
-		int ii, k;
-		long b_shift[2];
-		double val, fac;
-		val = 0.;
 		//
-		for(k = 0; k < nq; k++)
-			for(i = b_start[k]; i < b_end[k]; i++)
+		double val = 0.;
+		for(int k = 0; k < nq; k++)
+			for(long i = b_start[k]; i < b_end[k]; i++)
 			{
-				fac =  1.0 / (double)bnode_connected_dom[i];
-				for(ii = 0; ii < dof; ii++)
+				const double fac =  1.0 / (double)bnode_connected_dom[i];
+				for(int ii = 0; ii < dof; ii++)
 				{
-					l_buff = i + n_loc * ii + n_shift[k];
+					const long l_buff = i + n_loc * ii + n_shift[k];
 					val += fac * vec_x[l_buff] * vec_y[l_buff];
 				}
 			}
@@ -1441,18 +1447,16 @@ void DOMCreate()
  **************************************************************************/
 	void CPARDomain::Global2Border(const double* x, double* local_x, const long n )
 	{
-		long i, ig;
-		int ii, k;
 		//
 		long nnodes_g = (long)n / dof;
 		// BC
-		for(i = 0; i < dof * n_bc; i++)
+		for(long i = 0; i < dof * n_bc; i++)
 			local_x[i] = 0.0;
 		//
-		for(i = 0; i < n_bc; i++)
+		for(long i = 0; i < n_bc; i++)
 		{
-			k = t_border_nodes[i];
-			for(ii = 0; ii < dof; ii++)
+			int k = t_border_nodes[i];
+			for(int ii = 0; ii < dof; ii++)
 				local_x[i + n_bc * ii] = x[k + nnodes_g * ii];
 		}
 	}
@@ -1467,15 +1471,13 @@ void DOMCreate()
  **************************************************************************/
 	void CPARDomain::Border2Global(const double* local_x, double* x, const long n)
 	{
-		long i, ig;
-		int ii, k;
 		//
 		long nnodes_g = (long)n / dof;
 		//
-		for(i = 0; i < n_bc; i++)
+		for(long i = 0; i < n_bc; i++)
 		{
-			k = t_border_nodes[i];
-			for(ii = 0; ii < dof; ii++)
+			const int k = t_border_nodes[i];
+			for(int ii = 0; ii < dof; ii++)
 				x[k + nnodes_g * ii] = local_x[i + n_bc * ii];
 		}
 	}
@@ -1542,20 +1544,14 @@ void DOMCreate()
 //#define NEW_BREDUCE2
 	void CPARDomain::CatInnerX(double* global_x, const double* local_x, const long n)
 	{
-		long i, j, ig;
-		int ii, k;
-		long counter = 0;
-		double* x_i, * x_g;
 		Linear_EQS* eq = NULL;
 		if(quadratic)
 			eq = eqsH;
 		else
 			eq = eqs;
 		//
-		x_i = eq->f_buffer[0];
-		x_g = eq->f_buffer[(long)eq->f_buffer.size() - 1];
+		double* x_g = eq->f_buffer[(long)eq->f_buffer.size() - 1];
 		//
-		long n_global = (long)n / dof;
 		//
 #if defined(NEW_BREDUCE2)
 		// Not finished
@@ -1564,10 +1560,13 @@ void DOMCreate()
 		// for(i=0; i<eq->A->Dim();i++)
 		//   x_i[i] = 0.;
 		//
-		for(k = 0; k < nq; k++)
+		double* x_i = eq->f_buffer[0];
+		const long n_global = (long)n / dof;
+		long counter = 0;
+		for(int k = 0; k < nq; k++)
 		{
-			for(i = i_start[k]; i < i_end[k]; i++)
-				for(ii = 0; ii < dof; ii++)
+			for(long i = i_start[k]; i < i_end[k]; i++)
+				for(int ii = 0; ii < dof; ii++)
 				{
 					x_i[counter] = local_x[i + n_loc * ii];
 					counter++; //
@@ -1575,19 +1574,18 @@ void DOMCreate()
 		}
 		// Concatentate
 		MPI_Allgatherv (x_i, counter, MPI_DOUBLE, x_g, receive_cnt_i, receive_disp_i,
-		                MPI_DOUBLE, MPI_COMM_WORLD );
+		                MPI_DOUBLE, comm_DDC );
 		//
 		// Mapping to the golbal x
 		CPARDomain* a_dom;
-		for(j = 0; j < mysize; j++)
+		for(long j = 0; j < mysize; j++)
 		{
 			counter = receive_disp_i[j];
 			// Problem from here
 			if(j == myrank)
 				a_dom = this;
 			else
-				;
-			a_dom = dom_vector[j];
+				a_dom = dom_vector[j];
 			a_dom->nq = 1;
 			a_dom->i_start[0] = 0;
 			a_dom->i_end[0] =  a_dom->num_inner_nodes; //Number of interior nodes
@@ -1598,12 +1596,12 @@ void DOMCreate()
 				a_dom->i_end[1] = a_dom->i_start[1] + a_dom->num_inner_nodesHQ;
 			}
 
-			for(k = 0; k < a_dom->nq; k++) // This should come from different processors
+			for(int k = 0; k < a_dom->nq; k++) // This should come from different processors
 
-				for(i = a_dom->i_start[k]; i < a_dom->i_end[k]; i++)
+				for(long i = a_dom->i_start[k]; i < a_dom->i_end[k]; i++)
 				{
-					ig = a_dom->nodes[i];
-					for(ii = 0; ii < dof; ii++)
+					const long ig = a_dom->nodes[i];
+					for(int ii = 0; ii < dof; ii++)
 					{
 						global_x[ig + n_global * ii] = x_g[counter];
 						counter++;
@@ -1613,7 +1611,7 @@ void DOMCreate()
 
 #else // if defined(NEW_BREDUCE2)
 		Local2Global(local_x, x_g, n);
-		MPI_Allreduce( x_g, global_x, n, MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+		MPI_Allreduce( x_g, global_x, n, MPI_DOUBLE,MPI_SUM,comm_DDC);
 #endif
 	}
 
@@ -1652,7 +1650,7 @@ void DOMCreate()
 		}
 		// Concatentate
 		MPI_Allgatherv (x_g, counter, MPI_DOUBLE, x_cat, receive_cnt_b, receive_disp_b,
-		                MPI_DOUBLE, MPI_COMM_WORLD );
+		                MPI_DOUBLE, comm_DDC );
 		for(i = 0; i < dof * n_bc; i++)
 			x_b[i] = 0.0;
 		//

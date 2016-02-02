@@ -3,6 +3,11 @@
  *
  *  Created on: Jun 16, 2010
  *      Author: TF
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
  */
 
 #include "StringTools.h"
@@ -93,7 +98,7 @@ std::string copyPathToFileName(const std::string &file_name, const std::string &
 {
 	// check if file_name already contains a full path
 	size_t pos(file_name.rfind("/")); // linux, mac delimiter
-	if (pos == std::string::npos) 
+	if (pos == std::string::npos)
 	{
 		pos = file_name.rfind("\\"); // windows delimiter
 		if (pos == std::string::npos)

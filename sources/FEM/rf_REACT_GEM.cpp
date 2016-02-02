@@ -1,4 +1,13 @@
 /**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
+ /**
  * rf_REACT_GEM.cpp
  * Haibing Shao 25.03.08
  * haibing.shao@ufz.de

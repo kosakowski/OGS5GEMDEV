@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************
    MSHLib - Object:
    Task:
@@ -314,6 +323,11 @@ void CFEMesh::computeMinEdgeLength()
 				        = kth_edge_length;
 		}
 	}
+}
+
+void CFEMesh::setSearchLength(double len)
+{
+	_search_length = len;
 }
 
 double CFEMesh::getSearchLength() const
@@ -911,8 +925,9 @@ void CFEMesh::ConstructGrid()
 	e_edgeNodes.resize(0);
 	std::cout << " done." << "\n";
 
-	computeSearchLength();
+	//computeSearchLength();
 	computeMinEdgeLength();
+	setSearchLength(_min_edge_length / 2);
 	constructMeshGrid();
 }
 

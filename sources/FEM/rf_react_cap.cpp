@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /*
 
 	rf_react_cap.cpp
@@ -62,7 +71,7 @@ using namespace std;
 int NR_INORG_COMP_EQU;
 int NR_MIN_EQU;
 extern char *file_name;
-extern char *crdat; // MX 
+extern char *crdat; // MX
 //REACTION_MODEL *rcml=NULL;
 extern double gravity_constant;
 */
@@ -77,13 +86,13 @@ REACT_CAP::REACT_CAP(void){
 	data_file = "false";
 	data_format = "false";
 	mass_type = "false";
-	check_no_reaction_nodes = false; // ToDo 
+	check_no_reaction_nodes = false; // ToDo
 	nodenumber = 0;
 
     CAP_MODE = 0;  // default case, when Chemapp IS available
 
 
-  
+
 	}
 /* Destructor */
 REACT_CAP::~REACT_CAP(void){
@@ -96,12 +105,12 @@ REACT_CAP::~REACT_CAP(void){
 
    Task:
    Read ChemApp interface file *.cap
-   
+
    Programming:
-   11/2008     DL/SB         First Version 
+   11/2008     DL/SB         First Version
 **************************************************************************/
  ios::pos_type REACT_CAP::Read(ifstream *rfd_file, const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name){
- 
+
   bool new_keyword = false;
   std::string hash("#");
   std::string line_string;
@@ -202,7 +211,7 @@ REACT_CAP::~REACT_CAP(void){
 		this->species_list_phase.clear();
 		while(1){
 			in.str(GetLineFromFile1(rfd_file));
-			in >> ncomp_x;			
+			in >> ncomp_x;
 			in.clear();
 			if(!ncomp_x.find("END")) break;
 			this->CompNamePhase(ncomp_x, ncomp, ipx);
@@ -217,12 +226,12 @@ REACT_CAP::~REACT_CAP(void){
 		while(1){
 			in.clear();
 			in.str(GetLineFromFile1(rfd_file));
-			in >> ncomp_x;			
+			in >> ncomp_x;
 			in.clear();
 			if(!ncomp_x.find("END")) break;
 			this->CompNamePhase(ncomp_x, ncomp, ipx);
 			species_kin_name.push_back(ncomp);
-			species_kin_phase.push_back(ipx);					
+			species_kin_phase.push_back(ipx);
 		}
 	}
 
@@ -252,12 +261,12 @@ REACT_CAP::~REACT_CAP(void){
 			else {
 				React.species_stoi.push_back((double)atof(ncomp_x.c_str()));
 				in >> ncomp_x;
-				in.clear();	
+				in.clear();
 				this->CompNamePhase(ncomp_x, ncomp, ipx);
 				React.species_name.push_back(ncomp);
 				React.species_phase.push_back(ipx);
 				React.species_idx.push_back(-1);
-			}			
+			}
 		}
 	}
     //....................................................................
@@ -286,12 +295,12 @@ REACT_CAP::~REACT_CAP(void){
 			else {
 				React.species_stoi.push_back((double)atof(ncomp_x.c_str()));
 				in >> ncomp_x;
-				in.clear();	
+				in.clear();
 				this->CompNamePhase(ncomp_x, ncomp, ipx);
 				React.species_name.push_back(ncomp);
 				React.species_phase.push_back(ipx);
 				React.species_idx.push_back(-1);
-			}			
+			}
 		}
 	}
 	if(line_string.find("$NLOG_AC")!=string::npos){ // subkeyword found
@@ -305,13 +314,13 @@ REACT_CAP::~REACT_CAP(void){
 				break;
 			}
 			ncomp = new char [(int)ncomp_x.size()];
-			strcpy(ncomp, ncomp_x.c_str());	
+			strcpy(ncomp, ncomp_x.c_str());
 			this->nlog_name.push_back(ncomp);
 			in >> ncomp_x;
-			in.clear();				
+			in.clear();
 			this->CompNamePhase(ncomp_x, ncomp, ipx);
 			species_nlog_name.push_back(ncomp);
-			species_nlog_phase.push_back(ipx);							
+			species_nlog_phase.push_back(ipx);
 		}
 	}
 
@@ -343,7 +352,7 @@ REACT_CAP::~REACT_CAP(void){
 			}
 			this->pcs_rename1.push_back(pcs_name1);
 			this->pcs_rename_stoi.push_back(pcs_stoi1);
-			in.clear();				
+			in.clear();
 		}
 	}
 
@@ -359,7 +368,7 @@ REACT_CAP::~REACT_CAP(void){
 			if(!ncomp_x.find("END")) {
 				in.clear();
 				break;
-			}			
+			}
 			this->pcs_rename0_pre.push_back(ncomp_x);
 			//for(j=1;j<(int)REACT_PRQ::string2vector(line_str2).size();j+=2){
 			for(j=1;j<(int)REACTINT::string2vector(line_str2).size();j+=2){
@@ -375,7 +384,7 @@ REACT_CAP::~REACT_CAP(void){
 			}
 			this->pcs_rename1_pre.push_back(pcs_name1);
 			this->pcs_rename_stoi_pre.push_back(pcs_stoi1);
-			in.clear();				
+			in.clear();
 		}
 	}
 
@@ -432,7 +441,7 @@ REACT_CAP::~REACT_CAP(void){
 				strcpy(ncomp, ncomp_x.c_str());
 				ipx=0;
 			}
-			else 
+			else
 				this->CompNamePhase(ncomp_x, ncomp, ipx);
 			species_redox_name.push_back(ncomp);
 			species_redox_phase.push_back(ipx);
@@ -527,7 +536,7 @@ void REACT_CAP::RecoverChemSystem(void){
 
 /* ChemApp subroutine for chemical reaction calculation   DL 28,10,08 */
 void REACT_CAP::ExecuteReactionsChemApp(int f, int nodeflag){
-	
+
 	//CAP_MODE=2; // now from input file
 	CAP_icount=1;
 	CAP_Time=0;
@@ -536,7 +545,7 @@ void REACT_CAP::ExecuteReactionsChemApp(int f, int nodeflag){
 	int ii, ok = 0, ik = 0;
 
  if(f==0){
-		this->CreateREACT(); // set nodenumber and rateflag		
+		this->CreateREACT(); // set nodenumber and rateflag
 		this->InitChemApp(); // read DATAFILE
 
 		if(this->show_data_file){
@@ -549,11 +558,11 @@ void REACT_CAP::ExecuteReactionsChemApp(int f, int nodeflag){
 		this->CmpSpeciesListKIN();//DL 03.2010
 
 		if(!this->species_define.compare("TRANS")) {
-			cout << " Define TRANS as Chemical Reaction Species " << "\n";	
+			cout << " Define TRANS as Chemical Reaction Species " << "\n";
 			this->DefSpeciesInChemApp();
 		}
 		else if(!this->species_define.compare("LIST"))  {
-			cout << " Define LIST as Chemical Reaction Species " << "\n";			
+			cout << " Define LIST as Chemical Reaction Species " << "\n";
 			this->CmpSpeciesListDAT(); //consistent checking between .cap species_list and DATAFILE
 			if(this->CmpSpeciesList()) //consistent checking between .cap species_list and TRANS
 				     cout << " The two species lists are compatible. OK..." << "\n";
@@ -565,8 +574,8 @@ void REACT_CAP::ExecuteReactionsChemApp(int f, int nodeflag){
 			cout << " UNDEF SPECIES, USING THE TOTAL SPECIES LIST " << "\n";
 			this->DefSpeciesInChemAppAll();
 		}
-		
-		
+
+
 		if(!this->mass_type.compare("ELEMENT")){
 			cout << " SET MASS TRANSPORT AS ELEMENT " << "\n";
 			if(CAP_MODE==2)
@@ -574,7 +583,7 @@ void REACT_CAP::ExecuteReactionsChemApp(int f, int nodeflag){
 			else
 				this->ResetElement();
 		}else
-			cout << " SET MASS TRANSPORT AS SPECIES (defualt) " << "\n";	
+			cout << " SET MASS TRANSPORT AS SPECIES (defualt) " << "\n";
 
 		this->CmpSpeciesListKinReact();//DL 03.2010
 
@@ -594,11 +603,11 @@ void REACT_CAP::ExecuteReactionsChemApp(int f, int nodeflag){
 		cout << "-------------------------------" << "\n";
 		cout << "      END CHEMAPP INITIAL      " << "\n";
 		cout << "-------------------------------" << "\n";
-		
+
 
 		//this->KinInit();
 
-        cout.flush() << " Calculating geochemical equilibrium at all nodes using initial values." << "\n";	
+        cout.flush() << " Calculating geochemical equilibrium at all nodes using initial values." << "\n";
 		this->LoopNodeReact(0, nodeflag);
 
 	} // f == 0
@@ -611,13 +620,13 @@ void REACT_CAP::ExecuteReactionsChemApp(int f, int nodeflag){
 		}
 
 		for(ii=0;ii<this->nodenumber;ii++) if(this->rateflag[ii] != 0) ik++;
-		cout << " Calculating geochemical equilibrium at " << ik << " nodes." << "\n";	
+		cout << " Calculating geochemical equilibrium at " << ik << " nodes." << "\n";
 
   if(f==1)
     this->LoopNodeReact(1, nodeflag);
   else if(f==-1)
     this->LoopNodeReact_Liquid_Vapor(1, nodeflag);
-		
+
 	}
 
 	//if(f==2){
@@ -632,7 +641,7 @@ void REACT_CAP::ExecuteReactionsChemApp(int f, int nodeflag){
 
 ************************************************************************************************/
 int REACT_CAP::CheckNoReactionNodes(void){
-	
+
 	int ok = 0;
 	long l;
 	cout << " CheckNoReactionNodes " << "\n";
@@ -646,13 +655,13 @@ int REACT_CAP::CheckNoReactionNodes(void){
    if(REACTINT_vec.size()>0)
      m_rei = REACTINT_vec[0];
 
-	
+
 	if(aktueller_zeitschritt < 2){ //do not in the very first calculation before first time step and in the first time step
 		this->check_no_reaction_nodes = false;
 	}
  else{
 		CKinReactData *m_krd = NULL;
-		if(KinReactData_vector.size()>0) 
+		if(KinReactData_vector.size()>0)
 			m_krd = KinReactData_vector[0];
 		if(m_krd == NULL){
 			// no KinReactData specified in *.krc file
@@ -670,27 +679,27 @@ int REACT_CAP::CheckNoReactionNodes(void){
 		}
 
   // also, switch off reactions for nodes with Sat Water < WaterSatLimit to avoid dryout problem in Eclipse coupling
-  if(m_rei){ 
+  if(m_rei){
     if(m_rei->s_water_limit)
-      for(l=0; l< (long)m_msh->nod_vector.size();l++) 
+      for(l=0; l< (long)m_msh->nod_vector.size();l++)
         if(m_rei->dried_out_nodes[l])
           rateflag[l] = 0;
   }
 
 		this->check_no_reaction_nodes = true;
 	}
-	
+
 	ok=1;
-	return ok; 
+	return ok;
 }
 
 
 void REACT_CAP::CreateREACT(void){
-	
+
 	int i, vector_size;
 	long l;
 	CRFProcess *m_pcs = NULL;
-	
+
 	vector_size = (int) pcs_vector.size();
 	for(i=0;i<vector_size;i++){
 		m_pcs = pcs_vector[i];
@@ -701,7 +710,7 @@ void REACT_CAP::CreateREACT(void){
 		}
 	}
 	rateflag = (int *) Malloc(sizeof(int) * nodenumber);
-	for(l=0; l< nodenumber;l++) 
+	for(l=0; l< nodenumber;l++)
   	  rateflag[l] = 1;
 	CAP_count=0;
 
@@ -719,8 +728,8 @@ void REACT_CAP::InitChemApp(void){
 
   LI noerr, version;
 	//CRFProcess* m_pcs = NULL;
-	char *cap_datafile; 
-	
+	char *cap_datafile;
+
 
 #ifndef OGS_FEM_CAP // CAP_REACT
     cout << " Warning in REACT_CAP::InitChemApp():" << "\n";
@@ -738,16 +747,16 @@ void REACT_CAP::InitChemApp(void){
         cout << "      (normal ChemApp calculation with storage of results in text files." << "\n";
       }
       cout << "      Options for $CAP_MODE Keyword: " << "\n";
-      cout << "      0: default, 1: write result files, 2: read result files)" << "\n"; 
+      cout << "      0: default, 1: write result files, 2: read result files)" << "\n";
       CAP_MODE = 2;  // default case, when Chemapp IS NOT available
       cout << " Setting CAP_MODE = " <<  CAP_MODE << ": Read ChemApp results from precalculated files." << "\n";
     }
     else
       cout << " CAP_MODE = " <<  CAP_MODE << ": Read ChemApp results from precalculated files." << "\n";
-#endif	
-    
+#endif
+
 if(CAP_MODE==2){
-  // check for results file folder    
+  // check for results file folder
   cout << "\n" << "  CAP_MODE = " <<  CAP_MODE << "\n";
   cout << "  Checking OGS input files..." <<  "\n";
   bool files = CAP_check_file();
@@ -760,38 +769,38 @@ if(CAP_MODE==2){
 }
 
 
-    
+
     CAP_tqini(&noerr);
 	CAP_tqvers(&version,&noerr);
 	cout  <<"\n" << "---------------------------------------------------------------"<< "\n";
-	cout <<"   This program has been compiled with ChemApp version " << version << "\n";	
-	cout <<"   ChemApp Module for Chemical Reaction Calculation...Start... "<< "\n"; 
+	cout <<"   This program has been compiled with ChemApp version " << version << "\n";
+	cout <<"   ChemApp Module for Chemical Reaction Calculation...Start... "<< "\n";
 	cout <<"---------------------------------------------------------------"<< "\n";
   //CGSProject* m_gsp = NULL;
   //m_gsp = GSPGetMember("mmp");
   //if(m_gsp)
-  //  cap_datafile = new char [m_gsp->path.length() + this->data_file.length()];       
-	//strcpy(cap_datafile, m_gsp->path.c_str()); 
-	//strcat(cap_datafile, this->data_file.c_str()); 
-	cap_datafile = new char [this->data_file.length()];       
-	strcpy(cap_datafile, this->data_file.c_str()); 
+  //  cap_datafile = new char [m_gsp->path.length() + this->data_file.length()];
+	//strcpy(cap_datafile, m_gsp->path.c_str());
+	//strcat(cap_datafile, this->data_file.c_str());
+	cap_datafile = new char [this->data_file.length()];
+	strcpy(cap_datafile, this->data_file.c_str());
 	cout << "THERMOCHEM DATA FILE --> " << cap_datafile << "\n";
 	noerr=1;
 	if(data_format=="DAT"){
 		CAP_tqopna(cap_datafile,10,&noerr);
-		CAP_tqrfil(&noerr);			
+		CAP_tqrfil(&noerr);
 	}
 	if(data_format=="BIN"){
 		CAP_tqopnb(cap_datafile,10,&noerr);
-		CAP_tqrbin(&noerr);			
+		CAP_tqrbin(&noerr);
 	}
 	 if(data_format=="CST"){
 		CAP_tqopnt(cap_datafile,10,&noerr);
-		CAP_tqrcst(&noerr);			
+		CAP_tqrcst(&noerr);
 	}
 	if(!noerr) cout << " READ DATA FILE OK ..." << "\n" << "\n";
 	    else { cout << " READ DATA FILE ERROR !!! STOP." << "\n" << "\n";
-		       exit (1); } //STOP and EXIT		
+		       exit (1); } //STOP and EXIT
 	CAP_tqclos(10,&noerr);
 
 	//pH Eh save as species output
@@ -801,7 +810,7 @@ if(CAP_MODE==2){
 	//		cout << "     --> " << m_pcs->pcs_primary_function_name[0] << "\n";
 	//		pcs_ospecies_idx.push_back(pcs_mass_idx[ii]);
 	//	}
-	//}	
+	//}
 }
 
 void REACT_CAP::ShowDataFile(void){
@@ -814,21 +823,21 @@ void REACT_CAP::ShowDataFile(void){
 		CAP_tqgnsc(i, scname, &noerr);
 		printf("%li: %s\n", i, scname);
 	}
-	
+
 	CAP_tqnop(&nscom, &noerr);
 	printf("--> %li phases\n", nscom);
 	for (i = 1; i <= nscom; i++) { //phases list
 		CAP_tqgnp(i, scname, &noerr);
 		printf("%li: %s\n", i, scname);
 	}
-	
+
 	CAP_tqnopc(1, &npcon, &noerr);
 	printf("--> %li constituents in gas phase\n", npcon);
 	for (i = 1; i <= npcon; i++) { //gas species
 		CAP_tqgnpc(1, i, scname, &noerr);
 		printf("%li: %s\n", i, scname);
-	}	
-	
+	}
+
 	CAP_tqnopc(2, &npcon, &noerr);
 	printf("--> %li constituents in aqueous solution\n", npcon);
 	for (i = 1; i <= npcon; i++) { //aqueous solution species
@@ -840,7 +849,7 @@ void REACT_CAP::ShowDataFile(void){
 
 void REACT_CAP::CompNamePhase(std::string ncomp_x, char* &ncomp, int &ipx){
 
-	size_t i, np; 
+	size_t i, np;
       int flag=0;
 	std::string postfix;
 	for(i=0; i<this->phase_list.size(); i++){
@@ -850,7 +859,7 @@ void REACT_CAP::CompNamePhase(std::string ncomp_x, char* &ncomp, int &ipx){
 			flag=1;
 			ipx=phase_list[i];
 			ncomp = (char *)malloc(25);   // new char [np];  //CB-DL??
-			//ncomp = new char [np]; // (char *)malloc(25);  // CB200412: I'm not sure, mallloc was in my version			
+			//ncomp = new char [np]; // (char *)malloc(25);  // CB200412: I'm not sure, mallloc was in my version
 			strcpy(ncomp, ncomp_x.substr(0,np).c_str());
 		}
 		if(flag==0 && postfix==""){
@@ -864,13 +873,13 @@ void REACT_CAP::CompNamePhase(std::string ncomp_x, char* &ncomp, int &ipx){
 		cout << " ERROR!...  " << ncomp_x << "  out of PHASE LIST. STOP!" << "\n";
 		exit(0);
 	}
-	
+
 }
 
 
 /**************************************************************
     Function: REACT_CAP::LoadMassPCS
-	
+
 	Task:
     Loading Mass_Transport from Processes list.
 	Get index of phases by postfix of name
@@ -880,8 +889,8 @@ void REACT_CAP::CompNamePhase(std::string ncomp_x, char* &ncomp, int &ipx){
 void REACT_CAP::LoadMassPCS(void){
 	int i, ims, no_pcs, ipx;//number of process and transport species  ipx 0-solid 1-gas 2-aqueous
 	CRFProcess* m_pcs = NULL;
-	char* ncomp = new char[TQSTRLEN]; 
-	std::string ncomp_x;	
+	char* ncomp = new char[TQSTRLEN];
+	std::string ncomp_x;
 
 	int j, jx, nrs, is_idx, nrs_pre, is_idx_pre;
 	vector<int> idx0, idx1, idx0_pre, idx1_pre;
@@ -935,8 +944,8 @@ void REACT_CAP::LoadMassPCS(void){
 				ncomp_x=m_pcs->pcs_primary_function_name[0];
 				this->CompNamePhase(ncomp_x, ncomp, ipx);
 				species_name.push_back(ncomp);
-				species_phase.push_back(ipx);				
-			}		
+				species_phase.push_back(ipx);
+			}
 		}
 
 		for(j=0;j<nrs;j++){
@@ -971,7 +980,7 @@ void REACT_CAP::LoadMassPCS(void){
 		if(is_idx==0){
 			cout << " Warning!!!, line " << i+1 << " can not be found in PCS name list ! " << "\n";
 			exit(0);
-		}	
+		}
 		pcs_rename_idx0.push_back(idx0[i]);
 		pcs_rename_idx1.push_back(pcs_idx1[i]);
 	}
@@ -997,7 +1006,7 @@ void REACT_CAP::LoadMassPCS(void){
 		if(is_idx_pre==0){
 			cout << " Warning!!!, line " << i+1 << " can not be found in PCS name list ! " << "\n";
 			exit(0);
-		}	
+		}
 		pcs_rename_idx0_pre.push_back(idx0_pre[i]);
 		pcs_rename_idx1_pre.push_back(pcs_idx1_pre[i]);
 	}
@@ -1012,7 +1021,7 @@ void REACT_CAP::LoadMassPCS(void){
 
 /**************************************************************
     Function: REACT_CAP::CmpSpeciesListREDOX
-	
+
 	Task:
     Compare the species REDOX_EH list with DATAFILE.
 	Get index of phases and species.
@@ -1022,16 +1031,16 @@ void REACT_CAP::LoadMassPCS(void){
 bool REACT_CAP::CmpSpeciesListREDOX(void){
 	bool sr=true;
     LI ipc, noerr = 0;
-	int i, ii, ns;//number of process and transport species 
+	int i, ii, ns;//number of process and transport species
 	CRFProcess* m_pcs = NULL;
-	std::string ncomp_x;	
+	std::string ncomp_x;
 
 	cout << "\n" << "\n" << " => CmpSpeciesListREDOX() " << "\n";
 	//compare REDOX_EH LIST with DATAFILE and get redox_idx
 	this->pcs_redox=-1;
 	ns = (int)species_redox_name.size();
 	for(i=0;i<ns;i++){
-		if(i==0){				
+		if(i==0){
 			for(ii=this->mass_num; ii<(int)pcs_mass_idx.size(); ii++){
 				m_pcs = pcs_vector[pcs_mass_idx[ii]];
 				if(this->species_mobil[ii]==0 &&  strcmp(m_pcs->pcs_primary_function_name[0], species_redox_name[i])==0){
@@ -1043,15 +1052,15 @@ bool REACT_CAP::CmpSpeciesListREDOX(void){
 		}
 		else if(i==1) // electron element
 			species_redox_idx.push_back(0);
-		else{			
+		else{
 			if(species_redox_phase[i]==0) CAP_tqinp(species_redox_name[i], &ipc, &noerr);
 				else CAP_tqinpc(species_redox_name[i], species_redox_phase[i], &ipc, &noerr);
 			if(noerr) { cout << " ERROR !!! SPECIES REDOX INPUT out of DATAFILE. STOP." << "\n";
-						exit (1); }//STOP and EXIT	
-			species_redox_idx.push_back(ipc);				
+						exit (1); }//STOP and EXIT
+			species_redox_idx.push_back(ipc);
 			cout << " " << setw(4) << redox_stoi[i] << setw(4) << species_redox_phase[i] << setw(4) << species_redox_idx[i] << species_redox_name[i] << "\n";
 		}
-	}		
+	}
 	cout << " REDOX_Eh OF SPECIES DEFINE OK ..." << "\n";
 	return sr;
 }
@@ -1059,7 +1068,7 @@ bool REACT_CAP::CmpSpeciesListREDOX(void){
 
 /**************************************************************
     Function: REACT_CAP::CmpSpeciesListNLOG
-	
+
 	Task:
     Compare the species NLOG_AC list with DATAFILE.
 	Get index of phases and species.
@@ -1069,9 +1078,9 @@ bool REACT_CAP::CmpSpeciesListREDOX(void){
 bool REACT_CAP::CmpSpeciesListNLOG(void){
 	bool sr=true;
     LI ipc, noerr = 0;
-	int i, ii, ns;//number of process and transport species 
+	int i, ii, ns;//number of process and transport species
 	CRFProcess* m_pcs = NULL;
-	std::string ncomp_x;	
+	std::string ncomp_x;
 
 	cout  << "\n" << " => CmpSpeciesListNLOG() " << "\n";
 	//compare NLOG_AC LIST with DATAFILE and get list_idx
@@ -1083,10 +1092,10 @@ bool REACT_CAP::CmpSpeciesListNLOG(void){
 		if(species_nlog_phase[i]==0) CAP_tqinp(species_nlog_name[i], &ipc, &noerr);
 		    else CAP_tqinpc(species_nlog_name[i], species_nlog_phase[i], &ipc, &noerr);
 		if(noerr) { cout << " ERROR !!! SPECIES NLOG INPUT out of DATAFILE. STOP." << "\n";
-					exit (1); }//STOP and EXIT	
+					exit (1); }//STOP and EXIT
 		species_nlog_idx.push_back(ipc);
 		cout << " " << setw(8) << nlog_name[i] << setw(4) << species_nlog_phase[i] << setw(6) << species_nlog_idx[i] << species_nlog_name[i] << "\n";
-		
+
 		//DL 02.02.2009 nlog value output
 		for(ii=this->mass_num; ii<(int)pcs_mass_idx.size(); ii++){
 			m_pcs = pcs_vector[pcs_mass_idx[ii]];
@@ -1103,7 +1112,7 @@ bool REACT_CAP::CmpSpeciesListNLOG(void){
 
 /**************************************************************
     Function: REACT_CAP::CmpSpeciesListPCS
-	
+
 	Task:
     Compare the species MASS_TRANSPORT list with DATAFILE.
 	Get index of phases and species.
@@ -1112,9 +1121,9 @@ bool REACT_CAP::CmpSpeciesListNLOG(void){
 bool REACT_CAP::CmpSpeciesListPCS(void){
 	bool sr=true;
     LI ipc, noerr = 0;
-	int i, ns;//number of process and transport species 
+	int i, ns;//number of process and transport species
 	//CRFProcess* m_pcs = NULL;
-	std::string ncomp_x;	
+	std::string ncomp_x;
 
 	cout << "\n" << "\n" << " => CmpSpeciesListPCS() " << "\n";
 	//check up consistency between pcs_mass_transport and DATAFILE
@@ -1125,7 +1134,7 @@ bool REACT_CAP::CmpSpeciesListPCS(void){
 		else{
 			noerr=0;
 			//std::string name_st(species_name[i]);
-			//if(name_st.size()>24){ 
+			//if(name_st.size()>24){
 			//	species_name[i] = new char [24];
 			//	strcpy(species_name[i], name_st.substr(0,24).c_str());
 			//}
@@ -1133,11 +1142,11 @@ bool REACT_CAP::CmpSpeciesListPCS(void){
 			if(species_phase[i]==0) CAP_tqinp(species_name[i], &ipc, &noerr);
 							  else CAP_tqinpc(species_name[i], species_phase[i], &ipc, &noerr);
 			if(noerr) { cout << " SPECIES INPUT ERROR !!! STOP." << "\n";
-						exit (1); }//STOP and EXIT	
+						exit (1); }//STOP and EXIT
 		}
-		species_idx.push_back(ipc);	
+		species_idx.push_back(ipc);
 		species_dormant.push_back(0);
-		cout << " " << setw(4) << pcs_mass_idx[i] << setw(6) << species_phase[i] << setw(6) << species_idx[i] << species_name[i] << "\n";		
+		cout << " " << setw(4) << pcs_mass_idx[i] << setw(6) << species_phase[i] << setw(6) << species_idx[i] << species_name[i] << "\n";
 	}
 	cout << " TRANSPORT SPECIES INPUT OK ..." << "\n";
 	return sr;
@@ -1146,7 +1155,7 @@ bool REACT_CAP::CmpSpeciesListPCS(void){
 
 /**************************************************************
     Function: REACT_CAP::CmpSpeciesListDAT
-	
+
 	Task:
     Compare the two species .cap list with DATAFILE.
 	Get index of phases and species.
@@ -1157,9 +1166,9 @@ bool REACT_CAP::CmpSpeciesListPCS(void){
 bool REACT_CAP::CmpSpeciesListDAT(void){
 	bool sr=true;
     LI ipc, noerr = 0;
-	int i, ii, ns;//number of process and transport species 
+	int i, ii, ns;//number of process and transport species
 	CRFProcess* m_pcs = NULL;
-	std::string ncomp_x;	
+	std::string ncomp_x;
 
 	cout  << "\n"  << "\n" << " => CmpSpeciesListDAT() " << "\n";
 	//compare LIST with DATAFILE and get list_idx
@@ -1171,10 +1180,10 @@ bool REACT_CAP::CmpSpeciesListDAT(void){
 		if(species_list_phase[i]==0) CAP_tqinp(species_list_name[i], &ipc, &noerr);
 						  else CAP_tqinpc(species_list_name[i], species_list_phase[i], &ipc, &noerr);
 		if(noerr) { cout << " ERROR !!! SPECIES LIST INPUT out of DATAFILE. STOP." << "\n";
-					exit (1); }//STOP and EXIT	
-		species_list_idx.push_back(ipc);				
+					exit (1); }//STOP and EXIT
+		species_list_idx.push_back(ipc);
 		cout << " " << setw(6) << species_list_phase[i] << setw(6) << species_list_idx[i] << species_list_name[i] << "\n";
-		
+
 		//DL 21.01.2009 species value output
 		if(species_list_phase[i]==2)
 			for(ii=this->mass_num; ii<(int)pcs_mass_idx.size(); ii++){
@@ -1185,14 +1194,14 @@ bool REACT_CAP::CmpSpeciesListDAT(void){
 				}
 			}
 	}
-					
+
 	cout << " REACTION SPECIES LIST INPUT OK ..." << "\n";
 	return sr;
 }
 
 /**************************************************************
     Function: REACT_CAP::CmpSpeciesListKIN
-	
+
 	Task:
     Compare the species KINETIC list with DATAFILE.
 	Get index of phases and species.
@@ -1206,11 +1215,11 @@ bool REACT_CAP::CmpSpeciesListKIN(void){
 
 	cout << "\n" << " => CmpSpeciesListKIN() " << "\n";	//compare KIN LIST with DATAFILE and get list_idx
 	for(i=0;i<(int)this->species_kin_name.size();i++){
-		if(this->species_kin_phase[i]==0) 
+		if(this->species_kin_phase[i]==0)
 			 CAP_tqinp(this->species_kin_name[i], &ipc, &noerr);
 		else CAP_tqinpc(this->species_kin_name[i], this->species_kin_phase[i], &ipc, &noerr);
 		if(noerr) { cout << " ERROR !!! SPECIES KIN INPUT out of DATAFILE. STOP." << "\n";
-					exit (1); }//STOP and EXIT	
+					exit (1); }//STOP and EXIT
 		this->species_kin_idx.push_back(ipc);
 		cout << " " << setw(4) << right << this->species_kin_phase[i];
 		cout << setw(4) << this->species_kin_idx[i] << "  ";
@@ -1239,7 +1248,7 @@ bool REACT_CAP::CmpSpeciesListRelativeActivity(void){
 	for(i=0;i<(int)this->species_relative_activity_name.size();i++){
 		CAP_tqinp(this->species_relative_activity_name[i], &ipc, &noerr);
 		if(noerr) { cout << " ERROR !!! SPECIES RELATIVE ACTIVITY INPUT out of DATAFILE. STOP." << "\n";
-					exit (1); }//STOP and EXIT	
+					exit (1); }//STOP and EXIT
 		this->species_relative_activity_idx.push_back(ipc);
 
 		cout << " " << setw(8) << left << this->species_relative_activity_idx[i];
@@ -1254,7 +1263,7 @@ bool REACT_CAP::CmpSpeciesListRelativeActivity(void){
 			}
 		}
 		if(!is_pcs) { cout << " ERROR !!! SPECIES RELATIVE ACTIVITY INPUT out of PCS-MT list. STOP." << "\n";
-					exit (1); }//STOP and EXIT	
+					exit (1); }//STOP and EXIT
 
 
 
@@ -1265,7 +1274,7 @@ bool REACT_CAP::CmpSpeciesListRelativeActivity(void){
 
 /**************************************************************
     Function: REACT_CAP::CmpSpeciesListKinReact
-	
+
 	Task:
     Compare the species Kin React list with DATAFILE.
 	Get index of phases and species.
@@ -1281,11 +1290,11 @@ bool REACT_CAP::CmpSpeciesListKinReact(void){
 	for(ii=0;ii<(int)this->Kin_Reactions.size();ii++){
 		cout << " Reaction " << Kin_Reactions[ii].type << "\n";
 		for(i=0;i<(int)this->Kin_Reactions[ii].species_name.size();i++){
-			if(this->Kin_Reactions[ii].species_phase[i]==0) 
+			if(this->Kin_Reactions[ii].species_phase[i]==0)
 				 CAP_tqinp(this->Kin_Reactions[ii].species_name[i], &ipc, &noerr);
 			else CAP_tqinpc(this->Kin_Reactions[ii].species_name[i], this->Kin_Reactions[ii].species_phase[i], &ipc, &noerr);
 			if(noerr) { cout << " ERROR !!! SPECIES LOGK INPUT out of DATAFILE. STOP." << "\n";
-						exit (1); }//STOP and EXIT	
+						exit (1); }//STOP and EXIT
 			this->Kin_Reactions[ii].species_idx[i]=ipc;
 			cout << " " << setw(4) << right << this->Kin_Reactions[ii].species_phase[i];
 			cout << setw(4) << this->Kin_Reactions[ii].species_idx[i];
@@ -1306,7 +1315,7 @@ bool REACT_CAP::CmpSpeciesListKinReact(void){
 **************************************************************/
 void REACT_CAP::UndefOutSpecies(void){
     	LI ipc=0, noerr = 0;
-	int ii;//number of process and transport species 
+	int ii;//number of process and transport species
 	CRFProcess* m_pcs = NULL;
 
 	for(ii=this->mass_num; ii<(int)pcs_mass_idx.size(); ii++){
@@ -1322,14 +1331,14 @@ void REACT_CAP::UndefOutSpecies(void){
 
 /**************************************************************
     Function: REACT_CAP::CmpSpeciesList
-	
+
 	Task:
     Compare the two species lists from MASS_TRANSPORT and .cap
 	respectively, find out incompatible species.
                                                     DL 12.2008
 **************************************************************/
 bool REACT_CAP::CmpSpeciesList(void){
-	
+
 	int i, j, ns, nls, sf;
 	bool sr=true;
 	ns = (int)this->species_name.size();
@@ -1351,13 +1360,13 @@ bool REACT_CAP::CmpSpeciesList(void){
 
 /**************************************************************
     Function: REACT_CAP::DefSpeciesInChemApp
-	
+
 	Task:
     Eliminate redundant species from DataBase for reaction
                                                     DL 12.2008
 **************************************************************/
 void REACT_CAP::DefSpeciesInChemApp(void){
-	
+
 	LI i, ii, ns, nphase=0, npcon=0, noerr = 0; //, numcon=0;
 	//cout << "\n" << "\n" << "\n" << " => DefSpeciesInChemApp() " << "\n";
 	ns = (LI) species_name.size();
@@ -1367,13 +1376,13 @@ void REACT_CAP::DefSpeciesInChemApp(void){
 		CAP_tqnopc(i, &npcon, &noerr);
 		if(npcon==1) CAP_tqcsp(i, (char *)"eliminated", &noerr);
 		else for(ii=1;ii<=npcon;ii++) CAP_tqcspc(i, ii, (char *)"eliminated", &noerr);
-	}	
+	}
 	for(i=0;i<ns;i++) {
-		if(species_phase[i]==0) CAP_tqcsp(species_idx[i], (char *)"entered", &noerr);		
+		if(species_phase[i]==0) CAP_tqcsp(species_idx[i], (char *)"entered", &noerr);
 		if(species_phase[i] >0) CAP_tqcspc(species_phase[i], species_idx[i], (char *)"entered", &noerr);
 	}
 	for(i=0;i<(int)species_kin_name.size();i++) {
-		if(species_kin_phase[i]==0) CAP_tqcsp(species_kin_idx[i], (char *)"dormant", &noerr);		
+		if(species_kin_phase[i]==0) CAP_tqcsp(species_kin_idx[i], (char *)"dormant", &noerr);
 		if(species_kin_phase[i] >0) CAP_tqcspc(species_kin_phase[i], species_kin_idx[i], (char *)"dormant", &noerr);
 	}
 	}
@@ -1381,21 +1390,21 @@ void REACT_CAP::DefSpeciesInChemApp(void){
 
 void REACT_CAP::DefSpeciesInChemAppList(void){
 
-	LI i, ii, ns, nphase=0, npcon=0, noerr = 0;	
+	LI i, ii, ns, nphase=0, npcon=0, noerr = 0;
 	//cout << "\n" << "\n" << " => DefSpeciesInChemAppList() " << "\n";
 	ns = (LI) species_list_name.size();
 	CAP_tqnop(&nphase, &noerr);    //get the number of phase --> nphase
-	for(i=1;i<=nphase;i++) {	
+	for(i=1;i<=nphase;i++) {
 		CAP_tqnopc(i, &npcon, &noerr);
 		if(npcon==1) CAP_tqcsp(i, (char *)"eliminated", &noerr);
 		else for(ii=1;ii<=npcon;ii++) CAP_tqcspc(i, ii, (char *)"eliminated", &noerr);
-	}	
+	}
 	for(i=0;i<ns;i++) {
-		if(species_list_phase[i]==0) CAP_tqcsp(species_list_idx[i], (char *)"entered", &noerr);		
+		if(species_list_phase[i]==0) CAP_tqcsp(species_list_idx[i], (char *)"entered", &noerr);
 		if(species_list_phase[i] >0) CAP_tqcspc(species_list_phase[i], species_list_idx[i], (char *)"entered", &noerr);
-	}	
+	}
 	for(i=0;i<(int)species_kin_name.size();i++) {
-		if(species_kin_phase[i]==0) CAP_tqcsp(species_kin_idx[i], (char *)"dormant", &noerr);		
+		if(species_kin_phase[i]==0) CAP_tqcsp(species_kin_idx[i], (char *)"dormant", &noerr);
 		if(species_kin_phase[i] >0) CAP_tqcspc(species_kin_phase[i], species_kin_idx[i], (char *)"dormant", &noerr);
 	}
 }
@@ -1406,23 +1415,23 @@ void REACT_CAP::DefSpeciesInChemAppAll(void){
 	CAP_tqnop(&nphase, &noerr);
 	for(i=1;i<=nphase;i++) {
 		CAP_tqnopc(i, &npcon, &noerr);
-		if(npcon==1) 
+		if(npcon==1)
 			CAP_tqcsp(i, (char *)"entered", &noerr);
-		else 
-			for(ii=1;ii<=npcon;ii++) 
+		else
+			for(ii=1;ii<=npcon;ii++)
 				CAP_tqcspc(i, ii, (char *)"entered", &noerr);
 	}
 }
 
 void REACT_CAP::SetAllSolidAsDormant(void){
-	LI i, nphase=0, npcon=0, noerr = 0;	
+	LI i, nphase=0, npcon=0, noerr = 0;
 	// LI ii, ns ;
     //cout  << "\n"  << "\n" << " => SetAllSolidAsDormant() " << "\n";
 	CAP_tqnop(&nphase, &noerr);    //get the number of phase --> nphase
-	for(i=1;i<=nphase;i++) {	
+	for(i=1;i<=nphase;i++) {
 		CAP_tqnopc(i, &npcon, &noerr);
 		if(npcon==1) CAP_tqcsp(i, (char *)"dormant", &noerr);
-	}	
+	}
 }
 
 /***********************************************************
@@ -1447,7 +1456,7 @@ void REACT_CAP::ResetElement(void){
 	newscv.clear();
 	ns=(int)species_name.size();
 	for(i=0;i<ns;i++)
-		if(species_phase[i]==2 && species_mobil[i]==1)	ipw++;	
+		if(species_phase[i]==2 && species_mobil[i]==1)	ipw++;
 	CAP_tqnosc(&nscom, &noerr);
 	if(nscom<ipw){
 		cout << " ERROR... DEFINED TOO MANY Mass Transport Elements " << "\n";
@@ -1457,16 +1466,16 @@ void REACT_CAP::ResetElement(void){
 	//	for(i=0;i<ns;i++)
 	//	    if(species_phase[i]==2)	newscv.push_back(species_name[i]);
 
-	if(nscom>=ipw){ 
+	if(nscom>=ipw){
 		stoi =new DB[nscom];
 		zstoi=new DB[nscom];
-		for(i=0;i<nscom;i++) zstoi[i]=0;		
+		for(i=0;i<nscom;i++) zstoi[i]=0;
 		for(i=0;i<ns;i++)
-			if(strcmp(species_name[i],"EA")!=0 && species_phase[i]==2 && species_mobil[i]==1){				
+			if(strcmp(species_name[i],"EA")!=0 && species_phase[i]==2 && species_mobil[i]==1){
 				newscv.push_back(species_name[i]);
 				CAP_tqstpc(species_phase[i], species_idx[i], stoi, &wmass, &noerr);
 				for(j=0;j<nscom;j++) zstoi[j]=zstoi[j]+stoi[j];// find which element out of new element-list
-			}	
+			}
 
 		for(i=0;i<nscom;i++)// sum the account of other elements
 			if(zstoi[i]==0)	nm++;
@@ -1491,14 +1500,14 @@ void REACT_CAP::ResetElement(void){
 	for(i=0;i<nscom;i++)
 		strcpy(newsc[i], newscv[i].c_str());
 	strcpy(newsc[nscom], "");	//statement for end of element list
-	cout << " New Element" << "\n";	
+	cout << " New Element" << "\n";
 	for(i=0;i<nscom;i++)
 		cout << " " << setw(4) << i << newsc[i] << "\n";
 
 	CAP_tqcsc((CHP)newsc, &noerr);
 	if(!noerr) cout << " ELEMENT INPUT OK ..."  << "\n" << "\n";
 	    else { cout << " ELEMENT INPUT ERROR !!! STOP."  << "\n" << "\n";
-		       exit (1); } //STOP and EXIT	
+		       exit (1); } //STOP and EXIT
 }
 
 
@@ -1514,8 +1523,8 @@ void REACT_CAP::ResetElement(void){
 void REACT_CAP::LoopNodeReact(int f, int nodeflag){
 
 int ff;
-int ii, ns, isc, ix, widx=0,  fg; // idx, 
-size_t i, iv; 
+int ii, ns, isc, ix, widx=0,  fg; // idx,
+size_t i, iv;
 
 LI ipc, iEA, noerr, numcon=0, nscom=0;
 DB TT=298.15, PP=1.0, vals[2], value=0.0, value1=0.0, *stoi, wmass;//, zEA; // zEA -> sum of electronic charge in solution
@@ -1535,7 +1544,7 @@ double unitfactor_l = 1, unitfactor_s = 1;
 // CB / DL 21.1.2011: Attention: Gas phase volume fraction : (1-S)*n
 
 
-stringstream ss;	
+stringstream ss;
 // int i_r, i_s;
 int i_np; //for residual value return back pcs
 int np, precision_type;
@@ -1544,17 +1553,17 @@ double sp_value;
 double delta, err_vle=1.0e-12; //VLE
 bool is_equilibrium;
 bool is_VLE;
-int iter_eq;	
+int iter_eq;
 vector<bool> iv_eq;
 vector<double> a,b,x;
 vector<double> species_value_s;
 
-	
+
 ff=f; // if ff=0-->initial calculation,  ff=1->full geochemical system, ff=-1->for liquid system
 fg=f;
 f=1;  //old time level or new time level
 
-cout << " ChemApp Reaction node loop." << "\n";	
+cout << " ChemApp Reaction node loop." << "\n";
 cout.flush();
 
 //CB 19.1.2011
@@ -1562,7 +1571,7 @@ cout.flush();
 REACTINT *m_rei = NULL;
 if(REACTINT_vec.size()>0){
   m_rei = REACTINT_vec[0];
-  if(ff==0 && m_rei->icSolidUpdate) 
+  if(ff==0 && m_rei->icSolidUpdate)
     ff=1; // allow update of solid matrix concentrations
 }
 
@@ -1570,15 +1579,15 @@ ns = (int)species_name.size();
 
 CAP_tqinsc((char *)"EA", &iEA, &noerr);
 CAP_tqnosc(&nscom, &noerr);
-stoi=new DB[nscom];	
+stoi=new DB[nscom];
 //cout << " iEA= " << iEA << " " << nscom << "\n";
- 
+
 
 //if(ff != -1){
 if(nodeflag<0){
 	 node_logK.clear();
 	 node_ac.clear();
-	 node_HKF_logK.clear(); 
+	 node_HKF_logK.clear();
 }
 //}
 CAP_tqcio((char *)"ERROR", 0, &noerr);
@@ -1597,8 +1606,8 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
       continue;
 
   CAP_tqremc(0,&noerr); //removes all input conditions relating to incoming amounts
-		
-  //return pcs rename pre 
+
+  //return pcs rename pre
   // in new version, set in problem.cpp ?
   for(i=0;i<pcs_rename_idx0_pre.size();i++){
 	value=0.0;
@@ -1617,17 +1626,17 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 
   // only for nodes, where Cnew != Cold
   if(rateflag[ii]!=0)
-  { 
+  {
 	//CAP_tqremc(-2, &noerr); // remove all condition and targets set previously
 	//CAP_tqstrm("inputs", &noerr); // remove stream input
 
 	// get species conc. after transport mol/m2 Liquid
-	species_value.clear();		
+	species_value.clear();
 	for(i=0;i<(size_t)ns;i++){
 		m_pcs = pcs_vector[this->pcs_mass_idx[i]];
 		species_value.push_back(m_pcs->GetNodeValue(ii,f));
 		//if(ii==1) cout << i << " " << species_name[i] << " " << species_value[i] << "\n";
-	}			
+	}
 
 	//CB 19.1.2011
 	// based on porosity, calculate TOTALS Ti,w Tj,s before coputing equilirium chemistry
@@ -1643,7 +1652,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 	      if(species_phase[i]==2){   // liquid phase
             if(strcmp(species_name[i],"H2O")==0 || strcmp(species_name[i],"H2O_liquid")==0 || strcmp(species_name[i],"water_liquid")==0)
             {
-              // the water pcs node value is now updated after preprocessing, 
+              // the water pcs node value is now updated after preprocessing,
               // and after kinreact anyway, so use the node value
               //species_value[i] =  m_rei->water_conc[ii] * unitfactor_l ; // set the total amount of water
               widx = i; // save the species index of watre species
@@ -1655,7 +1664,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
             species_value[i] *= unitfactor_s ; //Tj,s = Cj,s * (1-n)
 		    // CB / DL 21.1.2011: Attention: Gas phase volume fraction : (1-S)*n
 		    //else if (species_phase[i]==1)// gas phase
-        } 			
+        }
 	  }
 	  // set P, T input values
  	  TT = m_rei->GetTemperature(ii);
@@ -1673,7 +1682,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 	b.clear();
 	x.clear();
 
-    if(m_rei) 
+    if(m_rei)
 	  for(iv=0;iv<m_rei->VLE_conditions.size();iv++){
 		  iv_eq.push_back(false);
 		  a.push_back(0);
@@ -1691,7 +1700,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 	//----END--init--
 
 	//----VLE_P--init----
-    if(m_rei) 
+    if(m_rei)
 	  for(iv=0;iv<m_rei->VLE_pressure.size();iv++){
 		iv_eq.push_back(false);
 		a.push_back(0);
@@ -1729,7 +1738,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 	  //	  cout << i << " " << species_value[i] << "\n";
 	  // setting input concentration values for Chemapp
 
-      //zEA=0;		
+      //zEA=0;
       residual_value.clear();
       residual_idx.clear();
 
@@ -1745,10 +1754,10 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
           {
 		    if(species_phase[i]==0 && species_value[i] < 0.0e0 && species_value[i]> -50 ) {  //DL to set different solid composition using IC flag "-100"
 		      residual_value.push_back(species_value[i]);
-		      residual_idx.push_back(i);						
+		      residual_idx.push_back(i);
 		      species_value[i]=0; // solid, negative c
             }
-      
+
             if(m_rei){  // set precision type for old version, in new version it is no used
 		      if(m_rei->unitconversion){
 			    if(species_phase[i]!=0 && species_value[i] < 1.0e-7 && species_value[i]!=0)
@@ -1756,7 +1765,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 			    //H and O element
 			    if(species_value[i] < 1.0e-5  && species_value[i]!=0)
 				  if(m_rei->formula2index(species_name[i])[8]!=0 || m_rei->formula2index(species_name[i])[9]!=0)
-				    precision_type=1;				 
+				    precision_type=1;
               }
               else{
 			    if(species_phase[i]!=0 && species_value[i] < 1.0e-10 && species_value[i]!=0)
@@ -1765,7 +1774,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
                 if(species_value[i] < 1.0e-8  && species_value[i]!=0)
 			      if(m_rei->formula2index(species_name[i])[8]!=0 || m_rei->formula2index(species_name[i])[9]!=0)
 			        precision_type=1;
-              } 
+              }
             }
             else{
 		      if(species_phase[i]!=0 && species_value[i] < 1.0e-10 && species_value[i]!=0)
@@ -1797,7 +1806,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 				    else if(np< -7 && np> -16) np=2;
 				    else if(np<= -16) np=1;
 
-				    np -= i_np;	
+				    np -= i_np;
 				    if(np < 0) np=0;
 				    ss.clear();
 				    ss << setprecision(np) << species_value[i];
@@ -1821,12 +1830,12 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
         } // if dormant
       } // for ns
 
-	  //cout << " zEA= " << zEA << "\n";	  
+	  //cout << " zEA= " << zEA << "\n";
 	  //CAP_tqsetc("ia", 0, iEA, zEA, &numcon, &noerr); // set electronic charge balance
       //if(zEA>0) CAP_tqsetc("ia", 2, 34, zEA, &numcon, &noerr);
 	  //if(zEA<0) CAP_tqsetc("ia", 2, 71, -zEA, &numcon, &noerr);
 	  //cout  << "\n" << ii << "-----------------------------"  << "\n" << "Input      P Id   Name" << "\n";
-	  //if(ii==2) 
+	  //if(ii==2)
 	  //for(i=0;i<ns;i++){
 	  //cout << setprecision(20) << species_value[i] << " " << 0 << " " << species_phase[i] << " " << setw(4) << species_idx[i] << " " << species_name[i] << "\n";
 	  //}
@@ -1837,7 +1846,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
       {  //no relative activity
 
 		for( i=0;i<(size_t)ns;i++){ //DL set the solid species as eliminated when the value is -100
-			if(species_phase[i]==0 && species_value[i] < -50 && species_value[i]> -200)  
+			if(species_phase[i]==0 && species_value[i] < -50 && species_value[i]> -200)
 				CAP_tqcsp(this->species_idx[i], (char *)"eliminated", &noerr);
 		}
           // here, calculate equilibrium geochemistry for a node
@@ -1873,7 +1882,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 					CAP_tqcsp(species_relative_activity_idx[i], (char *)"dormant", &noerr);//DL
 					CAP_tqsetc((char *)"ia",species_relative_activity_idx[i],0,species_value[this->species_relative_activity_idx_pcs[i]],&numcon,&noerr);
 				  }
-				}						
+				}
 				else if(species_value[this->species_relative_activity_idx_pcs[i]] <= 1.0e-16 ){
 				  if(this->species_relative_activity_state[i]==3 || this->species_relative_activity_state[i]==0){
                     CAP_tqcsp(this->species_relative_activity_idx[i], (char *)"dormant", &noerr);//DL
@@ -1889,7 +1898,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
             }
 
 			for( i=0;i<(size_t)ns;i++){ //DL set the solid species as eliminated when the value is -100
-			  if(species_phase[i]==0 && species_value[i] < -50 && species_value[i]> -200)  
+			  if(species_phase[i]==0 && species_value[i] < -50 && species_value[i]> -200)
 				CAP_tqcsp(this->species_idx[i], (char *)"eliminated", &noerr);
 			}
 			//CAP_tqshow(&noerr);
@@ -1928,7 +1937,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
                 }
                 if(species_value[this->species_relative_activity_idx_pcs[i]]>-50){ //DL====
 				  if(this->species_relative_activity_state[i]==1 || this->species_relative_activity_state[i]==4){ // ra case
-				    if(this->species_relative_activity_ia[i]>0.0 
+				    if(this->species_relative_activity_ia[i]>0.0
 					  && this->species_relative_activity_ia[i]> species_value[this->species_relative_activity_idx_pcs[i]]){
 					  this->species_relative_activity_state[i]=2;
 					  number_UnderSat++;
@@ -1958,7 +1967,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
         } // for ix< 5
       }
 	  //DL --------------------------------------------end ra
- 	  
+
 
       if(noerr)
 		warning_out << " Time Step " << aktueller_zeitschritt << "   Node " << ii << ". Recovering ... i_np = "  << i_np << " --> " << i_np+1 << "\n";
@@ -1984,7 +1993,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 		  species_value_d.clear();
 		  for(i=0;i<species_value.size();i++)
   		    species_value_d.push_back(species_value[i]);
-		  this->KinParamUpdata(ii, noerr, species_value_d); 
+		  this->KinParamUpdata(ii, noerr, species_value_d);
 		  this->KinParamUpdataHKF(ii,TT,PP,noerr);				// CB include noerr
       }
     }
@@ -2010,7 +2019,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
       // get results from Chemapp mol
       for( i=0;i<(size_t)ns;i++){
         if(species_value[i]>-50){
-          if(species_phase[i]==0)	
+          if(species_phase[i]==0)
             CAP_tqgetr((char *)"a", species_idx[i], 0, &value, &noerr);		// a = amount, phase 0, value = C, error flag
           else 	{
             if(species_phase[i]==2){  // aqueous
@@ -2022,24 +2031,24 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
               }
             }
             else                                                  // other phases
-		      CAP_tqgetr((char *)"a", species_phase[i], species_idx[i], &value, &noerr);	
+		      CAP_tqgetr((char *)"a", species_phase[i], species_idx[i], &value, &noerr);
           }
           if(species_dormant[i]==0)
-	        species_value[i] = value;  //get eq value from chemapp, set to input vector				
-      	
+	        species_value[i] = value;  //get eq value from chemapp, set to input vector
+
           //DL 04.2013 for relative activity ---------------------
           for(ix=0;ix<(int)this->species_relative_activity_name.size();ix++)
   	        if(this->species_relative_activity_idx_pcs[ix]==(int)i) //found the pcs mt in relative activity list
 		      species_value[i]=this->species_relative_activity_ia[ix];
         }
         //---------------------------------------
-        //if(ii==1) 
+        //if(ii==1)
         //	cout << setprecision(20) << species_value[i] << " " << isc << " " << species_phase[i] << " " << setw(4) << species_idx[i] << " " << species_name[i] << "\n";
-            
+
       } // for ns
-			
+
     }//end ChemApp calc
-			
+
     //----VLE--calc-- direct iteration method
 	//for(i=0;i<m_rei->VLE_conditions.size();i++){
 	//	//cout << " VLE calc ... " << iter_eq << "\n";
@@ -2069,7 +2078,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 	//}
 
     //----bisection method--  VLE
-    if(m_rei) 
+    if(m_rei)
       if(m_rei->VLE_conditions.size()>0 )
       {
  		for(i=0;i<m_rei->VLE_conditions.size();i++){
@@ -2080,9 +2089,9 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 			  a[i]=delta;
 			  b[i]=1.0; //10.0*m_rei->VLE_conditions[i].aq_value;
 			}
-			if (abs(m_rei->VLE_conditions[i].aq_value)>0) 
+			if (abs(m_rei->VLE_conditions[i].aq_value)>0)
 				err_vle= 1.0e-6*abs(m_rei->VLE_conditions[i].aq_value);
-			else 
+			else
 				err_vle=1.0e-12;
 			if(abs(delta)< err_vle)
 				iv_eq[i]=true;
@@ -2101,7 +2110,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 				}
 			}
           }
-          else 
+          else
 			iv_eq[i]=true;
         }
 
@@ -2112,7 +2121,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 		  }
 		  iter_eq ++;
           if(iter_eq >=20){
-				is_equilibrium=true;			
+				is_equilibrium=true;
 				cout << " warning..., at node " << ii << ", iter_eq max is 20. ";
 		  }
 		  if(!is_equilibrium){
@@ -2124,7 +2133,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
       }
 
       //----bisection method--  VLE pressure
-      if(m_rei) 
+      if(m_rei)
         if(m_rei->VLE_pressure.size()>0){
  		  for(i=0;i<m_rei->VLE_pressure.size();i++){
 			  m_rei->VLE_pressure[i].aq_value= exp(VLE::LnPHI_CO2(TT,PP))*m_rei->VLE_pressure[i].vp_value/exp(VLE::Henry_const_CO2(TT));
@@ -2144,9 +2153,9 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 				//b[i]=2.0; //up limiting
 				b[i]=10.0*species_value[widx]/55.51;
               }
- 			  if (abs(m_rei->VLE_pressure[i].aq_value)>0) 
+ 			  if (abs(m_rei->VLE_pressure[i].aq_value)>0)
 				err_vle= 1.0e-3*abs(m_rei->VLE_pressure[i].aq_value);
-              else 
+              else
 				err_vle=1.0e-6;
 			  if(abs(delta)< err_vle)
 				iv_eq[i]=true;
@@ -2158,10 +2167,10 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 				x[i]=0.5*(a[i]+b[i]);
                 //cout << " aq " << m_rei->VLE_pressure[i].aq_value << " sp " << species_value[m_rei->VLE_pressure[i].idx_aq_species]/(species_value[widx]/55.51) << " delta " << delta<< " x[i] " << x[i] << "\n";
 				m_rei->VLE_pressure[i].delta = x[i];
-			
+
               }
             }
-			else 
+			else
   			  iv_eq[i]=true;
           }
           is_equilibrium=true;
@@ -2173,7 +2182,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
           //cout << " iter_eq " << iter_eq << " water " << species_value[widx] << "\n";
 		  iter_eq ++;
 		  if(iter_eq >=20){
-				is_equilibrium=true;			
+				is_equilibrium=true;
                 cout << " warning..., at node " << ii << ", iter_eq max is 20. for VLE_P ";
           }
 
@@ -2185,14 +2194,14 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
           }
         }
 		//-----------------
-		
+
 		if(m_rei)
 		{
 
           if(m_rei->VLE_pressure.size()==0 && m_rei->VLE_conditions.size()==0)
 			is_equilibrium=true;
         }
-        else 
+        else
           is_equilibrium=true;
 
     }// END  while(!is_equilibrium)
@@ -2209,12 +2218,12 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 		    is_VLE=true;
         }
       }
-    }  
-    
+    }
+
     if(is_VLE) cout << "at node " << ii << " VLE_P iterations " << iter_eq << "\n";
 
     if(!noerr) {
-      if(m_rei) 
+      if(m_rei)
 		//revise VLE vp_value
 		for(i=0;i<m_rei->VLE_conditions.size();i++){
 			m_rei->VLE_conditions[i].vp_value -= m_rei->VLE_conditions[i].delta;
@@ -2229,7 +2238,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 		//}
 		// pass parameters from pcs-eclipse
 
-		////delete amount for charge balance 
+		////delete amount for charge balance
 		//for(i=0;i<ns;i++){
 		//	if(species_phase[i]==2){
 		//		if(zEA >=0 && species_idx[i]==34)
@@ -2243,7 +2252,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 		// Kinetic Parameters Updata
         if(MinKinReact && ff != 1 && nodeflag < 0){
 		//if(MinKinReact && ff != -1){
-				
+
 		  species_value_d.clear();
 		  for(i=0;i<species_value.size();i++)
 			  species_value_d.push_back(species_value[i]);
@@ -2263,7 +2272,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 			  //-----------------------------------
 			  //species_value=this->KineticReact(species_value);
 			  //-----------------------------------
-	
+
 		//if(ii==1) cout << " value " << species_value.back() << "\n";
         // unit factors are only different from 1 if(m_rei && m_rei->unitconversion)
         for( i=0;i<(size_t)ns;i++){ //mol/m3
@@ -2275,7 +2284,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
             }
             else if(this->species_phase[ns-i-1]==2){
  	          m_pcs->SetNodeValue(ii,f,species_value.back()/unitfactor_l);  // old or new time step
-			    if( ns-(int)i-1 == widx && m_rei) // update water concentration vector as well 
+			    if( ns-(int)i-1 == widx && m_rei) // update water concentration vector as well
 				  if(m_rei->unitconversion)
 					m_rei->water_conc[ii] = species_value.back()/unitfactor_l;
             }
@@ -2284,13 +2293,13 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
           }
           species_value.pop_back();
         }//push back chemical equilibrium values
-   
+
 		//TEST CB
-		//species_value.clear();		
+		//species_value.clear();
 		//	for(i=0;i<ns;i++){
 		//		m_pcs = pcs_vector[this->pcs_mass_idx[i]];
 		//		species_value.push_back(m_pcs->GetNodeValue(ii,1));
-		//	}		
+		//	}
 
 		//return species value at this node and time step, if pcs_ospecies_idx.size>0  22.01.2009
 		for(i=0;i<pcs_ospecies_idx.size();i++){
@@ -2310,7 +2319,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 				CAP_tqgetr((char *)"ac", species_nlog_phase[nspecies_idx[i]], species_nlog_idx[nspecies_idx[i]], &value, &noerr);
 			//if(value==0) exit(1);
 			if(abs(value-1.0)< 1.0e-8) value=1.0;
-			value = 0.0-log10(value);					
+			value = 0.0-log10(value);
 			m_pcs->SetNodeValue(ii,f,value);
 		}
 				//return redox Eh value of given reaction at this node
@@ -2330,13 +2339,13 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 		  m_pcs=pcs_vector[pcs_redox];
 		  m_pcs->SetNodeValue(ii,f,value1);
         }
-	
+
     } // if(noerr)
 
   } // if(rateflag[ii]!=0)
   else if(MinKinReact && ff != 1 && nodeflag < 0){   	// Kinetic Parameters Updata				  //
     // when rateflag[ii] == 0, noerr is not defined. Do so for Kinetic Parameters Updating
-	this->KinParamUpdata(ii, 1, species_value_d); 
+	this->KinParamUpdata(ii, 1, species_value_d);
 	this->KinParamUpdataHKF(ii,TT,PP,1);				// CB include noerr
   }
 
@@ -2365,7 +2374,7 @@ for(ii=0;ii<this->nodenumber;ii++){	//ii==0 as boundary point without reaction c
 	m_pcs= pcs_vector[pcs_rename_idx0[i]];
 	m_pcs->SetNodeValue(ii,f,value);
   }
-	
+
 } // for (ii node loop)
 
 } // end of function loopnodereact
@@ -2375,30 +2384,30 @@ void REACT_CAP::LoopNodeReact_Liquid_Vapor(int /*f*/, int nodeflag){
 	LI i, noerr = 0;
 	cout << "\n" << " --> Liquid Vapor Reactions " << "\n";
 
-	for(i=0;i<(int)species_name.size();i++) 
+	for(i=0;i<(int)species_name.size();i++)
 		if(species_phase[i]==0) CAP_tqcsp(species_idx[i], (char *)"dormant", &noerr);
 
 	this->LoopNodeReact(-1, nodeflag);
 
-	for(i=0;i<(int)species_name.size();i++) 
-		if(species_phase[i]==0) CAP_tqcsp(species_idx[i], (char *)"entered", &noerr);		
+	for(i=0;i<(int)species_name.size();i++)
+		if(species_phase[i]==0) CAP_tqcsp(species_idx[i], (char *)"entered", &noerr);
 	for(i=0;i<(int)species_kin_name.size();i++)
-		if(species_kin_phase[i]==0) CAP_tqcsp(species_kin_idx[i], (char *)"dormant", &noerr);		
+		if(species_kin_phase[i]==0) CAP_tqcsp(species_kin_idx[i], (char *)"dormant", &noerr);
 }
 
 void REACT_CAP::LoopNodeReact_Liquid_Solid(int /*f*/, int /*nodeflag*/){
 	//LI i, noerr=0;
 	cout << "\n" << " --> Liquid Solid Reactions " << "\n";
 
-	//for(i=0;i<(int)species_name.size();i++) 
+	//for(i=0;i<(int)species_name.size();i++)
 	//	if(species_phase[i]==0) CAP_tqcsp(species_idx[i], "dormant", &noerr);
 
 	//this->LoopNodeReact(-1, nodeflag);
 
-	//for(i=0;i<(int)species_name.size();i++) 
-	//	if(species_phase[i]==0) CAP_tqcsp(species_idx[i], "entered", &noerr);		
+	//for(i=0;i<(int)species_name.size();i++)
+	//	if(species_phase[i]==0) CAP_tqcsp(species_idx[i], "entered", &noerr);
 	//for(i=0;i<(int)species_kin_name.size();i++)
-	//	if(species_kin_phase[i]==0) CAP_tqcsp(species_kin_idx[i], "dormant", &noerr);		
+	//	if(species_kin_phase[i]==0) CAP_tqcsp(species_kin_idx[i], "dormant", &noerr);
 }
 
 
@@ -2422,14 +2431,14 @@ void REACT_CAP::KinParamUpdata(int /*ii*/, int err, vector <double> & spvc){
   if(err == 0){ // value was calculated
 	  for(i=0;i<(int)species_name.size();i++){    // loop over species
 		   if(species_phase[i]==0)  // mineral phase
-			   species_ac.push_back(1.0); 
+			   species_ac.push_back(1.0);
       //CAP_tqgetr("ac", species_idx[i], 0, &value_ac, &noerr);	// this is activity!! not a.coeff
      else{
 			   CAP_tqgetr((char *)"ac", species_phase[i], species_idx[i], &value_ac, &noerr); // liquid phase
       if(strcmp(species_name[i],"H2O")==0 || strcmp(species_name[i],"H2O_liquid")==0  || strcmp(species_name[i],"water_liquid")==0  ) // for H2O use value_ac directly
-        species_ac.push_back(value_ac); 
+        species_ac.push_back(value_ac);
 		    else if(value_ac/*spvc[i]*/>0) // otherwise divide by molality to obtain gamma, if species conc > 0
-        species_ac.push_back(value_ac/spvc[i] * spvc[0]/MOLH2OPERKG ); 
+        species_ac.push_back(value_ac/spvc[i] * spvc[0]/MOLH2OPERKG );
 		    else // store activity coefficient = 1, of species concentration = 0
         species_ac.push_back(1.0);
      }
@@ -2442,7 +2451,7 @@ void REACT_CAP::KinParamUpdata(int /*ii*/, int err, vector <double> & spvc){
 				  CAP_tqgdpc((char *)"G", Kin_Reactions[i_re].species_idx[i_resp], 0, &value_dG, &noerr);	   // Get Gibbs energy for species
 			  }
 			  else {
-				  CAP_tqgdpc((char *)"G", Kin_Reactions[i_re].species_phase[i_resp], Kin_Reactions[i_re].species_idx[i_resp], &value_dG, &noerr);	
+				  CAP_tqgdpc((char *)"G", Kin_Reactions[i_re].species_phase[i_resp], Kin_Reactions[i_re].species_idx[i_resp], &value_dG, &noerr);
 			  }
 			  logK += -value_dG*Kin_Reactions[i_re].species_stoi[i_resp]/2.302585;             // calculate logK for reaction
 		  }
@@ -2450,9 +2459,9 @@ void REACT_CAP::KinParamUpdata(int /*ii*/, int err, vector <double> & spvc){
 	  }
 	  //node_logK.push_back(reaction_logK);
   }
-  // pushback species_ac and reaction_logK vectors, 
+  // pushback species_ac and reaction_logK vectors,
   // or empty vectors instead when noerr = 1 or rateflag == 0
-  node_ac.push_back(species_ac);  
+  node_ac.push_back(species_ac);
 	 node_logK.push_back(reaction_logK);
 }
 
@@ -2465,17 +2474,17 @@ void REACT_CAP::KinParamUpdata(int /*ii*/, int err, vector <double> & spvc){
 	                                         DL   11/10
 ***********************************************************/
 void REACT_CAP::KinParamUpdataHKF(int /*ii*/, double T, double P, int err){
-	
+
 	int i=-1, i_re, i_resp;
 	//long noerr = 0;
-	//double value_ac; 
+	//double value_ac;
     double   value_dG, logK;
 	vector<double> species_ac, reaction_logK;
-	
+
 	//cout << " KinParamUpdataHKF " << "\n";
 
 	reaction_logK.clear();
-  
+
   if(err == 0){ // value was calculated
 	  HKFcalc(T,P);
     for(i_re=0;i_re<(int)this->Kin_HKF_Reactions.size();i_re++){
@@ -2545,7 +2554,7 @@ vector<double> REACT_CAP::KineticReact(vector<double> species_value0){
 	                                         DL   10/10
 ***********************************************************/
 vector<double> REACT_CAP::ODE(vector<double> c0, vector<double> h, int iter_max, double t_step){
-	
+
 	vector<double> dcdt0, dcdt1;
 	double k=0, t0, t1, t_sum=0.0;
 	int i,j=0,n;
@@ -2553,14 +2562,14 @@ vector<double> REACT_CAP::ODE(vector<double> c0, vector<double> h, int iter_max,
 	while(j<iter_max){
 		j++;
 		t0=t_step;
-		t1=t_step;		
+		t1=t_step;
 		n=0;
-		
+
 		if(j>1)	dcdt1=dcdt0;
 
 		dcdt0=derivs(c0);
 
-		if(j>1)	
+		if(j>1)
 			for(i=0;i<(int)c0.size();i++)
 				if(dcdt0[i]*dcdt1[i]<=0)
 					n++;
@@ -2581,7 +2590,7 @@ vector<double> REACT_CAP::ODE(vector<double> c0, vector<double> h, int iter_max,
 					t0=t1;
 			}
 		}
-				
+
 		t_sum += t0;
 		cout << " t sum " << t_sum << "\n";
 
@@ -2591,7 +2600,7 @@ vector<double> REACT_CAP::ODE(vector<double> c0, vector<double> h, int iter_max,
 			cout << " Kinetic... " << "\n";
 			break;
 		}
-		
+
 		if(n==(int)c0.size()){
 			cout << " Equilibrium... " << "\n";
 			break;
@@ -2620,7 +2629,7 @@ vector<double> REACT_CAP::derivs(vector<double> c){
 	double *stoi, wmass;
 	int i, ii, i_sp, i_re, i_resp;
 	long nscom, noerr = 0;
-		
+
 	//initial output vector
 	dcdt.clear();
 	for(i=0;i<(int)c.size();i++)
@@ -2637,7 +2646,7 @@ vector<double> REACT_CAP::derivs(vector<double> c){
 	this->KinRate();
 
 	//for(i_re=0;i_re<(int)Kin_Reactions.size();i_re++){
-		
+
 		//cout << Kin_Reactions[i_re].type << " " << Kin_Reactions[i_re].rate;
 		//for(i_resp=0;i_resp<(int)Kin_Reactions[i_re].species_name.size();i_resp++){
 		//	cout << " " << Kin_Reactions[i_re].species_stoi[i_resp] << " " << Kin_Reactions[i_re].species_name[i_resp];
@@ -2650,7 +2659,7 @@ vector<double> REACT_CAP::derivs(vector<double> c){
 			for(i_re=0;i_re<(int)this->Kin_Reactions.size();i_re++){
 				if(this->Kin_Reactions[i_re].is_Kin){
 					for(i_resp=0;i_resp<(int)this->Kin_Reactions[i_re].species_name.size();i_resp++){
-						if(strcmp(species_name[i_sp], Kin_Reactions[i_re].species_name[i_resp])==0 
+						if(strcmp(species_name[i_sp], Kin_Reactions[i_re].species_name[i_resp])==0
 							  && species_phase[i_sp]==Kin_Reactions[i_re].species_phase[i_resp]){
 							dcdt[i_sp]+= Kin_Reactions[i_re].species_stoi[i_resp]*Kin_Reactions[i_re].rate;
 						}
@@ -2675,7 +2684,7 @@ vector<double> REACT_CAP::derivs(vector<double> c){
 					//for non-aq phase species, renew value directly
 					if(Kin_Reactions[i_re].species_phase[i_resp]!=2)
 						for(i_sp=0;i_sp<(int)this->species_name.size();i_sp++){
-							if(strcmp(species_name[i_sp], Kin_Reactions[i_re].species_name[i_resp])==0 
+							if(strcmp(species_name[i_sp], Kin_Reactions[i_re].species_name[i_resp])==0
 								  && species_phase[i_sp]==Kin_Reactions[i_re].species_phase[i_resp]){
 								dcdt[i_sp]+= Kin_Reactions[i_re].species_stoi[i_resp]*Kin_Reactions[i_re].rate;
 								//cout << " " << species_name[i_sp] << "\n";
@@ -2708,8 +2717,8 @@ vector<double> REACT_CAP::derivs(vector<double> c){
 
 
 void REACT_CAP::KinRate(void){
-	
-    int i, ix, n_r, ii; // j, 
+
+    int i, ix, n_r, ii; // j,
 	double Kin_rate, T;//, P;
 
 	ii=current_node;
@@ -2717,7 +2726,7 @@ void REACT_CAP::KinRate(void){
 	//P=current_PP;
 	//cout << " kinetic minerals " << "\n";
 	n_r=(int)this->Kin_Reactions.size();
-	
+
 	for(i=0;i<n_r;i++){
 		if(Kin_Reactions[i].is_Kin){
 			Kin_rate=0;
@@ -2744,7 +2753,7 @@ void REACT_CAP::KinInit(void){
     CKinReact *m_kr = NULL;
 	string ref_name_kr;
 	bool is_species;
-	
+
 	n_r=(int)this->Kin_Reactions.size();
 	for(i=0;i<n_r;i++)
 		Kin_Reactions[i].is_Kin=false;
@@ -2777,7 +2786,7 @@ void REACT_CAP::KinInit(void){
 
 				Kin_Reactions[ix].EA.clear();     //energy activity
 				Kin_Reactions[ix].K25.clear(); //logK_25C
-				Kin_Reactions[ix].ref_species.clear(); 
+				Kin_Reactions[ix].ref_species.clear();
 				Kin_Reactions[ix].ref_idx.clear();
 				Kin_Reactions[ix].ref_expo.clear();
 
@@ -2793,10 +2802,10 @@ void REACT_CAP::KinInit(void){
 						is_species=false;
 						for(jx=0;jx<(int)species_name.size();jx++){
 							if(ref_name_kr==species_name[jx] && species_phase[jx]==2){
-								is_species=true;							
+								is_species=true;
 								Kin_Reactions[ix].ref_idx.push_back(jx);
 							}
-						}						
+						}
 						if(is_species==false){
 							cout << " WARNING ... " << ref_name_kr << " is NOT ChemApp species " << "\n";
 							exit(0);
@@ -2865,10 +2874,10 @@ bool REACT_CAP::SetKinHKFspecies(){
 						this->Kin_HKF_index.push_back(i_sp);
 				}
 			}
-			if(is_new==1){			
+			if(is_new==1){
 				i++;
 				HKFspecies.name0=Kin_HKF_Reactions[i_re].species_name[i_resp];
-				//cout << " HKFspecies.name " << HKFspecies.name <<  " " 
+				//cout << " HKFspecies.name " << HKFspecies.name <<  " "
 					//<< Kin_HKF_Reactions[i_re].species_name[i_resp] <<"\n";
 				//HKFspecies.type=
 				this->Kin_HKF_species.push_back(HKFspecies);
@@ -2900,7 +2909,7 @@ bool REACT_CAP::LoadHKFparam(){
 	for(i=0;i<(int)this->Kin_HKF_species.size();i++){
 		//cout << i << " " << Kin_HKF_species[i].name0 << " " << "\n";
 		if(Kin_HKF_species[i].name0.size()>14) {
-			cout << " Warning ... " << Kin_HKF_species[i].name0 << 
+			cout << " Warning ... " << Kin_HKF_species[i].name0 <<
 				" is not Kin_HKF_species in slop98.dat. EXIT" << "\n";
 			exit(0);
 		}
@@ -2965,7 +2974,7 @@ bool REACT_CAP::HKFcalc(double T, double P){
 			Kin_HKF_species[i].H=HKF::HKFcalcw(T, P, 1);
 			Kin_HKF_species[i].S=HKF::HKFcalcw(T, P, 2);
 		}
-			
+
 	}
 	return sr;
 }
@@ -2979,8 +2988,8 @@ bool REACT_CAP_Read(std::string file_base_name, const GEOLIB::GEOObjects& geo_ob
 	char line[MAX_ZEILE];
 	std::string file_name_cap, line_string;
 	ios::pos_type position;
-	
-	REACT_CAP *rc_cap = new REACT_CAP(); 
+
+	REACT_CAP *rc_cap = new REACT_CAP();
     // look if file is there
 	file_name_cap = file_base_name + REACTION_EXTENSION_CHEMAPP;
 	ifstream cap_file (file_name_cap.data(),ios::in);
@@ -2988,7 +2997,7 @@ bool REACT_CAP_Read(std::string file_base_name, const GEOLIB::GEOObjects& geo_ob
 	    delete rc_cap;
 		rc_cap =NULL;
 	}
-	else{ // file is there - use ChemApp  
+	else{ // file is there - use ChemApp
 		if(REACT_vec.capacity() > 0){  //Test, if PHREEQC is used also
 			cout << "\n" << " Warning!  ChemApp and PHREEQC both actived. ChemApp will NOT be used ! " << "\n";
 			delete rc_cap;
@@ -2998,14 +3007,14 @@ bool REACT_CAP_Read(std::string file_base_name, const GEOLIB::GEOObjects& geo_ob
 			rc_cap->flag_cap = true;
 			// Read input file *.cap
 			cap_file.clear();
-			cap_file.seekg(0,ios::beg); 
+			cap_file.seekg(0,ios::beg);
 			cout << "ChemApp_Read" << "\n";
 			cap_file.getline(line,MAX_ZEILE); // first line
 			cap_file.getline(line,MAX_ZEILE); // second line ToDo
 			line_string = line;
-			if(line_string.find("#STOP")!=string::npos) 
+			if(line_string.find("#STOP")!=string::npos)
 				return true;
-			
+
 			// Call the object read function
 			position = rc_cap->Read(&cap_file, geo_obj, unique_name);
 			// store data in global vector
@@ -3020,11 +3029,11 @@ bool REACT_CAP_Read(std::string file_base_name, const GEOLIB::GEOObjects& geo_ob
       Function: REACT_CAP::ConvertIC2BC
 
 	  Task:
-	  Convert calculated equilibrium values 
-	  at all mass transport processes to be used as 
-	  boundary condition for the remainsing simulation 
+	  Convert calculated equilibrium values
+	  at all mass transport processes to be used as
+	  boundary condition for the remainsing simulation
 	  at a specified geometry
-	  
+
 	  SB   10/2009   First Implementation
 ***********************************************************/
 void REACT_CAP::ConvertIC2BC(const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name){
@@ -3042,7 +3051,7 @@ void REACT_CAP::ConvertIC2BC(const GEOLIB::GEOObjects& geo_obj, const std::strin
 	if(this->ic_2_bc_geometry_name.size() > 0){
 
 		cout << "\n" << "\n" << " => ConvertIC2BC() " << "\n";
-	
+
 		// Get nodes at specified geometry
 
 
@@ -3054,7 +3063,7 @@ void REACT_CAP::ConvertIC2BC(const GEOLIB::GEOObjects& geo_obj, const std::strin
 	  s_geo_name = this->ic_2_bc_geometry_name[j];
 	  s_geo_type = this->ic_2_bc_geometry_type[j];
     //------------------------------------------------------------------
-    if(s_geo_type.compare("POINT")==0) 
+    if(s_geo_type.compare("POINT")==0)
     {
       // 06/2010 TF switch to new GEOLIB
       //CGLPoint* m_geo_point = NULL; // make new GEO point
@@ -3066,27 +3075,27 @@ void REACT_CAP::ConvertIC2BC(const GEOLIB::GEOObjects& geo_obj, const std::strin
       node_nr.push_back(l);
     }
     //------------------------------------------------------------------
-    if(s_geo_type.compare("POLYLINE")==0) 
+    if(s_geo_type.compare("POLYLINE")==0)
     {
     	//CGLPolyline *m_polyline = NULL;
       //m_polyline = GEOGetPLYByName(s_geo_name);// get Polyline by name
       //CGLPolyline *m_polyline (polyline_vector[this->ic_2_bc_GeoID[j]]);
       std::vector<GEOLIB::Polyline*> const* const ply_vec(
 	        geo_obj.getPolylineVec(unique_name));
-	  GEOLIB::Polyline const* const m_polyline((*ply_vec)[this->ic_2_bc_GeoID[j]]);      
-      
+	  GEOLIB::Polyline const* const m_polyline((*ply_vec)[this->ic_2_bc_GeoID[j]]);
+
       if(m_polyline) {
 		    //if(m_polyline->getType()==100) //WW
 			  //m_msh->GetNodesOnArc(m_polyline,nodes_vector);
 		    //else
               m_msh->GetNODOnPLY(m_polyline,nodes_vector);
         for(i=0;i<(long)nodes_vector.size();i++){
-			    ll = nodes_vector[i]; 
+			    ll = nodes_vector[i];
           l = ll; //+ShiftInNodeVector;
           node_nr.push_back(l);
         }
       }
-    } // if(POLYLINE) 
+    } // if(POLYLINE)
     //------------------------------------------------------------------
      if(s_geo_type.compare("SURFACE")==0) {
         Surface *m_surface = NULL;
@@ -3094,22 +3103,22 @@ void REACT_CAP::ConvertIC2BC(const GEOLIB::GEOObjects& geo_obj, const std::strin
         if(m_surface){
            m_msh->GetNODOnSFC(m_surface,nodes_vector);
            for(i=0;i<(long)nodes_vector.size();i++){
-				ll = nodes_vector[i]; 
+				ll = nodes_vector[i];
                 l = ll; //+ShiftInNodeVector;
                 node_nr.push_back(l);
            }
         }
-      }      
+      }
   } // end of for(j=0;j<m_krd->NoReactGeoName.size()...
 	 //test output
 	/* */  cout << " Vector node_nr: " << "\n";
-	for(l=0; l< (long)node_nr.size();l++) 
+	for(l=0; l< (long)node_nr.size();l++)
 	cout << " Node number: " << node_nr[l]  <<", ";
 	  cout << "\n";
 
 
 
-		
+
 		// Transfer simulated value to bc data structure
 		// First get them from results vectors of mass transport processes and store new values in species_value
 	  for(ii=0; ii < (int)node_nr.size(); ii++){ // count through nodes on geometry
@@ -3127,13 +3136,13 @@ void REACT_CAP::ConvertIC2BC(const GEOLIB::GEOObjects& geo_obj, const std::strin
 						break;
 					}
 				}
-				
+
 				if(ic_2_bc_species.size() == 0) replace = true;
-				
+
 				if(replace){
 					cout << " Species : " << setw(4) << this->pcs_mass_idx[i] << " " << setw(16) << m_pcs->pcs_primary_function_name[0] << " ";
 					// cout << old/new c in m_pcs: " << m_pcs->GetNodeValue(ii,0) <<" / " << m_pcs->GetNodeValue(ii,1) << "\n";
-		
+
 					// Store new value in boundary condition
 					for(j=0;j< (int) m_pcs->bc_node_value.size();j++){
 						if(m_pcs->bc_node_value[j]->msh_node_number == node_nr[ii]){
@@ -3148,3 +3157,4 @@ void REACT_CAP::ConvertIC2BC(const GEOLIB::GEOObjects& geo_obj, const std::strin
 	}
 
 }
+

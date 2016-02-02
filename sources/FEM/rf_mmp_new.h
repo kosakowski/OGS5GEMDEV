@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************
    FEMLib-Object: MAT-MP
    Task: MediumProperties
@@ -256,7 +265,7 @@ public:
 	double heat_conductivity_tensor[9];
 	int fct_number;                       // functions
 	int heat_diffusion_model;
-	double base_heat_diffusion_coefficient; 
+	double base_heat_diffusion_coefficient;
 	int evaporation;                      // if it is 647 then evaporation ON, else OFF: and corresponding heat loss will compensated by heat ST
 	double heatflux;
 	double vaporfraction;

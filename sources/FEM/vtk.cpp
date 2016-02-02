@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 #include "vtk.h"
 #include <fstream>
 #if defined(WIN32)
@@ -72,7 +81,7 @@ bool CVTK::InitializePVD(const string &file_base_name, const string &pcs_type_na
 	if (pcs_type_name.size() > 0)        // PCS
 		this->pvd_vtk_file_name_base += "_" + pcs_type_name;
 	*/
-	
+
 	//
 	pvd_vtk_file_path_base = defaultOutputPath;
 	pvd_vtk_file_name_base = pathBasename(file_base_name) + "_" + pcs_type_name; //WW

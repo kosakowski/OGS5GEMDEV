@@ -44,7 +44,12 @@ target_link_libraries( ogs
 	GEO
 	MathLib
 	MSH
+	BrentLib
 )
+
+if(PARALLEL_USE_MPI)
+	target_link_libraries(ogs ${MPI_CXX_LIBRARIES})
+endif()
 
 if (OGS_FEM_GEMS OR OGS_FEM_PETSC_GEMS)
 	target_link_libraries( ogs
@@ -62,30 +67,37 @@ if(OGS_FEM_IPQC)
 	target_link_libraries(ogs iphreeqc)
 endif ()
 
+if(OGS_FEM_MKL)
+	target_link_libraries(ogs ${MKL_LIBRARIES})
+	 # Hack, see http://webpages.charter.net/ppluzhnikov/linker.html
+	target_link_libraries(ogs ${MKL_LIBRARIES})
+	if(NOT MKL_USE_STATIC)
+		target_link_libraries(ogs ${CMAKE_DL_LIBS})
+	endif()
+endif()
+
 ####################
 ### Installation ###
 ####################
 
-if (OGS_PACKAGING)
-	install (TARGETS ogs RUNTIME DESTINATION bin COMPONENT ogs)
+install (TARGETS ogs RUNTIME DESTINATION bin COMPONENT ogs)
 
-	if(MSVC)
-		set(OGS_EXE ${OGS_EXECUTABLE}.exe)
-	else()
-		set(OGS_EXE ${OGS_EXECUTABLE})
-	endif()
+if(MSVC)
+	set(OGS_EXE ${OGS_EXECUTABLE}.exe)
+else()
+	set(OGS_EXE ${OGS_EXECUTABLE})
+endif()
 
-	include(GetPrerequisites)
-	if (EXISTS ${OGS_EXE})
-		GET_PREREQUISITES(${OGS_EXE} OGS_GUI_DEPENDENCIES 1 1 "/usr/local/lib;/;${VTK_DIR}" "")
-		message (STATUS "ogs depends on:")
-		foreach(DEPENDENCY ${OGS_DEPENDENCIES})
-			if(NOT ${DEPENDENCY} STREQUAL "not") # Some bug on Linux?
-				message("${DEPENDENCY}")
-				GP_RESOLVE_ITEM ("/" "${DEPENDENCY}" ${OGS_EXE} "/usr/local/lib;/;${VTK_DIR}" DEPENDENCY_PATH)
-				set (DEPENDENCY_PATHS ${DEPENDENCY_PATHS} ${DEPENDENCY_PATH})
-			endif()
-		endforeach ()
-		install (FILES ${DEPENDENCY_PATHS} DESTINATION bin COMPONENT ogs)
-	endif ()
+include(GetPrerequisites)
+if (EXISTS ${OGS_EXE})
+	GET_PREREQUISITES(${OGS_EXE} OGS_GUI_DEPENDENCIES 1 1 "/usr/local/lib;/;${VTK_DIR}" "")
+	message (STATUS "ogs depends on:")
+	foreach(DEPENDENCY ${OGS_DEPENDENCIES})
+		if(NOT ${DEPENDENCY} STREQUAL "not") # Some bug on Linux?
+			message("${DEPENDENCY}")
+			GP_RESOLVE_ITEM ("/" "${DEPENDENCY}" ${OGS_EXE} "/usr/local/lib;/;${VTK_DIR}" DEPENDENCY_PATH)
+			set (DEPENDENCY_PATHS ${DEPENDENCY_PATHS} ${DEPENDENCY_PATH})
+		endif()
+	endforeach ()
+	install (FILES ${DEPENDENCY_PATHS} DESTINATION bin COMPONENT ogs)
 endif ()

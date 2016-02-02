@@ -2,6 +2,11 @@
  * \file FileTools.h
  * 26/4/2010 LB Initial implementation
  *
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
  */
 
 #ifndef FILETOOLS_H

@@ -1,6 +1,11 @@
 /**
  * \file LegacyVtkInterface.h
  * 05/04/2011 LB Initial implementation
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
  */
 
 #ifndef LEGACYVTKINTERFACE_H
@@ -41,7 +46,7 @@ public:
 	void WriteDataVTK(int number, double simulation_time, std::string baseFilename) const;
 #if defined(USE_PETSC)
 	void WriteDataVTKPETSC(int number, double simulation_time, std::string baseFilename) const;
-#endif	
+#endif
 	double RoundDoubleVTK(double MyZahl);
 protected:
 	void WriteVTKHeader(std::fstream&, int, double) const;
@@ -53,8 +58,8 @@ protected:
 	void WriteVTKPointDataPETSC(PetscViewer) const;
 	void WriteVTKCellDataPETSC(PetscViewer) const;
 	void WriteVTKDataArraysPETSC(PetscViewer) const;
-#endif	
-	
+#endif
+
     void printScalarArray(std::string arrayName, std::fstream &vtk_file) const;
 
 	// Copied from COutput

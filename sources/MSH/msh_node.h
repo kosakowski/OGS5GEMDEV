@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************
    MSHLib - Object:
    Task:
@@ -147,10 +156,23 @@ public:
 		return _connected_nodes;
 	}
 
-        size_t getNumConnectedNodes() const 
-        {
-	  return _connected_nodes.size();
-        }
+	size_t getNumConnectedNodes() const
+	{
+	   return _connected_nodes.size();
+	}
+
+	/*!
+	 * \brief Check whether the node is non-ghost
+	 * \param id_max_act_l Maximum node ID of the non-ghost node for linear element.
+	 * \param id_max_l     Maximum node ID of the node of linear element.
+	 * \param id_max_act_h Maximum node ID of the non-ghost node for quadratic element.
+	 */
+	 bool isNonGhost(const size_t id_max_act_l, const size_t id_max_l,
+	              const size_t id_max_act_h)
+	{
+	   return (index < id_max_act_l) || (index >= id_max_l && index < id_max_act_h);
+	}
+
 private:
 	double coordinate[3];
 	long eqs_index; // renumber

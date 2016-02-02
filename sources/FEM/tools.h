@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************/
 /* ROCKFLOW - Modul: tools.h
  */
@@ -107,15 +116,6 @@ extern long DampOscillations(int ndx1,
                              double (* NodeCalcLumpedMass)(long));
 extern int GetLineFromFile(char*, std::ifstream*);
 
-typedef struct
-{
-	long row;
-	long col;
-	double** m;
-} DMATRIX;
-
-extern DMATRIX* CreateDoubleMatrix(long row, long col);
-extern void DestroyDoubleMatrix(DMATRIX* dm);
 extern double FindMin (std::vector<double>Vec);   //NB 4.9.05
 extern double FindMax (std::vector<double>Vec);   //NB 4.9.05
 
@@ -131,21 +131,6 @@ extern double FindMax (std::vector<double>Vec);   //NB 4.9.05
  */
 extern void NsPol3 (double p, double q, double r, std::vector<double>* t);
 
-typedef struct
-{
-	long row;
-	long col;
-	long** m;
-} LMATRIX;
-
-extern LMATRIX* CreateLongMatrix(long row, long col);
-extern void DestroyLongMatrix(LMATRIX* lm);
-
-#ifdef MFC                                        //WW
-extern void CURRead(string);                      //WW
-extern string ext_file_name;
-#endif
-
 /// Release the memory of arrary allocated by using 'new'. WW. 31.08.2010
 template<class num> void  DeleteArray(num* an_array)
 {
@@ -153,4 +138,5 @@ template<class num> void  DeleteArray(num* an_array)
 		delete [] an_array;
 	an_array = NULL;
 }
+
 #endif

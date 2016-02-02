@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************
    Class: RandomWalk
    Task: Random Walk - an alternative for FDM or FEM of transport equation
@@ -65,13 +74,13 @@ RandomWalk::RandomWalk(int srand_seed)
     //FM_TEST
     flow_pcs = NULL;
     for (size_t i = 0; i < pcs_vector.size(); i++)
-    { 
+    {
        CRFProcess *pcs_e = pcs_vector[i];
        if (   pcs_e->getProcessType() == FiniteElement::GROUNDWATER_FLOW
 		   || pcs_e->getProcessType() == FiniteElement::LIQUID_FLOW
 		   || pcs_e->getProcessType() == FiniteElement::RICHARDS_FLOW
 		   || pcs_e->getProcessType() == FiniteElement::MULTI_PHASE_FLOW
-		   || pcs_e->getProcessType() == FiniteElement::TWO_PHASE_FLOW		  
+		   || pcs_e->getProcessType() == FiniteElement::TWO_PHASE_FLOW
 		  )
        {
           flow_pcs = pcs_e;
@@ -226,7 +235,7 @@ void RandomWalk::InterpolateVelocity(Particle* A)
 	m_pcs = PCSGet("FLUID_MOMENTUM");
 
     //FM_TEST
-    int idx, idy, idz; 
+    int idx, idy, idz;
     if(m_pcs)
     {
        idx= m_pcs->GetNodeValueIndex("VELOCITY1_X")+1;
@@ -1121,10 +1130,10 @@ void RandomWalk::InterpolateVelocityOfTheParticleByBilinear(int option, Particle
 				  //Todo
 #elif defined(NEW_EQS)
 
+#if defined(LIS)
 					double* x;
 					int size = m_msh->nod_vector.size();
 					x = new double[size];
-#if defined(LIS)
 					m_pcs->EQSSolver(x); // an option added to tell FLUID_MOMENTUM for sparse matrix system.
 					cout << "Solver passed in FLUID_MOMENTUM." << "\n";
 #endif
@@ -1153,7 +1162,7 @@ void RandomWalk::InterpolateVelocityOfTheParticleByBilinear(int option, Particle
 	{
 		m_pcs = PCSGet("FLUID_MOMENTUM");
 	    //FM_TEST
-        int idx, idy, idz; 
+        int idx, idy, idz;
         if(m_pcs)
         {
            idx= m_pcs->GetNodeValueIndex("VELOCITY1_X")+1;
@@ -1830,7 +1839,7 @@ int RandomWalk::SolveForDerivativeOfVelocity(Particle* A)
         ///1. Get coordinates of the particles, x, y, z
         ///2. Find the element where the particle is.
         ///3. Compute Gradient of velocity
-  
+
         ///4. Convert real coordinates to local coordinates
         /// Gradient of shape  function: CElement::dshapefct
         /// Gradient of velocity:
@@ -3339,7 +3348,7 @@ void RandomWalk::CheckBoundary2D(Particle* A, Particle* B)
 			p3[0] = A->x; p3[1] = A->y;
 			p4[0] = B->x; p4[1] = B->y;
 
-			MeshLib::CElem *n_ele; 
+			MeshLib::CElem *n_ele;
 			MeshLib::CNode *a_node;
 
 			for(size_t j=0; j<m_msh->face_vector.size(); j++)
@@ -3573,7 +3582,7 @@ using namespace MeshLib;
 int RandomWalk::SearchElementFromNeighbor(Particle* A)
 {
    int index;
-   double xyz[3]; 
+   double xyz[3];
    // Mount the proper mesh
    m_msh = selectMeshForFluidMomentumProcess();
    CElem* theElement = m_msh->ele_vector[A->elementIndex];
@@ -3758,7 +3767,7 @@ int RandomWalk::CheckElementIndex(Particle* A)
    switch(n_ele->GetElementType())
      {
        case  MshElemType::LINE:
-       double d1, d2, d3;	    
+       double d1, d2, d3;
        d1 = 0.;
        d2 = 0.;
 	   d3 = 0.;
@@ -3767,7 +3776,7 @@ int RandomWalk::CheckElementIndex(Particle* A)
           d1 += (x1[kk] - xyz[kk]) * (x1[kk] - xyz[kk]);
           d2 += (x2[kk] - xyz[kk]) * (x2[kk] - xyz[kk]);
           d3 += (x1[kk] - x2[kk]) * (x1[kk] - x2[kk]);
-	   }  
+	   }
        d1 = sqrt(d1);
        d2 = sqrt(d2);
        d3 = sqrt(d3);

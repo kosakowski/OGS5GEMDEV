@@ -20,6 +20,12 @@ else()
 	find_path(TESTDATA_DIR_FOUND testdata.dummy ${PROJECT_SOURCE_DIR}/../testdata)
 endif()
 
+# Check if we have a git repository
+set(SCM_IS_GIT OFF CACHE INTERNAL "")
+if(IS_DIRECTORY ${PROJECT_SOURCE_DIR}/.git)
+	set(SCM_IS_GIT ON CACHE INTERNAL "")
+endif()
+
 ######################
 ### Find tools     ###
 ######################
@@ -37,6 +43,9 @@ find_package(Git)
 if(WIN32 AND GIT_FOUND)
 	find_package(MsysGit)
 endif() # WIN32 AND GIT_FOUND
+
+# Find Bash
+find_program(BASH_TOOL_PATH bash DOC "The bash executable")
 
 # Find dot tool from graphviz
 find_program(DOT_TOOL_PATH dot DOC "Dot tool from graphviz")
@@ -103,13 +112,14 @@ if(OGS_FEM_PETSC OR OGS_NO_EXTERNAL_LIBS)
 	return()
 endif()
 
-find_path (OGS_LIBS_DIR_FOUND geotiff.lib ${PROJECT_SOURCE_DIR}/../Libs/libgeotiff)
+if(IS_DIRECTORY ${PROJECT_SOURCE_DIR}/../Libs)
+	set(OGS_LIBS_DIR_FOUND ${PROJECT_SOURCE_DIR}/../Libs CACHE PATH "Libs directory")
 
 # Find precompiled libraries (for BRNS GEMS LIS)
-find_path (OGS_PRECOMPILED_LIBS_DIR_FOUND BrnsDll.lib ${PROJECT_SOURCE_DIR}/../Libs/precompiled)
+	find_path (OGS_PRECOMPILED_LIBS_DIR_FOUND BrnsDll.lib ${OGS_LIBS_DIR_FOUND}/precompiled)
 if (OGS_PRECOMPILED_LIBS_DIR_FOUND)
-	include_directories (${PROJECT_SOURCE_DIR}/../Libs/precompiled)
-	link_directories (${PROJECT_SOURCE_DIR}/../Libs/precompiled)
+		include_directories (${OGS_LIBS_DIR_FOUND}/precompiled)
+		link_directories (${OGS_LIBS_DIR_FOUND}/precompiled)
 else ()
 	if (WIN32)
 		if (OGS_FEM_BRNS OR OGS_FEM_GEMS OR OGS_FEM_CHEMAPP)
@@ -121,6 +131,7 @@ else ()
 		endif ()
 	endif ()
 endif ()
+endif()
 
 
 ## pthread ##
@@ -155,8 +166,26 @@ else()
         message(STATUS "** Boost libraries: ${Boost_LIBRARIES}")
 endif()
 
+# Find Math Kernel Library (MKL)
 if(OGS_FEM_MKL)
-	# Find MKLlib
+	if(APPLE)
+		set(MKL_USE_STATIC ON CACHE BOOL "" FORCE)
+	endif()
+	if(OGS_LIBS_DIR_FOUND AND CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT DEFINED MKL_DIR)
+		message(STATUS "Using MKL from OGS Libs-folder. This implies PARALLEL_USE_OPENMP=ON.")
+		if(NOT IS_DIRECTORY ${OGS_LIBS_DIR_FOUND}/MKL/include)
+			message(STATUS "Extracting MKL include files...")
+			execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf ${OGS_LIBS_DIR_FOUND}/MKL/mkl-include.tgz
+				WORKING_DIRECTORY ${OGS_LIBS_DIR_FOUND}/MKL)
+		endif()
+		if(NOT IS_DIRECTORY ${OGS_LIBS_DIR_FOUND}/MKL/64)
+			message(STATUS "Extracting MKL libraries...")
+			execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf ${OGS_LIBS_DIR_FOUND}/MKL/mkl-64.tgz
+				WORKING_DIRECTORY ${OGS_LIBS_DIR_FOUND}/MKL)
+		endif()
+		set(MKL_DIR ${OGS_LIBS_DIR_FOUND}/MKL)
+		set(PARALLEL_USE_OPENMP ON CACHE BOOL "" FORCE)
+	endif()
 	find_package( MKL REQUIRED )
 	include_directories (${MKL_INCLUDE_DIR})
 endif()
@@ -169,12 +198,4 @@ if(OGS_FEM_LIS OR OGS_FEM_MKL)
 		-o3
 		-DIPMGEMPLUGIN
 	)
-endif()
-
-# Find OpenMP
-if(PARALLEL_USE_OPENMP)
-	find_package( OpenMP REQUIRED )
-	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}" )
-	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}" )
-	set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lgomp" )
 endif()

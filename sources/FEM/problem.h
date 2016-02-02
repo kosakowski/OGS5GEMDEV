@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /*
   Class to define a problem to be solved.
   Programming WW 08.07.2008
@@ -38,7 +47,7 @@ class Problem
     {
       if(is_x_k)
         return buffer_array1;
-      else			
+      else
         return buffer_array;
     }
 	int GetCPLMaxIterations() { return cpl_overall_max_iterations; }
@@ -66,9 +75,9 @@ class Problem
 	/// Set rank and size for MPI
     void setRankandSize(const int rank, const int size)
 	{
-        mrank = rank;  
-        msize = size;  
-	} 
+        mrank = rank;
+        msize = size;
+	}
    private:
       // Time:
       double start_time;
@@ -151,7 +160,7 @@ class Problem
 
 	/// rank for MPI
 	int mrank;
-    /// processor number for MPI  
+    /// processor number for MPI
 	int msize;
 
 	static const size_t max_processes = 16;

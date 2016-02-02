@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************
    FEMLib - Object: MAT-FP
    Task: class implementation
@@ -11,7 +20,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-//#include "rfmat_cp.h"//AKS
 
 class CompProperties;
 class CRFProcess;
@@ -48,13 +56,12 @@ namespace FiniteElement {
 	class CFiniteElementStd;
 }
 
-using FiniteElement::CFiniteElementStd;
-
 class CFluidProperties
 {
-	friend bool MFPRead(std::string);
-
 public:
+	CFluidProperties(void);
+	~CFluidProperties(void);
+
 	double getCriticalDensity() const { return rhoc; }
 	double getCriticalTemperature() const { return Tc; }
 	double getCriticalPressure() const { return pc; }
@@ -75,7 +82,105 @@ public:
 	 */
 	double getReferenceTemperature() const { return T_0; }
 
+	std::ios::pos_type Read(std::ifstream*);
+	void Write(std::ofstream*) const;
+	void CalPrimaryVariable(std::vector<std::string>& pcs_name_vector);
+	// Add an argument: double* variables = NULL. 28.05.2008 WW
+	double Density(double* variables = NULL);
+	double GetElementValueFromNodes(long ElementIndex,
+			               int GPIndex,
+			               int PhaseIndex,
+			               int Variable);
+	double drhodP(double* variables = NULL);
+	double drhodT(double* variables = NULL);
+	double drhodX(int CIndex, double* variables = NULL);
+	double ComponentDensity(int CIndex, double* variables = NULL);//AKS
+	double Viscosity(double* variables = NULL); //OK4709
+	//NB Jan09
+	double PhaseDiffusion(double *variables = NULL);
+	double SpecificHeatCapacity(double* variables = NULL);
+	void therm_prop(std::string caption); //NB 4.9.05
+	double PhaseChange();                 // JOD
+	double HeatConductivity(double* variables = NULL);
+	double CalcEnthalpy(double temperature);
+
+	double vaporDensity(const double T);  //WW
+	//WW
+	double vaporDensity_derivative(const double T);
+	bool CheckGravityCalculation() const {return cal_gravity; }
+	int GetHeatCapacityModel() const      //YD
+	{
+		return heat_capacity_model;
+	}
+	double GetDiffusion() {return diffusion; }
+	int getCompressibilityTModel() const {return compressibility_model_temperature;} //CB
+	// Derivations of free Helmholtz energy, NB JUN 09
+	double phi_r_d (double rho, double T) const;
+	double phi_r_tt (double rho, double T) const;
+	double phi_0_t (double T) const;
+	double phi_r_t (double rho, double T) const;
+	double phi_r_dt (double rho, double T) const;
+	double phi_r_dd (double rho, double T) const;
+	double phi_0_tt (double T) const;
+	double EffectiveDiffusionCoef(int CIndex, double* variables = NULL); //AKS
+
 private:
+	int fluid_id;                         // specification of substance (NB JUN 09)
+	std::string name;
+	std::string cmpNm1, cmpNm2, cmpNm3, cmpNm4; // component name
+	int cmpN; //components number
+	// FEM
+	FiniteElement::CFiniteElementStd* Fem_Ele_Std;
+	long node;                            //OK4704
+	// Density
+	int density_model;
+
+	// TF 11/2011 - used only in read- and write-method
+	int density_curve_number, viscosity_curve_number; // JOD 2014-11-10
+
+	// Viscosity
+	int viscosity_model;
+	// TF 11/2011 - used only in read- and write-method
+	//	std::string _my_fct_name;
+	// Thermal properties
+	// TF 11/2011 - used only in read- and write-method
+	//	std::string heat_capacity_fct_name;
+	int heat_conductivity_model;
+	// TF 11/2011 - used only in read- and write-method
+	//	std::string heat_conductivity_fct_name;
+	int heat_diffusion_model;             //AKS
+	int heat_capacity_model;              //YD, shifted to public JOD
+	// Electrical properties
+	int electric_conductivity_model;
+	int electric_conductivity_num_val;
+	double* electric_conductivity_val;
+	//
+	// Chemical properties
+	// TF 11/2011 - only in read-method used
+	//	std::string dif_fct_name;
+	int diffusion_model;                  /* SB:p2 */
+	// Phase diffusion (Daq, Yaws et al.)
+	double diff;
+	double A_Daq;
+	double B_Daq;
+
+	int heat_phase_change_curve;
+	// IO
+	int mode;
+	// PCS  YD
+	std::vector<std::string> density_pcs_name_vector;
+	std::vector<std::string> viscosity_pcs_name_vector;
+	std::vector<std::string> phase_diffusion_pcs_name_vector;
+	std::vector<std::string> specific_heat_capacity_pcs_name_vector;
+	std::vector<std::string> heat_conductivity_pcs_name_vector;
+	std::vector<std::string> enthalpy_pcs_name_vector;
+	//AKS
+	std::vector<CompProperties*> component_vector;
+
+	bool drho_dT_unsaturated;
+
+	double specific_heat_source;
+
 	double rhoc;                          //critical_density; //NB
 	double Tc;                            //critical_temperature;
 	double pc;                            //critical_pressure;
@@ -107,6 +212,8 @@ private:
 	double diffusion_coef; //AKS
 	// Viscosity
 	double viscosity;
+	double viscosity0;
+	double viscosity_T_star;
 	double viscosity_T_shift; //JM in order to use some viscosity functions, based on total temperature, within Richards
 	double my_0;
 	double dmy_dp;
@@ -134,150 +241,27 @@ private:
 	// Chemical properties
 	double T_Latent1, T_Latent2, latent_heat;
 
-public:
-	int fluid_id;                         // specification of substance (NB JUN 09)
-	std::string name;
-	std::string cmpNm1, cmpNm2, cmpNm3, cmpNm4; // component name 
-	int cmpN; //components number
-private:
 	std::string fluid_name;               //NB4801
 	// compressibility
 	int compressibility_model_pressure;   //NB
 	int compressibility_model_temperature; //NB
-		int solutal_expansivity_model; //NB
+	int solutal_expansivity_model; //NB
 	double compressibility_pressure;         //NB
 	double compressibility_temperature;      //NB
-		double solutal_expansivity; //AKS
+	double solutal_expansivity; //AKS
 
 	int phase;
 
-private:
 	// Limits and coefficients for free Helmholtz Energy, NB JUN 09
 	int limit[5];
 	double k [2][8];
 	double K [14][56], KP[4];
 
-public:
-	// FEM
-	CFiniteElementStd* Fem_Ele_Std;
-	long node;                            //OK4704
-	// Density
-	int density_model;
-
-	// TF 11/2011 - used only in read- and write-method
-	int density_curve_number, viscosity_curve_number; // JOD 2014-11-10
-	
-	// Viscosity
-	int viscosity_model;
-	// TF 11/2011 - used only in read- and write-method
-//	std::string _my_fct_name;
-	// Thermal properties
-	// TF 11/2011 - used only in read- and write-method
-//	std::string heat_capacity_fct_name;
-	int heat_conductivity_model;
-	// TF 11/2011 - used only in read- and write-method
-//	std::string heat_conductivity_fct_name;
-	int heat_diffusion_model;             //AKS
-	int heat_capacity_model;              //YD, shifted to public JOD
-	// Electrical properties
-	int electric_conductivity_model;
-	int electric_conductivity_num_val;
-	double* electric_conductivity_val;
-	//
-	// Chemical properties
-	// TF 11/2011 - only in read-method used
-//	std::string dif_fct_name;
-	int diffusion_model;                  /* SB:p2 */
-      // Phase diffusion (Daq, Yaws et al.)
-      double diff;
-      double A_Daq;
-      double B_Daq;
-
-	int heat_phase_change_curve;
-	// IO
-	int mode;
-	// PCS  YD
-	std::vector<std::string>density_pcs_name_vector;
-	std::vector<std::string>viscosity_pcs_name_vector;
-    std::vector<std::string>phase_diffusion_pcs_name_vector;
-	std::vector<std::string>specific_heat_capacity_pcs_name_vector;
-	std::vector<std::string>heat_conductivity_pcs_name_vector;
-	std::vector<std::string>enthalpy_pcs_name_vector;
-	//AKS
-	std::vector<CompProperties*>component_vector;
-
-	// FCT
-	// TF 11/2011 - not used
-//	std::string fct_pcs_name;
-	// TF 11/2011 - not used
-//	std::string fct_name;
-
-public:
-	CFluidProperties(void);
-	~CFluidProperties(void);
-	std::ios::pos_type Read(std::ifstream*);
-	void Write(std::ofstream*) const;
-	void CalPrimaryVariable(std::vector<std::string>& pcs_name_vector);
-	// Add an argument: double* variables = NULL. 28.05.2008 WW
-	double Density(double* variables = NULL);
-	double GetElementValueFromNodes(long ElementIndex,
-	                                int GPIndex,
-	                                int PhaseIndex,
-	                                int Variable);  
-    double drhodP(double* variables = NULL);
-	double drhodT(double* variables = NULL);
-	double drhodX(int CIndex, double* variables = NULL);
-	double ComponentDensity(int CIndex, double* variables = NULL);//AKS
-	double Viscosity(double* variables = NULL); //OK4709
-	                                            //NB Jan09
-      double PhaseDiffusion(double *variables = NULL);
-	double SpecificHeatCapacity(double* variables = NULL);
-	void therm_prop(std::string caption); //NB 4.9.05
-	double PhaseChange();                 // JOD
-	double HeatConductivity(double* variables = NULL);
-	double CalcEnthalpy(double temperature);
-	//WW double Enthalpy(int,double);
-	//WW double EnthalpyPhase(long,int,double*,double);
-	//WW double MassFraction(long number,int comp,double*gp,double theta, CFiniteElementStd* assem=NULL);
-	//WW double InternalEnergy(long number,double*gp,double theta);
-	//WW double DensityTemperatureDependence(long number,int comp,double*gp,double theta);
-	double vaporDensity(const double T);  //WW
-	                                      //WW
-	double vaporDensity_derivative(const double T);
-	bool CheckGravityCalculation() const {return cal_gravity; }
-	int GetHeatCapacityModel() const      //YD
-	{
-		return heat_capacity_model;
-	}
-	double GetDiffusion() {return diffusion; }
-    int getCompressibilityTModel() const {return compressibility_model_temperature;} //CB
-// Derivations of free Helmholtz energy, NB JUN 09
-	double phi_r_d (double rho, double T) const;
-	double phi_r_tt (double rho, double T) const;
-	double phi_0_t (double T) const;
-	double phi_r_t (double rho, double T) const;
-	double phi_r_dt (double rho, double T) const;
-	double phi_r_dd (double rho, double T) const;
-	double phi_0_tt (double T) const;
-	double EffectiveDiffusionCoef(int CIndex, double* variables = NULL); //AKS
-	bool drho_dT_unsaturated; 
-
-	  double specific_heat_source;
-
-private:
 	// State variables
 	double primary_variable[10];          //WW
 	double primary_variable_t0[10];       //CMCD
 	double primary_variable_t1[10];       //CMCD
 	bool cal_gravity;                     //YD/WW
-	// FEM
-	//WW
-	friend class FiniteElement::CFiniteElementStd;
-
-
-#ifdef MFP_TEST
-	Hash_Table* scatter_data; //WW
-#endif
 
 	double GasViscosity_Reichenberg_1971(double,double);
 	//AKS
@@ -286,22 +270,37 @@ private:
 	double LiquidViscosity_Marsily_1986(double);
 	double LiquidViscosity_NN(double,double);
 	double LiquidViscosity_CMCD(double p,double T,double C);
-    double PhaseDiffusion_Yaws_1976(double);
+	double LiquidViscosity_expo(double T);
+	double PhaseDiffusion_Yaws_1976(double);
 	double MATCalcHeatConductivityMethod2(double p, double T, double C);
 	double MATCalcFluidHeatCapacityMethod2(double p, double T, double C);
+
+	friend class FiniteElement::CFiniteElementStd;
+	friend class Problem;
+	friend bool MFPRead(std::string);
+	friend class CMediumProperties;
+	friend class CKinReactData;
+	friend class REACTINT;
+	friend class CompProperties;
+
+	friend class CRFProcess;
+	friend CFluidProperties* MFPGet(const std::string&);
+	friend CFluidProperties* MFPGet(int);
+	friend void KNaplCalcDensity();
+	friend double MFPGetNodeValue(long,const std::string&,int);
+	friend void MMPCalcSecondaryVariablesNew(CRFProcess*, bool);
 };
 
 extern std::vector<CFluidProperties*>mfp_vector;
 extern bool MFPRead(std::string);
 extern void MFPWrite(std::string);
 #define MFP_FILE_EXTENSION ".mfp"
-//WW extern double MFPCalcVapourPressure(double);
-//WW
-extern double MFPCalcFluidsHeatCapacity(CFiniteElementStd* assem = NULL);
+
+extern double MFPCalcFluidsHeatCapacity(FiniteElement::CFiniteElementStd* assem = NULL);
 extern double MFPCalcFluidsHeatConductivity(long index,
                                             double* gp,
                                             double theta,
-                                            CFiniteElementStd* assem = NULL);
+                                            FiniteElement::CFiniteElementStd* assem = NULL);
 extern void MFPDelete();
 //OK/YD
 extern CFluidProperties* MFPGet(const std::string&);

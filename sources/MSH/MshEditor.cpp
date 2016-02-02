@@ -1,6 +1,11 @@
 /**
  * \file MshEditor.cpp
  * 2011/06/15 KR Initial implementation
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
  */
 
 #include "MshEditor.h"
@@ -43,7 +48,7 @@ void MshEditor::getNodeAreas(const MeshLib::CFEMesh* mesh, std::vector<double> &
 
 			// angle AC-BC
 			const double cos_gamma = (c2-a*a-b*b)/(-2*a*b);
-			
+
 			// Area of tri-element
 			const double Area = 0.5*a*b*sin(acos(cos_gamma));
 
@@ -199,7 +204,7 @@ void MshEditor::sortNodesLexicographically(MeshLib::CFEMesh *mesh)
 
 	const std::size_t size(nodes.size());
 	for (std::size_t j(0); j<size; ++j)
-	    delete nodes[j]; 
+	    delete nodes[j];
 
 }
 

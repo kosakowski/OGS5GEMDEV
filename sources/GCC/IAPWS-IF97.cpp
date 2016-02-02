@@ -1,9 +1,19 @@
-#include <iostream> 
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
+#include <iostream>
 #include <limits>
 #include <cstdlib>
 #include <cmath>
 #include "IAPWS-IF97.h"
 #include "NR.h"
+#include "Brent/brent.hpp"
 using namespace std;
 
 
@@ -57,7 +67,7 @@ double IF97::Tsat(double P){
 	n8 =  0.40511340542057e+06;
 	n9 = -0.23855557567849e+00;
 	n10=  0.65017534844798e+03;
-	beta=pow(P,0.25);	
+	beta=pow(P,0.25);
 	E =    pow(beta,2.0)+n3*beta+n6;
 	F = n1*pow(beta,2.0)+n4*beta+n7;
 	G = n2*pow(beta,2.0)+n5*beta+n8;
@@ -128,7 +138,7 @@ double IF97::g1PT(double P, double T){
 }
 
 double IF97::g2PT(double P, double T){
-	
+
 	// REGION 2 CORRELATION DATA
 	// Ideal Gas Series Data
 	#define REG2I_COUNT 9
@@ -161,12 +171,12 @@ double IF97::g2PT(double P, double T){
 				0.30629316876232E-12, -0.42002467698208E-05, -0.59056029685639E-25, 0.37826947613457E-05,
 				-0.12768608934681E-14, 0.73087610595061E-28, 0.55414715350778E-16, -0.94369707241210E-06
 			};
-	
+
 	int i;
 	double R=0.461526,Px=1.0,Tx=540.0,Pi,Tau,resI=0,resR=0;
 	Pi = P/Px;
 	Tau= Tx/T;
-	resI=log(Pi);	
+	resI=log(Pi);
 	for(i=0;i<9; i++) resI += REGION2_N0[i]*pow(Tau,REGION2_J0[i]);
 	for(i=0;i<43;i++) resR += REGION2_N[i] *pow(Pi,REGION2_I[i])*pow(Tau-0.5,REGION2_J[i]);
 	return (resI+resR)*R*T;
@@ -207,7 +217,7 @@ double IF97::f3DT(double D, double T){
 	return res*R*T;
 }
 
-double IF97::dpressure(double ds){ 
+double IF97::dpressure(double ds){
 	return IF97::PP-ds*ds*NR::dfridrX(IF97::f3DT, ds, IF97::TT)*1.0e-3;
 }
 
@@ -259,7 +269,7 @@ double IF97::density(double T, double P){
 	if(rg==3) {
 		IF97::TT=T;
 		IF97::PP=P;
-		res=NR::zbrent(dpressure, 85.0, 750.0, 1.0e-6);
+		brent::local_min(85.0, 750.0, 1e-6, dpressure, res);
 	}
 	return res;
 }
@@ -284,7 +294,7 @@ double IF97::viscosity(double T, double P){
 	for(i=1;i<=4;i++) res0 += VISC_N0[i]*pow(Theta, 1-i);
 	res0 = pow(Theta,0.5)*pow(res0,-1.0);
 	Theta=Tc/T;
-	for(i=0;i<21;i++) res1 += VISC_N[i]*pow(Delta-1.0, VISC_I[i])*pow(Theta-1.0,VISC_J[i]);		
+	for(i=0;i<21;i++) res1 += VISC_N[i]*pow(Delta-1.0, VISC_I[i])*pow(Theta-1.0,VISC_J[i]);
 	res1 = exp(Delta*res1);
 	return res0*res1*1.0e-6;
 }
@@ -294,7 +304,7 @@ double IF97::dielectric(double T, double P){
 	const int DIEL_I[11] = {  1, 1, 1, 2, 3, 3, 4, 5, 6, 7, 10  };
 	const double DIEL_J[11] = {  0.25, 1, 2.5, 1.5, 1.5, 2.5, 2, 2, 5, 0.5, 10  };
 	const double DIEL_N[12] = {
-		0.978224486826, -0.957771379375, 0.237511794148, 0.714692244396, -0.298217036956, -0.108863472196, 
+		0.978224486826, -0.957771379375, 0.237511794148, 0.714692244396, -0.298217036956, -0.108863472196,
 		0.949327488264e-1, -0.980469816509e-2, 0.165167634970e-4, 0.937359795772e-4, -0.123179218720e-9, 0.196096504426e-2
 	};
 	int i;

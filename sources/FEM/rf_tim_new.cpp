@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************
    FEMLib - Object: TIM
    Task:
@@ -1016,7 +1025,7 @@ double CTimeDiscretization::FirstTimeStepEstimate(void)
 			if(time_control_type == TimeControlType::SELF_ADAPTIVE)	//MW
 			{
 				// time step will be reduced in an exponential way until min_time_step.
-				time_step_length = pow( time_adapt_coe_vector[time_adapt_coe_vector.size() - 1] , rejected_step_count ) * initial_step_size;
+				time_step_length = pow( time_adapt_coe_vector[time_adapt_coe_vector.size() - 1] , (double)rejected_step_count ) * initial_step_size;
 
 				if (time_step_length < min_time_step) {
 					std::cout << "-> ***ERROR*** Next time step size is less than the given minimum size. The simulation is aborted." << std::endl;
@@ -1075,7 +1084,7 @@ double CTimeDiscretization::FirstTimeStepEstimate(void)
 				//					time_step_length=ini_time_step;
 				//				else
 				//				{
-				time_step_length = pow( time_adapt_coe_vector[time_adapt_coe_vector.size() - 1] , rejected_step_count ) * initial_step_size;
+				time_step_length = pow( time_adapt_coe_vector[time_adapt_coe_vector.size() - 1] , (double)rejected_step_count ) * initial_step_size;
 
 				if (time_step_length<=min_time_step)
 				{
@@ -1344,7 +1353,7 @@ double CTimeDiscretization::StableErrorAdaptive ( void )
 					<< "### Time control " << convertTimeControlTypeToString(time_control_type)
 					<< " not tested for other ITERATIVE_TYPES, use with caution. \n";
 			} else if (adapt_itr_type==IterationType::COUPLED) {
-				current_error = m_pcs->cpl_max_relative_error;
+				current_error = m_pcs->cpl_max_relative_error_overall;
 			}
 			else
 			{
@@ -1359,7 +1368,7 @@ double CTimeDiscretization::StableErrorAdaptive ( void )
 	last_time_step_length = time_step_length;
 
 	double multiplier(1);
-	if ( ( aktueller_zeitschritt == 0 ) )
+	if ( aktueller_zeitschritt == 0 )
 	{
 		//check validity of given parameters on very first time step
 		if ( (rejected_step_count < 1) && SEA_parameters_are_bad() )

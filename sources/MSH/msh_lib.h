@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************
    MSHLib - Object:
    Task:
@@ -36,12 +45,12 @@ void FEMRead(const std::string& mesh_fname,
              GEOLIB::GEOObjects* geo_obj = NULL,
              std::string* unique_name = NULL);
 #if defined(USE_PETSC) // || defined(using other parallel scheme)
-void FEMRead_ASCII(const int msize, const int mrank, 
+void FEMRead_ASCII(const int msize, const int mrank,
              const std::string& file_base_name,
              std::vector<MeshLib::CFEMesh*>& mesh_vec,
              GEOLIB::GEOObjects* geo_obj = NULL,
              std::string* unique_name = NULL);
-void FEMRead_BIN(const int msize, const int mrank, 
+void FEMRead_BIN(const int msize, const int mrank,
              const std::string& file_base_name,
              std::vector<MeshLib::CFEMesh*>& mesh_vec,
              GEOLIB::GEOObjects* geo_obj = NULL,

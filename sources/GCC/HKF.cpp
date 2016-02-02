@@ -1,23 +1,32 @@
-/* References 
-(1).Shock, E. L., Oelkers, E. H., Johnson, J. W., Sverjensky, D. A., and Helgeson, H. C., 1992. 
-	Calculation of the Thermodynamic Properties of Aqueous Species at High-Pressures and Temperatures- 
-	Effective Electrostatic Radii, Dissociation-Constants and Standard Partial Molal Properties to 
-	1000-Degrees-C and 5-Kbar. 
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
+/* References
+(1).Shock, E. L., Oelkers, E. H., Johnson, J. W., Sverjensky, D. A., and Helgeson, H. C., 1992.
+	Calculation of the Thermodynamic Properties of Aqueous Species at High-Pressures and Temperatures-
+	Effective Electrostatic Radii, Dissociation-Constants and Standard Partial Molal Properties to
+	1000-Degrees-C and 5-Kbar.
 	Journal of the Chemical Society-Faraday Transactions 88, 803-826.
 
 (2).Oelkers, E. H. and Helgeson, H. C., 1988. Calculation of the Thermodynamic and Transport-
 	Properties of Aqueous Species at High-Pressures and Temperatures - Aqueous Tracer Diffusion-
-	Coefficients of Ions to 1000-Degrees-C and 5-Kb. 
-	Geochimica Et Cosmochimica Acta 52, 63-85.	
+	Coefficients of Ions to 1000-Degrees-C and 5-Kb.
+	Geochimica Et Cosmochimica Acta 52, 63-85.
 
-(3).Duan, Z. H., Moller, N., and Weare, J. H., 1992. 
-	An Equation of State for the Ch4-Co2-H2o System .1. Pure Systems from 0-Degrees-C to 1000-Degrees-C 
-	and 0 to 8000 Bar. 
+(3).Duan, Z. H., Moller, N., and Weare, J. H., 1992.
+	An Equation of State for the Ch4-Co2-H2o System .1. Pure Systems from 0-Degrees-C to 1000-Degrees-C
+	and 0 to 8000 Bar.
 	Geochimica Et Cosmochimica Acta 56, 2605-2617.
 
-(4).Helgeson, H. C., 1992. Effects of complex formation in flowing fluids on the hydrothermal 
-	solubilities of minerals as a function of fluid pressure and temperature in the 
-	critical and supercritical regions of the system H2O. 
+(4).Helgeson, H. C., 1992. Effects of complex formation in flowing fluids on the hydrothermal
+	solubilities of minerals as a function of fluid pressure and temperature in the
+	critical and supercritical regions of the system H2O.
 	Geochimica Et Cosmochimica Acta 56, 3191-3207.
 */
 
@@ -101,7 +110,7 @@ int HKF::HKF_OGS_calc(double T, double P, double &G, double &H, double &S, int t
 		G=spec.G;
 		H=spec.H;
 		S=spec.S;
-	}	
+	}
 	return res;
 }
 
@@ -146,7 +155,7 @@ double HKF::HKFcalc(double T, double P, int ghs, std::string name, int sub, int 
 
 
 
-int HKF::load_param(vector<SpeciesData> &spec, vector<int> name_type, vector<int> phase_type){	
+int HKF::load_param(vector<SpeciesData> &spec, vector<int> name_type, vector<int> phase_type){
 	if((int)spec.size()==(int)name_type.size() && (int)spec.size()==(int)phase_type.size()){
 
 	int i, j, js, jx, jz, type= -1, is_spec, is_OK=0;
@@ -159,7 +168,7 @@ int HKF::load_param(vector<SpeciesData> &spec, vector<int> name_type, vector<int
 	is_OK= IO::file2vector("slop98.dat", slop98);
 	//for(i=0;i<(int)slop98.size();i++){
 	//	cin.get();
-	//	cout << slop98[i] <<endl;		
+	//	cout << slop98[i] <<endl;
 	//}
 
 	if(is_OK){
@@ -167,8 +176,8 @@ int HKF::load_param(vector<SpeciesData> &spec, vector<int> name_type, vector<int
 		for(i=0;i<(int)slop98.size();i++){
 			first_char= slop98[i].substr(0,3);
 			if(first_char=="min" || first_char=="gas" || first_char=="aqu") {
-				type++;						
-				i++;					
+				type++;
+				i++;
 			}
 
 			piesx= IO::string2vector(slop98[i]);
@@ -199,11 +208,11 @@ int HKF::load_param(vector<SpeciesData> &spec, vector<int> name_type, vector<int
 						if(spec[j].name0==piesz[js]) is_spec=1;
 				}
 
-				
+
 
 				if(is_spec==1){
 					//searching depend on phase type
-					
+
 					is_spec=0;
 					if(phase_type[j]==type || phase_type[j]<0 || phase_type[j]>5)
 						is_spec=1;
@@ -234,7 +243,7 @@ int HKF::load_param(vector<SpeciesData> &spec, vector<int> name_type, vector<int
 						case 4:
 						case 5:
 							for(jx=0;jx<3;jx++)	{
-								pies=IO::string2vector(slop98[i+jx+3]);								
+								pies=IO::string2vector(slop98[i+jx+3]);
 								for(jz=0;jz<4;jz++)
 									if(jz<(int)pies.size())
 										spec[j].param[jx][jz]= atof(pies[jz].c_str());
@@ -248,11 +257,11 @@ int HKF::load_param(vector<SpeciesData> &spec, vector<int> name_type, vector<int
 							break;
 
 						case 1:
-							pies=IO::string2vector(slop98[i+3]);		
+							pies=IO::string2vector(slop98[i+3]);
 							for(jz=0;jz<4;jz++)
 								spec[j].param[0][jz]= atof(pies[jz].c_str());
 
-							pies=IO::string2vector(slop98[i+4]);	
+							pies=IO::string2vector(slop98[i+4]);
 							for(jz=0;jz<3;jz++)
 								spec[j].param[1][jz]= atof(pies[jz].c_str());
 							spec[j].param[1][3]= 0.0;
@@ -260,7 +269,7 @@ int HKF::load_param(vector<SpeciesData> &spec, vector<int> name_type, vector<int
 							for(jz=0;jz<4;jz++)
 								spec[j].param[2][jz]= atof(pies[jz+3].c_str());
 
-							pies=IO::string2vector(slop98[i+5]);	
+							pies=IO::string2vector(slop98[i+5]);
 							for(jz=0;jz<3;jz++)
 								spec[j].param[3][jz]= atof(pies[jz].c_str());
 							spec[j].param[3][3]= 0.0;
@@ -276,25 +285,25 @@ int HKF::load_param(vector<SpeciesData> &spec, vector<int> name_type, vector<int
 							break;
 
 						case 2:
-							pies=IO::string2vector(slop98[i+3]);								
+							pies=IO::string2vector(slop98[i+3]);
 							for(jz=0;jz<4;jz++)
 								spec[j].param[0][jz]= atof(pies[jz].c_str());
 
-							pies=IO::string2vector(slop98[i+4]);	
+							pies=IO::string2vector(slop98[i+4]);
 							for(jz=0;jz<3;jz++)
 								spec[j].param[1][jz]= atof(pies[jz].c_str());
 							spec[j].param[1][3]= 0.0;
 							for(jz=0;jz<4;jz++)
 								spec[j].param[2][jz]= atof(pies[jz+3].c_str());
 
-							pies=IO::string2vector(slop98[i+5]);	
+							pies=IO::string2vector(slop98[i+5]);
 							for(jz=0;jz<3;jz++)
 								spec[j].param[3][jz]= atof(pies[jz].c_str());
 							spec[j].param[3][3]= 0.0;
 							for(jz=0;jz<4;jz++)
 								spec[j].param[4][jz]= atof(pies[jz+3].c_str());
 
-							pies=IO::string2vector(slop98[i+6]);	
+							pies=IO::string2vector(slop98[i+6]);
 							for(jz=0;jz<3;jz++)
 								spec[j].param[5][jz]= atof(pies[jz].c_str());
 							spec[j].param[5][3]= 0.0;
@@ -310,32 +319,32 @@ int HKF::load_param(vector<SpeciesData> &spec, vector<int> name_type, vector<int
 							break;
 
 						case 3:
-							pies=IO::string2vector(slop98[i+3]);								
+							pies=IO::string2vector(slop98[i+3]);
 							for(jz=0;jz<4;jz++)
 								spec[j].param[0][jz]= atof(pies[jz].c_str());
 
-							pies=IO::string2vector(slop98[i+4]);	
+							pies=IO::string2vector(slop98[i+4]);
 							for(jz=0;jz<3;jz++)
 								spec[j].param[1][jz]= atof(pies[jz].c_str());
 							spec[j].param[1][3]= 0.0;
 							for(jz=0;jz<4;jz++)
 								spec[j].param[2][jz]= atof(pies[jz+3].c_str());
 
-							pies=IO::string2vector(slop98[i+5]);	
+							pies=IO::string2vector(slop98[i+5]);
 							for(jz=0;jz<3;jz++)
 								spec[j].param[3][jz]= atof(pies[jz].c_str());
 							spec[j].param[3][3]= 0.0;
 							for(jz=0;jz<4;jz++)
 								spec[j].param[4][jz]= atof(pies[jz+3].c_str());
 
-							pies=IO::string2vector(slop98[i+6]);	
+							pies=IO::string2vector(slop98[i+6]);
 							for(jz=0;jz<3;jz++)
 								spec[j].param[5][jz]= atof(pies[jz].c_str());
 							spec[j].param[5][3]= 0.0;
 							for(jz=0;jz<4;jz++)
 								spec[j].param[6][jz]= atof(pies[jz+3].c_str());
 
-							pies=IO::string2vector(slop98[i+7]);	
+							pies=IO::string2vector(slop98[i+7]);
 							for(jz=0;jz<3;jz++)
 								spec[j].param[7][jz]= atof(pies[jz].c_str());
 							spec[j].param[7][3]= 0.0;
@@ -345,8 +354,8 @@ int HKF::load_param(vector<SpeciesData> &spec, vector<int> name_type, vector<int
 								spec[j].param[8][jz]= 0.0;
 							spec[j].charge=0.0;
 							break;
-						
-						default: 
+
+						default:
 							break;
 					}//end switch
 				}//end if
@@ -367,14 +376,14 @@ int HKF::load_param(vector<SpeciesData> &spec, vector<int> name_type, vector<int
 				case 3:
 					i+= 8;
 					break;
-				default: 
+				default:
 					break;
 			}
 		}
 		if((int)id_spec.size()>0){
 			cekz=1;
 			for(i=0;i<(int)spec.size();i++){
-				cek=0;	
+				cek=0;
 				for(j=0;j<(int)id_spec.size();j++)
 					if(id_spec[j]==i) cek=1;
 				if(cek==0) {
@@ -383,22 +392,22 @@ int HKF::load_param(vector<SpeciesData> &spec, vector<int> name_type, vector<int
 				}
 			}
 			if(cekz==1)
-				return 1;//OK		
+				return 1;//OK
 			else
 				return -1;//species name is incorrect
 		}
 		else
 			return -2;//did nothing
 	}
-	else 
+	else
 		return 0;//can NOT open species list vector
 	}
 	else
 		exit(0);
 
 }
-		
-	
+
+
 int HKF::HelgesonEquation(double T, double P, vector<SpeciesData> &spec){
 
 	double c1, c2, a1, a2, a3, a4, Z,dG,dH,dS,dV;//aqueous species parameters from database
@@ -477,7 +486,7 @@ int HKF::HelgesonEquation(double T, double P, vector<SpeciesData> &spec){
 				Hw= wr*(T*Y-Tr*Yr+1.0/e-1.0/er);//(A22) Ref.(1)
 			}
 			else{
-				rejr= Z*Z*(eta*Yr-100.0)/(dS-71.5*abs(Z)); //(D1) Ref.(1) & Eq(29) Ref.(4) 
+				rejr= Z*Z*(eta*Yr-100.0)/(dS-71.5*abs(Z)); //(D1) Ref.(1) & Eq(29) Ref.(4)
 				rej = rejr+abs(Z)*g; //Eq(6) Ref.(1)
 				wr  = eta*Z*(Z/rejr-1.0/3.082); //(D5) Ref.(1)
 				w   = eta*Z*(Z/(rejr+abs(Z)*g)-1.0/(3.082+g)); //(D4) Ref.(1)
@@ -489,7 +498,7 @@ int HKF::HelgesonEquation(double T, double P, vector<SpeciesData> &spec){
 			spec[i].S= dS            +c1*Sc1 +c2*Sc2 +                a3*Sa3 +a4*Sa4 +Sw; //(A20) (B21) Ref.(1)
 			spec[i].G= dG -dS*(T-Tr) +c1*Gc1 +c2*Gc2 +a1*Ga1 +a2*Ga2 +a3*Ga3 +a4*Ga4 +Gw; //(A24) (B25) Ref.(1)
 			spec[i].H= dH            +c1*Hc1 +c2*Hc2 +a1*Ha1 +a2*Ha2 +a3*Ha3 +a4*Ha4 +Hw; //(A22) (B23) Ref.(1)
-			
+
 		}
 		else{
 			dG= spec[i].param[0][0];
@@ -513,7 +522,7 @@ int HKF::HelgesonEquation(double T, double P, vector<SpeciesData> &spec){
 			case 1:
 			case 2:
 			case 3:
-			default: 
+			default:
 				spec[i].G= 0.0;
 				spec[i].H= 0.0;
 				spec[i].S= 0.0;
@@ -554,12 +563,12 @@ double HKF::diel_water(double T, double P){ //T K, P bar
 
 
 
-double HKF::Ydiff(double T, double P){ 
-	return 1.0/diel_water(T,P); 
+double HKF::Ydiff(double T, double P){
+	return 1.0/diel_water(T,P);
 }
 
-double HKF::Yfunc(double T, double P){ 
-	return   -NR::dfridrX(Ydiff,T,P); 
+double HKF::Yfunc(double T, double P){
+	return   -NR::dfridrX(Ydiff,T,P);
 }
 
 

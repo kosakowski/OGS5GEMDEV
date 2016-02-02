@@ -1,3 +1,14 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ * zero()-function: Copyright Richard Brent, John Burkhardt | GNU LGPL license
+ *
+ */
+
 /**********************************************************************
    Module: Equation of State
 
@@ -799,7 +810,7 @@ double co2_heat_conductivity (double rho, double T)
     lamda = lamda_r * Lamda_C;
 
 
-    return lamda; 
+    return lamda;
 }
 
 /**********************************************************************
@@ -2056,99 +2067,193 @@ void auswahl (double T, double P, int fluid, double* x1, double* x2, double eps)
 	}
 }
 
-/*************************************************************
-   Interpolates the Helmholts free energy pressure-temperature-
-   density relation and returns a density for a temperature and
-   a pressure
 
-   Programming: Dedong Li
-             May 2009
-   Last modification: NB Jun 2009
-*************************************************************/
-double zbrent(double TT, double PP, int fluid, const double tol)
+
+//****************************************************************************80
+
+double zero ( double T, double P, int fluid, double t)
+
+//****************************************************************************80
+//
+//  Purpose:
+//
+//    (Original):
+//    ZERO seeks the root of a function F(X) in an interval [A,B].
+//
+//  Discussion:
+//
+//    The interval [A,B] must be a change of sign interval for F.
+//    That is, F(A) and F(B) must be of opposite signs.  Then
+//    assuming that F is continuous implies the existence of at least
+//    one value C between A and B for which F(C) = 0.
+//
+//    The location of the zero is determined to within an accuracy
+//    of 6 * MACHEPS * r8_abs ( C ) + 2 * T.
+//
+//    Thanks to Thomas Secretin for pointing out a transcription error in the
+//    setting of the value of P, 11 February 2013.
+//
+//  Licensing:
+//
+//    This code is distributed under the GNU LGPL license.
+//
+//  Modification:
+//    This implementation of zero seeks the density for a specific pressure
+//    and temperature condition according to a specified fluid
+//
+//  Modified:
+//
+//    11 February 2013
+//    31 July 2015
+//
+//  Author:
+//
+//    Original FORTRAN77 version by Richard Brent.
+//    C++ version by John Burkardt.
+//    Modified for OGS purpose by N Boettcher
+//
+//  Reference:
+//
+//    Richard Brent,
+//    Algorithms for Minimization Without Derivatives,
+//    Dover, 2002,
+//    ISBN: 0-486-41998-3,
+//    LC: QA402.5.B74.
+//
+//  Parameters:
+//
+//    Input: double T, P, --> temperature and pressure
+//           int fluid --> an index specifying a fluid
+//
+//    Output: estimated density value according to specified fluid, pressure,
+//    and temperature.
+//
 {
-	const int ITMAX = 100;
-	const double EPS = 5.0e-16;           //numeric_limits<double>::epsilon();
-	//double fa=func(a),fb=func(b);
-	double fa,fb;
-	double fc,p,q,r,s,tol1,xm;
-	double x1;
-	double x2;
-	//	PP=PP/1e5; // P in bar
-	auswahl(TT,PP,fluid,&x1,&x2,tol);
-	double a = x1,b = x2,c = x2,d = 0.0,e = 0.0; //OK411
-	fa = dpressure(TT,PP,fluid,x1);
-	fb = dpressure(TT,PP,fluid,x2);
+  double c;
+  double d;
+  double e;
+  double fa;
+  double fb;
+  double fc;
+  double m;
+  double macheps;
+  double p;
+  double q;
+  double r;
+  double s;
+  double sa;
+  double sb;
+  double tol;
+//
+//  Make local copies of A and B.
+//
+  double a, b;
+  auswahl(T,P,fluid,&a,&b,t);
 
-	if ((fa > 0.0 && fb > 0.0) || (fa < 0.0 && fb < 0.0)) //cout << "Error in zbrent, fluid " << fluid << " T: " << TT << " P: " << PP << " b: " << b << "\n";
-		cout << ".";
-	fc = fb;
-	for (int iter = 0; iter < ITMAX; iter++)
-	{
-		if ((fb > 0.0 && fc > 0.0) || (fb < 0.0 && fc < 0.0))
-		{
-			c = a;
-			fc = fa;
-			e = d = b - a;
-		}
-		if (fabs(fc) < fabs(fb))
-		{
-			a = b;
-			b = c;
-			c = a;
-			fa = fb;
-			fb = fc;
-			fc = fa;
-		}
-		tol1 = 2.0* EPS* fabs(b) + 0.5 * tol;
-		xm = 0.5 * (c - b);
-		if (fabs(xm) <= tol1 || fb == 0.0)
-			return b;
-		if (fabs(e) >= tol1 && fabs(fa) > fabs(fb))
-		{
-			s = fb / fa;
-			if (a == c)
-			{
-				p = 2.0 * xm * s;
-				q = 1.0 - s;
-			}
-			else
-			{
-				q = fa / fc;
-				r = fb / fc;
-				p = s * (2.0 * xm * q * (q - r) - (b - a) * (r - 1.0));
-				q = (q - 1.0) * (r - 1.0) * (s - 1.0);
-			}
-			if (p > 0.0)
-				q = -q;
-			p = fabs(p);
-			double min1 = 3.0 * xm * q - fabs(tol1 * q);
-			double min2 = fabs(e * q);
-			if (2.0 * p < (min1 < min2 ? min1 : min2))
-			{
-				e = d;
-				d = p / q;
-			}
-			else
-			{
-				d = xm;
-				e = d;
-			}
-		}
-		else
-		{
-			d = xm;
-			e = d;
-		}
-		a = b;
-		fa = fb;
-		if (fabs(d) > tol1)
-			b += d;
-		else
-			b += (double)SIGN(tol1,(float)xm);  //OK411
-		fb = dpressure(TT,PP,fluid,b);
-	}
-	throw("Maximum number of iterations exceeded in zbrent");
+  sa = a;
+  sb = b;
+  fa = dpressure(T, P, fluid, sa);
+  fb = dpressure(T, P, fluid, sb);
+
+  c = sa;
+  fc = fa;
+  e = sb - sa;
+  d = e;
+
+  macheps = std::numeric_limits<double>::epsilon();
+
+  for ( ; ; )
+  {
+    if ( std::abs ( fc ) < std::abs ( fb ) )
+    {
+      sa = sb;
+      sb = c;
+      c = sa;
+      fa = fb;
+      fb = fc;
+      fc = fa;
+    }
+
+    tol = 2.0 * macheps * std::abs ( sb ) + t;
+    m = 0.5 * ( c - sb );
+
+    if ( std::abs ( m ) <= tol || fb == 0.0 )
+    {
+      break;
+    }
+
+    if ( std::abs ( e ) < tol || std::abs ( fa ) <= std::abs ( fb ) )
+    {
+      e = m;
+      d = e;
+    }
+    else
+    {
+      s = fb / fa;
+
+      if ( sa == c )
+      {
+        p = 2.0 * m * s;
+        q = 1.0 - s;
+      }
+      else
+      {
+        q = fa / fc;
+        r = fb / fc;
+        p = s * ( 2.0 * m * q * ( q - r ) - ( sb - sa ) * ( r - 1.0 ) );
+        q = ( q - 1.0 ) * ( r - 1.0 ) * ( s - 1.0 );
+      }
+
+      if ( 0.0 < p )
+      {
+        q = - q;
+      }
+      else
+      {
+        p = - p;
+      }
+
+      s = e;
+      e = d;
+
+      if ( 2.0 * p < 3.0 * m * q - std::abs ( tol * q ) &&
+        p < std::abs ( 0.5 * s * q ) )
+      {
+        d = p / q;
+      }
+      else
+      {
+        e = m;
+        d = e;
+      }
+    }
+    sa = sb;
+    fa = fb;
+
+    if ( tol < std::abs ( d ) )
+    {
+      sb = sb + d;
+    }
+    else if ( 0.0 < m )
+    {
+      sb = sb + tol;
+    }
+    else
+    {
+      sb = sb - tol;
+    }
+
+    fb = dpressure( T, P, fluid, sb);
+
+    if ( ( 0.0 < fb && 0.0 < fc ) || ( fb <= 0.0 && fc <= 0.0 ) )
+    {
+      c = sa;
+      fc = fa;
+      e = sb - sa;
+      d = e;
+    }
+  }
+  return sb;
 }
 
 /**********************************************************************

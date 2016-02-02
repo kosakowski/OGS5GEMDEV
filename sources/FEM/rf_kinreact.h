@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************
    rf_kinreact.cpp
 
@@ -61,8 +70,8 @@ class MicrobeData
       std::vector<double> Gibbs;
       std::vector<double> _drmc_level;
       double steepness ;
-      double k_incr; 
-      double k_decr; 
+      double k_incr;
+      double k_decr;
       double G0;
       double dt;
       double decayrate;
@@ -147,7 +156,7 @@ public:
       bool T_dependence;
       int T_model;
       std::vector <double> T_params;
-      
+
 	  // CB _drmc_
       bool _drmc_;
       std::string Microbename;
@@ -187,7 +196,7 @@ public:
 	int typeflag_napldissolution;         /* set to 1 if reaction is NAPL dissolution */
 	int typeflag_iso_fract;               /* set to 1 if reaction is isotope fractionation */
       int typeflag_mineralkinetics; /* set to 1 if reaction is mineral kinetics */
-      int typeflag_gasdissolution; 
+      int typeflag_gasdissolution;
 
        //CB new parallel computation data structure, replaces double current_Csat;
        std::vector <double> Current_Csat;       /* initial interfacial area, interfacial area of last iteration */
@@ -208,7 +217,7 @@ public:
        double Km_default;
        bool Am_constant;
        int Am_model;
-       double Am_ini;                 // initial mineral Surface area 
+       double Am_ini;                 // initial mineral Surface area
        double Theta;
        double Eta;
        bool precip_baseterm_only;
@@ -302,14 +311,14 @@ public:
 	std::vector<double> Interfacial_area;
 	std::vector<std::string> BlobGeoType;
 	std::vector<std::string> BlobGeoName;
-     //New-Sherwood-Number 
+     //New-Sherwood-Number
       int shidx;
       double NContent_expo;
       double WContent_expo;
       double Pe_expo;
       double D50_expo;
       double Poro_expo ;
-      double Delta_expo; 
+      double Delta_expo;
       double UI_expo ;
       double NContent_ini_expo ;
       double NContent_res_expo ;
@@ -334,7 +343,7 @@ public:
       double Length;
       bool modSherwood ;
       bool Sherwood_model ;
-      
+
       bool gas_dissolution_flag;
 private:
 	std::vector<size_t> BlobGeoID;
@@ -356,17 +365,17 @@ public:
 	int NumberMonod;
 	int NumberNAPLdissolution;
       int NumberMineralkinetics;
-	  
+
 	  // CB _drmc_
       int NumberMicrobeData;
-	
-      clock_t cpu_time_krc;  
+
+      clock_t cpu_time_krc;
 
       // biodeg data
       double maxBacteriaCapacity;
       std::vector<int> is_a_bacterium;
       double minBactConcentration;
-      int minConcentrationMode; 
+      int minConcentrationMode;
       double minConcentrationThreshhold;
       double minConcentrationSet;
 	//	vector <int> is_a_bacterium2; // short version
@@ -510,7 +519,7 @@ extern bool KNaplDissCheck(void);                 /* CB check if NAPL dissolutio
 extern void KNaplCalcDensity(void);   /* CB check if NAPL dissolution is modeled */
 extern double CalcNAPLDens(int node); //CB 01/08
 extern void CalcNewNAPLSat();         //CB 01/08
-extern void CalcNAPLCompMasses();     
+extern void CalcNAPLCompMasses();
 extern void CalcNewPhasePressure();
 extern bool KMinKinCheck(void);
 
@@ -523,7 +532,7 @@ extern bool odeint(double ystart[], int nvar, double x1, double x2, double eps, 
 	double hmin, double *nexth, int *nok, int *nbad,
 	void (*derivs)(double, double [], double [], int, long, double),
 	bool (*stifbs)(double [], double [], int, double *, double, double, double [],
-	  double *, double *, void (*)(double, double [], double [], int, long, double), long), 
+	  double *, double *, void (*)(double, double [], double [], int, long, double), long),
   bool (*rkqs)(double [], double [], int, double *, double , double , double [],
 	  double *, double *, void (*)(double , double [], double [], int, long, double), long),
   long, int);

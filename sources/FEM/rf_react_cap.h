@@ -1,4 +1,13 @@
-/* reaction package header file */
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
+ /* reaction package header file */
 
 //#ifndef reaction_INC
 //#define reactions_INC
@@ -19,7 +28,7 @@ class REACT_CAP{
 	int *rateflag;     /* flag used for determining if reaction are calculated */
 	long nodenumber;   /* number of nodes, on which reactions are calculated */
 	bool flag_cap;     /* flag if *.cap file exists   DL 28,10,08*/
-    std::string data_file;	
+    std::string data_file;
 	std::string data_format;
 	int    mass_num;
 	std::string mass_type;
@@ -101,13 +110,13 @@ class REACT_CAP{
 		std::string ecform; //elemental chemical formula
 		std::string ref[2];
 		double charge;  //charge
-		int    type  ;  //phase flag 
+		int    type  ;  //phase flag
 						//0-minerals that do not undergo phase transitions
 						//1-minerals that undergo one phase transition
 						//2-minerals that undergo two phase transitions
 						//3-minerals that undergo three phase transitions
 						//4-gases
-						//5-aqueous species 
+						//5-aqueous species
 		double param[9][4]; //parameters
 		//calculating result
 		double S; //entropy
@@ -156,12 +165,12 @@ class REACT_CAP{
  * @param geo_obj object of class GEOObjects managing the geometric entities
  * @param unique_name unique name to access the geometric entities in geo_obj
  */
-	std::ios::pos_type Read(std::ifstream*, const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name);	
-	
-	void CreateREACT(void);	 
+	std::ios::pos_type Read(std::ifstream*, const GEOLIB::GEOObjects& geo_obj, const std::string& unique_name);
+
+	void CreateREACT(void);
 	void InitChemApp(void);
 	void ResetElement(void);
-	void DefSpeciesInChemApp(void);	
+	void DefSpeciesInChemApp(void);
 	void DefSpeciesInChemAppList(void);
 	void DefSpeciesInChemAppAll(void);
 
@@ -187,7 +196,7 @@ class REACT_CAP{
 
 	void CompNamePhase(std::string, char*&, int&);
 
-	int  CheckNoReactionNodes(void);	
+	int  CheckNoReactionNodes(void);
 	void LoopNodeReact(int, int);
 		std::vector<double> KineticReact(std::vector<double>); //DL 05.10.10
 		void KinInit(void);

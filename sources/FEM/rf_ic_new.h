@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************
    FEMLib - Object: Initial Conditions IC
    Task: class implementation
@@ -64,7 +73,7 @@ public:
 	void SetByNodeIndex(int);             // 19.11.2009 PCH
 	void SetPolyline(int);
 	void SetSurface(int);
-	void SetPoint(int);    
+	void SetPoint(int);
 	void StoreInitialValues();// JOD 2014-11-10
 	bool storeValues;
 	//void SetMaterialDomain(int); //MX

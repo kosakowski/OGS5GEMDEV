@@ -1,4 +1,13 @@
 /**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
+ /**
  * \file msh_mesh.h
  */
 
@@ -160,6 +169,12 @@ public:
 	 * @return the search length
 	 */
 	double getSearchLength() const;
+
+	/**
+	 * set search length to half of minimum edge length.
+	 * @set the search length
+	 */
+	void setSearchLength(double len);
 
 	/**
 	 * @brief Compute the search length for geometric search algorithms.

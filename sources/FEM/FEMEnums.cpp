@@ -3,6 +3,11 @@
  *
  *  Created on: Sep 2, 2010
  *      Author: TF
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
  */
 
 #include "FEMEnums.h"
@@ -144,7 +149,7 @@ bool isFlowProcess (ProcessType pcs_type)
 
 bool isMultiFlowProcess (ProcessType pcs_type)
 {
-	if (pcs_type == PS_GLOBAL || 
+	if (pcs_type == PS_GLOBAL ||
 		pcs_type == MULTI_PHASE_FLOW ||
 		pcs_type == TWO_PHASE_FLOW ||
 		pcs_type == DEFORMATION_H2)
@@ -398,7 +403,7 @@ DistributionType convertDisType(const std::string& dis_type_string)
 	if (dis_type_string.compare("FUNCTION") == 0)
 		return FUNCTION;                              //24.08.2011. WW
 	if (dis_type_string.compare("TRANSFER_SURROUNDING") == 0)
-		return TRANSFER_SURROUNDING;    
+		return TRANSFER_SURROUNDING;
 	else
 	{
 		std::cout << "convertDisType #" << dis_type_string << "# not found"

@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /*=======================================================================
    //Class Problem: Handle the data and their functions for time stepping
 
@@ -12,6 +21,7 @@
 
 #if defined (USE_MPI)
 #include <mpi.h>
+#include "SplitMPI_Communicator.h"
 #endif
 
 
@@ -324,8 +334,9 @@ Problem::Problem (char* filename) :
 				rc->CreateREACT(); //SB
 				rc->InitREACT();
 				//SB4501        rc->ExecuteReactions();
-
-#ifdef LIBPHREEQC                     // MDL: new functions with built-in phreeqc
+#ifdef OGS_FEM_IPQC
+				rc->ExecutePQCString();
+#elif LIBPHREEQC                     // MDL: new functions with built-in phreeqc
 				rc->ExecuteReactionsPHREEQCNewLib();
 #else
 				rc->ExecuteReactionsPHREEQCNew();
@@ -1094,7 +1105,7 @@ void Problem::Euler_TimeDiscretize()
 		SetTimeActiveProcesses(); // JT2012: Activate or deactivate processes with independent time stepping
 //
 #if defined(USE_MPI)
-		MPI_Bcast(&dt, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD); // all processes use the same time stepping (JT->WW. Must they always?)
+		MPI_Bcast(&dt, 1, MPI_DOUBLE, 0, comm_DDC); // all processes use the same time stepping (JT->WW. Must they always?)
 #endif
 //
 		// Update time settings
@@ -1415,11 +1426,16 @@ bool Problem::CouplingLoop()
 				max_outer_error = MMax(max_outer_error,a_pcs->cpl_max_relative_error);
 
 				// Reapply BCs if constrained BC
-#if defined(USE_MPI) || defined(USE_PETSC)
-				bool has_constained_bc_i = a_pcs->hasConstrainedBC();
-				bool has_constained_bc = false;
-				MPI_Allreduce(&has_constained_bc_i, &has_constained_bc, 1, MPI_INT, MPI_LOR, MPI_COMM_WORLD);
-			    	if(has_constained_bc)   
+#if defined(USE_MPI)
+				bool has_constrained_bc_i = a_pcs->hasConstrainedBC();
+				bool has_constrained_bc = false;
+				MPI_Allreduce(&has_constrained_bc_i, &has_constrained_bc, 1, MPI_C_BOOL, MPI_LOR, comm_DDC);
+				if(has_constrained_bc)
+#elif defined (USE_PETSC)
+				bool has_constrained_bc_i = a_pcs->hasConstrainedBC();
+				bool has_constrained_bc = false;
+				MPI_Allreduce(&has_constrained_bc_i, &has_constrained_bc, 1, MPI_C_BOOL, MPI_LOR, MPI_COMM_WORLD);
+				if(has_constrained_bc)
 #else                                
 				if(a_pcs->hasConstrainedBC())
 #endif
@@ -1429,6 +1445,7 @@ bool Problem::CouplingLoop()
 #else
 					const int rank = -1;
 #endif
+					if (rank<1) std::cout << "this process has constrained BCs. reapply BCs." << std::endl;
 					a_pcs->IncorporateBoundaryConditions(rank);
 			}
 			}
@@ -1444,6 +1461,14 @@ bool Problem::CouplingLoop()
 			std::cout << "Outer coupling loop " << outer_index+1 << "/" << cpl_overall_max_iterations << " complete."<<"\n";
 			std::cout << "Max coupling error (relative to tolerance): " << max_outer_error << "\n";
 			std::cout << "======================================================\n";
+
+			//update max cpl error variable in all processes
+			for (std::size_t i(0); i<active_process_index.size(); i++)
+			{
+				std::size_t thisPCSIndex(active_process_index[i]);
+				CRFProcess* thisPCS(total_processes[thisPCSIndex]);
+				thisPCS->cpl_max_relative_error_overall = max_outer_error;
+	    }
 	    }
 	    else{
 			std::cout << "\n";
@@ -1526,6 +1551,7 @@ void Problem::PostCouplingLoop()
 		if (H_Process && dm_pcs->type / 10 != 4) // HM partitioned scheme
 			dm_pcs->ResetTimeStep();
 		dm_pcs->Extropolation_GaussValue();
+		dm_pcs->WriteGaussPointStress();
 	}
 
 // Reaction postprocessing
@@ -3374,7 +3400,9 @@ inline double Problem::MassTrasport()
 #else
 			// REACT_vec[0]->ExecuteReactions();
 
-#ifdef LIBPHREEQC
+#ifdef OGS_FEM_IPQC
+			REACT_vec[0]->ExecutePQCString();
+#elif LIBPHREEQC
 			// MDL: built-in phreeqc
 			REACT_vec[0]->ExecuteReactionsPHREEQCNewLib();
 #else
@@ -4016,7 +4044,7 @@ inline void Problem::LOPExecuteRegionalRichardsFlow(CRFProcess* m_pcs_global, in
 					          no_local_nodes,
 					          MPI_DOUBLE,
 					          k,
-					          MPI_COMM_WORLD);
+					          comm_DDC);
 					for(l = 0; l < no_local_nodes; l++)
 						m_pcs_global->SetNodeValue(l + rp * no_local_nodes,
 						                           idxp,
@@ -4028,7 +4056,7 @@ inline void Problem::LOPExecuteRegionalRichardsFlow(CRFProcess* m_pcs_global, in
 					          no_local_nodes,
 					          MPI_DOUBLE,
 					          k,
-					          MPI_COMM_WORLD);
+					          comm_DDC);
 					for(l = 0; l < no_local_nodes; l++)
 						m_pcs_global->SetNodeValue(l + rp * no_local_nodes,
 						                           idxcp,
@@ -4040,7 +4068,7 @@ inline void Problem::LOPExecuteRegionalRichardsFlow(CRFProcess* m_pcs_global, in
 					          no_local_nodes,
 					          MPI_DOUBLE,
 					          k,
-					          MPI_COMM_WORLD);
+					          comm_DDC);
 					for(l = 0; l < no_local_nodes; l++)
 						m_pcs_global->SetNodeValue(l + rp * no_local_nodes,
 						                           idxS,
@@ -4053,7 +4081,7 @@ inline void Problem::LOPExecuteRegionalRichardsFlow(CRFProcess* m_pcs_global, in
 					          no_local_nodes,
 					          MPI_DOUBLE,
 					          k,
-					          MPI_COMM_WORLD);
+					          comm_DDC);
 					for(l = 0; l < no_local_nodes; l++)
 						m_pcs_global->SetNodeValue(l + rp * no_local_nodes,
 						                           idxp,
@@ -4063,7 +4091,7 @@ inline void Problem::LOPExecuteRegionalRichardsFlow(CRFProcess* m_pcs_global, in
 					          no_local_nodes,
 					          MPI_DOUBLE,
 					          k,
-					          MPI_COMM_WORLD);
+					          comm_DDC);
 					for(l = 0; l < no_local_nodes; l++)
 						m_pcs_global->SetNodeValue(l + rp * no_local_nodes,
 						                           idxcp,
@@ -4073,7 +4101,7 @@ inline void Problem::LOPExecuteRegionalRichardsFlow(CRFProcess* m_pcs_global, in
 					          no_local_nodes,
 					          MPI_DOUBLE,
 					          k,
-					          MPI_COMM_WORLD);
+					          comm_DDC);
 					for(l = 0; l < no_local_nodes; l++)
 						m_pcs_global->SetNodeValue(l + rp * no_local_nodes,
 						                           idxS,

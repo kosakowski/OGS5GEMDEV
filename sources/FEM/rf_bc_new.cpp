@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /**************************************************************************
    FEMLib - Class: BC BoundaryConditions
    Task:
@@ -153,6 +162,7 @@ CBoundaryCondition::CBoundaryCondition() :
 	_pressure_as_head_density = 0;
 	_isConstrainedBC = false;
 	_isSeepageBC = false;
+	_isSwitchBC = false;
 }
 
 // KR: Conversion from GUI-BC-object to CBoundaryCondition
@@ -326,6 +336,44 @@ std::ios::pos_type CBoundaryCondition::Read(std::ifstream* bc_file,
 			{
 				this->setProcessDistributionType(FiniteElement::CONSTANT);
 				in >> geo_node_value; //sub_line
+				in.clear();
+			}
+
+			if (line_string.find("SWITCH") != std::string::npos)
+			{
+				this->setProcessDistributionType(FiniteElement::SWITCH);
+				this->_isSwitchBC = true;
+				std::string tempst;
+				// read process
+				in >> tempst;
+				_switchBC.switchProcessType = FiniteElement::convertProcessType(tempst);
+				if(_switchBC.switchProcessType == FiniteElement::INVALID_PROCESS)
+				{
+					std::cerr << "Invalid Process type in SWITCH BC! Exiting now." << std::endl;
+					std::exit(0);
+				}
+				// ... and associated primary variable
+				in >> tempst;
+				_switchBC.switchPrimVar = FiniteElement::convertPrimaryVariable(tempst);
+
+				// ... which will give the simulated switch value
+				if (!(in >> _switchBC.switchValue))
+				{
+					std::cerr << "No switch value given in SWITCH BC! Exiting now." << std::endl;
+					std::exit(0);
+				}
+				// ... to switch from the on state (ie simulated switch value is higher than this one:)
+				if (!(in >> _switchBC.switchOnValue))
+				{
+					std::cerr << "No switch on value given in SWITCH BC! Exiting now." << std::endl;
+					std::exit(0);
+				}
+				// ... or to switch to the off state (ie simulated switch value is lower than this one:)
+				if (!(in >> _switchBC.switchOffValue))
+				{
+					std::cerr << "No switch off value given in SWITCH BC! Exiting now." << std::endl;
+					std::exit(0);
+				}
 				in.clear();
 			}
 			// If a linear function is given. 25.08.2011. WW
@@ -544,7 +592,10 @@ std::ios::pos_type CBoundaryCondition::Read(std::ifstream* bc_file,
 				in >> tempst;	//Seepage face option (set BC to constrained value, if calculated value > constrained value)
 				if (tempst == "SEEPAGE")
 				{
-					_isSeepageBC = true;
+					if (temp.constrainedDirection == ConstrainedType::SMALLER)
+						temp._isSeepageBC = true;
+					else
+						std::cout << "Seepage not used as constrained direction is not set to SMALLER.\n Please check .bc file." << std::endl;
 				}
 			}
 			if (_isConstrainedBC)
@@ -1110,7 +1161,7 @@ void CBoundaryConditionsGroup::Set(CRFProcess* pcs, int ShiftInNodeVector,
 			if (bc->getGeoType() == GEOLIB::POINT)
 			{
 			  //05.2012. WW
-			  long node_idx =  m_msh->GetNODOnPNT(static_cast<const GEOLIB::Point*> 
+			  long node_idx =  m_msh->GetNODOnPNT(static_cast<const GEOLIB::Point*>
 								(bc->getGeoObj()));
 			  if(node_idx<0)
 			    {
@@ -1120,7 +1171,8 @@ void CBoundaryConditionsGroup::Set(CRFProcess* pcs, int ShiftInNodeVector,
 			  //-------
 				m_node_value = new CBoundaryConditionNode;
 				// Get MSH node number
-			  if (bc->getProcessDistributionType()  == FiniteElement::CONSTANT)
+			  if (bc->getProcessDistributionType()  == FiniteElement::CONSTANT
+					  || bc->getProcessDistributionType()  == FiniteElement::SWITCH)
 			    m_node_value->geo_node_number = node_idx;
 
 				m_node_value->conditional = cont;
@@ -1160,7 +1212,8 @@ void CBoundaryConditionsGroup::Set(CRFProcess* pcs, int ShiftInNodeVector,
 
 				if (m_polyline)
 				{
-					if (bc->getProcessDistributionType() == FiniteElement::CONSTANT)
+					if (bc->getProcessDistributionType() == FiniteElement::CONSTANT
+							|| bc->getProcessDistributionType() == FiniteElement::SWITCH)
 					{
 						// 08/2010 TF
 						double msh_min_edge_length =
@@ -1185,8 +1238,10 @@ void CBoundaryConditionsGroup::Set(CRFProcess* pcs, int ShiftInNodeVector,
 							m_node_value->geo_node_number =
 							        nodes_vector[i];
 							//dis_prop[0];
-							m_node_value->node_value =
-							        bc->geo_node_value;
+							if (bc->getProcessDistributionType() == FiniteElement::SWITCH)
+								m_node_value->node_value = bc->getSwitchBC().switchOnValue;
+							else
+								m_node_value->node_value = bc->geo_node_value;
 							m_node_value->CurveIndex =
 							        bc->getCurveIndex();
 							//YD/WW
@@ -1466,7 +1521,12 @@ void CBoundaryConditionsGroup::Set(CRFProcess* pcs, int ShiftInNodeVector,
 									m_node_value->node_value = bc->dis_linear_f->getValue(coords[0],
 													coords[1], coords[2]);
 								} else {
-									m_node_value->node_value = bc->geo_node_value;
+									if (bc->getProcessDistributionType() == FiniteElement::SWITCH)
+									{
+										m_node_value->node_value = bc->getSwitchBC().switchOnValue;
+									}
+									else
+										m_node_value->node_value = bc->geo_node_value;
 								}
 							}
 						}
@@ -1481,9 +1541,9 @@ void CBoundaryConditionsGroup::Set(CRFProcess* pcs, int ShiftInNodeVector,
 
 						if (bc->isConstrainedBC() == true && nodes_vector_length > 0)
 						{
-							for (std::size_t i=0; i < bc->getNumberOfConstrainedBCs(); i++)
+							for (std::size_t k=0; k < bc->getNumberOfConstrainedBCs(); k++)
 							{
-								const Constrained &temp(bc->getConstrainedBC(i));	//delete object, else previous elements will reside here.
+								const Constrained &temp(bc->getConstrainedBC(k));	//delete object, else previous elements will reside here.
 								if (temp.constrainedVariable == ConstrainedVariable::VELOCITY)
 								{
 									double const * const coords(m_msh->nod_vector[m_node_value->geo_node_number]->getData());

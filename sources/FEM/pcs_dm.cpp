@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 #include "makros.h"
 
 #include <cfloat>
@@ -77,15 +86,23 @@ namespace process
 CRFProcessDeformation::
 CRFProcessDeformation()
 	: CRFProcess(), fem_dm(NULL), ARRAY(NULL),
-	  counter(0), InitialNorm(0.0)
+	  counter(0), InitialNorm(0.0), idata_type(none),
+	  _has_initial_stress_data(false), error_k0(1.0e10)
 
 {
-	error_k0 = 1.0e10;
-	idata_type = none;
+
 }
 
 CRFProcessDeformation::~CRFProcessDeformation()
 {
+	const bool last_step = true;
+	WriteGaussPointStress(last_step);
+	if(type == 41 && (idata_type == write_all_binary || idata_type == read_write) )
+	{
+		// mono-deformation-liquid
+		WriteSolution();
+	}
+
 	if(ARRAY)
 		delete [] ARRAY;
 	if(fem_dm)
@@ -94,20 +111,8 @@ CRFProcessDeformation::~CRFProcessDeformation()
 	fem_dm = NULL;
 	ARRAY = NULL;
 	// Release memory for element variables
-	// alle stationaeren Matrizen etc. berechnen
-	long i;
-	// Write Gauss stress // TEST for excavation analysis
-	//   if(reload==1)
-	//if(reload == 1 || reload == 3)
-	if(idata_type == write_all_binary || idata_type == read_write )
-	{
-		WriteGaussPointStress();
-		if(type == 41) // mono-deformation-liquid
-			WriteSolution();
-	}
-	//
 	MeshLib::CElem* elem = NULL;
-	for (i = 0; i < (long)m_msh->ele_vector.size(); i++)
+	for (std::size_t i = 0; i < m_msh->ele_vector.size(); i++)
 	{
 		elem = m_msh->ele_vector[i];
 		if (elem->GetMark())      // Marked for use
@@ -120,7 +125,7 @@ CRFProcessDeformation::~CRFProcessDeformation()
 	{
 		while(ele_value_dm.size() > 0)
 			ele_value_dm.pop_back();
-		for(i = 0; i < (long)LastElement.size(); i++)
+		for(std::size_t i = 0; i < LastElement.size(); i++)
 		{
 			DisElement* disEle = LastElement[i];
 			delete disEle->InterFace;
@@ -151,8 +156,6 @@ void CRFProcessDeformation::Initialization()
         idata_type = read_all_binary;
     if(reload == 3)
         idata_type = read_write;
-    //--
-
 
 	// Local assembliers
 	// An instaniate of CFiniteElementVec
@@ -173,7 +176,6 @@ void CRFProcessDeformation::Initialization()
 		Tolerance_Local_Newton  = m_num->nls_plasticity_local_tolerance;
 		Tolerance_global_Newton = m_num->nls_error_tolerance[0];
 	}
-	//
 
 	//Initialize material transform tensor for tansverse isotropic elasticity
 	//UJG/WW. 25.11.2009
@@ -274,26 +276,23 @@ void CRFProcessDeformation::CalIniTotalStress()
 		return;
 	CRFProcess *tmp_h_pcs=NULL;
 	tmp_h_pcs = fem_dm->h_pcs;
-	size_t i;
-	int j, gp, NGS, MatGroup; //, n_dom, k, ;
 	ElementValue_DM *eleV_DM = NULL;
 	CSolidProperties *SMat = NULL;
 	MeshLib::CElem* elem = NULL;
 	int h_pcs_type = tmp_h_pcs->type;
 	int idx_p1, idx_p2, idx_s;
-	int nnodes;
 	double pw = 0.;
 	idx_p1 = tmp_h_pcs->GetNodeValueIndex("PRESSURE1")+1;
 	idx_p2 = tmp_h_pcs->GetNodeValueIndex("PRESSURE2")+1;
 	idx_s = tmp_h_pcs->GetNodeValueIndex("SATURATION1")+1;
-	for (i = 0; i < m_msh->ele_vector.size(); i++)
+	for (std::size_t i = 0; i < m_msh->ele_vector.size(); i++)
 	{
 		pw = 0.;
 		elem = m_msh->ele_vector[i];
-		nnodes = elem->GetNodesNumber(false);
-		MatGroup = elem->GetPatchIndex();
+		const int nnodes = elem->GetNodesNumber(false);
+		const int MatGroup = elem->GetPatchIndex();
 		SMat = msp_vector[MatGroup];
-		for (j=0; j<nnodes; j++)
+		for (int j=0; j<nnodes; j++)
 		{
 			if(h_pcs_type == 1 || h_pcs_type==41)//liquid flow
 			{
@@ -334,11 +333,11 @@ void CRFProcessDeformation::CalIniTotalStress()
 			//elem->SetOrder(true);
 			//fem_dm->ConfigElement(elem);
 			eleV_DM = ele_value_dm[i];
-			NGS = fem_dm->GetNumGaussPoints();
+			const int NGS = fem_dm->GetNumGaussPoints();
 
-			for (gp = 0; gp < NGS; gp++)
+			for (int gp = 0; gp < NGS; gp++)
 			{
-				for(j=0; j<3; j++)
+				for(int j=0; j<3; j++)
 				{
 					if(SMat->biot_const<0 && pw < 0)//if biot is negative value, negative pw is not considered
 						(*eleV_DM->Stress0)(j, gp) =  (*eleV_DM->Stress0)(j, gp);
@@ -420,10 +419,6 @@ double CRFProcessDeformation::Execute(int loop_process_number)
 #endif
 
 	clock_t dm_time;
-
-	//-------------------------------------------------------
-	// Controls for Newton-Raphson steps
-	int l;
 
 	//  const int MaxLoadsteps=10; //20;
 	//  const double LoadAmplifier =2.0;
@@ -577,7 +572,7 @@ double CRFProcessDeformation::Execute(int loop_process_number)
 	     if(fluid) number_of_load_steps = 10;
 	   }
 	 */
-	for(l = 1; l <= number_of_load_steps; l++)
+	for(int l = 1; l <= number_of_load_steps; l++)
 	{
 		// This is may needed by pure mechacial process
 		//  Auto increment loading  2
@@ -858,7 +853,7 @@ double CRFProcessDeformation::Execute(int loop_process_number)
                 NormU =  eqs_new->GetVecNormX();
 #else
 		for(size_t n = 0; n < m_msh->GetNodesNumber(true); n++)
-			for(l = 0; l < pcs_number_of_primary_nvals; l++)
+			for(int l = 0; l < pcs_number_of_primary_nvals; l++)
 			{
 				NormU = GetNodeValue(n, fem_dm->Idx_dm1[l]);
 				Error += NormU * NormU;
@@ -987,8 +982,6 @@ double CRFProcessDeformation::Execute(int loop_process_number)
 	}
 	*/
 
-	//----------------------------------------------------------------------
-
 	return Error;
 }
 
@@ -1067,8 +1060,12 @@ void CRFProcessDeformation::InitGauss(void)
 	for(j = 0; j < NS; j++)
 		if(stress_ic[j])
 			ccounter++;
+
+	// Initial stresses are given in .ic file, reload file is therefore disabled,
 	if(ccounter > 0)
-		reload = -1000;
+	{
+		_has_initial_stress_data = true;
+	}
 
 	for (i = 0; i < m_msh->GetNodesNumber(false); i++)
 		for(j = 0; j < NS + 1; j++)
@@ -1225,7 +1222,6 @@ void CRFProcessDeformation::InitGauss(void)
 		}
 	}
 	// Reload the stress results of the previous simulation
-	//if(reload >= 2)
 	if(idata_type == read_all_binary || idata_type == read_write )
 	{
 		ReadGaussPointStress();
@@ -1264,8 +1260,7 @@ void CRFProcessDeformation::CreateInitialState4Excavation()
 	}
 	Idx_Strain[NS] = GetNodeValueIndex("STRAIN_PLS");
 	// For excavation simulation. Moved here on 05.09.2007 WW
-	if((idata_type == write_all_binary || idata_type == none)  && reload != -1000 )
-	//	if(reload < 2 && reload != -1000)
+	if ( !_has_initial_stress_data )
 	{
 		GravityForce = true;
 		cout << "\n ***Excavation simulation: 1. Establish initial stress profile..." <<
@@ -1303,9 +1298,6 @@ void CRFProcessDeformation::CreateInitialState4Excavation()
 		SetBoundaryConditionSubDomain();
 	}
 #endif
-
-	if(reload == -1000)
-		reload = 1;
 }
 
 /*************************************************************************
@@ -1526,7 +1518,6 @@ void CRFProcessDeformation::UpdateIterativeStep(const double damp, const int u_t
 
 			for(j = 0; j < number_of_nodes; j++)
 			  {
-
 
 				SetNodeValue(j,ColIndex, GetNodeValue(j,
 				                                      ColIndex) +
@@ -3088,20 +3079,24 @@ void CRFProcessDeformation::UpdateStress()
    letzte Aenderung:
 
 **************************************************************************/
-void CRFProcessDeformation::WriteGaussPointStress()
+void CRFProcessDeformation::WriteGaussPointStress(const bool last_step)
 {
-#if defined(USE_PETSC) //|| defined(other parallel libs)//03.3012. WW
-	int rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	const std::string StressFileName = FileName + "_" + number2str(rank) + ".sts";
+	if ( !(idata_type == write_all_binary || idata_type == read_write) )
+		return;
+
+	if ( ( aktueller_zeitschritt % nwrite_restart  ) > 0 && (!last_step))
+		return;
+	
+#if defined(USE_PETSC) || defined(USE_MPI) //|| defined(other parallel libs)//03.3012. WW
+	const std::string StressFileName = FileName + "_" + number2str(myrank) + ".sts";
 #else
 	const std::string StressFileName = FileName + ".sts";
 #endif
 
-	fstream file_stress(StressFileName.data(),ios::binary | ios::out);
+	fstream file_stress(StressFileName.data(),ios::binary | ios::out | ios::trunc);
 	ElementValue_DM* eleV_DM = NULL;
 
-	long ActiveElements = 0;
+	std::size_t ActiveElements = 0;
 	MeshLib::CElem* elem = NULL;
 	for(std::size_t i=0; i<m_msh->ele_vector.size(); i++)
 	{
@@ -3124,8 +3119,7 @@ void CRFProcessDeformation::WriteGaussPointStress()
 			file_stress.write((char*)(&i), sizeof(i));
 			//          *eleV_DM->Stress_i += *eleV_DM->Stress0;
 			//TEST           *eleV_DM->Stress0 = 0.0;
-			*eleV_DM->Stress0 = *eleV_DM->Stress_i;
-			eleV_DM->Write_BIN(file_stress);
+			eleV_DM->Write_BIN(file_stress, last_step);
 		}
 	}
 	//
@@ -3144,10 +3138,8 @@ void CRFProcessDeformation::WriteGaussPointStress()
 **************************************************************************/
 void CRFProcessDeformation::ReadGaussPointStress()
 {
-#if defined(USE_PETSC) //|| defined(other parallel libs)//03.3012. WW
-	int rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	const std::string StressFileName = FileName + "_" + number2str(rank) + ".sts";
+#if defined(USE_PETSC) || defined(USE_MPI) //|| defined(other parallel libs)//03.3012. WW
+	const std::string StressFileName = FileName + "_" + number2str(myrank) + ".sts";
 #else
 	const std::string StressFileName = FileName + ".sts";
 #endif
@@ -3155,11 +3147,11 @@ void CRFProcessDeformation::ReadGaussPointStress()
 	fstream file_stress (StressFileName.data(),ios::binary | ios::in);
 	ElementValue_DM* eleV_DM = NULL;
 	//
-	long ActiveElements;
+	std::size_t ActiveElements;
 	file_stress.read((char*)(&ActiveElements), sizeof(ActiveElements));
-	for (long i = 0; i < ActiveElements; i++)
+	for (std::size_t i = 0; i < ActiveElements; i++)
 	{
-		long index;
+		std::size_t index;
 		file_stress.read((char*)(&index), sizeof(index));
 		eleV_DM = ele_value_dm[index];
 		eleV_DM->Read_BIN(file_stress);

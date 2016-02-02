@@ -1,0 +1,46 @@
+#POINTS
+0 0.0 0.0 0.0 
+1 876.0 0.0 0.0 
+2 0.0 100.0 0.0 
+3 876.0 100.0 0.0 
+#POLYLINE
+ $NAME
+  OUT_LINE
+ $POINTS
+  0
+  1
+#POLYLINE
+ $NAME
+  top
+ $POINTS
+  2
+  3
+#POLYLINE
+ $NAME
+  around
+ $POINTS
+  0
+  2
+  3
+  1
+  0
+#POLYLINE
+ $NAME
+  LF
+ $POINTS
+  0
+  2
+#POLYLINE
+ $NAME
+  RT
+ $POINTS
+  3
+  1
+#SURFACE
+ $NAME
+  SURF_0
+ $POLYLINES
+  around
+ $TYPE
+  0
+#STOP

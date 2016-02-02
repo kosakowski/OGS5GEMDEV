@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /*
    Class element declaration
    class for finite element.
@@ -198,7 +207,7 @@ public:
 	void ExtropolateGauss(CRFProcess* m_pcs, const int idof);
 	// Extrapolate reaction rates on TNEQ flow
 	void ExtrapolateGauss_ReactRate_TNEQ_TES(CRFProcess *m_pcs);
-	void UpdateSolidDensity(size_t elem_idx, const bool initial = true);       // HS
+	void UpdateSolidDensity(size_t elem_idx);       // HS
 	// CB _ctx_ CB_merge_0513
 	//void Set_ctx_(long ele_index, double val, int gaussp, int i_dim);
 	//double Get_ctx_(long ele_index, int gaussp, int i_dim);
@@ -467,6 +476,17 @@ private:
 	// CB _ctx_ CB_merge_0513
 	//Matrix _ctx_Gauss;
 };
+
+
+// controls if gas mass form is used in matrix elements of TNEQ process
+#define GAS_MASS_FORM
+#ifdef GAS_MASS_FORM
+const bool GasMassForm = true;
+#else
+const bool GasMassForm = false;
+#endif
+#undef GAS_MASS_FORM
+
 }                                                 // end namespace
 
 /*------------------------------------------------------------------

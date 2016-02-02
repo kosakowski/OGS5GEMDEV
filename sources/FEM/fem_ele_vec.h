@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 /*
    Class element declaration
    class for finite element.
@@ -43,7 +52,8 @@ public:
 	ElementValue_DM(CElem* ele,  const int NGP, bool HM_Staggered);
 	~ElementValue_DM();
 	void ResetStress(bool cpl_loop);
-	void Write_BIN(std::fstream& os);
+	/// \param last_step The last time step or the end of the program.
+	void Write_BIN(std::fstream& os, const bool last_step = false);
 	void Read_BIN(std::fstream& is);
 	void ReadElementStressASCI(std::fstream& is);
 	double MeanStress(const int gp)
@@ -260,12 +270,6 @@ private:
 	// Auxillarary vector
 	Vec* dAcceleration;
 	void ComputeMass();
-
-#if defined(USE_PETSC) // || defined(other parallel libs)//03.3012. WW
-        double *local_matrix;
-        double *local_vec;
-#endif
-
 
 };
 }                                                 // end namespace

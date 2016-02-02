@@ -2,6 +2,11 @@
  * OGSMeshIO.cpp
  *
  *  Created on: Mar 3, 2011
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
  */
 
 #include "GEOObjects.h"

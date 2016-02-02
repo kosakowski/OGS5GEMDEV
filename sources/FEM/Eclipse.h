@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 // Classes for interface GeoSys - ECLIPSE
 #include <vector>
 //#define MAX_ZEILEN 512
@@ -165,7 +174,7 @@ public:
 	bool phase_shift_flag;
 	double sumCO2removed;
 	int ProcessIndex_CO2inLiquid;
-	int ProcessIndex_CO2inGas; //KB 
+	int ProcessIndex_CO2inGas; //KB
 	double actual_time;
 	bool Windows_System;
 	bool existWells;
@@ -236,13 +245,13 @@ public:
 	bool CorrespondingElements(void);
 
 	bool CompareElementsGeosysEclipse(void);
-	
+
 	// TF commented out method since we have already functions for computing the distance
 	// between points
 	//double CalculateDistanceBetween2Points(double Point1[3], double Point2[3]);
 
 	bool CreateFaces(void);
-	
+
 	bool ConnectFacesToElements(void);
 
 	//bool MakeNodeVector(CRFProcess *m_pcs, std::string path, int timestep, int phase_index);
@@ -269,8 +278,8 @@ public:
 	void InterpolateGeosysVelocitiesToNodes(CRFProcess* m_pcs, double* vel_nod, long node);
 
 	void WriteDataToGeoSys(CRFProcess* m_pcs, std::string folder);
-	
-	void SaveEclipseDataFile(long Timestep, CRFProcess* m_pcs); // WTP function to save a copy of the .data file 
+
+	void SaveEclipseDataFile(long Timestep, CRFProcess* m_pcs); // WTP function to save a copy of the .data file
 
 	bool CleanUpEclipseFiles(std::string folder, std::string projectname);
 

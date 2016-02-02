@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 #ifndef OGS_MINI_BM_TESTS_H
 #define OGS_MINI_BM_TESTS_H
 
@@ -33,7 +42,7 @@ exit(1) // fail
 #endif
 
 namespace {
-	
+
 char tmpChar[] = OGS_EXECUTABLE;
 std::string tmpStr = tmpChar; // path passed by CMakeLists.txt
 
@@ -162,7 +171,7 @@ protected:
 
     int outfd[2];
     int infd[2];
-  
+
     pipe(outfd); // ogs writes to
     pipe(infd); //  gtest reads from
 
@@ -171,7 +180,7 @@ protected:
     if( ! pid )    // the child process
       {
 
-	close(STDOUT_FILENO);     // close the file descriptors inherited 
+	close(STDOUT_FILENO);     // close the file descriptors inherited
 	close(STDIN_FILENO);      //   from the parent
 
 	dup2(outfd[0], STDIN_FILENO);  // reassign the new fd
@@ -206,13 +215,13 @@ protected:
     // copy the model files to the temporaray directory
 
   }
-  
+
   virtual void TearDown() {
     // Code here will be called immediately after each test (right
     // before the destructor).
 
     // Remove the temporary directory and contents
- 
+
     DIR * adir = opendir( tmpDirectory );
     std::string fullPath;
 
@@ -237,7 +246,7 @@ protected:
 		PRINT_INFO( "Deleting file from " << toFpath << std::endl );
 		if( remove( toFpath.c_str() ) != 0 ) {
 		  // untested
-		  std::string errStr = ( "Error deleting file : " + 
+		  std::string errStr = ( "Error deleting file : " +
 					 std::string( strerror(errno) ) );
 		  PRINT_ERROR( errStr << std::endl; );
 		}

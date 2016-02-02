@@ -1,3 +1,12 @@
+/**
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
+ *
+ */
+
 //1. Eclipse starten (die Files liegen alle vorbereitet vor
 //2. Daten auslesen -> Tool ecl2gs
 //3. Datenumwandeln (Uebertragung auf Knoten, Geschwindigkeit berechnen)
@@ -457,7 +466,7 @@ void CECLIPSEData::ReadEclipseGrid(std::string Filename)
 			in >> m_eclipseblock->column >> m_eclipseblock->row >>
 			m_eclipseblock->layer >> m_eclipseblock->index >> m_eclipseblock->active;
 			in.clear();
-			
+
 			// SB und KB
 			//cout << m_eclipseblock->column << "\n";
 			//this->SplitStrings(TextFile->Daten[i+1]," ");
@@ -699,10 +708,10 @@ void CECLIPSEData::DetermineNeighbourElements(string Projectname)
 		//	exit(0);
 		//}
 		//Release memory
-		
+
 	}
 	delete (TextFile);
-	
+
 	if ((error == true) || (Error_NeighbourFile == true))
 	{
 		cout << "           Create new *.neighbours file." << "\n";
@@ -920,7 +929,7 @@ int CECLIPSEData::ReadDataFromInputFile(std::string Filename)
 				zeilen = zeilen +1;
 			}
 			while (TextFile->Data[l + zeilen] == ""); // look for possible empty rows between the Keyword and the items
-			while ((TextFile->Data[l + zeilen] != "") && (TextFile->Data[l+ zeilen] != "/")) { 
+			while ((TextFile->Data[l + zeilen] != "") && (TextFile->Data[l+ zeilen] != "/")) {
 			if (TextFile->Data[l + zeilen].substr(0,2) != "--") { // ignore comments
 				found=TextFile->Data[l + zeilen].find(incl);
 				if(found!=string::npos) {
@@ -1433,7 +1442,7 @@ void CECLIPSEData::ReadEclipseData(std::string Filename, long Timestep)
 					else
 					{
 						//convert pressure units from bar to Pa
-						if ((this->Variables[k].compare("PRESSURE") == 
+						if ((this->Variables[k].compare("PRESSURE") ==
 							0) ||
 						    (this->Variables[k].compare("PCOW") == 0) ||
 						    (this->Variables[k].compare("PCOG") == 0) ||
@@ -2029,12 +2038,12 @@ bool CECLIPSEData::ReplaceASectionInFile(std::string Filename,
 bool CECLIPSEData::WriteIncludeFile(std::string Filename, std::string Keyword, vector <std::string> Data, bool append) {
 	bool success = true;
 	ofstream aus;
-	
+
 	if (append)
 		aus.open(Filename.c_str(), ios::app);
 	else
 		aus.open(Filename.c_str());
-	
+
 	aus << Keyword << "\n";
 //	for (long i = 0; i < Data.size(); i++) {
 	for (std::size_t i = 0; i < Data.size(); i++) { // WTP
@@ -2222,17 +2231,17 @@ bool CECLIPSEData::CompareElementsGeosysEclipse()
     const double * pnt;
 	//	const double * gc;
 	start = clock();
-	
+
 
 	cout << "        CompareElements() ";
-	
+
 	//check if number of elements is equal
 	if (long(m_msh->ele_vector.size()) != this->elements)
 	{
 		cout << "Error: The number of elements between Geosys and Eclipse is not equal!" <<
 		"\n";
 		return false;
-	}	
+	}
 	for (unsigned long i = 0; i < m_msh->ele_vector.size(); i++)
 	{
 
@@ -2316,8 +2325,8 @@ bool CECLIPSEData::CompareElementsGeosysEclipse()
 
 		if (ElementIsEqual == false)
 			return 0;
-		
-		
+
+
 		//Get the gravity centre of the element from geosys
 		double const* gc(m_ele->GetGravityCenter());
 		//gc = m_ele->GetGravityCenter();
@@ -2325,7 +2334,7 @@ bool CECLIPSEData::CompareElementsGeosysEclipse()
 		this->eclgrid[i]->y_barycentre = gc[1];
 		this->eclgrid[i]->z_barycentre = gc[2];
 		this->eclgrid[i]->volume = m_ele->GetVolume();
-		
+
 	}
 
 	finish = clock();
@@ -3755,7 +3764,7 @@ void CECLIPSEData::InterpolateDataFromBlocksToNodes(CRFProcess* m_pcs,
 				}
 				//KB Vapor component mass fraction, redo wtp
 				if (int(this->GetVariableIndex("YFW2")) >= 0){
-					variable_index_vapor_mass_fraction = this->GetVariableIndex("YFW2");				 
+					variable_index_vapor_mass_fraction = this->GetVariableIndex("YFW2");
 
 				}
 			}
@@ -3862,7 +3871,7 @@ void CECLIPSEData::InterpolateDataFromBlocksToNodes(CRFProcess* m_pcs,
 		phase_pressure = phase_pressure / sum_weights;
 		this->NodeData[i]->phase_pressure[phase_index] = phase_pressure;
 		this->NodeData[i]->pressure = phase_pressure; // the last phase pressure is the highest pressure
-		
+
 
 		if (int(this->Phases.size()) > 1)
 		{
@@ -4034,7 +4043,7 @@ void CECLIPSEData::InterpolateDataFromBlocksToNodes(CRFProcess* m_pcs,
 				vec_string.push_back(tempstring);
 			}
 		}
-		
+
 	//CWriteTextfiles *TextFile;
 	//TextFile = new CWriteTextfiles;
 	//int position = int(path.find_last_of("\\"));
@@ -4137,14 +4146,14 @@ void CECLIPSEData::WriteDataToGeoSys(CRFProcess* m_pcs, std::string path)
 	//long index_saturation2, index_gas_density;
 	int phase1, phase2, transportphase = 0; // SB redo wtp
 	double value = 0.0, value_gas = 0.0; // SB redo wtp
-	//double saturation_w, 
+	//double saturation_w,
 	double porosity = 0.1; // SB redo wtp
 	//double Molweight_CO2;
 
 	// Sb redo wtp
     // CB_merge_0513
 	REACTINT *m_rei = NULL;
-	if(REACTINT_vec.size()>0)    
+	if(REACTINT_vec.size()>0)
 	  m_rei = REACTINT_vec[0];
 
     //WTP_CB: get no of nodes in mesh
@@ -4158,7 +4167,7 @@ void CECLIPSEData::WriteDataToGeoSys(CRFProcess* m_pcs, std::string path)
 		index_water_density = m_pcs->GetNodeValueIndex("DENSITY1");  //DENSITY1 is not a variable for some flow process, e.g. LIQUID_FLOW
 		//WTP_CB: new way to get the total number of nodes in the mesh since nod_val_vector is not suitable anymore
 		//for(unsigned long i = 0; i < m_pcs->nod_val_vector.size(); i++)
-		for(long i = 0; i < nnodes; i++) 
+		for(long i = 0; i < nnodes; i++)
 		{
 			value = this->NodeData[i]->pressure;
 			m_pcs->SetNodeValue(i, index_pressure1, value);
@@ -4200,7 +4209,7 @@ void CECLIPSEData::WriteDataToGeoSys(CRFProcess* m_pcs, std::string path)
 		index_water_density = m_pcs->GetNodeValueIndex("DENSITY1");
 		index_gas_density = m_pcs->GetNodeValueIndex("DENSITY2");
 		// WTP: getting the index for the temperature coupling,
-		// what is with 1 Phase Flow?, what with Dens coupling? 
+		// what is with 1 Phase Flow?, what with Dens coupling?
 		//index_temperature1 = m_pcs->GetNodeValueIndex("TEMPERATURE1") + 1;
 
 
@@ -4229,7 +4238,7 @@ void CECLIPSEData::WriteDataToGeoSys(CRFProcess* m_pcs, std::string path)
 				m_pcs->SetNodeValue(i, index_water_density, value);
 
 			value = this->NodeData[i]->phase_density[phase2];
-			if(index_gas_density > 0)	
+			if(index_gas_density > 0)
 				m_pcs->SetNodeValue(i, index_gas_density, value);
 
 			//// WTP: Saving the temperature data
@@ -4300,7 +4309,7 @@ void CECLIPSEData::WriteDataToGeoSys(CRFProcess* m_pcs, std::string path)
 				        i,
 				        indexConcentration,
 				        value);
-				// CB_merge_0513 next statement??		
+				// CB_merge_0513 next statement??
 				if(indexConcentration>0)
      				pcs_vector[this->ProcessIndex_CO2inLiquid]->SetNodeValue(i, indexConcentration-1, value); //2012.07.02
 				//cout << "Node: " << i << " Druck: " << m_pcs->GetNodeValue(i, index_pressure2) << " RS: " << this->NodeData[i]->Gas_dissolved << " Dichte: " << this->SurfaceCO2Density << " C(4): " << value << "\n";
@@ -4315,7 +4324,7 @@ void CECLIPSEData::WriteDataToGeoSys(CRFProcess* m_pcs, std::string path)
 				}
 			}
 		}
-		//KB: e300 calculate species concentration in the gas phase 
+		//KB: e300 calculate species concentration in the gas phase
 		if (this->GetVariableIndex("YFW2") >= 0) {
 			CRFProcess *n_pcs = NULL;
 			int indexConcentration_gas;
@@ -4337,16 +4346,16 @@ void CECLIPSEData::WriteDataToGeoSys(CRFProcess* m_pcs, std::string path)
 			indexConcentration_gas = pcs_vector[this->ProcessIndex_CO2inGas]->GetNodeValueIndex(pcs_vector[this->ProcessIndex_CO2inGas]->pcs_primary_function_name[0]) + 1; // +1: new timelevel
 			//WTP_CB: new way to get the total number of nodes in the mesh since nod_val_vector is not suitable anymore
 			//for(unsigned long i = 0; i < pcs_vector[this->ProcessIndex_CO2inGas]->nod_val_vector.size(); i++){
-			for(long i = 0; i < nnodes; i++){ 
- 			//Calculate CO2 Concentration in Gas 
+			for(long i = 0; i < nnodes; i++){
+ 			//Calculate CO2 Concentration in Gas
 				double mass_CO2 = this->NodeData[i]->VaporComponentMassFraction * this->NodeData[i]->phase_density[phase2];
 				value_gas = mass_CO2 / (this->Molweight_CO2 / 1000);
   				// CB: use correct reference volume
   				if(transportphase==3) {// NAPL Phase, i.e. mol/m³REV
 			      // CB_merge_0513
                   if(m_rei)
-  				    porosity = m_rei->node_porosity[i];   // CB: Todo, generalize  
-  				  value_gas *= this->NodeData[i]->phase_saturation[2] * porosity; 
+  				    porosity = m_rei->node_porosity[i];   // CB: Todo, generalize
+  				  value_gas *= this->NodeData[i]->phase_saturation[2] * porosity;
   				}
 				pcs_vector[this->ProcessIndex_CO2inGas]->SetNodeValue(i, indexConcentration_gas, value_gas);
 				// CB: also set the old TL. This is required by Satu update from NAPL dissolution
@@ -4359,7 +4368,7 @@ void CECLIPSEData::WriteDataToGeoSys(CRFProcess* m_pcs, std::string path)
 			}
 		}
 
-	 //CB: e100 calculate species concentration in the gas phase 
+	 //CB: e100 calculate species concentration in the gas phase
 	 if (this->E100 && this->dissolved_co2_ingas_pcs_name_ECL.size()>0) {
 			CRFProcess *n_pcs = NULL;
 			int indexConcentration_gas;
@@ -4383,14 +4392,14 @@ void CECLIPSEData::WriteDataToGeoSys(CRFProcess* m_pcs, std::string path)
 			//WTP_CB: new way to get the total number of nodes in the mesh since nod_val_vector is not suitable anymore
 			//for(unsigned long i = 0; i < pcs_vector[this->ProcessIndex_CO2inGas]->nod_val_vector.size(); i++){
 		    for(long i = 0; i < nnodes; i++){
- 			//Calculate CO2 Concentration in Gas, gas is pure CO2 so mass fraction is 1 by definition 
+ 			//Calculate CO2 Concentration in Gas, gas is pure CO2 so mass fraction is 1 by definition
 				double mass_CO2 = 1.0 * this->NodeData[i]->phase_density[phase2];
 				value_gas = mass_CO2 / (this->Molweight_CO2 / 1000);
 				if(transportphase==3) {// NAPL Phase, i.e. mol/m^3REV
-			      // CB_merge_0513 
+			      // CB_merge_0513
                   if(m_rei)
-				    porosity = m_rei->node_porosity[i];   // CB: Todo, generalize  
-				  value_gas *= this->NodeData[i]->phase_saturation[2] * porosity; 
+				    porosity = m_rei->node_porosity[i];   // CB: Todo, generalize
+				  value_gas *= this->NodeData[i]->phase_saturation[2] * porosity;
 				}
 				pcs_vector[this->ProcessIndex_CO2inGas]->SetNodeValue(i, indexConcentration_gas, value_gas);
 				// CB: also set the old TL. This is required by Satu update from NAPL dissolution
@@ -4404,7 +4413,7 @@ void CECLIPSEData::WriteDataToGeoSys(CRFProcess* m_pcs, std::string path)
 		}
 	 } //SB_KB
 
-	
+
 
 	//Geschwindigkeiten an den Gausspunkten interpolieren
 	for (int i = 0; i < int(this->Phases.size()); i++)
@@ -4711,7 +4720,7 @@ std::string CECLIPSEData::ExecuteEclipse(long Timestep, CRFProcess* m_pcs, std::
 			//if (this->WellRates.size() != 0){
 			//	std::string outline = this->ecl_well[ii]->name + "   " + this->ecl_well[ii]->phase + "   " + this->ecl_well[ii]->open_flag + "   " + this->ecl_well[ii]->control_mode + "   " +  this->WellRates[ii] + "   " + " / ";
 			//	vecData.push_back(outline);
-			//	}	
+			//	}
 			//}
 			if (vecData.size() != 0 ){
 				std::string outline = "/";
@@ -4888,7 +4897,7 @@ std::string CECLIPSEData::ExecuteEclipse(long Timestep, CRFProcess* m_pcs, std::
 				if (int(this->Phases.size()) == 3) {
 					// three phases present, but use only oil as water and gas as CO2
 					this->phase_shift_flag = true;
-				
+
 				}
 			}
 			else
@@ -4973,7 +4982,7 @@ std::string CECLIPSEData::ExecuteEclipse(long Timestep, CRFProcess* m_pcs, std::
 		{
 			if (this->Windows_System == true)
 			{
-				
+
 				tempstring = EclipseExe + " " + projectname;
 				//std::cout << " Calling Eclipse executable using : " << tempstring << "\n";
 				if (system(tempstring.c_str()))
@@ -5006,9 +5015,9 @@ std::string CECLIPSEData::ExecuteEclipse(long Timestep, CRFProcess* m_pcs, std::
 		// increase the number of time steps used for restart
 		Keyword = "RESTART";
 		//tempstring = " d:\\Projekte\\MoPa\Programme\\Eclipse\\BGfirstmodel\\";
-		//SB redo WTP tempstring = folder + "TemporaryResults "; 
+		//SB redo WTP tempstring = folder + "TemporaryResults ";
 		tempstring = folder;
-		
+
 		// For the path to the restart file, ECLIPSE under LINUX wants "\" instead of "/"; replace for this section in folder string
 		replace(tempstring.begin(), tempstring.end(),'/','\\');
 		tempstring += "TEMPORARYRESULTS ";
@@ -5084,7 +5093,7 @@ bool CECLIPSEData::CleanUpEclipseFiles(std::string folder, std::string projectna
 	std::string extension;
 	std::string laenge;
 
-	if(this->Windows_System == true){ 
+	if(this->Windows_System == true){
 		system_delete = "del ";
 		system_noquery = " /Q";
 	}
@@ -5122,7 +5131,7 @@ bool CECLIPSEData::CleanUpEclipseFiles(std::string folder, std::string projectna
                   extension += "00" + temp.str() + " " ;
                 else if(aktueller_zeitschritt < 1000)
                   extension += "0" + temp.str() + " " ;
-                else 
+                else
                   extension += temp.str() + " " ;
 
                 systemcommand = "cp "  + projectname + extension + folder + "TEMPORARYRESULTS" + extension;
@@ -5210,12 +5219,12 @@ int CECLIPSEData::WriteDataBackToEclipse(CRFProcess* m_pcs, std::string folder)
 	typeExponentialNumber tempNumber;
 	const double epsilon = 1e-7;
 	int j_max;
-	
-	double value=0.0, value_old = 0; //porosity=0.0, saturation_w=0.0, 
+
+	double value=0.0, value_old = 0; //porosity=0.0, saturation_w=0.0,
 	double RS = 0;
 	vector <double> Sats;
 	vector <double> Press;
-	
+
 
     //get no of nodes in mesh
 	long nnodes = fem_msh_vector[0]->GetNodesNumber(false);
@@ -5233,18 +5242,18 @@ int CECLIPSEData::WriteDataBackToEclipse(CRFProcess* m_pcs, std::string folder)
 	std::string tempstring3;
 	double *tensor = NULL;
 	long count;
-	//CB_merge_0513 
+	//CB_merge_0513
 	//int idx_kxx, idx_kyy, idx_kzz; //WTP
 	int idx_n = 0;
 	std::ostringstream sstream;
 	sstream.precision(8);
-	
+
 	//WTP variables for temperautre coupling to ecl
 	CRFProcess* l_pcs = NULL;
 	int idx_T = -1;	// WTP Index of temperature data in
 	double temp_temp = -99.;
 	double ele_temp = -99.;
-	
+
 	cout << "      Write DIC to Eclipse File " << "\n";
 
 	start = clock();
@@ -5298,7 +5307,7 @@ int CECLIPSEData::WriteDataBackToEclipse(CRFProcess* m_pcs, std::string folder)
 		     << "\n";
 		return 0;
 	}
-	
+
 	// Calculate CO2 in liquid Phase: RS kg/m³ water
 	//first, get the pcs
 	 n_pcs = pcs_vector[this->ProcessIndex_CO2inLiquid];
@@ -5307,7 +5316,7 @@ int CECLIPSEData::WriteDataBackToEclipse(CRFProcess* m_pcs, std::string folder)
 	//indexConcentration = pcs_vector[this->ProcessIndex_CO2inLiquid]->GetNodeValueIndex(pcs_vector[this->ProcessIndex_CO2inLiquid]->pcs_primary_function_name[0]) + 1; // +1: new timelevel
 	indexConcentration = n_pcs->GetNodeValueIndex(n_pcs->pcs_primary_function_name[0]) + 1; // +1: new timelevel
 	//WTP_CB: new way to get the total number of nodes in the mesh since nod_val_vector is not suitable anymore
-	//for(unsigned long i = 0; i < pcs_vector[this->ProcessIndex_CO2inLiquid]->nod_val_vector.size(); i++){ 
+	//for(unsigned long i = 0; i < pcs_vector[this->ProcessIndex_CO2inLiquid]->nod_val_vector.size(); i++){
 	for(long i = 0; i < nnodes; i++){
 
 		 //Read CO2 density
@@ -5366,7 +5375,7 @@ int CECLIPSEData::WriteDataBackToEclipse(CRFProcess* m_pcs, std::string folder)
 	idx = m_pcs->GetNodeValueIndex("SATURATION1") + 1; // +1: new timelevel
 	for(long i = 0; i < nnodes; i++){
 	  // get the node values old and new
-	  value_old = NodeData[i]->phase_saturation[phase2]; 
+	  value_old = NodeData[i]->phase_saturation[phase2];
 	  value = 1 - m_pcs->GetNodeValue(i, idx);
 	  // Check consistency
 	  if ((value < 0) || (value > 1))  {
@@ -5379,7 +5388,7 @@ int CECLIPSEData::WriteDataBackToEclipse(CRFProcess* m_pcs, std::string folder)
 	    cout << "Node: " << i << " Sgas_old: " << value_old << " Sgas_new: " << value << "\n";
 	    return 0;
 	  }
-	
+
 	  //calculate change of Sgas
 	  NodeData[i]->deltaSat =  value - value_old;
 	  if (NodeData[i]->deltaSat != 0) {
@@ -5396,13 +5405,13 @@ int CECLIPSEData::WriteDataBackToEclipse(CRFProcess* m_pcs, std::string folder)
 	    cout << "  Fehler in Berechnung von Sgas: " << NodeData[i]->phase_saturation[phase2] << "\n";
 	  }
 	}
-	
+
 	// CB Return delta Pressure
 	// get index of gas sat in nodevaluevector of this process
 	idx = m_pcs->GetNodeValueIndex("PRESSURE2") + 1; // +1: new timelevel
 	for(long i = 0; i < nnodes; i++){
 	  // get the node values old and new
-	  value_old = NodeData[i]->phase_pressure[phase2]; 
+	  value_old = NodeData[i]->phase_pressure[phase2];
 	  value = m_pcs->GetNodeValue(i, idx);
 	  // Check consistency
 	  if (value < 0)  {
@@ -5415,7 +5424,7 @@ int CECLIPSEData::WriteDataBackToEclipse(CRFProcess* m_pcs, std::string folder)
 	    cout << "Node: " << i << " PRESSURE2_old: " << value_old << " PRESSURE2_new: " << value << "\n";
 	    return 0;
 	  }
-	
+
 	  //calculate change of PRESSURE2
 	  NodeData[i]->deltaPress =  value - value_old;
 	  if (NodeData[i]->deltaPress != 0) {
@@ -5546,27 +5555,27 @@ int CECLIPSEData::WriteDataBackToEclipse(CRFProcess* m_pcs, std::string folder)
 	    //check if delta_gas_dissolved is not larger than the available volume of CO2 gas phase
 	    if (fabs(delta_gas_dissolved) > (Data[i][variable_index_Gas_saturation] - epsilon)) {
 		     cout << "The volume of CO2 gas phase (Sat) removed is larger than the available volume of CO2 gas! The value is corrected!" << "\n";
-		     for (long j = 0; j < long(vec_element_nodes.Size()); j++) 
+		     for (long j = 0; j < long(vec_element_nodes.Size()); j++)
 			    cout << "     Node: " << vec_element_nodes[j]->GetIndex() << " Sgas: " << NodeData[vec_element_nodes[j]->GetIndex()]->deltaSat << "\n";
 				cout << "  Element: " << i << " deltaSat: " << delta_gas_dissolved << " Sgas_old: " << Data[i][variable_index_Gas_saturation];
 			    delta_gas_dissolved = - Data[i][variable_index_Gas_saturation]; // limit the delta
 		    }
 	   }
 	   // here set the delta ro element
-	   if (delta_gas_dissolved != 0) { 
-	     if ((fabs(delta_gas_dissolved) / Data[i][variable_index_Gas_saturation]) < epsilon) 
+	   if (delta_gas_dissolved != 0) {
+	     if ((fabs(delta_gas_dissolved) / Data[i][variable_index_Gas_saturation]) < epsilon)
 			     Sats.push_back(Data[i][variable_index_Gas_saturation]); // old satu
-	     else 
+	     else
 			     Sats.push_back(Data[i][variable_index_Gas_saturation] + delta_gas_dissolved);
 	   }
-	   else 
+	   else
 		    Sats.push_back(Data[i][variable_index_Gas_saturation]);
 	   if (Sats[Sats.size() - 1] < 0) {
 		    cout << "The new calculated Saturation of CO2 gas (SGAS) is negative!" << "\n";
 		    return 0;
 	   }
 	 }
-	
+
 	 // CB interpolate change of PRESSURE2 from nodes to elements
 	 for (long i = 0; i < nele; i++) {
 		  m_element = m_msh->ele_vector[i];
@@ -5582,29 +5591,29 @@ int CECLIPSEData::WriteDataBackToEclipse(CRFProcess* m_pcs, std::string folder)
 		    //check if delta_gas_dissolved is not larger than the old Pressure of CO2 gas phase
 	     if (fabs(delta_gas_dissolved) > (Data[i][variable_index_Gas_pressure] - epsilon)) {
 			     cout << "The pressure reduction of CO2 gas phase is larger than the old pressure of CO2 gas! The value is corrected!" << "\n";
-			     for (long j = 0; j < long(vec_element_nodes.Size()); j++) 
+			     for (long j = 0; j < long(vec_element_nodes.Size()); j++)
 				      cout << "     Node: " << vec_element_nodes[j]->GetIndex() << " Press: " << NodeData[vec_element_nodes[j]->GetIndex()]->deltaPress << "\n";
 			     cout << "  Element: " << i << " deltaPress: " << delta_gas_dissolved << " Press_old: " << Data[i][variable_index_Gas_pressure];
 			     delta_gas_dissolved = - Data[i][variable_index_Gas_pressure]; // limit the delta
 		    }
 	   }
 	   // here set the delta ro element
-	   if (delta_gas_dissolved != 0) { 
-	     if ((fabs(delta_gas_dissolved) / Data[i][variable_index_Gas_pressure]) < epsilon) 
+	   if (delta_gas_dissolved != 0) {
+	     if ((fabs(delta_gas_dissolved) / Data[i][variable_index_Gas_pressure]) < epsilon)
 			     Press.push_back(Data[i][variable_index_Gas_pressure]); // old satu
-	     else 
+	     else
 			     Press.push_back(Data[i][variable_index_Gas_pressure] + delta_gas_dissolved);
 	   }
-	   else 
+	   else
 		    Press.push_back(Data[i][variable_index_Gas_pressure]);
 	   if (Press[Press.size() - 1] < 0) {
 		    cout << "The new calculated Pressure of CO2 gas (PRESSURE) is negative!" << "\n";
 		    return 0;
 	   }
 	   // Pa -> bar: /10000
-	   Press[i] /= 1.0e+5; 
+	   Press[i] /= 1.0e+5;
 	 }
-		
+
 	 //write RS, SGAS, PRESSURE, POROPERM Data into the Eclipse restart file
 
 	if (this->E100 == true)
@@ -5738,7 +5747,7 @@ int CECLIPSEData::WriteDataBackToEclipse(CRFProcess* m_pcs, std::string folder)
 		  //system("Pause");
 		  return 0;
 	 }
-	
+
 	 // CB PRESS independent of e100 / e300
 	 Keyword = " 'PRESSURE";
 	 vecString.clear();
@@ -5771,12 +5780,12 @@ int CECLIPSEData::WriteDataBackToEclipse(CRFProcess* m_pcs, std::string folder)
 		  //system("Pause");
 		  return 0;
 	 }
-	
+
 	 // CB Poropermdata independent of e100 / e300
 	 //for (long i = 0; i < mmp_vector.size(); i++) {
 	 for (std::size_t i = 0; i < mmp_vector.size(); i++) { // WTP
-	   if(mmp_vector[i]->porosity_model==13){ 
-	     poroflag=true; // poro update from geochemistry  
+	   if(mmp_vector[i]->porosity_model==13){
+	     poroflag=true; // poro update from geochemistry
 	     idx_n = m_pcs->GetElementValueIndex("POROSITY") + 1;
 	     if(idx_n<0) cout << " Warning in Eclipse: No POROSITY ele index found with PCS " << m_pcs->getProcessType() << "." << "\n";
 	   }
@@ -5794,7 +5803,7 @@ int CECLIPSEData::WriteDataBackToEclipse(CRFProcess* m_pcs, std::string folder)
 			   tempstring  = "";
 			   tempstring2 = "";
 			   tempstring3 = "";
-			   if (long(eclipse_ele_active_flag.size()) - i < j_max) 
+			   if (long(eclipse_ele_active_flag.size()) - i < j_max)
 	       j_max = (long(eclipse_ele_active_flag.size()) - i);
 			   for (int j = 0; j < j_max; j++) {
 				    tempstring += " ";  // 1lz
@@ -5828,10 +5837,10 @@ int CECLIPSEData::WriteDataBackToEclipse(CRFProcess* m_pcs, std::string folder)
 	   }
 	   if(PoroPermIncludeFile)  Filename = folder + "GRID_PROPS.INC" ;
 	   else Filename = folder + "ECL_RESTART.DATA" ;
-	
+
 	   if(this->Radialmodell) Keyword = "PERMR";
 	   else Keyword = "PERMX";
-	   
+
 	   if(PoroPermIncludeFile) WriteIncludeFile(Filename, Keyword, vecString, false);
 			 else if (ReplaceASectionInFile(Filename, Keyword, vecString, false) == false) {
 				  cout << "Replacing section " << Keyword << " in the file: " << Filename << " didn't work!" << "\n";
@@ -5840,7 +5849,7 @@ int CECLIPSEData::WriteDataBackToEclipse(CRFProcess* m_pcs, std::string folder)
 			 }
 	   if(this->Radialmodell) Keyword = "PERMTHT";
 	   else Keyword = "PERMY";
-	   
+
 	   if(PoroPermIncludeFile) WriteIncludeFile(Filename, Keyword, vecString2, true);
 	 		else if (ReplaceASectionInFile(Filename, Keyword, vecString2, false) == false) {
 				  cout << "Replacing section " << Keyword << " in the file: " << Filename << " didn't work!" << "\n";
@@ -5859,10 +5868,10 @@ int CECLIPSEData::WriteDataBackToEclipse(CRFProcess* m_pcs, std::string folder)
 	  	j_max = 4;
 	   count = 0;
 	   vecString.clear();
-	
+
 		 	for (long i = 0; i < long(eclipse_ele_active_flag.size()); i = i + j_max) {
 			  	tempstring = "";
-				  if (long(eclipse_ele_active_flag.size()) - i < j_max) 
+				  if (long(eclipse_ele_active_flag.size()) - i < j_max)
 					   j_max = (long(eclipse_ele_active_flag.size()) - i);
 				  for (int j = 0; j < j_max; j++) {
 					   tempstring += " "; // 1lz
@@ -5880,7 +5889,7 @@ int CECLIPSEData::WriteDataBackToEclipse(CRFProcess* m_pcs, std::string folder)
 			 Keyword = "PORO";
 	 		if(PoroPermIncludeFile)  Filename = folder + "GRID_PROPS.INC" ;
 	   else Filename = folder + "ECL_RESTART.DATA" ;
-	  
+
 	   if(PoroPermIncludeFile) WriteIncludeFile(Filename, Keyword, vecString, true);
 	 		else if (ReplaceASectionInFile(Filename, Keyword, vecString, false) == false) {
 				  cout << "Replacing section " << Keyword << " in the file: " << Filename << " didn't work!" << "\n";
@@ -5888,7 +5897,7 @@ int CECLIPSEData::WriteDataBackToEclipse(CRFProcess* m_pcs, std::string folder)
 				  return 0;
 			 }
 	 }
-	
+
 	 /// WTP: Write temperature file for eclipse using the 'TEMPI' keyword in Eclipse
 	 /// if heattransport is used in OGS and the simulator is Eclipse.
 	 /// Only works one way (OGS->Eclipse).
@@ -5900,7 +5909,7 @@ int CECLIPSEData::WriteDataBackToEclipse(CRFProcess* m_pcs, std::string folder)
 		 l_pcs = PCSGet("HEAT_TRANSPORT");
 		 // get the correct index for the process
 		 idx_T = l_pcs->GetNodeValueIndex("TEMPERATURE1")+1;
-		 
+
 		 // setting the correct filename for the temperature output
 		 Filename = folder + "TEMP.INC" ;
 		 // keyword to read the temperature within the ecl run
@@ -5914,18 +5923,18 @@ int CECLIPSEData::WriteDataBackToEclipse(CRFProcess* m_pcs, std::string folder)
 		 // running a loop over all, active and non-active elements of Eclipse
 		 for (long i = 0; i < long(eclipse_ele_active_flag.size()); i = i + j_max) {
 			 tempstring = "";
-			 if (long(eclipse_ele_active_flag.size()) - i < j_max) 
+			 if (long(eclipse_ele_active_flag.size()) - i < j_max)
 				 j_max = (long(eclipse_ele_active_flag.size()) - i);
 			 for (int j = 0; j < j_max; j++) {
-				 tempstring += " "; 
+				 tempstring += " ";
 				 // if the current element is active e.g. also used in Geosys get the temperature
 				 if(eclipse_ele_active_flag[i]){
-					 // here get the index of every node in the element 
+					 // here get the index of every node in the element
 					m_element = m_msh->ele_vector[ele_no];
 					m_element->GetNodes(vec_element_nodes);
-		
+
 					ele_no++; // saving the ammount of active elements
-					ele_temp = 0.0; 
+					ele_temp = 0.0;
 					weight = float(1.0 / vec_element_nodes.Size()); // getting the correct weight for each nodal value
 					// run a loop over the number of nodes of the element
 					for (long k = 0; k < long(vec_element_nodes.Size()); k++) {
@@ -5933,7 +5942,7 @@ int CECLIPSEData::WriteDataBackToEclipse(CRFProcess* m_pcs, std::string folder)
 						long loc_nd_idx = vec_element_nodes[k]->GetIndex();
 						// read the corresponging temperature
 						temp_temp = l_pcs->GetNodeValue(loc_nd_idx, idx_T);
-						// add it up 
+						// add it up
 						ele_temp += temp_temp * weight;
 					}
 					// depending on the temperature unit used in Geosys it has to be converted to °C for Ecl
@@ -5959,7 +5968,7 @@ int CECLIPSEData::WriteDataBackToEclipse(CRFProcess* m_pcs, std::string folder)
 	 vecString.clear();
 	 vecString2.clear();
 	 vecString3.clear();
-	
+
 	 Sats.clear();
 	 Press.clear();
 
@@ -6109,7 +6118,7 @@ int CECLIPSEData::RunEclipse(long Timestep, CRFProcess* m_pcs)
 		this->ReadEclipseGrid(GridFilename);
 
 		//Check if Eclipse grid is identical with Geosys grid
-		if (CompareElementsGeosysEclipse() == 0) 
+		if (CompareElementsGeosysEclipse() == 0)
 		{
 			cout <<
 			"The Eclipse grid is not identical to the Geosys grid! Abort Calculations!"
@@ -6194,7 +6203,7 @@ int CECLIPSEData::RunEclipse(long Timestep, CRFProcess* m_pcs)
 	}
 	WriteDataToGeoSys(m_pcs, folder);
 
-	// WTP Save old .data files from eclipse for benchmarking if wanted 
+	// WTP Save old .data files from eclipse for benchmarking if wanted
 	// --> might want to add saving the temperature files
 	if (UseSaveEclipseDataFiles == true)
 		SaveEclipseDataFile(Timestep, m_pcs);
@@ -6217,12 +6226,12 @@ int CECLIPSEData::RunEclipse(long Timestep, CRFProcess* m_pcs)
 /*-------------------------------------------------------------------------
 GeoSys - Function: WriteOutput_2DSection
 Task: writes sth
-Return: 
+Return:
 Programming: XX/XXXX KB / CB
 Modification:
 -------------------------------------------------------------------------*/
 void CECLIPSEData::WriteOutput_2DSection(long Timestep) {
-	
+
 	vector<string> pressure;
 	vector<string> soil;
 	vector<string> sgas;
@@ -6240,7 +6249,7 @@ void CECLIPSEData::WriteOutput_2DSection(long Timestep) {
 	std::stringstream strstream;
 	strstream << Timestep;
 	strstream >> time;
-	
+
 	Filename.clear();
 	Filename = Filename_base + time + "_co40_lay1.txt";
 
@@ -6254,7 +6263,7 @@ void CECLIPSEData::WriteOutput_2DSection(long Timestep) {
 		if ((this->eclgrid[i]->column == 40) && (this->eclgrid[i]->layer == 1)){
 			for (int k=0; k < this->rows; k++){
 				textfile << this->eclgrid[i]->column << " " << " " << k << " " << this->eclgrid[i]->layer << " " << this->eclgrid[i]->x_barycentre << " " << this->eclgrid[i]->y_barycentre << " " << this->eclgrid[i]->z_barycentre << " ";
-				//textfile << pressure[i] << " " << soil[i] << " " sgas[i] << " " << oildens[i] << " " << gasdens[i] << " ";				
+				//textfile << pressure[i] << " " << soil[i] << " " sgas[i] << " " << oildens[i] << " " << gasdens[i] << " ";
 				textfile << this->Data[i][this->GetVariableIndex("PRESSURE")] << " " << this->Data[i][this->GetVariableIndex("SOIL")]<< " " << this->Data[i][this->GetVariableIndex("SGAS")] << " " << this->Data[i][this->GetVariableIndex("OIL_DEN")] << " " << this->Data[i][this->GetVariableIndex("GAS_DEN")];
 				textfile << "\n";
 			}
@@ -6268,7 +6277,7 @@ void CECLIPSEData::WriteOutput_2DSection(long Timestep) {
 	textfile << "\n";
 
 	textfile.close();
-	
+
 };
 
 
@@ -6326,6 +6335,6 @@ void CECLIPSEData::SaveEclipseDataFile(long Timestep, CRFProcess* m_pcs) {
 	time = (double(finish) - double(start)) / CLOCKS_PER_SEC;
 	cout << "                 Time: " << time << " seconds." << "\n";
 
-	return; 
+	return;
 };
 

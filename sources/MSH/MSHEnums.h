@@ -2,6 +2,11 @@
  * \file MSHEnums.h
  * 15/11/2010 KR initial implementation
  *
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
  */
 
 #ifndef MSHENUMS_H

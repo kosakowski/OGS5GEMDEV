@@ -1,6 +1,11 @@
 /**
  * \file RapidXMLInterface.cpp
  * 2012/08/16 KR Initial implementation
+ * \copyright
+ * Copyright (c) 2015, OpenGeoSys Community (http://www.opengeosys.org)
+ *            Distributed under a Modified BSD License.
+ *              See accompanying file LICENSE.txt or
+ *              http://www.opengeosys.org/project/license
  */
 
 //RapidXML
@@ -17,7 +22,7 @@ std::vector<GEOLIB::Point*> *RapidXMLInterface::readStationFile(const std::strin
 {
 	std::vector<GEOLIB::Point*> *stations = new std::vector<GEOLIB::Point*>;
 	std::ifstream in(fileName.c_str());
-	if (in.fail()) 
+	if (in.fail())
 	{
 		std::cout << "XmlStnInterface::rapidReadFile() - Can't open xml-file." << "\n";
 		return NULL;
@@ -35,14 +40,14 @@ std::vector<GEOLIB::Point*> *RapidXMLInterface::readStationFile(const std::strin
 	// build DOM tree
 	rapidxml::xml_document<> doc;
 	doc.parse<0>(buffer);
-	
+
 	// parse content
 	if (std::string(doc.first_node()->name()).compare("OpenGeoSysSTN"))
 	{
 		std::cout << "XmlStnInterface::readFile() - Unexpected XML root." << "\n";
 		return NULL;
 	}
-	
+
 	// iterate over all station lists
 	for (rapidxml::xml_node<>* station_list = doc.first_node()->first_node(); station_list; station_list = station_list->next_sibling())
 	{
@@ -58,7 +63,7 @@ std::vector<GEOLIB::Point*> *RapidXMLInterface::readStationFile(const std::strin
 				RapidXMLInterface::readStations(list_item, stations, fileName);
 		}
 	}
-    
+
 	doc.clear();
 	delete [] buffer;
 
@@ -70,7 +75,7 @@ int RapidXMLInterface::rapidReadFile(const std::string &fileName)
 	GEOLIB::GEOObjects* geoObjects = _project->getGEOObjects();
 
 	std::ifstream in(fileName.c_str());
-	if (in.fail()) 
+	if (in.fail())
 	{
 		std::cout << "XmlStnInterface::rapidReadFile() - Can't open xml-file." << "\n";
 		return 0;
@@ -88,14 +93,14 @@ int RapidXMLInterface::rapidReadFile(const std::string &fileName)
 	// build DOM tree
 	rapidxml::xml_document<> doc;
 	doc.parse<0>(buffer);
-	
+
 	// parse content
 	if (std::string(doc.first_node()->name()).compare("OpenGeoSysSTN"))
 	{
 		std::cout << "XmlStnInterface::readFile() - Unexpected XML root." << "\n";
 		return 0;
 	}
-	
+
 	// iterate over all station lists
 	for (rapidxml::xml_node<>* station_list = doc.first_node()->first_node(); station_list; station_list = station_list->next_sibling())
 	{
@@ -117,7 +122,7 @@ int RapidXMLInterface::rapidReadFile(const std::string &fileName)
 		else
 			delete stations;
 	}
-    
+
 	doc.clear();
 	delete [] buffer;
 
@@ -145,11 +150,11 @@ void RapidXMLInterface::readStations(const rapidxml::xml_node<>* station_root, s
 			/* add other station features here */
 
 			if (std::string(station_node->name()).compare("station") == 0)
-			{				
+			{
 				GEOLIB::Station* s = new GEOLIB::Station(
 							strtod(station_node->first_attribute("x")->value(), 0),
 				            strtod(station_node->first_attribute("y")->value(), 0),
-				            zVal, 
+				            zVal,
 							station_name);
 				s->setStationValue(station_value);
 				if (!sensor_data_file_name.empty())
@@ -209,7 +214,7 @@ void RapidXMLInterface::readStratigraphy( const rapidxml::xml_node<>* strat_root
 				depth_check = depth;
 			}
 			else
-				std::cout << "Warning: Skipped layer \"" << horizon_name << "\" in borehole \"" 
+				std::cout << "Warning: Skipped layer \"" << horizon_name << "\" in borehole \""
 					      << borehole->getName() << "\" because of thickness 0.0." << "\n";
 		}
 		else
