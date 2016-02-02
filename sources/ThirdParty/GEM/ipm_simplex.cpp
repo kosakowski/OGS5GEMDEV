@@ -177,17 +177,17 @@ void TMulti::START( long int T,long int *ITER,long int M,long int N,long int NMB
 {
     long int I,J;
 
-    for( I=0;I<M;I++)
+    for( I=0;I<M;I++) // KG44 what is happening here? M is number of independent components, N is number of unknowns-> The up array is +M  bigger than UND !
         UP[N+I]=0.;
     for( J=0;J<N;J++)
     {
+       UP[J]-=UND[J];
         if(fabs(UP[J])<EPS)
             UP[J]=0.;
         else
         {
-            UP[J]-=UND[J];
             if( fabs(UP[J])<EPS)
-                UP[J]=EPS;
+                UP[J]=EPS;  //kg44 why this????
             else if( UP[J]<0.)
                 Error("E00IPM: SolveSimplex()", "Inconsistent LP problem (negative UP[J] value(s) in START()) ");
         }
