@@ -4532,30 +4532,30 @@ int REACT_GEM::CalcLimits ( long in, int flag_equilibration,double deltat, TNode
 
 //                        if (dummy < 0.0)
 //                            dummy = 0.0;
-                            if ( !( dummy <= 1.0 ) && !( dummy > 1.0 ) )
+                            if ( !std::isfinite(dummy) )
                             {
                                 // no change!
-                               m_dul[in * nDC + j] = m_xDC[in * nDC + j];
-                               m_dll[in * nDC + j] = m_xDC[in * nDC + j];
+//                               m_dul[in * nDC + j] = m_xDC[in * nDC + j];
+//                               m_dll[in * nDC + j] = m_xDC[in * nDC + j];
                             }
                             else if ( dummy < 0.0) // This is the dissolution case
                             {
-                                m_dul[in * nDC + j] = m_xDC[in * nDC + j]+dummy;
+                                m_dul[in * nDC + j] = m_xDC[in * nDC + j];
                                 m_dll[in * nDC + j] = m_xDC[in * nDC + j]+dummy;
 //                            m_dll[in * nDC + j] += dummy;
 //                            m_dul[in * nDC + j] = dummy;
                             }
                             else if (dummy > 0.0) // This is the precipitation case
                             {
-                                m_dll[in * nDC + j] = m_xDC[in * nDC + j]+dummy;
+                                m_dll[in * nDC + j] = m_xDC[in * nDC + j];
 //                            m_dll[in * nDC + j] = dummy;
                                 m_dul[in * nDC + j] = m_xDC[in * nDC + j]+dummy;
 //                            m_dul[in * nDC + j] += dummy;
                             }
-                            else
+                            else // do nothing
 			    {
-                               m_dul[in * nDC + j] = m_xDC[in * nDC + j];
-                               m_dll[in * nDC + j] = m_xDC[in * nDC + j];			      
+//                               m_dul[in * nDC + j] = m_xDC[in * nDC + j];
+//                               m_dll[in * nDC + j] = m_xDC[in * nDC + j];			      
 			    }
                         }
                     } //end else for kinetics not SS
