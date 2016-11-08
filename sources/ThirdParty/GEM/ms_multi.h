@@ -295,7 +295,6 @@ double
 
     *DUL,     ///< VG Vector of upper kinetic restrictions to x_j, moles [L]
     *DLL,     ///< NG Vector of lower kinetic restrictions to x_j, moles [L]
-    
     *fDQF,    ///< Increments to molar G0 values of DCs from pure gas fugacities or DQF terms, normalized [L]
 // TKinMet stuff (old DODs, new contents )
     *PUL,  ///< Vector of upper restrictions to multicomponent phases amounts [FIs]
