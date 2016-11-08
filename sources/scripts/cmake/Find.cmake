@@ -112,9 +112,8 @@ if(OGS_FEM_PETSC OR OGS_NO_EXTERNAL_LIBS)
 	return()
 endif()
 
-if(IS_DIRECTORY ${PROJECT_SOURCE_DIR}/../Libs)
-	set(OGS_LIBS_DIR_FOUND ${PROJECT_SOURCE_DIR}/../Libs CACHE PATH "Libs directory")
-
+find_path(OGS_LIBS_DIR_FOUND .dummy PATHS ${CMAKE_SOURCE_DIR}/../Libs NO_DEFAULT_PATH)
+if(OGS_LIBS_DIR_FOUND)
 # Find precompiled libraries (for BRNS GEMS LIS)
 	find_path (OGS_PRECOMPILED_LIBS_DIR_FOUND BrnsDll.lib ${OGS_LIBS_DIR_FOUND}/precompiled)
 if (OGS_PRECOMPILED_LIBS_DIR_FOUND)
