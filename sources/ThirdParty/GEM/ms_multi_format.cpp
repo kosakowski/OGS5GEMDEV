@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: ms_multi_format.cpp 1072 2015-06-30 14:18:10Z kulik $
+// $Id$
 //
 /// \file ms_multi_format.cpp
 /// Implementation of writing/reading IPM, DCH and DBR text I/O files
@@ -33,7 +33,7 @@
 #endif
 
 //bool _comment = true;
-const char *_GEMIPM_version_stamp = " GEMS3K v.3.3 r.1060 (rc) ";
+const char *_GEMIPM_version_stamp = " GEMS3K v.3.3.4 c.8df0cc1 ";
 
 //===================================================================
 // in the arrays below, the first field of each structure contains a string

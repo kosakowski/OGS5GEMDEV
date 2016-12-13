@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: ipm_main.cpp 1081 2015-07-29 13:43:44Z kulik $
+// $Id$
 //
 /// \file ipm_main.cpp
 /// Implementation of parts of the Interior Points Method (IPM) module

@@ -275,6 +275,8 @@ int PETScLinearSolver::Solver()
    {
      PetscPrintf(PETSC_COMM_WORLD,"\nOther kind of divergence: solver returned: %d. This should not happen.\n",(int)reason);
      its=(int)reason; //kg44 ...return negative number...this allows to do error handling for FCT!
+     PetscEnd(); //make sure MPI exits
+     exit(1);
    }
    else 
    {

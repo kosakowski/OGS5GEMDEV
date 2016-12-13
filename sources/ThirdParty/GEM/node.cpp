@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: node.cpp 1069 2015-06-29 11:46:27Z kulik $
+// $Id$
 //
 /// \file node.cpp
 /// Implementation of TNode class functionality including initialization
@@ -88,6 +88,23 @@ long int TNode::get_grid_index_Ppa_sat( double Tk )
         }
 	}
     return r;
+}
+
+//return exact or interpolated saturated pressure value for the temperature Tk using the exported data from the *.dch file
+double TNode::Get_Psat(double Tk)
+{
+    double psat = 0.;
+
+    long int xT;
+
+    xT = check_grid_T(Tk);
+
+    if (xT >=0)
+        psat = CSD->Psat[xT];
+    else
+        psat = LagranInterp1D(CSD->TKval, CSD->Psat,Tk, CSD->nTp, 3);
+
+    return psat;
 }
 
 
@@ -184,8 +201,11 @@ long int TNode::GEM_run( bool uPrimalSol )
 	   unpackDataBr( uPrimalSol );
    }
    else if( CNode->NodeStatusCH == NEED_GEM_AIA )
-	     {  pmm->pNP = 0; // As default setting AIA mode
-	        unpackDataBr( false );
+         {
+            pmm->pNP = 0; // As default setting AIA mode
+            if (CNode->dt > 0.)
+               uPrimalSol = true;
+            unpackDataBr( uPrimalSol );
          }
         else
 	       return CNode->NodeStatusCH;
@@ -2112,14 +2132,22 @@ void TNode::unpackDataBr( bool uPrimalSol )
   }
   for( ii=0; ii<CSD->nPHb; ii++ )
   {
-    if( CSD->nAalp >0 )
+    if( CSD->nAalp > 0 )
         pmm->Aalp[ CSD->xph[ii] ] = CNode->aPH[ii]/kg_to_g;
     pmm->Falp[ CSD->xph[ii] ] = CNode->omPH[ii];
   }
 
+  for( ii=0; ii<CSD->nPHb; ii++ )
+  {
+    pmm->XF[ CSD->xph[ii] ] = CNode->xPH[ii];
+    //pmm->YF[ CSD->xph[ii] ] = CNode->xPH[ii];
+  }
+
  if( !uPrimalSol )
- {    //  Using primal solution retained in the MULTI structure instead -
+ {
+     //  Using primal solution retained in the MULTI structure instead -
     ; // the primal solution data from the DATABR structure are not unpacked
+
 //   pmm->IT = 0;
  }
  else {   // Unpacking primal solution provided in the node DATABR structure
@@ -2133,8 +2161,8 @@ void TNode::unpackDataBr( bool uPrimalSol )
 
   for( ii=0; ii<CSD->nPSb; ii++ )
   {
-      pmm->FVOL[ CSD->xph[ii] ] = CNode->vPS[ii]*m3_to_cm3;
-      pmm->FWGT[ CSD->xph[ii] ] = CNode->mPS[ii]*kg_to_g;
+//      pmm->FVOL[ CSD->xph[ii] ] = CNode->vPS[ii]*m3_to_cm3;
+//      pmm->FWGT[ CSD->xph[ii] ] = CNode->mPS[ii]*kg_to_g;
       pmm->PUL[ CSD->xph[ii] ] = CNode->amru[ii];
       pmm->PLL[ CSD->xph[ii] ] = CNode->amrl[ii];
   }
@@ -2142,7 +2170,9 @@ void TNode::unpackDataBr( bool uPrimalSol )
   for( ii=0; ii<CSD->nPHb; ii++ )
   {
     pmm->XF[ CSD->xph[ii] ] =
-    pmm->YF[ CSD->xph[ii] ] = CNode->xPH[ii];
+    pmm->YF[ CSD->xph[ii] ] = this->Ph_Mole(ii);
+    pmm->FVOL[ CSD->xph[ii] ] = this->Ph_Volume(ii)*m3_to_cm3;
+    pmm->FWGT[ CSD->xph[ii] ] = this->Ph_Mass(ii)*kg_to_g;
   }
 
   for( long int k=0; k<CSD->nPSb; k++ )

@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: num_methods.h 771 2012-12-13 13:07:43Z kulik $
+// $Id$
 //
 /// \file num_methods.h
 /// Declarations of C/C++ Numerical Methods used in GEMS3K code.
@@ -41,6 +41,7 @@ double LagranInterp(float *y, float *x, float *d, float yoi,
 		float xoi, int M, int N, int pp );
 double LagranInterp(double *y, double *x, double *d, double yoi,
 		double xoi, long int M, long int N, long int pp );
+double LagranInterp1D(double *x, double *d, double xoi, long int M, long int pp );
 
 
 // generic functions for calculating partial derivatives

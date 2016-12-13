@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: num_methods.cpp 771 2012-12-13 13:07:43Z kulik $
+// $Id$
 //
 /// \file num_methods.cpp
 /// C/C++ implementation of some numerical methods (Lagrange interpolation)
@@ -63,8 +63,8 @@ double getStep( double *Tai, int nPoints )
 ///  d[N][M] - discrete values of a function of x and y arguments
 ///  yoi - row (y) argument of interest ( y[0] <= yi <= y[N-1] )
 ///  xoi - column (x) argument of interest ( x[0] <= xi <= x[M-1] )
-///  M - number of rows in y array
-///  N - number of columns in y array
+///  M - number of elements in x array
+///  N - number of elements in y array
 ///  pp  -level of interpolation ( default 1)
 ///  Function returns an interpolated value of d(yoi,xoi) or error if
 ///  yoi or xoi are out of range
@@ -174,6 +174,40 @@ double LagranInterp(float *y, float *x, double *d, float yoi,
  return res;
 }
 
+double LagranInterp1D(double *x, double *d, double xoi, long int M, long int pp )
+{
+    double s,z;
+    long int  ppx, px, i, k, jx;
+
+    px = M-1;
+
+   if(xoi < x[0] || xoi > x[px] )
+   Error( "LagranInterp",
+    "E34RErun: xoi < x[0] or xoi > x[px] ( column argument outside the range )");
+
+   if( M==1 ) // zero dimension interpolation
+      return d[0];
+
+// find the point in the column
+   ppx = min( M-1, pp );
+   for(jx=0;jx<M;jx++)
+        if(xoi >= x[jx] && xoi <= x[jx+1])
+            break;
+   if(jx >= M-ppx)
+     jx = M-ppx-1;
+
+   s=0.;
+   for(i=0;i<=ppx;i++)
+   {
+       z=1;
+       for(k=0;k<=ppx;k++)
+           if(k!=i)
+               z*=(xoi-x[k+jx])/(x[i+jx]-x[k+jx]);
+       s+=d[i+jx]*z;
+   }
+
+   return(s);
+}
 
 /// 1st partial derivative of quotient of two functions
 double quot( double u, double v, double du, double dv )

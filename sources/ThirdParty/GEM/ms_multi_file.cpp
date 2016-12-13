@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: ms_multi_file.cpp 1023 2015-03-04 21:21:49Z kulik $
+// $Id$
 //
 /// \file ms_multi_file.cpp
 /// Implementation of writing/reading IPM I/O files of GEMS3K
@@ -2006,6 +2006,8 @@ if( pm.D ) delete[] pm.D;
 
     // optimization 08/02/2007
     Free_TSolMod();
+    Free_TSorpMod();
+    Free_TKinMet();
     Free_internal();
     Free_uDD();
 }

@@ -289,13 +289,15 @@ Problem::Problem (char* filename) :
         if ( m_vec_GEM -> Init_Nodes(path) == 0)
 	{
 	        m_vec_GEM->GetReactInfoFromMassTransport(0); // get concentrations, pressure and temperature values
-		if (m_vec_GEM->Init_RUN(path) == 0)
+                int myinit;
+               myinit =  m_vec_GEM->Init_RUN(path);
+		if (myinit == 0)
 		{
 			m_vec_GEM->initialized_flag = 1;
 		}
 		else // something is wrong and we stop execution
 		{
-		              cout << " GEMS: Error in Init_Nodes..check input " << "\n";
+		              cout << " GEMS: Error in Init_Nodes. Init_run returned: "<< myinit << "\n";
 #if defined(USE_MPI_GEMS) || defined(USE_PETSC) 
             MPI_Finalize();                       //make sure MPI exits
 #endif

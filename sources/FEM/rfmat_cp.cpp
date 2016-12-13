@@ -879,7 +879,7 @@ double CompProperties::CalcDiffusionCoefficientCP(long index,double theta,CRFPro
 		   }
 		 */
 #ifdef GEM_REACT
-        case 8: /* Archies law De = Dp * tau * tau_zero* poros   with tau = poros^m/poros0^m   ....tortuosity = tau_zero * tau depends on porosity and tau_zero is multiplicated  (like porosity) outside this function  */
+        case 8: /* Archies law De = Dp * tau * poros   with tau =tau_zero * poros^m/poros0^m   ....tortuosity = tau depends on porosity and tau_zero is multiplicated  (like porosity) outside this function  */
         {
             MeshLib::CElem* m_Elem;
 
@@ -1036,7 +1036,7 @@ double CompProperties::CalcDiffusionCoefficientCP(long index,double theta,CRFPro
                 }
                 // Attention....this does not work for gas phase/non wetting phase ....tr_phase=10
                 dummy *=saturation; // account for "mean element" saturation in Archies law ....better would be to get node saturations!
-                Dm = k[0] * pow(dummy,k[1]) * exp(k[2]/(8.31451*dummytemperature)); //node based diffusion coefficient with temperature correction De = De0 * exp( E_a/(R*T) )
+                Dm = k[0] * pow(dummy,k[1]) * exp(k[2]/(-8.31451*dummytemperature)); //node based diffusion coefficient with temperature correction De = De0 * exp( E_a/(R*T) )
 
                 diffusion_average += 1.0 / Dm;
 			//	cout << "debug: " << Dm << " porosity: " << GetNodePorosityValue_MT(m_Elem->GetNodeIndex ( i ), 0) << "\n";

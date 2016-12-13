@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: m_const.h 978 2014-08-18 08:08:26Z kulik $
+// $Id$
 //
 /// \file m_const.h
 /// Declarations of enums and constants from GEM-Selektor code that

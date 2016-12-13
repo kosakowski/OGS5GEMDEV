@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: ms_param.cpp 874 2013-10-07 13:04:32Z kulik $
+// $Id$
 /// \file ms_param.cpp
 /// Implementation  of default settings for the Interior Points Method
 /// (IPM) module for convex programming Gibbs energy minimization

@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: databr.h 1068 2015-06-17 21:34:09Z kulik $
+// $Id$
 /// \file databr.h
 /// Contains definition of the DATABR structure - data bridge between
 /// GEMS3K and another code.

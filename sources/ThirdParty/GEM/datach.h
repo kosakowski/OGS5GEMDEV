@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: datach.h 771 2012-12-13 13:07:43Z kulik $
+// $Id$
 //
 /// \file datach.h
 /// DataCHemistry contains chemical system definitions common to all

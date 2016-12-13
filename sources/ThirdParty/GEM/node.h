@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: node.h 1068 2015-06-17 21:34:09Z kulik $
+// $Id$
 /// \file node.h
 /// Declaration of TNode class that implements a simple C/C++ interface
 /// between GEMS3K and another code.
@@ -671,6 +671,8 @@ long int GEM_step_MT( const long int step )
 
 	 /// Returns index of Tk point - Psat point pair 
 	 long int get_grid_index_Ppa_sat( double Tk );
+
+     double Get_Psat (double Tk);
 
     /// Sets new molar Gibbs energy G0(P,TK) value for Dependent Component
     /// in the DATACH structure.

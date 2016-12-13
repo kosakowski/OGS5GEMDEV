@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: ipm_simplex.cpp 1081 2015-07-29 13:43:44Z kulik $
+// $Id$
 //
 /// \file ipm_simplex.cpp
 /// Implementation of parts of the Interior Points Method (IPM) algorithm

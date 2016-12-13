@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: verror.h 771 2012-12-13 13:07:43Z kulik $
+// $Id$
 /// \file verror.h
 /// Declarations of classes TError and TFatalError for error handling.
 //

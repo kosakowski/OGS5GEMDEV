@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: m_param.h 887 2013-10-23 08:34:43Z kulik $
+// $Id$
 //
 /// \file m_param.h
 /// Declaration of TProfil class, config and calculation functions

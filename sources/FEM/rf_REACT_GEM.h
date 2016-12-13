@@ -124,6 +124,8 @@ public:
     double *dmdt;                               // kinetically controlled rates
     int CalcLimits ( long in, int flag_equilibration, double deltat, TNode* m_Node);
     int CalcLimitsInitial ( long in, TNode* m_Node);
+    int SetConstraints ( long in, TNode* m_Node);
+    int SetLimitsInitial ( long in, TNode* m_Node);    
     int CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration ,TNode* m_Node);
     double CementHydrationKinetics (double oldvalue,  long kin_phasenr, double dt ); // calculates cement hydration kinetics according ot Lothenbach and Wieland (2008=
     int *m_boundary;                            //holds marker for boundary nodes
@@ -131,7 +133,7 @@ public:
     double MaxChangeKineticsPhase(long in, int ii, int i,TNode *m_Node); // maximum allowed change to 10% concentrations
     bool calc_limits;                          // do this for first Picard iteration
     int CheckConstraints ( long in,TNode* m_Node);
-    double MaxDtKinetics(long int,  TNode* m_Node); // function to calculate max timestep in case of kinetics for a node 
+    double MaxDtKinetics (long int,  TNode* m_Node); // function to calculate max timestep in case of kinetics for a node 
     
     int SolveChemistry(long in, TNode* m_Node); // extra time loop for chemistry & kinetics
     
@@ -177,6 +179,8 @@ public:
     int max_gems_iteration_loop;  // maximum number of iterations
     double  iteration_eps;  // leave iteration if this is achieved
     bool flag_concentrations_with_water; // 1 use water itself also in concentrations for H and O ...0: water is substracted from O and H concentrations (only dissolved species are transported)
+    bool flag_accept_bad_gem; /// accept bad GEM solutions 
+    
     
     int heatflag;                               //0-initialized and not heat transport;1-heat_transport;
     int flowflag;                               //0-initialized;1-GROUNDWATER_FLOW;2-LIQUID_FLOW;3-RICHARDS_FLOW;4-FLOW;
@@ -333,6 +337,9 @@ public:
       double u_amount; // which upper amount
     }Calculate_GEMS;
     vector<Calculate_GEMS> m_calc;
+    
+    
+    int flag_loose_kinetics; // flag used in calclimits to give more freedom to dul/dll passed to gems
     
     typedef struct
     {

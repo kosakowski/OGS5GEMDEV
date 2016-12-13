@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: gdatastream.h 771 2012-12-13 13:07:43Z kulik $
+// $Id$
 /// \file gdatastream.h
 /// Contains definition of the GemDataStream class for processing
 /// binary data streams on platforms with different endianness.

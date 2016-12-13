@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: io_arrays.cpp 954 2014-03-31 07:05:57Z ext_miron_d $
+// $Id$
 //
 /// \file io_arrays.cpp
 /// Implementation of service functions for writing/reading arrays in files

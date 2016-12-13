@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: ms_multi.h 1081 2015-07-29 13:43:44Z kulik $
+// $Id$
 //
 /// \file ms_multi.h
 /// Declaration of TMulti class, configuration, and related functions

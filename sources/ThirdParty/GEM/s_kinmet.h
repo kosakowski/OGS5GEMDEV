@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: s_kinmet.h 1016 2015-01-30 16:19:28Z kulik $
+// $Id$
 //
 // Declaration of TKinMet class for kinetics/metastability models
 //

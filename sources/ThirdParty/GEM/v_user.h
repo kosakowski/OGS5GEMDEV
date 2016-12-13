@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: v_user.h 771 2012-12-13 13:07:43Z kulik $
+// $Id$
 /// \file v_user.h
 /// Declaration of platform-specific utility functions and classes
 //
@@ -180,9 +180,9 @@ inline char* gcvt(double num, int digit, char* buf)
 
 #endif  // __FreeBSD
 
-#ifdef __APPLE__
-#include <algobase.h>
-#endif
+//#ifdef __APPLE__
+//#include <algobase.h>
+//#endif
 
 
 // dynamically allocates temporary 'char*'

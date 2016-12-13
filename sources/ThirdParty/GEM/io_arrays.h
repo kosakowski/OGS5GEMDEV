@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------
-// $Id: io_arrays.h 950 2014-03-25 14:17:34Z dmitrieva $
+// $Id$
 /// \file io_arrays.h
 /// Various service functions for writing/reading arrays in files
 //

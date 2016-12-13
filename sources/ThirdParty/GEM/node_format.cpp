@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------
-// $Id: node_format.cpp 1076 2015-07-10 13:18:19Z kulik $
+// $Id$
 //
 /// \file node_format.cpp
 /// Interface for writing/reading DBR and DCH I/O files of GEMS3K
@@ -1226,7 +1226,7 @@ void TNode::databr_realloc()
      CNode->xPA[k] = 0.0;
      for(  j=0; j<CSD->nICb; j++ )
         CNode->bPS[k*CSD->nICb+j] = 0.0;
-     CNode->amru[k] = 0.0;
+     CNode->amru[k] = 1.0e6;
      CNode->amrl[k] = 0.0;
  }
 }
@@ -1274,6 +1274,10 @@ DATABR * TNode::databr_free( DATABR *CNode_ )
  if( CNode_->xPH )
   { delete[] CNode_->xPH;
     CNode_->xPH = 0;
+  }
+ if( CNode_->omPH )
+  { delete[] CNode_->omPH;
+    CNode_->omPH = 0;
   }
  if( CNode_->vPS )
   { delete[] CNode_->vPS;
