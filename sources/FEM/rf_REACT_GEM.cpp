@@ -267,8 +267,8 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 	gem_glob_x0 = new PetscScalar[glob_NodesNumber_Linear];
 	gem_glob_x1 = new PetscScalar[glob_NodesNumber_Linear];
 #endif
-
 	TNode* m_Node;
+
 	// DATABR structure for exchange with GEMIPM
 	DATACH* dCH;                         //pointer to DATACH
 	DATABR* dBR;                          //pointer to DATABR
@@ -276,9 +276,7 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 	// Creating TNode structure accessible trough node pointer
 	// Here we read the files needed as input for initializing GEMIPM2K
 	// The easiest way to prepare them is to use GEMS-PSI code (GEM2MT module)
-
 	m_Node = new TNode();
-
 	dCH = m_Node->pCSD();
 	dBR = m_Node->pCNode();
 
@@ -293,6 +291,7 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 //               (only if dBR->NodeStatusCH = NEED_GEM_SIA has been set before GEM_run() call).
 //               false  (0) -  use speciation and activity coefficients from previous GEM_run() calculation
 //               true  (1)  -  use speciation provided in the DATABR memory structure (e.g. after reading the DBR file)
+
 		m_Node->GEM_run ( false );
 //iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
 
@@ -596,8 +595,7 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 			if ( myrank == 0 /*should be set to root*/ )
 #endif
 
-			cout <<
-			        "Richards flow used and only the water pahse is defined in GEMS...please add a gas phase.\n";
+			cout << "Richards flow used and only the water pahse is defined in GEMS...please add a gas phase.\n";
 
 			exit ( 1 );
 		}
@@ -614,8 +612,7 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 			{
 #if defined(USE_PETSC)
 				rwmutex.lock();
-				cout << "Creating GEMS-worker thread " << i << " for MPI task " <<
-				        myrank << "\n";
+				cout << "Creating GEMS-worker thread " << i << " for MPI task " << myrank << "\n";
 				rwmutex.unlock();
 #else
 				rwmutex.lock();
@@ -789,8 +786,7 @@ short REACT_GEM::Init_RUN(string Project_path)
         }
         if (m_constraints[ii].n_comp == -1)
         {
-            cout << " GEMS: Error in constraints..check input for "  <<
-                 m_constraints[ii].component_name << "\n";
+            cout << " GEMS: Error in constraints..check input for "  << m_constraints[ii].component_name << "\n";
 #if defined(USE_PETSC)
             PetscEnd();           //make sure MPI exits
 #endif
@@ -1212,12 +1208,7 @@ long int  p_NodeHandle,   // Node identification handle
 		                      m_bIC + in * nIC,
 		                      m_dul + in * nDC,
 		                      m_dll + in * nDC,
-		                      m_aPH + in * nPH, 
-				      m_xDC + in * nDC,
-				      m_gam + in * nDC);
-                
-
-
+		                      m_aPH + in * nPH);
 		                      //	cout << m_xDC+in*nDC << "\n";
 }
 
@@ -2252,9 +2243,7 @@ double REACT_GEM::FluidDensity(long elem, int gaussnode,  CFiniteElementStd* fem
 	{
 		if (!fem)
 		{
-			cout <<
-			        "DEBUG REACTGEM: fluiddensity from gauss node failed: could not get fem"
-			     << "\n";
+			cout << "DEBUG REACTGEM: fluiddensity from gauss node failed: could not get fem" << "\n";
 			return density; //make sure call to interpolate does not fail
 		}
 		double NodalVal_BG[size_m]; //BG
@@ -5632,8 +5621,6 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 
     if ( buffer )
         free ( buffer );
-
-
 
     t_Node = new TNode();
     if ( t_Node->GEM_init ( tinit_path.c_str()  ) )
