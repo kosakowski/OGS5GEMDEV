@@ -4338,7 +4338,7 @@ double* CMediumProperties::PermeabilityTensor(long index)
 			int count_nodes = m_Elem->GetNodesNumber ( false );
                         double permeability_average = 0.0;
                         double dummy,dummy0,pdummy;
-                        for (size_t ii = 0; ii < count_nodes; ii++) //calculate harmonic mean of node based diffusion coefficients
+                        for (int ii = 0; ii < count_nodes; ii++) //calculate harmonic mean of node based diffusion coefficients
                         {
                         // then get the values from nodes
                            dummy = m_vec_GEM->REACT_GEM::GetNodePorosityValue(m_Elem->GetNodeIndex ( ii )); //current node based prosity
@@ -4400,7 +4400,7 @@ double* CMediumProperties::PermeabilityTensor(long index)
 			int count_nodes = m_Elem->GetNodesNumber ( false );
                         double permeability_average = 0.0;
                         double dummy,dummy0,pdummy;
-                        for (size_t ii = 0; ii < count_nodes; ii++) //calculate harmonic mean of node based diffusion coefficients
+                        for (int ii = 0; ii < count_nodes; ii++) //calculate harmonic mean of node based diffusion coefficients
                         {
                         // then get the values from nodes
                            dummy = m_vec_GEM->REACT_GEM::GetNodePorosityValue(m_Elem->GetNodeIndex ( ii ));

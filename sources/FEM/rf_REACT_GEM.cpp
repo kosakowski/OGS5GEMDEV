@@ -134,15 +134,15 @@ REACT_GEM::~REACT_GEM ( void )
 
 	if ( initialized_flag > 0 )
 	{
-	  for (int i = 0; i < gem_nThread; ++i) // here we interrupt the threads! 
+	  for (unsigned int i = 0; i < gem_nThread; ++i) // here we interrupt the threads! 
 	  {
 	      gemThread[i].interrupt();
 	  }
-	  for (int i = 0; i < gem_nThread; ++i) // here we interrupt the threads! 
+	  for (unsigned int i = 0; i < gem_nThread; ++i) // here we interrupt the threads! 
 	  {
 	      gemThread[i].detach();
 	  }
-	  for (int i = 0; i < gem_nThread; ++i) // here we join the threads! otherwise it might be that boost/phtread throws an assertion, because condition variables are still in use when destroyed!
+	  for (unsigned int i = 0; i < gem_nThread; ++i) // here we join the threads! otherwise it might be that boost/phtread throws an assertion, because condition variables are still in use when destroyed!
 	  {
 	    gemThread[i].join();
 	  }
@@ -1124,6 +1124,7 @@ short REACT_GEM::SetReactInfoBackMassTransport ( int timelevel )
 
 short REACT_GEM::SetReactInfoBackMassTransportPicardIteration ( int timelevel )
 {
+        cout << timelevel ; //dummy output
 	REACT_GEM::nNodes = GetNodeNumber_MT();
 
 	for ( long in = 0; in < nNodes; in++ )
@@ -1566,9 +1567,7 @@ short REACT_GEM::SetPressureValue_MT ( long node_Index, int timelevel, double pr
 
 short REACT_GEM::GetDCValue_MT ( long node_Index,
                                  int timelevel,
-                                 double* m_DC,
-                                 double* m_DC_pts,
-                                 double* m_DC_MT_delta )
+                                 double* m_DC )
 {
 	string str;
 	double /*DC_MT_pre,*/ DC_MT_cur;
@@ -2228,7 +2227,6 @@ double REACT_GEM::FluidDensity(long elem, int gaussnode,  CFiniteElementStd* fem
 	double density;
 	double distance, weight, sum_weights;
 	int size_m = 20;                  //assigned to the value in CFiniteElementStd(CRFProcess *Pcs, const int C_Sys_Flad, const int order=1);
-	double* NodalVal_BG;
 
 	density = 1000.0; //default backup value
 
@@ -2343,7 +2341,7 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
     long i,j,k,ii;
     int idx;
     double gas_volume,fluid_volume;
-    double skal_faktor = 0.0,skal_faktor_gas = 0.0, saturation = 1.0;
+    double skal_faktor = 0.0;
     DATACH* dCH;                            //pointer to DATACH
     DATABR* dBR;
     // Getting direct access to DataCH structure in GEMIPM2K memory
@@ -2452,7 +2450,7 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
 	   // m_excess_water[in]=0.0; // as we change the saturation we do not have to set source/sink
             skal_faktor=1.0; // no specific scaling, as we inject/remove excess water 
            // skal_faktor = m_porosity[in] *
-                          m_pcs->GetNodeValue ( in,idx + 1) / m_fluid_volume[in]; //KG44 18.10.2012  is this really correct??
+           //               m_pcs->GetNodeValue ( in,idx + 1) / m_fluid_volume[in]; //KG44 18.10.2012  is this really correct??
            // m_fluid_volume[in] = m_porosity[in] * m_pcs->GetNodeValue ( in,idx + 1);
               // not good to do it here, but we keeip it for testing
 //	    if (flag_coupling_hydrology) m_pcs->SetNodeValue ( in, idx, m_fluid_volume[in] / m_porosity[in]); // instead change saturation accordingly; this is done always.
@@ -2587,7 +2585,7 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
         }
 
         // here we do not need to account for different flow processes .... as long as we work only with one wetting phase (water!!!) ...for liqid CO2 we have to change something ....
-        //****************************************************************************************
+        // ****************************************************************************************
         if ( flag_transport_b == 1 )
             for ( j = 0; j < nIC; j++ )
             {
@@ -2621,7 +2619,7 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
 int REACT_GEM::ConcentrationToMass ( long l /*idx of node*/, int i_timestep )
 {
     // converting the value from mol/m^3 water to moles.
-    long i,j,ii;
+    long i,j;
     double water_volume = 0.0, scale_factor = 1.0;
     int idx;
     string ErrorOut;
@@ -2818,7 +2816,7 @@ void REACT_GEM::UpdateXDCChemDelta ( void )
 
 void REACT_GEM::UpdatebICChemDelta ( void )
 {
-	size_t i,inod;
+	unsigned int i,inod;
 	for ( inod = 0; inod < nNodes; inod++ )
 	{
  	   for ( i = 0; i < nIC; i++ )
@@ -2828,7 +2826,7 @@ void REACT_GEM::UpdatebICChemDelta ( void )
 
 void REACT_GEM::ResetbICChemDelta ( void )
 {
-	size_t i,inod;
+	unsigned int i,inod;
 	for ( inod = 0; inod < nNodes; inod++ )
 	{
  	   for ( i = 0; i < nIC; i++ )
@@ -2838,7 +2836,7 @@ void REACT_GEM::ResetbICChemDelta ( void )
 
 void REACT_GEM::CopyCurBPre ( void )
 {
-	long i;
+	unsigned int i;
 	for ( i = 0; i < nNodes * nIC; i++ )
 	{
 		m_soluteB_pts[i] = m_soluteB[i];
@@ -3048,12 +3046,10 @@ void REACT_GEM::RestoreSolutionAllPicardIteration ( ) // for Picard iterations
 }
 
 
-double REACT_GEM::CalculateCharge (long in,int timelevel) //for a given node number ..data from OGS!
+double REACT_GEM::CalculateCharge (long in) //for a given node number ..data from OGS!
 {
-    CRFProcess* m_process = NULL;
-    size_t i;
-    double charge,dummy,sum_charge, * test_conc, sum_change;
-    char* mcomp_name;
+    // size_t i;
+    double charge,dummy,sum_charge, sum_change;
     double change[nIC];
     // loop over all Processes...identify mass transport process and add stored value for charge
     charge=0.0;
@@ -3061,7 +3057,7 @@ double REACT_GEM::CalculateCharge (long in,int timelevel) //for a given node num
     sum_change=0.0;
     m_chargeB_pre[in*nIC+nIC-1]=0.0;
 //    cout << "DEBUG precharge \n" ;
-    for (i=0; i<nIC-1; i++)
+    for (unsigned int i=0; i<nIC-1; i++)
     {
         dummy = (m_chargeB[in*nIC+i] * m_soluteB[in*nIC+i] * m_porosity[in]); //+=(charge/per mol * concentration * porosity
         m_chargeB_pre[in*nIC+i]=dummy;
@@ -3638,7 +3634,6 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
 	double aa = 1.0,ab = 1.0,ac = 1.0;         // activity products ...species are input from material file
 	double sactivity;                          // dummy variable for extracting activities
 	const char* species;
-        double saturation_cutoff = 1e10; // hardcoded limit for maximum saturation!!!!!..in principle one would also need a limit for minimum saturation, or?
 	DATACH* dCH;                            //pointer to DATACH
 	DATABR* dBR;
 	// Getting direct access to DataCH structure in GEMIPM2K memory
@@ -3978,7 +3973,7 @@ double REACT_GEM::MaxDtKinetics(long in, TNode *m_Node)
 
 double REACT_GEM::MaxChangeKineticsPhase(long in, int ii, int i, TNode *m_Node) // in: node number, ii: counter for kinetics phase, i: endmember number in phase
 {
-    int idx=0, iomega_max;
+    int idx=0;
     const char* species;
     double mxchange;
     double dummy=0.0, dummyc=0.0;
@@ -4262,10 +4257,9 @@ int REACT_GEM::SetLimitsInitial ( long in, TNode* m_Node)
 
 int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration, TNode* m_Node)
 {
-    int iomega_max;
-    double dummy, dummy2,omega_dummy, omega_max, charge_phase,phase_change,mdiff,endmember_sum;  // dummy value and amount we need
+    double dummy, charge_phase,phase_change,endmember_sum;  // dummy value and amount we need
     long i, k,j;
-    double dm_sum, dm_abssum, dll_sum, dul_sum,checksum, dm_minus,dm_plus; //change of mass for endmember in given time intervall, sum of changes for endmember in given time intervall
+    double dm_sum, dm_abssum,checksum, dm_minus,dm_plus; //change of mass for endmember in given time intervall, sum of changes for endmember in given time intervall
     // kinetic_model==5 dissolution+precipitation for solid solutions
     // kinetic_model==7 dissolution only for solid solutions
     DATACH* dCH;                            //pointer to DATACH
@@ -4291,13 +4285,10 @@ int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration
 //    cout << "DEBUG kinetics mole phase " << ii << " "  << mol_phase[in * nPH + k] << " phase stability " << omega_phase[in * nPH +k]<< "\n";
     
     dm_sum=0.0;
-    dul_sum=0.0;
-    dll_sum=0.0;
     dm_abssum=0.0;
     dm_minus=0.0;
     dm_plus=0.0;
     checksum=0.0;
-    omega_max=0.0;
     charge_phase=0.0;
     endmember_sum=0.0;
 
@@ -4572,8 +4563,8 @@ int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration
  */
 int REACT_GEM::CheckConstraints ( long in,TNode* m_Node)
 {
-    long int jj,ii,k; // indices for loops
-    int iret,i;
+    long int jj,ii; // indices for loops
+    int iret;
     double rel_error; // used for correction of constraints
     DATACH* dCH;                            //pointer to DATACH
     DATABR* dBR;
@@ -4667,12 +4658,11 @@ int REACT_GEM::CheckConstraints ( long in,TNode* m_Node)
  *  from the phase reaction rates (calculated at the previous time step)
  *  parameters:
  * in: node number
- * flag_equilibration: 0 (normal behaviour), 1 (only equilibration of solid solutions for cation exchange)
  * m_node: pointer to GEMS data structures
  */
-int REACT_GEM::CalcLimits ( long in, int flag_equilibration,double deltat, TNode* m_Node)
+int REACT_GEM::CalcLimits ( long in,double deltat, TNode* m_Node)
 {
-    double dummy, alpha_t;  // dummy value and degree of hydration for cementhydration kinetics
+    double dummy=0.0, alpha_t;  // dummy value and degree of hydration for cementhydration kinetics
     long ii,k,j;
     DATACH* dCH;                            //pointer to DATACH
     DATABR* dBR;
@@ -5567,8 +5557,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 {
     nNodes = GetNodeNumber_MT();
     nElems = GetElemNumber_MT();
-    long j,in,node_fail = 0,  kinetic_loop_counter;
-    double oldvolume;
+    long j,in,node_fail = 0;
 
     // collection of time data for rough performance analysis
     double time_gem_total, time_fraction, tdummy, tdummy1, tdummy2, twait, tstart, twaittotal;
@@ -5770,28 +5759,8 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
                         m_dul[in * nDC + j] *= 1.0001 ; // make bigger
                     }  */
 
-        if (node_fail) //second attempt
-        {
-            REACT_GEM::SetReactInfoBackGEM ( in, t_Node); // needs to be done to
-  // run GEMS again
-            tdBR->NodeStatusCH = NEED_GEM_AIA;
-            m_NodeStatusCH[in] = t_Node->GEM_run ( false );
 
-            if ( !( m_NodeStatusCH[in] == OK_GEM_AIA || m_NodeStatusCH[in] == OK_GEM_SIA ))
-            {
-                // do nothing
-                node_fail=1;
-            }
-            else
-            {
-                rwmutex.lock();
-                cout << "Initial GEMs run first pass gave success at node " << in << "\n";
-                rwmutex.unlock();
-                node_fail=0; // good solution..continue
-            }
-        }
-
-        if (node_fail) // third attempt
+        if (node_fail) // second attempt
         {
             REACT_GEM::SetReactInfoBackGEM ( in, t_Node); // needs to be done to
             tdBR->NodeStatusCH = NEED_GEM_AIA;
@@ -5922,29 +5891,8 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
                         m_dul[in * nDC + j] *= 1.0001 ; // make bigger
                     }  */
 
-        if (node_fail) //second attempt
-        {
-	    REACT_GEM::CheckConstraints(in,t_Node);
-            REACT_GEM::SetReactInfoBackGEM ( in, t_Node); // needs to be done to
-// run GEMS again
-            tdBR->NodeStatusCH = NEED_GEM_AIA;
-            m_NodeStatusCH[in] = t_Node->GEM_run ( false );
 
-            if ( !( m_NodeStatusCH[in] == OK_GEM_AIA || m_NodeStatusCH[in] == OK_GEM_SIA ))
-            {
-                // do nothing
-                node_fail=1;
-            }
-            else
-            {
-                rwmutex.lock();
-                cout << "Initial GEMs run second pass gave success at node " << in << "\n";
-                rwmutex.unlock();
-                node_fail=0; // good solution..continue
-            }
-        }
-
-        if (node_fail) // third attempt
+        if (node_fail) // second attempt
         {
 	    REACT_GEM::CheckConstraints(in,t_Node);
             REACT_GEM::SetReactInfoBackGEM ( in, t_Node); // needs to be done to
@@ -6035,7 +5983,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
             else if (m_calculate_gems[in]) // calculate if m_calculate_gems is 1 aka true
             {
                 // first calculate charges and fill m_chargeB
-                REACT_GEM::CalculateCharge(in,1); // fill for current timelevel                
+                REACT_GEM::CalculateCharge(in); // fill for current timelevel                
 		// Convert from concentration
                 REACT_GEM::ConcentrationToMass ( in,1); // I believe this is save for MPI
 
@@ -6244,7 +6192,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
     int node_fail,node_fail_first;
     long ii, iisplit,j;
     double oldvolume, dtchem,dummy, subtime;
-    double debug_time1, debug_time2; //performance analysis
+  //  double debug_time1, debug_time2; //performance analysis
   //  double *dulb, *dllb;
 
     // create backup arrays for DUL and DLL!
@@ -6273,7 +6221,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
 
     for ( j = 0; j < nDC; j++ )
     {
-        dllb[j]=m_dll[in * nDC + j] ;          //
+        dllb[j]=m_dll[in * nDC + j] ;          //take the old values for dll and dul
         dulb[j]=m_dul[in * nDC + j] ;      //
     }
 
@@ -6302,7 +6250,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
    //   if (in==226) cout <<   "DEBUG: node: " << in << " run " << ii << " kinetic iterations and time step dtchem "<< dtchem << "\n";
 
         // now we calculate kinetic constraints for GEMS!
-        REACT_GEM::CalcLimits ( in,0, dtchem,m_Node);
+        REACT_GEM::CalcLimits ( in, dtchem,m_Node);
         // take values from old B volume for comparison
         oldvolume = m_Vs[in];
         if (REACT_GEM::CheckConstraints(in,m_Node))
@@ -6325,7 +6273,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
     //        cout <<   "DEBUG: node: " << in << " after " << ii << " kinetic iterations the time step was changed to: "<< dtchem << "\n";
     //        rwmutex.unlock();
             // reset the limits for new calculation
-            for ( j = 0; j < nDC; j++ )
+            for ( j = 0; j < nDC; j++ ) // check constraint failed..therefore we take the old values again!
             {
                 m_dll[in * nDC + j] = dllb[j] ;          //
                 m_dul[in * nDC + j] = dulb[j] ;      //
@@ -6337,17 +6285,17 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
         //move data to GEMS
         REACT_GEM::SetReactInfoBackGEM ( in,m_Node); // this should be also save for MPI
 
-//        if (aktueller_zeitschritt > 1 )
-//        {
-        //    dBR->NodeStatusCH = NEED_GEM_SIA; //warm start
+        if (aktueller_zeitschritt > 1 )
+        {
+           dBR->NodeStatusCH = NEED_GEM_SIA; //warm start
         //  Parameter:
 //   uPrimalSol  flag to define the mode of GEM smart initial approximation
 //               (only if dBR->NodeStatusCH = NEED_GEM_SIA has been set before GEM_run() call).
 //               false  (0) -  use speciation and activity coefficients from previous GEM_run() calculation
 //               true  (1)  -  use speciation provided in the DATABR memory structure (e.g. after reading the DBR file)
-//            m_NodeStatusCH[in] = m_Node->GEM_run ( true );
-//        }
-//        else
+            m_NodeStatusCH[in] = m_Node->GEM_run ( false );
+        }
+        else
         {
             dBR->NodeStatusCH = NEED_GEM_AIA; // cold start...need simplex
             m_NodeStatusCH[in] = m_Node->GEM_run ( false );
@@ -6355,7 +6303,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
         // test for bad GEMS and for volume changes bigger than 10% ...maximum 5 failed nodes per process.....
         if ( ( !((m_NodeStatusCH[in] == OK_GEM_AIA) ||  (m_NodeStatusCH[in] == OK_GEM_SIA) ) ||
             (m_NodeStatusCH[in] == BAD_GEM_SIA && flag_accept_bad_gem==1) || (m_NodeStatusCH[in] == BAD_GEM_AIA && flag_accept_bad_gem==1)) ||
-                ( ( fabs ( oldvolume - dBR->Vs ) / oldvolume ) > 010.0 ) && ( flowflag != 3 ) )                                   // not for Richards flow
+                (( ( fabs ( oldvolume - dBR->Vs ) / oldvolume ) > 10.0 ) && ( flowflag != 3 )) )                                   // not for Richards flow
         {
             node_fail=1;
         }
@@ -6377,7 +6325,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
             // second  method fails...try third time
             if ( ( !((m_NodeStatusCH[in] == OK_GEM_AIA) ||  (m_NodeStatusCH[in] == OK_GEM_SIA)) ||
             (m_NodeStatusCH[in] == BAD_GEM_SIA && flag_accept_bad_gem==1) || (m_NodeStatusCH[in] == BAD_GEM_AIA && flag_accept_bad_gem==1)) ||
-                ( ( fabs ( oldvolume - dBR->Vs ) / oldvolume ) > 0.1 ) && ( flowflag != 3 ) )                                   // not for Richards flow
+                (( ( fabs ( oldvolume - dBR->Vs ) / oldvolume ) > 0.1 ) && ( flowflag != 3 )) )                                   // not for Richards flow
             {
                 node_fail = 1; //node failed and do nothing....
             }
@@ -6405,7 +6353,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
             // second  method fails...try third time
             if ( ( !((m_NodeStatusCH[in] == OK_GEM_AIA) ||  (m_NodeStatusCH[in] == OK_GEM_SIA) || 
                             (m_NodeStatusCH[in] == BAD_GEM_SIA && flag_accept_bad_gem==1) || (m_NodeStatusCH[in] == BAD_GEM_AIA && flag_accept_bad_gem==1)) ||
-                    ( ( fabs ( oldvolume - dBR->Vs ) / oldvolume ) > 0.1 ) && ( flowflag != 3 ) ))                                   // not for Richards flow
+                    (( ( fabs ( oldvolume - dBR->Vs ) / oldvolume ) > 0.1 ) && ( flowflag != 3 )) ))                                   // not for Richards flow
             {
                 node_fail = 1; //node failed and do nothing....
             }
@@ -6419,30 +6367,6 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
 
             }
         }
-
-        if (node_fail) //third attempt
-        {
-
-            //move data to GEMS
-            REACT_GEM::SetReactInfoBackGEM ( in,m_Node); // this should be also save for MPI
-
-            dBR->NodeStatusCH = NEED_GEM_AIA; //always run cold start
-
-            m_NodeStatusCH[in] = m_Node->GEM_run ( false );
-            // second  method fails...try third time
-            if ( ( !((m_NodeStatusCH[in] == OK_GEM_AIA) ||  (m_NodeStatusCH[in] == OK_GEM_SIA) ||
-                     (m_NodeStatusCH[in] == BAD_GEM_SIA && flag_accept_bad_gem==1) || (m_NodeStatusCH[in] == BAD_GEM_AIA && flag_accept_bad_gem==1)) ||
-                    ( ( fabs ( oldvolume - dBR->Vs ) / oldvolume ) > 0.1 ) && ( flowflag != 3 ) ))                                   // not for Richards flow
-            {
-                node_fail = 1; //node failed and do nothing....
-            }
-            else
-            {
-                node_fail=0;
-                node_fail_first=0;
-            }
-        }
-
 
         if (node_fail)
         {

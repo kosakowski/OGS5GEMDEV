@@ -14323,7 +14323,7 @@ CRFProcess* PCSGetMass(size_t component_number)
 		long N_Nodes;             // Number of Nodes
 		int nIC;                  // Number of mass transport components.
 		int i = 0;                // index of the component
-		long bc_eqs_index;
+//		long bc_eqs_index;
 		double value;
 		// Get a vector pointing to the REACT_GEM class
 #if !defined(USE_PETSC)
@@ -14349,7 +14349,7 @@ CRFProcess* PCSGetMass(size_t component_number)
 			// ----------------------------------------------------
 
 			// Loop over all the nodes-----------------------------
-			for ( size_t it = 0; it <  N_Nodes /*Number of Nodes*/; it++ )
+			for ( unsigned int it = 0; it <  N_Nodes /*Number of Nodes*/; it++ )
 			{
 			 value= m_vec_GEM->m_bIC_Chem_delta[it * nIC + i] / Tim->time_step_length; // divison of m_bIC_Chem_delta by time gives a rate for each node
 //			 value= m_vec_GEM->m_bIC_Chem_delta[it * nIC + i]/ Tim->time_step_length; 

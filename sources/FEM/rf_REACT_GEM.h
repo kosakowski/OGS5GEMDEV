@@ -122,7 +122,7 @@ public:
     double *mol_phase, *mol_phase_initial, *omega_phase,*omega_components;
 
     double *dmdt;                               // kinetically controlled rates
-    int CalcLimits ( long in, int flag_equilibration, double deltat, TNode* m_Node);
+    int CalcLimits ( long in, double deltat, TNode* m_Node);
     int CalcLimitsInitial ( long in, TNode* m_Node);
     int SetConstraints ( long in, TNode* m_Node);
     int SetLimitsInitial ( long in, TNode* m_Node);    
@@ -214,7 +214,7 @@ public:
 
     double GetTempValue_MT(long node_Index, int timelevel);
     double GetPressureValue_MT(long node_Index, int timelevel);
-    short GetDCValue_MT(long node_Index, int timelevel, double* m_DC, double* m_DC_pts, double* m_DC_MT_delta);
+    short GetDCValue_MT(long node_Index, int timelevel, double* m_DC);
     short GetBValue_MT ( long node_i, int timelevel, double *m_soluteB);
     short GetSoComponentValue_MT(long node_Index, int timelevel, double* m_Phase,  TNode* m_Node );
     double GetDCValueSpecies_MT ( long node_Index, int timelevel, int iDc );
@@ -246,7 +246,7 @@ public:
     short RestoreOldConcMasstransport_MT ( long node_Index);
     void CopyCurKineticsPre ( void );
     // struff related to charge
-    double CalculateCharge (long in,int timelevel); //for a given node number in
+    double CalculateCharge (long in); //for a given node number in
     void CalculateChargeFromGEMS ( long in, TNode* t_Node);
     /// this is only for porosity interpolation to elemens
     void ConvPorosityNodeValue2Elem(int i_timestep);
