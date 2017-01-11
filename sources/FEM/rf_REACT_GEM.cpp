@@ -4599,21 +4599,13 @@ int REACT_GEM::CheckConstraints ( long in,TNode* m_Node)
 	dll_check[ii] += m_dll[in*nDC+jj] * dCH->A[ii+jj*nIC]; //CSD->xic[xic] + CSD->xdc[xdc] * CSD->nIC
 	dul_check[ii] += m_dul[in*nDC+jj] * dCH->A[ii+jj*nIC];
       }
-    /* from GEMS
-       if( p_xDC )
-   {  long int jj;
-      // Correction of bIC vector by convoluting the amounts of DCs
-      for( jj=0; jj<CSD->nDCb; jj++ )
-        if( p_xDC[jj] )
-          for( ii=0; ii<CSD->nICb; ii++ )
-            CNode->bIC[ii] += p_xDC[jj] * DCaJI( jj, ii );
-   }
-    */
+
     // now check the results
       for (ii=0;ii<nIC;ii++)
       {
 	if (dll_check[ii] > m_bIC[in*nIC+ii]) 
 	{
+	  if (rel_error > (dll_check[ii]/m_bIC[in*nIC+ii])) rel_error= dll_check[ii]/m_bIC[in*nIC+ii];	  
 	  rwmutex.lock();
 	  cout << "DEBUG: CheckConstraints failed: node, "<< in << " IC number, " <<ii<< " dll, " << dll_check[ii] << " dul, " << dul_check[ii] << " bIC, " << m_bIC[in*nIC+ii] << " diff " << m_bIC[in*nIC+ii]-
      dll_check[ii] << " rel error " << rel_error << "\n";
@@ -4624,6 +4616,13 @@ int REACT_GEM::CheckConstraints ( long in,TNode* m_Node)
 //	  cout << " Experimental fix by changing dll \n";
 //	  m_bIC[in*nIC+ii]+=1.1*abs(m_bIC[in*nIC+ii]-dll_check[ii]); // not good...seems to make things much worse!
         }
+      }
+      
+      if (iret == 0)
+      {
+	    for (jj=0;jj<nDC;jj++)
+	      m_dll[in*nDC+jj] /= rel_error*1.001; //make ALL limits smaller!
+	    iret=1;
       }
 
       /*
@@ -4828,10 +4827,10 @@ int REACT_GEM::CalcLimits ( long in,double deltat, TNode* m_Node)
                             if ( !std::isfinite(dummy) ) // dummy is nan -> no change!
                             {
                                 // no change!
-                                m_dul[in * nDC + j] = m_xDC[in * nDC + j];
-                                m_dll[in * nDC + j] = m_xDC[in * nDC + j];
-//                                m_dul[in * nDC + j] = m_dll[in * nDC +j];
-//  	      			  m_xDC[in * nDC + j] = m_dll[in * nDC +j];
+//                                m_dul[in * nDC + j] = m_xDC[in * nDC + j];
+//                                m_dll[in * nDC + j] = m_xDC[in * nDC + j];
+                                  m_dul[in * nDC + j] = m_dll[in * nDC +j];
+  	      			  m_xDC[in * nDC + j] = m_dll[in * nDC +j];
 
                             }
 
@@ -4839,7 +4838,8 @@ int REACT_GEM::CalcLimits ( long in,double deltat, TNode* m_Node)
 
                             if (dummy <= 0.0)
                             {
-                                m_dll[in * nDC + j] = m_xDC[in * nDC + j]+dummy;
+                                m_dll[in * nDC + j] = m_dll[in * nDC + j]+dummy;  //experimental: avoid completely wrong limits due to broken amounts
+//                                m_dll[in * nDC + j] = m_xDC[in * nDC + j]+dummy;
                                 if (flag_loose_kinetics)
                                     m_dul[in * nDC + j] = m_xDC[in * nDC + j];
                                 else
@@ -4847,7 +4847,8 @@ int REACT_GEM::CalcLimits ( long in,double deltat, TNode* m_Node)
                             }
                             else if (dummy > 0.0)
                             {
-                                m_dul[in * nDC + j] = m_xDC[in * nDC + j]+dummy;
+                                m_dul[in * nDC + j] = m_dul[in * nDC + j]+dummy;   //experimental: avoid completely wrong limits due to broken amounts
+//                                m_dul[in * nDC + j] = m_xDC[in * nDC + j]+dummy;
                                   if (flag_loose_kinetics)
                                     m_dll[in * nDC + j] = m_xDC[in * nDC + j];
                                 else
@@ -6287,7 +6288,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
 
         if (aktueller_zeitschritt > 1 )
         {
-           dBR->NodeStatusCH = NEED_GEM_SIA; //warm start
+           dBR->NodeStatusCH = NEED_GEM_AIA; //warm start
         //  Parameter:
 //   uPrimalSol  flag to define the mode of GEM smart initial approximation
 //               (only if dBR->NodeStatusCH = NEED_GEM_SIA has been set before GEM_run() call).
