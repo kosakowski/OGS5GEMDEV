@@ -6201,7 +6201,7 @@ void REACT_GEM::SynchronizeData(double* data)   //pass pointer to the vector we 
 
 int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
 {
-    int node_fail,node_fail_first;
+    int node_fail;
     long ii, iisplit,j;
     double oldvolume, dtchem,dummy, subtime;
   //  double debug_time1, debug_time2; //performance analysis
@@ -6310,7 +6310,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
 //               (only if dBR->NodeStatusCH = NEED_GEM_SIA has been set before GEM_run() call).
 //               false  (0) -  use speciation and activity coefficients from previous GEM_run() calculation
 //               true  (1)  -  use speciation provided in the DATABR memory structure (e.g. after reading the DBR file)
-            m_NodeStatusCH[in] = m_Node->GEM_run ( false );
+            m_NodeStatusCH[in] = m_Node->GEM_run ( true );
         }
         else
         {
@@ -6327,7 +6327,6 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
         else
         {
             node_fail=0;
-            node_fail_first=0;
         }
 
         if (node_fail) // repeat first attempt with AIA
@@ -6349,7 +6348,6 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
             else
             {
                 node_fail=0;
-                node_fail_first=0;
   //                          rwmutex.lock();
   //                          cout << "DEBUG: GEM4R run gave success at node " << in <<"with method: " << gem_numerical_method[0] << " and simplex \n";
   //                        rwmutex.unlock();
@@ -6377,7 +6375,6 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
             else
             {
                 node_fail=0;
-                node_fail_first=0;
 //                rwmutex.lock();
 //                cout << "DEBUG: GEM4R run gave success at node " << in <<"with method: " << gem_numerical_method[1] << "\n";
 //                rwmutex.unlock();
@@ -6393,8 +6390,6 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
              //   rwmutex.unlock();
             }
             // leave loop without new calculation of porosity and reaction rates and also not update Chemistry values...take last values!
-            if ( (node_fail_first == 1) ) // attempt to solve chemistry failed
-            {
                 rwmutex.lock();
                 cout <<
                      "DEBUG: Error: main Loop Kin-Chem loop " << ii << " failed when running GEM on Node #"
@@ -6407,7 +6402,6 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
                      "\n";
                 rwmutex.unlock();
                 // exit ( 1 );
-            }
             break;
         }
         else //normal postprocessing
