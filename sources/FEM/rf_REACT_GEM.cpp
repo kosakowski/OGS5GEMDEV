@@ -4322,25 +4322,30 @@ int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration
         {
             dm_endmember[i] =  phase_change * m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter] * (m_xDC[in * nDC + j] /mol_phase[in*nPH+ k])  ;
         }
-        if ( !( std::isfinite(dm_endmember[i])) ) //test for NaN
+        
+        if ( !(std::isfinite(dm_endmember[i])) ) //test for NaN
         {
             // no change!
             dm_endmember[i]=0.0;
         }
-        if ( ( dm_endmember[i] > 1.0e10 )  ) //test for inf
+        else if ( ( dm_endmember[i] > 1.0e30 )  ) //test for inf
         {
             // no change!
             dm_endmember[i]=0.0;
         }
-        if ( ( dm_endmember[i] < -1.0e30 )  ) //test for -inf
+        else if ( ( dm_endmember[i] < -1.0e30 )  ) //test for -inf
         {
             // no change!
             dm_endmember[i]=0.0;
         }
-        if (dm_endmember[i] < 0.0)
+        else if (dm_endmember[i] < 0.0)
+	{
             dm_minus += dm_endmember[i];  //sum of endmembers which go into solution...used for scaling to dmdt
-        if (dm_endmember[i] > 0.0)    // sum of endmembers which are created newly: these are limited by ions in solution...therefore never touch again
+	}
+        else if (dm_endmember[i] > 0.0)    // sum of endmembers which are created newly: these are limited by ions in solution...therefore never touch again
+	{
             dm_plus += dm_endmember[i];
+	}
         dm_sum += dm_endmember[i];
         dm_abssum += fabs(dm_endmember[i]);
 
@@ -4425,25 +4430,30 @@ int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration
 //	          << " omega fraction " << omega_components[in * nDC + j] / omega_phase[in * nPH + k] << " charge_fraction " << m_xDC[in * nDC + j]*m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter]/charge_phase;	    
 //	    if (in == 0) cout <<  " mol " <<  m_xDC[in * nDC + j]<< " omega " << omega_components[in * nDC + j]  << " \n";	    
         }
-        if ( !( std::isfinite(dm_endmember[i]))) //test for NaN
+        
+        if ( !(std::isfinite(dm_endmember[i])) ) //test for NaN
         {
             // no change!
             dm_endmember[i]=0.0;
         }
-        if ( ( dm_endmember[i] > 1.0e10 )  ) //test for inf
+        else if ( ( dm_endmember[i] > 1.0e30 )  ) //test for inf
         {
             // no change!
             dm_endmember[i]=0.0;
         }
-        if ( ( dm_endmember[i] < -1.0e30 )  ) //test for -inf
+        else if ( ( dm_endmember[i] < -1.0e30 )  ) //test for -inf
         {
             // no change!
             dm_endmember[i]=0.0;
         }
-        if (dm_endmember[i] < 0.0)
+        else if (dm_endmember[i] < 0.0)
+	{
             dm_minus += dm_endmember[i];  //sum of endmembers which go into solution...used for scaling to dmdt
+	}
         if (dm_endmember[i] > 0.0)    // sum of endmembers which are created newly: these are limited by ions in solution...therefore never touch again
+	{
             dm_plus += dm_endmember[i];
+	}
         dm_sum += dm_endmember[i];
         dm_abssum += fabs(dm_endmember[i]);
 //    if (in == 0)    cout << "DEBUG solid solution i, change "<< i << " " <<  dm_endmember[i] << " mold endmember " <<  m_xDC[in * nDC + j] << " dm_sum " << dm_sum << " dm_abssum " << dm_abssum << " \n";
@@ -4491,7 +4501,7 @@ int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration
                 dm_endmember[i]=0.0;
             }
         }
-        if ( !( std::isfinite(dm_endmember[i])) ) //test for NaN
+        if ( !( std::isfinite(dm_endmember[i]))) //test for NaN
         {
             // no change!
             dm_endmember[i]=0.0;
@@ -4618,38 +4628,42 @@ int REACT_GEM::CheckConstraints ( long in,TNode* m_Node)
         }
       }
       
-      if (iret == 0)
-      {
-	    for (jj=0;jj<nDC;jj++)
-	      m_dll[in*nDC+jj] /= rel_error*1.001; //make ALL limits smaller!
-	    iret=1;
-      }
-
-      /*
-    if (!iret) // reset constraints to previous values if we have a problem! and loosen the value?
-        // not very good...seems also to destroy mass balances!
-        // best solution at the moment seems to let the node fail?
+    if (iret == 0)
     {
-        rwmutex.lock();
-        for ( ii = 0; ii < ( int ) m_kin.size(); ii++ )
+        for (jj=0; jj<nDC; jj++)
+            m_dll[in*nDC+jj] *= (1.0-1.0e-6); //make ALL limits smaller!
+        iret=1;
+	
+        // Check again!
+        for (ii=0; ii<nIC; ii++)
         {
-            k = m_kin[ii].phase_number;
-            cout << "failed, iret is " << iret << " phase is " << m_kin[ii].phase_name << " at node " << in << " ";
-            cout << "mol_phase " << mol_phase[in * nPH +k] << " dmdt " << dmdt[in * nPH +
-                      k] << " omegaPhase " <<
-                 omega_phase[in * nPH + k] << "\n";
-        } 
-        for ( ii = 0; ii < nDC; ii++ )
-        {
-            m_dll[in*nDC+ii] *= 0.999; //(1.0-(rel_error*2.0));          // set a bit smaller
-            m_dul[in*nDC+ii] *= 1.001;  //(1.0+(rel_error*2.0));       // set the same as lower limit...for REAKTORO
-//             m_xDC[in*nDC+ii] = m_dll[in*nDC+ii]; // this should be consistent with REAKTORO
+            dll_check[ii]=0.0;
+            dul_check[ii]=0.0;
         }
-        rwmutex.unlock();
-    }
-*/
-    
 
+        // loop over all dependent components
+        for (jj=0; jj<nDC; jj++)
+            for (ii=0; ii<nIC; ii++)
+            {
+                dll_check[ii] += m_dll[in*nDC+jj] * dCH->A[ii+jj*nIC]; //CSD->xic[xic] + CSD->xdc[xdc] * CSD->nIC
+                dul_check[ii] += m_dul[in*nDC+jj] * dCH->A[ii+jj*nIC];
+            }
+        for (ii=0; ii<nIC; ii++)
+        {
+            if (dll_check[ii] > m_bIC[in*nIC+ii])
+            {
+                if (rel_error > (dll_check[ii]/m_bIC[in*nIC+ii])) rel_error= dll_check[ii]/m_bIC[in*nIC+ii];
+                rwmutex.lock();
+                cout << "DEBUG: CheckConstraints failed after correction: node, "<< in << " IC number, " <<ii<< " dll, " << dll_check[ii] << " dul, " << dul_check[ii] << " bIC, " << m_bIC[in*nIC+ii] << " diff " << m_bIC[in*nIC+ii]-
+                     dll_check[ii] << " rel error " << rel_error << "\n";
+                rwmutex.unlock();
+                //	if (dul_check[ii] >= m_bIC[ii]) cout << "DEBUG: upper CheckConstraints failed: node, IC number, dll, dul, bIC, diff"<< in << " " <<ii<< " " << dll_check[ii] << " " << dul_check[ii] << " " << m_bIC[ii] << " " << m_bIC[ii]-dul_check[ii] << "\n";
+                iret=0;
+//	  cout << " Experimental fix by changing dll \n";
+//	  m_bIC[in*nIC+ii]+=1.1*abs(m_bIC[in*nIC+ii]-dll_check[ii]); // not good...seems to make things much worse!
+            }
+        }
+    }
   return iret;
 }
 
@@ -4763,7 +4777,7 @@ int REACT_GEM::CalcLimits ( long in,double deltat, TNode* m_Node)
                             dummy = 1.0 - m_dll[in * nDC + j] / m_kin[ii].kinetic_parameters[7] ; //zero is no hydration (initial)...1 is completely hydrated!
                             // get new value
                             alpha_t = CementHydrationKinetics(dummy, ii, deltat);
-                            if ( std::isfinite(alpha_t) )
+                            if ( std::isfinite(alpha_t) ) // gives false for nan and infinite numbers
                                 m_dll[in * nDC + j] = m_kin[ii].kinetic_parameters[7] * (1.0 - alpha_t);
                             // no negative masses allowed..give some freedom
                             if ( m_dul[in * nDC + j] <= 0.0 )
@@ -4780,13 +4794,13 @@ int REACT_GEM::CalcLimits ( long in,double deltat, TNode* m_Node)
 
                             if( m_dll[in * nDC + j] >1e20)
                             {
-                                cout << "something is wrong in cement kinetics as m_dll[in * nDC + j] is to big: " << m_dll[in * nDC + j] << " node " << in << " component " << j << " phase " << m_kin[ii].phase_name<<"\n";
+                                cout << "kinetics failed: something is wrong in cement kinetics as m_dll[in * nDC + j] is to big: " << m_dll[in * nDC + j] << " node " << in << " component " << j << " phase " << m_kin[ii].phase_name<<"\n";
                             }
-                            if ( !std::isfinite(m_dll[in*nDC+j]) ) // dummy is nan -> no change!
+                            if ( !std::isfinite(m_dll[in*nDC+j]) ) // dummy is nan or infinite -> no change!
                             {
                                 // no change!
-                                m_dul[in * nDC + j] = m_xDC[in * nDC + j];
-                                m_dll[in * nDC + j] = m_xDC[in * nDC + j];
+//                                m_dul[in * nDC + j] = m_xDC[in * nDC + j];
+//                                m_dll[in * nDC + j] = m_xDC[in * nDC + j];
 //                                m_dul[in * nDC + j] = m_dll[in * nDC +j];
 //  	      			  m_xDC[in * nDC + j] = m_dll[in * nDC +j];
                                 exit(1);
@@ -4829,14 +4843,11 @@ int REACT_GEM::CalcLimits ( long in,double deltat, TNode* m_Node)
                                 // no change!
 //                                m_dul[in * nDC + j] = m_xDC[in * nDC + j];
 //                                m_dll[in * nDC + j] = m_xDC[in * nDC + j];
-                                  m_dul[in * nDC + j] = m_dll[in * nDC +j];
-  	      			  m_xDC[in * nDC + j] = m_dll[in * nDC +j];
+//                                  m_dul[in * nDC + j] = m_dll[in * nDC +j];
+//  	      			  m_xDC[in * nDC + j] = m_dll[in * nDC +j];
 
                             }
-
-
-
-                            if (dummy <= 0.0)
+                            else if (dummy <= 0.0)
                             {
                                 m_dll[in * nDC + j] = m_dll[in * nDC + j]+dummy;  //experimental: avoid completely wrong limits due to broken amounts
 //                                m_dll[in * nDC + j] = m_xDC[in * nDC + j]+dummy;
@@ -4932,8 +4943,8 @@ int REACT_GEM::CalcLimits ( long in,double deltat, TNode* m_Node)
                     if ( !std::isfinite(m_dll[in*nDC+j]) ) // dummy is nan -> no change!
                     {
                         // no change!
-                        m_dul[in * nDC + j] = m_xDC[in * nDC + j];
-                        m_dll[in * nDC + j] = m_xDC[in * nDC + j];
+//                        m_dul[in * nDC + j] = m_xDC[in * nDC + j];
+//                        m_dll[in * nDC + j] = m_xDC[in * nDC + j];
 //                                m_dul[in * nDC + j] = m_dll[in * nDC +j];
 //  	      			  m_xDC[in * nDC + j] = m_dll[in * nDC +j];
 //                        exit(1);
@@ -6222,7 +6233,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
 
     for ( j = 0; j < nDC; j++ )
     {
-        dllb[j]=m_dll[in * nDC + j] ;          //take the old values for dll and dul
+        dllb[j]=m_dll[in * nDC + j] ;          //store the old values for dll and dul
         dulb[j]=m_dul[in * nDC + j] ;      //
     }
 
@@ -6232,6 +6243,9 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
     {
         dummy=MaxDtKinetics(in, m_Node);        // set smaller time step ...use a critera based on kinetic rate! and minimum value given in *.gem file
         // cout << "DEBUG " << dummy << " dt " << dt << "\n";
+	
+	if (dummy < minimum_kinetic_time_step) dummy = minimum_kinetic_time_step;
+	
         if ((dummy < dt)) // max_kinetic_timestep is the maximum allowed timestep according to kinetic criteria
         {
             iisplit=dt/dummy;
@@ -6260,6 +6274,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
         }
         else
         {
+/* ***************** DO nothing *****************
             // check constraints returned "0" and we decrease time step
             dtchem=dtchem/10.0;
             if (dtchem<(minimum_kinetic_time_step/1000.0)) // make sure we do not get too many time steps! -> if kinetics requires very small time steps, they should be set via minimum kinetic time step
@@ -6281,6 +6296,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
             }
             // test if dtchem is too small
             continue; // rest of the while loop is ignored....
+*/ 
         }
 
         //move data to GEMS
@@ -6288,7 +6304,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
 
         if (aktueller_zeitschritt > 1 )
         {
-           dBR->NodeStatusCH = NEED_GEM_AIA; //warm start
+           dBR->NodeStatusCH = NEED_GEM_SIA; //warm start
         //  Parameter:
 //   uPrimalSol  flag to define the mode of GEM smart initial approximation
 //               (only if dBR->NodeStatusCH = NEED_GEM_SIA has been set before GEM_run() call).
