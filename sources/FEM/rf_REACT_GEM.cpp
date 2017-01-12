@@ -106,6 +106,7 @@ REACT_GEM::REACT_GEM ( void )
 	m_gem_pressure = 1.0e+5;                   // default pressure 1 bar
 	flag_iterative_scheme = 0;                 //0-not iteration;1=iteration;
 	flag_disable_gems = 0;                    // always calculate gems
+	flag_gem_sia = 0;                         // default: do not allow GEM_SIA
 	// flag for different iterative scheme
 	// 0 - sequential non-iterative scheme
 	// 1 - standard iterative scheme
@@ -3413,6 +3414,16 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
 			in.clear();
 			continue;
 		}        // ......................................................
+		/// use SIA mode for gem calculations 
+		if ( line_string.find ( "$FLAG_GEM_USE_SIA" ) != string::npos )
+		{
+			// subkeyword found
+			in.str ( GetLineFromFile1 ( gem_file ) );
+			in >> flag_gem_sia;
+			in.clear();
+			continue;
+		}        // ......................................................
+
 		/// keyword "$CALCULATE_GEMS" is used to exclude nodes from gems calculations....
 		/// nodes are not calculated in intervall between lower and upper limit...input: condition type (default: 1), number of species, lower limit, upper limit 
         if ( line_string.find ( "$CALCULATE_GEMS" ) != string::npos )
@@ -6257,7 +6268,6 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
         }
     }
     node_fail=1; // we start with no correct result!
-    node_fail_first=1;
         ii=0;
 //    for (ii=0; ii<iisplit; ii++) // sub-loop for kinetics
     while(subtime<=dt)
@@ -6304,7 +6314,8 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
 
         if (aktueller_zeitschritt > 1 )
         {
-           dBR->NodeStatusCH = NEED_GEM_SIA; //warm start
+           if (flag_gem_sia) dBR->NodeStatusCH = NEED_GEM_SIA; //warm start
+           else dBR->NodeStatusCH = NEED_GEM_AIA;
         //  Parameter:
 //   uPrimalSol  flag to define the mode of GEM smart initial approximation
 //               (only if dBR->NodeStatusCH = NEED_GEM_SIA has been set before GEM_run() call).
