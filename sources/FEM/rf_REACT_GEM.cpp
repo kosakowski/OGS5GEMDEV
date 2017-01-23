@@ -1210,8 +1210,9 @@ long int  p_NodeHandle,   // Node identification handle
 		                      m_bIC + in * nIC,
 		                      m_dul + in * nDC,
 		                      m_dll + in * nDC,
-		                      m_aPH + in * nPH);
-		                      //	cout << m_xDC+in*nDC << "\n";
+		                      m_aPH + in * nPH,
+				      m_xDC + in * nDC,  
+				      m_gam + in * nDC);
 }
 
 short REACT_GEM::Run_MainLoop ( )
@@ -4746,7 +4747,7 @@ int REACT_GEM::CalcLimits ( long in,double deltat, TNode* m_Node)
             {
                 CalcLimitsSolidSolution(in,ii,0,m_Node); // we pass "0" for flag_equilibration, as here we also calculate phase kinetics
             }
-            else if ( (m_kin[ii].kinetic_model == 44) ) // cement hydration kinetics
+            else if ( (m_kin[ii].kinetic_model == 44) ) // for cement solid solution AL endmember should not exceed Iron 
                {
                        //  m_kin[ii].kinetic_parameters[0] // (0 or 1) indicates which one is Al endmember (=: first in dch list)...the other one is Fe endmember
                    int jAl, jFe;
@@ -4860,7 +4861,7 @@ int REACT_GEM::CalcLimits ( long in,double deltat, TNode* m_Node)
                             }
                             else if (dummy <= 0.0)
                             {
-                                m_dll[in * nDC + j] = m_dll[in * nDC + j]+dummy;  //experimental: avoid completely wrong limits due to broken amounts
+                                m_dll[in * nDC + j] += dummy;  //experimental: avoid completely wrong limits due to broken amounts
 //                                m_dll[in * nDC + j] = m_xDC[in * nDC + j]+dummy;
                                 if (flag_loose_kinetics)
                                     m_dul[in * nDC + j] = m_xDC[in * nDC + j];
@@ -4869,7 +4870,7 @@ int REACT_GEM::CalcLimits ( long in,double deltat, TNode* m_Node)
                             }
                             else if (dummy > 0.0)
                             {
-                                m_dul[in * nDC + j] = m_dul[in * nDC + j]+dummy;   //experimental: avoid completely wrong limits due to broken amounts
+                                m_dul[in * nDC + j] += dummy;   //experimental: avoid completely wrong limits due to broken amounts
 //                                m_dul[in * nDC + j] = m_xDC[in * nDC + j]+dummy;
                                   if (flag_loose_kinetics)
                                     m_dll[in * nDC + j] = m_xDC[in * nDC + j];
@@ -4951,18 +4952,21 @@ int REACT_GEM::CalcLimits ( long in,double deltat, TNode* m_Node)
                     {
                         cout << "something is wrong in kinetics as m_dll[in * nDC + j] is to big: " << m_dll[in * nDC + j] << " node " << in << " component " << j << " phase " << m_kin[ii].phase_name<<"\n";
                     }
-                    if ( !std::isfinite(m_dll[in*nDC+j]) ) // dummy is nan -> no change!
-                    {
+//                    if ( !std::isfinite(m_dll[in*nDC+j]) ) // dummy is nan -> no change!
+//                    {
                         // no change!
 //                        m_dul[in * nDC + j] = m_xDC[in * nDC + j];
 //                        m_dll[in * nDC + j] = m_xDC[in * nDC + j];
 //                                m_dul[in * nDC + j] = m_dll[in * nDC +j];
 //  	      			  m_xDC[in * nDC + j] = m_dll[in * nDC +j];
 //                        exit(1);
+//                    }
 
-                    }
-
-
+                    // no negative masses allowed
+                    if ( m_xDC[in * nDC + j] < m_dll[in * nDC + j] )
+                        m_xDC[in * nDC + j] = m_dll[in * nDC + j];
+                    if ( m_xDC[in * nDC + j] > m_dul[in * nDC + j] )
+                        m_xDC[in * nDC + j] = m_dul[in * nDC + j];
 
                     //              if ((in == 5)&&(ii == (m_kin.size()-2)))  cout << "Kin debug for component no. " << j << " at node " << in << " m_xDC "  <<  m_xDC[in*nDC+j] << " m_dll, mdul " << m_dll[in*nDC+j] << " " << m_dul[in*nDC+j] << " diff " << m_dul[in*nDC+j]- m_dll[in*nDC+j] << " Kin debug mol phase " << mol_phase[in*nPH+k] << " dmdt " << dmdt[in*nPH+k]*dt << "\n";
 //                if ((in == 5))  cout << "Kin debug for component no. " << j << " at node " << in << " m_xDC "  <<  m_xDC[in*nDC+j] << " m_dll, mdul " << m_dll[in*nDC+j] << " " << m_dul[in*nDC+j] << " diff " << m_dul[in*nDC+j]- m_dll[in*nDC+j] << " Kin debug mol phase " << mol_phase[in*nPH+k] << " dmdt " << dmdt[in*nPH+k]*dt << "\n";
