@@ -1271,29 +1271,25 @@ long int TMulti::MetastabilityLagrangeMultiplier()
         case NO_LIM:
         case LOWER_LIM:
             if( pm.Y[J]<=pm.DLL[J])
-                pm.Y[J]=pm.DLL[J]+E;
+                pm.Y[J]=pm.DLL[J]+E; 
+            if( pm.Y[J]>pm.DUL[J])  // we hope that upper limit is at least 1e+6...but shit happes...
+                pm.Y[J]=pm.DUL[J];
             break;
         case BOTH_LIM:
-            if( pm.Y[J]<=pm.DLL[J])
-                pm.Y[J]=pm.DLL[J]+E;
-            if( pm.Y[J]>=pm.DUL[J])     // SD 22/01/2009
-            {
-                if( pm.DUL[J] == 1e6 )
-                   return J;   // Broken initial approximation!
-                pm.Y[J]=pm.DUL[J]-E;
-                if( pm.Y[J]<=pm.DLL[J])
-                        pm.Y[J]=(pm.DUL[J]+pm.DLL[J])/2.;
-             }
-             break;
+            if( pm.Y[J]<pm.DLL[J])
+                pm.Y[J]=pm.DLL[J]+(pm.DUL[J]-pm.DLL[J])/2.0;
+            if( pm.Y[J]>pm.DUL[J])     
+	        pm.Y[J]=pm.DLL[J]+(pm.DUL[J]-pm.DLL[J])/2.0;
+             if( pm.Y[J]<pm.DLL[J])  // in case we have some numerical inaccuaracy (DLL == DUL) we test again
+                pm.Y[J]=pm.DLL[J];
+             if( pm.Y[J]>pm.DUL[J])  // in case we have some numerical inaccuaracy (DLL == DUL) we test again
+                pm.Y[J]=pm.DUL[J];
+	     break;
         case UPPER_LIM:
-            if( pm.Y[J]>=pm.DUL[J])
-            {
-                if( pm.DUL[J] == 1e6 )
-               	    return J;   // Broken initial approximation!
+            if( pm.Y[J]>pm.DUL[J])
                 pm.Y[J]=pm.DUL[J]-E;
-                if( pm.Y[J]<=0)         // SD 22/01/2009
-                        pm.Y[J]=(pm.DUL[J])/2.;
-            }
+            if( pm.Y[J]< pm.DLL[J])        // we hope that lower limit is 0.0 ...
+                pm.Y[J]=pm.DLL[J];
             break;
         }
     }   // J
