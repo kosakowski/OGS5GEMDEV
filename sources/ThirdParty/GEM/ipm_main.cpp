@@ -1262,36 +1262,26 @@ long int TMulti::MetastabilityLagrangeMultiplier()
     for(long int J=0;J<pm.L;J++)
     {
         if( pm.Y[J] < 0. )   // negative number of moles!
-        	return J;
+            return J;
         if( pm.Y[J] < min( pm.lowPosNum, pm.DcMinM ))
             continue;
-
-        switch( pm.RLC[J] )
-        {
-        case NO_LIM:
-        case LOWER_LIM:
-            if( pm.Y[J]<=pm.DLL[J])
-                pm.Y[J]=pm.DLL[J]+E; 
-            if( pm.Y[J]>pm.DUL[J])  // we hope that upper limit is at least 1e+6...but shit happes...
-                pm.Y[J]=pm.DUL[J];
-            break;
-        case BOTH_LIM:
-            if( pm.Y[J]<pm.DLL[J])
-                pm.Y[J]=pm.DLL[J]+(pm.DUL[J]-pm.DLL[J])/2.0;
-            if( pm.Y[J]>pm.DUL[J])     
-	        pm.Y[J]=pm.DLL[J]+(pm.DUL[J]-pm.DLL[J])/2.0;
-             if( pm.Y[J]<pm.DLL[J])  // in case we have some numerical inaccuaracy (DLL == DUL) we test again
-                pm.Y[J]=pm.DLL[J];
-             if( pm.Y[J]>pm.DUL[J])  // in case we have some numerical inaccuaracy (DLL == DUL) we test again
-                pm.Y[J]=pm.DUL[J];
-	     break;
-        case UPPER_LIM:
-            if( pm.Y[J]>pm.DUL[J])
-                pm.Y[J]=pm.DUL[J]-E;
-            if( pm.Y[J]< pm.DLL[J])        // we hope that lower limit is 0.0 ...
-                pm.Y[J]=pm.DLL[J];
-            break;
-        }
+// kg44 why use a switch? Much to complicated! Simply correct all the values that are to big or to small. 
+// values that are in the intervall given by DLL and DUL need no change.	
+        if(pm.Y[J]<pm.DLL[J])
+	{
+	  if ((pm.DUL[J] - pm.DLL[J])/2.0 > E) 
+	    pm.Y[J]=pm.DLL[J]+E;
+	  else 
+	    pm.Y[J]=pm.DLL[J]+(pm.DUL[J]-pm.DLL[J])/2.0; // this seems to work better than setting it directly to constraints
+	}
+        if (pm.Y[J]>pm.DUL[J])
+	{
+	  if ((pm.DUL[J] - pm.DLL[J])/2.0 > E) 
+	    pm.Y[J]=pm.DUL[J]-E;
+	  else 
+	    pm.Y[J]=pm.DLL[J]+(pm.DUL[J]-pm.DLL[J])/2.0; // this seems to work better than setting it directly to constraints
+	}
+	  
     }   // J
     return -1L;
 }
