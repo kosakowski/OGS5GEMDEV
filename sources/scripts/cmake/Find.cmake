@@ -148,7 +148,7 @@ mark_as_advanced(CMAKE_THREAD_PREFER_PTHREAD)
 ## boost (see FindBoost.cmake for more options) ##
 ##kg44 this configuration works for boost and petsc on a cray
 option(Boost_USE_STATIC_LIBS "" OFF)
-option(Boost_USE_MULTITHREADED "" ON)
+option(Boost_USE_MULTITHREADED "" OFF)
 option(Boost_USE_STATIC_RUNTIME "" OFF)
 mark_as_advanced(Boost_USE_STATIC_LIBS Boost_USE_MULTITHREADED Boost_USE_STATIC_RUNTIME)
 

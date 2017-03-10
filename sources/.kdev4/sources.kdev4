@@ -29,7 +29,7 @@ Name=New Compiled Binary Launcher
 Type=Native Application
 
 [Launch][Launch Configuration 0][Data]
-Arguments=cc1p
+Arguments=bench
 Dependencies=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x00)
 Dependency Action=Nothing
 EnvironmentGroup=
@@ -37,7 +37,7 @@ Executable=file:///home/kosakowski/GitMigration/sources/build/bin/ogs
 External Terminal=konsole --noclose --workdir %workdir -e %exe
 Project Target=OGS5GEM,OGS,ogs
 Use External Terminal=false
-Working Directory=file:///home/kosakowski/work/CI/OpaCem2017-Esdred-CNASH-V1-ogsgemdev
+Working Directory=file:///home/kosakowski/work/Fass/TestLookupTable/
 isExecutable=true
 
 [Project]

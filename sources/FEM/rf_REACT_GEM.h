@@ -86,7 +86,7 @@ public:
     double *m_fluid_density;
     
     /// indexes, which one in the xDC vector is water, oxygen or hydrogen
-    int idx_water, idx_hydrogen, idx_oxygen;
+    int idx_water, idx_hydrogen, idx_oxygen, idx_carbon, idx_co2g;
 
     double *m_T, *m_P, *m_Vs, *m_Ms,
     *m_Gs, *m_Hs, *m_IC, *m_pH, *m_pe,
@@ -182,13 +182,17 @@ public:
     bool flag_accept_bad_gem; /// accept bad GEM solutions 
     bool flag_gem_sia; /// allow warmstart option to speedup calculatuons (better convergence of GEM kernel)
     
-    
+    int flag_gas_diffusion;                      // simple implemention of gas diffusion for benchmark
+    double *m_co2;    
+    double GetCO2Value_MT ( long node_Index, int timelevel);
+    short SetCO2Value_MT ( long node_Index, int timelevel, double co2value );
     int heatflag;                               //0-initialized and not heat transport;1-heat_transport;
     int flowflag;                               //0-initialized;1-GROUNDWATER_FLOW;2-LIQUID_FLOW;3-RICHARDS_FLOW;4-FLOW;
     int flag_porosity_change;                   //0-porosity change not coupled into transport; 1=coupled;
     int flag_coupling_hydrology;                //0-without coupling; 1=with coupling;
     int flag_calculate_boundary_nodes;          // set to zero to avoid precipitation/dissolution (porosity change) at boundary nodes
     int gem_pressure_flag;                      //shall we give a constant user defined pressure to gems?
+    int flag_concentrations_from_gems;          // shall we use gems calculated concentrations for transport?
     int flag_transport_b;                       //1: transport only dissolved components of b vector; 0: transport full speciation
     long m_max_failed_nodes; ///maximum number of failed nodes
     int flag_disable_gems;             //disable gems calculations in main loop ..not for initialization!
@@ -267,6 +271,9 @@ public:
     int FindWater_xDC(TNode* m_Node);
     int Findhydrogen_bIC ( TNode* m_Node);
     int Findoxygen_bIC ( TNode* m_Node);
+    int Findcarbon_bIC ( TNode* m_Node);
+    int Findco2g_bIC ( TNode* m_Node);
+
     //kg44 11/2008 for kinetics
     int CalcReactionRate ( long node,  TNode* m_Node );
     double SurfaceAreaPh ( long kin_phasenr,long in ,  TNode* m_Node );
