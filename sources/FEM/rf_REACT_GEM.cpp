@@ -4312,12 +4312,14 @@ int REACT_GEM::CalcLimitsInitial ( long in, TNode* m_Node)
 	if ( !dBR )
 		return 0;
 // ok here, for the very first beginning....
-	for ( j = 0; j < nDC; j++ )
+	if ( ( m_flow_pcs->GetRestartFlag() < 2 ) ) // we test if restart flag is set....
 	{
+	  for ( j = 0; j < nDC; j++ )
+	  {
 		m_dll[in * nDC + j] = 0.0;          // set to zero
 		m_dul[in * nDC + j] = 1.0e6;      // very high number
+	   }
 	}
-
 	if ( ( m_flow_pcs->GetRestartFlag() >= 2 ) ) // we test if restart flag is set....if not this will not work, as x_dc might be not correct
 	{
 		for ( ii = 0; ii < ( int ) m_kin.size(); ii++ )
@@ -4356,6 +4358,7 @@ int REACT_GEM::CalcLimitsInitial ( long in, TNode* m_Node)
 		}                                      // end loop over phases
 		return 1; 
 	}  // end restart
+	/*
 	else // we test if kinetic constraints are set
 	{
 	      if ( ( int ) m_constraints.size() >=1) 
@@ -4383,9 +4386,9 @@ int REACT_GEM::CalcLimitsInitial ( long in, TNode* m_Node)
 		       }
 				    
 		}
-	      }// end loop over constraints
-	  
+	      }// end loop over constraint
 	}
+	*/
 	return 1;
 }
 
@@ -5910,8 +5913,16 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 //        rwmutex.unlock();
 
         node_fail=0;
-        if ( ( m_flow_pcs->GetRestartFlag() >= 2 ) ) // everything is stored in concentrations for restart ...moved it to here from init_gems
+        if ( ( m_flow_pcs->GetRestartFlag() >= 2 ) )
+	{// everything is stored in concentrations for restart ...moved it to here from init_gems
+	  	// now initialize m_co2 if gas transport should be considered....m_co2 should be identical to 
+	  if (flag_gas_diffusion)
+	  {
+	      m_co2[in]=m_xDC[in * nDC + idx_co2g]; // here we set m_co2 to gas concentration before we pass m_co2 to transport solver
+	      // m_co2 is used in concentrationtomass!!!
+	  }
             REACT_GEM::ConcentrationToMass ( in,1); // I believe this is save for MPI         Convert from concentration only for restart!
+	}
         // this we have already
 
         if ( !( m_flow_pcs->GetRestartFlag() >= 2 ) ) { // only for restart
