@@ -4258,12 +4258,6 @@ int REACT_GEM::SetConstraints ( long in, TNode* m_Node)
     // exchanges data between GEMIPM and FMT parts
     dBR = m_Node->pCNode();
     if ( !dBR ) return 0;
-    // ok here, for the very first beginning....
-	for ( j = 0; j < nDC; j++ )
-	{
-		m_dll[in * nDC + j] = 0.0;          // set to zero
-		m_dul[in * nDC + j] = 1.0e6;      // very high number
-	}
 
     if ( ( int ) m_constraints.size() >=1)
     {
@@ -5930,6 +5924,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 	}
         // now we calculate kinetic constraints for GEMS!
             REACT_GEM::SetConstraints ( in, t_Node);                           // this is always safe to do, but AFTER SetLimitsInitial, as in this way we can overwrite dll values for restart
+	  
  
 
         // Manipulate some kinetic contstraints for special initial conditions
