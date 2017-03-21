@@ -183,9 +183,9 @@ public:
     bool flag_gem_sia; /// allow warmstart option to speedup calculatuons (better convergence of GEM kernel)
     
     int flag_gas_diffusion;                      // simple implemention of gas diffusion for benchmark
-    double *m_co2;    
-    double GetCO2Value_MT ( long node_Index, int timelevel);
-    short SetCO2Value_MT ( long node_Index, int timelevel, double co2value );
+    double *m_co2, *m_co2_transport;    
+    short GetCO2Value_MT ( long node_Index, int timelevel, double* m_co);
+    short SetCO2Value_MT ( long node_Index, int timelevel,  double co2value);
     int heatflag;                               //0-initialized and not heat transport;1-heat_transport;
     int flowflag;                               //0-initialized;1-GROUNDWATER_FLOW;2-LIQUID_FLOW;3-RICHARDS_FLOW;4-FLOW;
     int flag_porosity_change;                   //0-porosity change not coupled into transport; 1=coupled;
@@ -194,6 +194,7 @@ public:
     int gem_pressure_flag;                      //shall we give a constant user defined pressure to gems?
     int flag_concentrations_from_gems;          // shall we use gems calculated concentrations for transport?
     int flag_transport_b;                       //1: transport only dissolved components of b vector; 0: transport full speciation
+    int flag_hayekit;                           // flag to force behaviour for hayekit benchmark...fluid phase is scaled by scaling water only and not solutes
     long m_max_failed_nodes; ///maximum number of failed nodes
     int flag_disable_gems;             //disable gems calculations in main loop ..not for initialization!
     bool *m_calculate_gems;     // size: nNodes: =1 (default) =0 (switch off calculation for specific nodes)

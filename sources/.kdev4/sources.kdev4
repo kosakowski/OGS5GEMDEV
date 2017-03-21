@@ -37,8 +37,11 @@ Executable=file:///home/kosakowski/GitMigration/sources/build/bin/ogs
 External Terminal=konsole --noclose --workdir %workdir -e %exe
 Project Target=OGS5GEM,OGS,ogs
 Use External Terminal=false
-Working Directory=file:///home/kosakowski/work/Fass/TestLookupTable/
+Working Directory=file:///scratch/ISLAND/400C_500bar/
 isExecutable=true
+
+[MakeBuilder]
+Number Of Jobs=32
 
 [Project]
 VersionControlSupport=kdevgit

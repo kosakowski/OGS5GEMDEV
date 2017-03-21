@@ -111,6 +111,7 @@ REACT_GEM::REACT_GEM ( void )
 	flag_iterative_scheme = 0;                 //0-not iteration;1=iteration;
 	flag_disable_gems = 0;                    // always calculate gems
 	flag_gem_sia = 0;                         // default: do not allow GEM_SIA
+	flag_hayekit = 0;                         // default is not use skaling for hayekit
 	// flag for different iterative scheme
 	// 0 - sequential non-iterative scheme
 	// 1 - standard iterative scheme
@@ -324,15 +325,19 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 		// imediately check
 		if ( idx_hydrogen == -1 )
 			return 1;
-		idx_carbon = Findcarbon_bIC(m_Node);
-		// imediately check
-		if ( idx_carbon == -1 )
+		if(flag_gas_diffusion)
+		{
+		  idx_carbon = Findcarbon_bIC(m_Node);
+		  // imediately check
+		  if ( idx_carbon == -1 )
 			return 1;
-		idx_co2g = Findco2g_bIC(m_Node);
-		// imediately check
-		if ( idx_co2g == -1 )
+		  idx_co2g = Findco2g_bIC(m_Node);
+		  // imediately check
+		  if ( idx_co2g == -1 )
 			return 1;
-
+		  else 
+		    cout << "DEBUG gas_transport idx_co2g " << idx_co2g << "\n";
+		}
 		
 		heatflag = GetHeatFlag_MT();        // Get heatflag
 		flowflag = GetFlowType_MT();        // Get flow flag
@@ -391,6 +396,7 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 
 		m_excess_gas = new double [nNodes];
 		m_co2 = new double [nNodes];
+		m_co2_transport = new double [nNodes];
 		
 		m_Node_Volume  = new double [nNodes];
 
@@ -526,6 +532,7 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 			m_excess_water[in] = 0.0;
 			m_excess_gas[in] = 0.0;
                         m_co2[in]=0.0;
+                        m_co2_transport[in]=0.0;
 			
 			m_Node_Volume[in]  = REACT_GEM::GetNodeAdjacentVolume ( in);
 
@@ -1097,7 +1104,11 @@ short REACT_GEM::GetReactInfoFromMassTransport ( int timelevel )
 			REACT_GEM::GetBValue_MT ( node_i, timelevel, m_soluteB + node_i * nIC );
 		// Convert to mole values
 		// if(conv_concentration == 1)	REACT_GEM::ConcentrationToMass( node_i );
-                if (flag_gas_diffusion) m_co2[node_i]=REACT_GEM::GetCO2Value_MT(node_i,timelevel);
+                if (flag_gas_diffusion) 
+		{
+		  REACT_GEM::GetCO2Value_MT(node_i,timelevel, m_co2 + node_i);
+		  m_co2_transport[node_i]=m_co2[node_i];
+		}
 		// Setting Solid Phase Component // HS: Solid does not move.
 		// REACT_GEM::GetSoComponentValue_MT(node_i, timelevel, m_xPH+node_i*nPH );
 	}
@@ -1613,8 +1624,8 @@ short REACT_GEM::GetDCValue_MT ( long node_Index,
 }
 
 
-double REACT_GEM::GetCO2Value_MT ( long node_Index,
-                                 int timelevel)
+short REACT_GEM::GetCO2Value_MT ( long node_Index,
+                                 int timelevel, double* m_co)
 {
 	string str;
 	double /*DC_MT_pre,*/ DC_MT_cur;
@@ -1633,7 +1644,8 @@ double REACT_GEM::GetCO2Value_MT ( long node_Index,
                         if (str == "CO2g")
 			{
 			 	DC_MT_cur = m_pcs->GetNodeValue ( node_Index,m_pcs->GetNodeValueIndex (str ) + timelevel );
-				return DC_MT_cur;
+				// return DC_MT_cur;
+				*(m_co) = DC_MT_cur;
 				// m_co2[node_Index]=DC_MT_pre;
 			}
 		
@@ -1646,7 +1658,7 @@ double REACT_GEM::GetCO2Value_MT ( long node_Index,
 		}
 	}
 
-	return DC_MT_cur;
+	return 1;
 }
 
 
@@ -2211,7 +2223,7 @@ int REACT_GEM::Findco2g_bIC (TNode* m_Node)
 	for ( i = 0; i < nDC; i++ )
 	{
 	  string tmp_str = string(dCH->DCNL[i]);
-		if  (tmp_str == "CO2" )
+		if  (tmp_str == "CO2g" )
 		{
 			rt = i;
 			return rt;
@@ -2640,7 +2652,7 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
 #if defined(USE_PETSC)
     //	if ( fabs ( m_excess_water_buff[in] ) >= 0.01 ) cout << "node "<< in <<" m_excess_water" << m_excess_water_buff[in] <<"\n";
     //	if ( fabs ( m_excess_gas_buff[in] ) >= 0.01 ) cout << "node "<< in <<" m_excess_gas" << m_excess_water_buff[in] <<"\n";
-#else
+#elsebench0025.vtk
     //	if ( fabs ( m_excess_water[in] ) >= 0.01 ) cout << "node "<< in <<" m_excess_water " << m_excess_water[in] <<"\n";
     //	if ( fabs ( m_excess_gas[in] ) >= 0.01 ) cout << "node "<< in <<" m_excess_gas " << m_excess_water[in] <<"\n";
 #endif
@@ -2649,24 +2661,29 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
 
     // if ( fabs ( m_excess_water[in] ) >= 1.e-10 ) cout << "node "<< in <<"m_excess_water" << m_excess_water[in] <<"\n";
     // do we need to scale this accoring to the node volume?..I think so: it is done while transering this to GEMS
-    if ( flowflag <= 3 )  // Includes Richards flow!!!!!
+    if ( flowflag <= 3 )  // Includes NRichards flow!!!!!
     {
         for ( j = 0; j < nIC; j++ )
         {
             i = in * nIC + j;
             ii = in * nPS * nIC + 0 * nIC + j; // corresponding index of first phase (fluid) for m_bPS
             m_bIC[i] -= m_bPS[ii];        // B vector without solute
-            if ( flag_coupling_hydrology )
+            if ( flag_porosity_change && !flag_hayekit )
+	    {
                 m_bPS[ii] *= skal_faktor; // completely newly scaled first phase ...this is default!
+	    }
             else
             {   // this is necessary for hayekit, as only water needs to be scaled and we apply this also for not coupling with hydrology
+	      if (flag_hayekit && flag_porosity_change)
+	      {
                 if ( idx_hydrogen == j )
                     m_bPS[ii] *= skal_faktor;
                 if ( idx_oxygen == j )
                     m_bPS[ii] *= skal_faktor;
+	      }
             }
         }
-        if ( flag_coupling_hydrology )
+        if ( flag_porosity_change && !flag_hayekit )
         {
             for ( j=0 ; j <= idx_water; j++ )
             {
@@ -2676,10 +2693,16 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
         }
         else  // special case for hayekit and not coupling with hydrology
         {
+	  if (flag_hayekit && flag_porosity_change)
+	  {
             j = idx_water; // scale only water
             i = in * nDC + j;
             m_xDC[i] *= skal_faktor;
+	  }
+	    
         }
+        if (flag_porosity_change) m_fluid_volume[in] = m_porosity[in]; //if we scale b-vector for water we also have to change fluid volume!
+
         // here we do not need to account for different flow processes ....
         //****************************************************************************************
         if ( flag_transport_b == 1 )
@@ -2712,10 +2735,10 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
 
    if (flag_gas_diffusion) 
     {
-      m_co2[in]=m_xDC[in * nDC + idx_co2g]; // here we set m_co2 to gas concentration before we pass m_co2 to transport solver
-      m_bIC[in*nIC+idx_oxygen] -= 2*m_co2[in];
+      m_co2[in]=m_xDC[in * nDC + idx_co2g]; // here we set m_co2 to gas amount after gems calculations before we pass m_co2 to transport solver
+      m_bIC[in*nIC+idx_oxygen] -= (2.0*m_co2[in]);
       m_bIC[in*nIC+idx_carbon] -= m_co2[in];
-      m_co2[in] /= m_porosity[in];
+      m_co2[in] /= m_porosity[in];  //here we set it to concentrations
     }
 
     
@@ -2779,7 +2802,7 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
     return 1;
 }
 
-int REACT_GEM::ConcentrationToMass ( long l /*idx of node*/, int i_timestep )
+int REACT_GEM::ConcentrationToMass ( long in /*idx of node*/, int i_timestep )
 {
     // converting the value from mol/m^3 water to moles.
     long i,j;
@@ -2795,25 +2818,25 @@ int REACT_GEM::ConcentrationToMass ( long l /*idx of node*/, int i_timestep )
     switch ( flowflag )
     {
     case 1:                                 // groundwater flow
-        water_volume = m_fluid_volume[l]; // kg44: reuse stored fluid volume from last timestep!
+        water_volume = m_fluid_volume[in]; // kg44: reuse stored fluid volume from last timestep!
         scale_factor=1.0;
         break;
     case 2:                                 // liquid flow
-        water_volume = m_fluid_volume[l];
+        water_volume = m_fluid_volume[in];
         scale_factor=1.0;
         break;
     case 3:                                 // Richards flow
         m_pcs = PCSGet ( "RICHARDS_FLOW" );
         idx = m_pcs->GetNodeValueIndex ( "SATURATION1" );
-        water_volume = m_porosity[l] * m_pcs->GetNodeValue ( l,idx + i_timestep ); //current volume of water phase after hydraulic step
-        scale_factor = water_volume/m_fluid_volume[l]; // 1: same volume <1 decrease in water volume >1 increasing volume since last time step due to saturation change!
+        water_volume = m_porosity[in] * m_pcs->GetNodeValue ( in,idx + i_timestep ); //current volume of water phase after hydraulic step
+        scale_factor = water_volume/m_fluid_volume[in]; // 1: same volume <1 decrease in water volume >1 increasing volume since last time step due to saturation change!
 //        m_fluid_volume[l] = water_volume; // update fluid volume
         // cout << "conctomass " << m_fluid_volume[l] << " " << scale_factor <<" " ;
         break;
     case 4:                                 // multiphase flow...works with case 1 ...pressure saturation scheme
         m_pcs = PCSGet ( "MULTI_PHASE_FLOW" );
         idx = m_pcs->GetNodeValueIndex ( "SATURATION0" );
-        water_volume = m_porosity[l] * m_pcs->GetNodeValue ( l,idx + i_timestep );
+        water_volume = m_porosity[in] * m_pcs->GetNodeValue ( in,idx + i_timestep );
         break;
     default:
 #if defined(USE_PETSC)
@@ -2825,7 +2848,7 @@ int REACT_GEM::ConcentrationToMass ( long l /*idx of node*/, int i_timestep )
 
     if ( ( water_volume < min_possible_porosity ) || ( water_volume > 1.0 ) )
     {
-        cout << "conctomass water volume " << water_volume << " at node: " << l << "\n";
+        cout << "conctomass water volume " << water_volume << " at node: " << in << "\n";
 #if defined(USE_PETSC)
         PetscEnd();                     //make sure MPI exits
 #endif
@@ -2837,7 +2860,7 @@ int REACT_GEM::ConcentrationToMass ( long l /*idx of node*/, int i_timestep )
 
         for ( j = 0; j < nIC; j++ )
         {
-            i = l * nIC + j;
+            i = in * nIC + j;
 
             m_soluteB[i] *= water_volume;  // old volumes for groundwater_flow and liquid_flow..."new volume" for Richards flow
             // also check if xDC values is negative
@@ -2855,9 +2878,9 @@ int REACT_GEM::ConcentrationToMass ( long l /*idx of node*/, int i_timestep )
             if (!flag_concentrations_with_water) // here we also correct for change in volume due to flow!
             {
                 if ( idx_hydrogen == j )
-                    m_soluteB[i] += ( 2.0 * m_xDC[l * nDC + idx_water] * scale_factor);
+                    m_soluteB[i] += ( 2.0 * m_xDC[in * nDC + idx_water] * scale_factor);
                 else if ( idx_oxygen == j )
-                    m_soluteB[i] +=  (m_xDC[l * nDC + idx_water] * scale_factor) ;
+                    m_soluteB[i] +=  (m_xDC[in * nDC + idx_water] * scale_factor) ;
             }
             m_bIC[i] += m_soluteB[i];    //updated B vector for GEMS ..already scaled to new volume
             // here we check again if the vector if negative or smaller than a minimum amount...if yes we add some stuff....
@@ -2918,7 +2941,7 @@ int REACT_GEM::ConcentrationToMass ( long l /*idx of node*/, int i_timestep )
     }
   */
   // test charge 
-    m_bIC[l*nIC+nIC-1] = 0.0;
+    m_bIC[in*nIC+nIC-1] = 0.0;
     // m_bIC[l*nIC+nIC-1] = m_chargeB_pre[l*nIC+nIC-1];
 // DEBUG!!!!!!!!!
     /*
@@ -2937,9 +2960,10 @@ int REACT_GEM::ConcentrationToMass ( long l /*idx of node*/, int i_timestep )
     
     if (flag_gas_diffusion) 
     {
-      m_co2[l] *=m_porosity[l];
-      m_bIC[l*nIC+idx_oxygen] += 2*m_co2[l];
-      m_bIC[l*nIC+idx_carbon] += m_co2[l];
+      if (m_co2[in] < 0.0) m_co2[in]=0.0;
+      m_co2[in] *= m_porosity[in];  //concentration from transport to total mol amount
+      m_bIC[in*nIC+idx_oxygen] += 2.0*m_co2[in];
+      m_bIC[in*nIC+idx_carbon] += m_co2[in];
     }
 
     
@@ -3436,6 +3460,17 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
 			in.clear();
 			continue;
 		}
+		// ......................................................
+		/// Key word "$FLAG_HAYEKIT": force scaling of water volume after porosity change by removint/adding water only and leave bulk amount of solutes the same...............
+		if ( line_string.find ( "$FLAG_HAYEKIT" ) != string::npos )
+		{
+			// subkeyword found
+			in.str ( GetLineFromFile1 ( gem_file ) );
+			in >> flag_hayekit;
+			in.clear();
+			continue;
+		}
+
 		// ......................................................
 		/// Key word "$FLAG_GAS_DIFFUSION": next line could be either "0" or "1" (recommended). "1": test for diffusion of gas   .......................
 		if ( line_string.find ( "$FLAG_GAS_DIFFUSION" ) != string::npos )
@@ -5768,6 +5803,16 @@ void REACT_GEM::WriteVTKGEMValues ( fstream &vtk_file )
 	for ( j = 0; j < nNodes; j++ )
 //		vtk_file << " " <<  m_chargeB[j * nIC + 0] << "\n"; //here the last component is total charge of fluid
 		vtk_file << " " <<  m_chargeB[j * nIC + nIC - 1] << "\n"; //here the last component is total charge of fluid
+	vtk_file << "SCALARS " << " M_CO2 " << " double 1" << "\n";
+	vtk_file << "LOOKUP_TABLE default" << "\n";
+	//....................................................................
+	for ( j = 0; j < nNodes; j++ )
+		vtk_file << " " <<  m_co2[j] << "\n";
+	vtk_file << "SCALARS " << " M_CO2_TRANSPORT " << " double 1" << "\n";
+	vtk_file << "LOOKUP_TABLE default" << "\n";
+	//....................................................................
+	for ( j = 0; j < nNodes; j++ )
+		vtk_file << " " <<  m_co2_transport[j] << "\n";
 
 }
 
@@ -5918,7 +5963,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 	  	// now initialize m_co2 if gas transport should be considered....m_co2 should be identical to 
 	  if (flag_gas_diffusion)
 	  {
-	      m_co2[in]=m_xDC[in * nDC + idx_co2g]; // here we set m_co2 to gas concentration before we pass m_co2 to transport solver
+	    m_co2[in]=m_xDC[in * nDC + idx_co2g]; // here we set m_co2 to gas concentration before we pass m_co2 to transport solver
 	      // m_co2 is used in concentrationtomass!!!
 	  }
             REACT_GEM::ConcentrationToMass ( in,1); // I believe this is save for MPI         Convert from concentration only for restart!
