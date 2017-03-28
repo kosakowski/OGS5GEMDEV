@@ -192,7 +192,6 @@ public:
     int flag_coupling_hydrology;                //0-without coupling; 1=with coupling;
     int flag_calculate_boundary_nodes;          // set to zero to avoid precipitation/dissolution (porosity change) at boundary nodes
     int gem_pressure_flag;                      //shall we give a constant user defined pressure to gems?
-    int flag_concentrations_from_gems;          // shall we use gems calculated concentrations for transport?
     int flag_transport_b;                       //1: transport only dissolved components of b vector; 0: transport full speciation
     int flag_hayekit;                           // flag to force behaviour for hayekit benchmark...fluid phase is scaled by scaling water only and not solutes
     long m_max_failed_nodes; ///maximum number of failed nodes
@@ -227,7 +226,7 @@ public:
     short SetTempValue_MT(long node_Index, int timelevel, double temp);
     short SetPressureValue_MT(long node_Index, int timelevel, double pressure);
 //    short SetDCValue_MT(long node_Index, int timelevel, double* m_DC);
-    short SetBValue_MT(long node_Index, int timelevel, double* m_soluteB, double* m_chargeB);
+    short SetBValue_MT(long node_Index, int timelevel, double* m_soluteB); //, double* m_chargeB);
 
     int IsThisPointBCIfYesStoreValue ( long index, CRFProcess* m_pcs, double& value );/// taken from rf_REACT_BRNS
 

@@ -15,7 +15,7 @@
  $DAT_TYPE
   VTK
  $TIM_TYPE
-   STEPS 100
+   STEPS 1
 #STOP
 
 

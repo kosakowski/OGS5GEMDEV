@@ -1,13 +1,23 @@
 GeoSys-MMP  Material Medium Properties ------------------------------------
 #GEM_PROPERTIES
   $GEM_THREADS
-    16
+    32
   $GEM_INIT_FILE
     TestSolub-dat.lst    ; only file name, no path
   $FLAG_CALCULATE_BOUNDARY_NODE
     1    ; calculate GEMS solution also on boundary nodes...this might change porosity
   $FLAG_POROSITY_CHANGE
     1    ; 0-not coupled;1=coupled;
+  $FLAG_HAYEKIT
+    1
+  $FLAG_GEM_USE_SIA
+   0
+  $FLAG_ACCEPT_BAD_GEM
+   0
+  $LOOSE_KINETICS
+   1
+  $MINIMUM_KINETIC_TIME_STEP
+   100.0
   $MIN_POROSITY
     1.0e-15
   $MAX_POROSITY
@@ -18,6 +28,8 @@ GeoSys-MMP  Material Medium Properties ------------------------------------
     298.15       ; temperature for GEMS in degree Kelvin
   $TRANSPORT_B
      1 ; 1: do transport of b vector
+  $MAX_FAILED_NODES
+    2  ; number of nodes alowed to fail
  $KINETIC_GEM     ; wie Traber and Maeder
    AB-solid 1   1     0.0 0.0 0.0   0.0 -7.69897 0.0  0.0 1.0  1.0 1.0  0.0 1.0   H+  0.0  0.0 0.0
    4 1.0e+4

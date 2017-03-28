@@ -96,7 +96,6 @@ REACT_GEM::REACT_GEM ( void )
 	idx_carbon = -1;
 	idx_co2g = -1;
         flag_concentrations_with_water=0;
-	flag_concentrations_from_gems=0; //default = 0 ...inserted for benchmark with Alina..for concentrations take porosities = liquid flow ...set to 1 only for groundwater and liquid flow and if porosity coupling is disabled... 
         flag_gas_diffusion=0; // default is 0 ...do not use as only simplified implementation
 	flag_accept_bad_gem=0;
 	initialized_flag = 0;
@@ -111,7 +110,7 @@ REACT_GEM::REACT_GEM ( void )
 	flag_iterative_scheme = 0;                 //0-not iteration;1=iteration;
 	flag_disable_gems = 0;                    // always calculate gems
 	flag_gem_sia = 0;                         // default: do not allow GEM_SIA
-	flag_hayekit = 0;                         // default is not use skaling for hayekit
+	flag_hayekit = 1;                         // default is to use scaling for hayekit: for porosity change this is necessary, otherwise results are not ok....for coupling hydrology it should not be done!
 	// flag for different iterative scheme
 	// 0 - sequential non-iterative scheme
 	// 1 - standard iterative scheme
@@ -944,8 +943,8 @@ short REACT_GEM::Init_RUN(string Project_path)
 
 	for ( in = 0; in < nNodes; in++ ) // set the correct boundary conditions
 	{
-		REACT_GEM::SetBValue_MT ( in, 0, &( m_soluteB[in * nIC] ),&( m_chargeB[in * nIC] ) ); // old timestep
-		REACT_GEM::SetBValue_MT ( in, 1, &( m_soluteB[in * nIC] ),&( m_chargeB[in * nIC] ) ); // new timestep
+		REACT_GEM::SetBValue_MT ( in, 0, &( m_soluteB[in * nIC] )); //,&( m_chargeB[in * nIC] ) ); // old timestep
+		REACT_GEM::SetBValue_MT ( in, 1, &( m_soluteB[in * nIC] )); //,&( m_chargeB[in * nIC] ) ); // new timestep
 	}
 
 	// always calculate porosity at the beginning
@@ -1128,7 +1127,7 @@ short REACT_GEM::SetReactInfoBackMassTransport ( int timelevel )
 		// Setting Independent Component
 		if ( m_NodeStatusCH[in] == OK_GEM_AIA || m_NodeStatusCH[in] == OK_GEM_SIA )
 			if ( flag_transport_b == 1 )
-				REACT_GEM::SetBValue_MT ( in, timelevel, &( m_soluteB[in * nIC] ),&( m_chargeB[in * nIC] ) );
+				REACT_GEM::SetBValue_MT ( in, timelevel, &( m_soluteB[in * nIC] )); //,&( m_chargeB[in * nIC] ) );
 
                 if (flag_gas_diffusion) REACT_GEM::SetCO2Value_MT(in,timelevel,m_co2[in]);
 		// Set the extra water as source/sink term; not for boundary nodes
@@ -1871,7 +1870,7 @@ short REACT_GEM::RestoreOldConcMasstransport_MT ( long node_Index) //sets concen
 
 	return 1;
 }
-short REACT_GEM::SetBValue_MT ( long node_Index, int timelevel, double* m_soluteB, double* m_chargeB ) //sets concentrations and charges!
+short REACT_GEM::SetBValue_MT ( long node_Index, int timelevel, double* m_soluteB) // , double* m_chargeB ) //sets concentrations and charges!
 {
 	CRFProcess* m_pcs = NULL;
 	string str;
@@ -1923,7 +1922,6 @@ short REACT_GEM::SetCO2Value_MT ( long node_Index, int timelevel, double co2valu
 {
 	CRFProcess* m_pcs = NULL;
 	string str;
-	long i = -1 ;
 	for ( size_t j = 0; j < pcs_vector.size(); j++ )
 	{
 		m_pcs = pcs_vector[j]; // not good!
@@ -2506,7 +2504,7 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
     long i,j,k,ii;
     int idx;
     double gas_volume,fluid_volume;
-    double skal_faktor = 0.0;
+    double skal_faktor = 0.0; //, old_h2o=0.0, new_h2o=0.0, diff_h2o=0.0;
     DATACH* dCH;                            //pointer to DATACH
     DATABR* dBR;
     // Getting direct access to DataCH structure in GEMIPM2K memory
@@ -2588,12 +2586,10 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
     case 1:                              // groundwater flow	     cout << " skal factor " << skal_faktor << " excess water volume " << m_excess_water[in] ;
         m_excess_water[in] = m_fluid_volume[in] - m_porosity[in];
         skal_faktor = ( m_porosity[in] ) / m_fluid_volume[in]; //scale water to available volume
-        if (!flag_concentrations_from_gems) m_fluid_volume[in] = m_porosity[in];
         break;
     case 2:                              // liquid flow
         m_excess_water[in] = m_fluid_volume[in] - m_porosity[in];
         skal_faktor = ( m_porosity[in] ) / m_fluid_volume[in]; //scale water to available volume
-        if (!flag_concentrations_from_gems) m_fluid_volume[in] = m_porosity[in];
         break;
     case 3:                              // Richards flow: Saturation is directly calculated from the pressure, therefore add a source-sink term to induce pressure/saturation changes
         m_pcs = PCSGet ( "RICHARDS_FLOW" );
@@ -2663,45 +2659,76 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
     // do we need to scale this accoring to the node volume?..I think so: it is done while transering this to GEMS
     if ( flowflag <= 3 )  // Includes NRichards flow!!!!!
     {
-        for ( j = 0; j < nIC; j++ )
-        {
-            i = in * nIC + j;
-            ii = in * nPS * nIC + 0 * nIC + j; // corresponding index of first phase (fluid) for m_bPS
-            m_bIC[i] -= m_bPS[ii];        // B vector without solute
-            if ( flag_porosity_change && !flag_hayekit )
-	    {
-                m_bPS[ii] *= skal_faktor; // completely newly scaled first phase ...this is default!
+
+          for ( j = 0; j < nIC; j++ ) // first split off liquid phase from total b vector
+            {
+                i = in * nIC + j;
+		ii = in * nPS * nIC + 0 * nIC + j; // corresponding index of first phase (fluid) for m_bPS
+                m_bIC[i] -= m_bPS[ii];        // B vector without solute
 	    }
-            else
-            {   // this is necessary for hayekit, as only water needs to be scaled and we apply this also for not coupling with hydrology
-	      if (flag_hayekit && flag_porosity_change)
-	      {
-                if ( idx_hydrogen == j )
-                    m_bPS[ii] *= skal_faktor;
-                if ( idx_oxygen == j )
-                    m_bPS[ii] *= skal_faktor;
-	      }
-            }
-        }
-        if ( flag_porosity_change && !flag_hayekit )
+        // Next we scale the fluid phase in order to match the volume of porosity.
+        // Three cases:
+        // 1) full coupling of porosity change and fluid flow (flag_porosity_change && flag_coupling_hydrology): the whole phase is scaled
+        // 2) porosity change is considered (flag_porosity_change ) I believe the correct way is always to change the amount of water only and
+        //                                                       do not scale amount of solutes (flag_hayekit). This case might cause problems with
+        //                                                        non-aqueous liquids and solutions with very high ionic strentght....this needs to be investigated
+        // 3) do not scale the fluid phase for all other combinations. This essentially means, that flag_hayekit is ignored, resp. switches skaling off, if set to zero and porosity change is set
+
+        //  this changes are phase based
+        if ( flag_porosity_change && flag_coupling_hydrology)
         {
+            // scale in xDC (for output only)
             for ( j=0 ; j <= idx_water; j++ )
             {
                 i = in * nDC + j;
                 m_xDC[i] *= skal_faktor;     //newly scaled xDC including water /excluding rest
             }
+            // these changes are for each entry in b Vector
+            for ( j = 0; j < nIC; j++ )
+            {
+                i = in * nIC + j;
+		ii = in * nPS * nIC + 0 * nIC + j; // corresponding index of first phase (fluid) for m_bPS
+                m_bPS[ii] *= skal_faktor; // completely newly scaled first phase ...this is default!
+            }
+            m_fluid_volume[in] *= skal_faktor; //if we scale b-vector for water we also have to change fluid volume! -> it should be now equal to porosity for fully saturated conditions
         }
-        else  // special case for hayekit and not coupling with hydrology
+        else if (flag_hayekit && flag_porosity_change) // this is necessary for hayekit, as only water needs to be scaled and we apply this also for not coupling with hydrology
         {
-	  if (flag_hayekit && flag_porosity_change)
-	  {
-            j = idx_water; // scale only water
-            i = in * nDC + j;
+            i = in * nDC + idx_water;// scale only water
+             
+           // old_h2o=m_xDC[i];
             m_xDC[i] *= skal_faktor;
-	  }
-	    
+           // new_h2o=m_xDC[i];
+           // diff_h2o=old_h2o-new_h2o;// will be reused for scaling b_vector
+            // 23.Mar2017: new scaling based on H2O only....H,O in complexes, dissolved gases are ignored
+            ii = in * nPS * nIC + idx_hydrogen; // corresponding index of first phase (fluid) for m_bPS
+            m_bPS[ii] *= skal_faktor; //
+            ii = in * nPS * nIC + idx_oxygen; // corresponding index of first phase (fluid) for m_bPS
+            m_bPS[ii] *= skal_faktor; // 
+	    m_fluid_volume[in] *= skal_faktor; //if we scale b-vector for water we also have to change fluid volume! -> should be equal to porosity for fully saturated conditions
         }
-        if (flag_porosity_change) m_fluid_volume[in] = m_porosity[in]; //if we scale b-vector for water we also have to change fluid volume!
+        else if (!flag_hayekit && flag_porosity_change)
+        {
+            // warning: I believe this case gives wrong results....flag_coupling_hydrology does not matter here!....even without flag_coupling_hydrology results seem wrong
+	              // scale in xDC (for output only)
+            for ( j=0 ; j <= idx_water; j++ )
+            {
+                i = in * nDC + j;
+                m_xDC[i] *= skal_faktor;     //newly scaled xDC including water /excluding rest
+            }
+            // these changes are for each entry in b Vector
+            for ( j = 0; j < nIC; j++ )
+            {
+                i = in * nIC + j;
+		ii = in * nPS * nIC + 0 * nIC + j; // corresponding index of first phase (fluid) for m_bPS
+                m_bPS[ii] *= skal_faktor; // completely newly scaled first phase ...this is default!
+            }
+            m_fluid_volume[in] *= skal_faktor; //if we scale b-vector for water we also have to change fluid volume!
+        }
+        else
+        {
+            // do nothing! no change in phase amount
+        }
 
         // here we do not need to account for different flow processes ....
         //****************************************************************************************
@@ -2728,7 +2755,7 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
                         m_soluteB[i] = m_bPS[ii];
                 }
 //better not..might cause problems at the moment                m_soluteB[i] += m_soluteB_corr[i]; // corrected for substracted negative concentrations
-                m_soluteB[i] /= m_fluid_volume[in]; // now these are the concentrations
+                m_soluteB[i] /=  m_fluid_volume[in];              //m_fluid_volume[in]; // now these are the concentrations
             }
     } // flowflag < 3 is finished
 
@@ -2857,7 +2884,7 @@ int REACT_GEM::ConcentrationToMass ( long in /*idx of node*/, int i_timestep )
     }
 
     if ( flowflag <= 3 ) // groundwater flow or fluid flow
-
+    {
         for ( j = 0; j < nIC; j++ )
         {
             i = in * nIC + j;
@@ -2875,7 +2902,7 @@ int REACT_GEM::ConcentrationToMass ( long in /*idx of node*/, int i_timestep )
 
             //carrier for zero(first phase)  is normally water!
 
-            if (!flag_concentrations_with_water) // here we also correct for change in volume due to flow!
+            if (!flag_concentrations_with_water) // NOT concentrations with water: here we also correct for change in volume due to flow!
             {
                 if ( idx_hydrogen == j )
                     m_soluteB[i] += ( 2.0 * m_xDC[in * nDC + idx_water] * scale_factor);
@@ -2889,6 +2916,12 @@ int REACT_GEM::ConcentrationToMass ( long in /*idx of node*/, int i_timestep )
                 m_bIC[i] = 1e-16;
             //                        cout <<  " i " << i << " " << m_bIC[i] << "\n";
         }
+        
+          // set charge to zero!!!test charge 
+        m_bIC[in*nIC+nIC-1] = 0.0;
+    }
+   
+    // m_bIC[l*nIC+nIC-1] = m_chargeB_pre[l*nIC+nIC-1];
 /*
         else if ( flowflag == 3 ) // Richards flow
     {
@@ -2940,9 +2973,7 @@ int REACT_GEM::ConcentrationToMass ( long in /*idx of node*/, int i_timestep )
         }
     }
   */
-  // test charge 
-    m_bIC[in*nIC+nIC-1] = 0.0;
-    // m_bIC[l*nIC+nIC-1] = m_chargeB_pre[l*nIC+nIC-1];
+
 // DEBUG!!!!!!!!!
     /*
     	for ( j = 0; i < nIC-1; j++ )
@@ -3548,16 +3579,6 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
 			// subkeyword found
 			in.str ( GetLineFromFile1 ( gem_file ) );
 			in >> flag_concentrations_with_water;
-			in.clear();
-			continue;
-		}		
-		// ......................................................
-		/// Key word "$CONCENTRATIONS_WITH_WATER": By setting this to "1" it is possible to switch on GEMS calculations that include the solvent itself as transported substance (in H and O). Please do not forget to adjust the boundary conditions to include also water in the H and O concentrations.
-		if ( line_string.find ( "$CONCENTRATIONS_FROM_GEMS" ) != string::npos )
-		{
-			// subkeyword found
-			in.str ( GetLineFromFile1 ( gem_file ) );
-			in >> flag_concentrations_from_gems;
 			in.clear();
 			continue;
 		}		
@@ -4281,7 +4302,7 @@ double REACT_GEM::MaxChangeKineticsPhase(long in, int ii, int i, TNode *m_Node) 
  */
 int REACT_GEM::SetConstraints ( long in, TNode* m_Node)
 {
-    long ii,k,j;
+    long ii,k;
     DATACH* dCH;                            //pointer to DATACH
     DATABR* dBR;
     // Getting direct access to DataCH structure in GEMIPM2K memory
@@ -6033,7 +6054,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
             tdBR->NodeStatusCH = NEED_GEM_AIA;
             m_NodeStatusCH[in] = t_Node->GEM_run ( false );
 
-            if ( !( m_NodeStatusCH[in] == OK_GEM_AIA || (m_NodeStatusCH[in] == BAD_GEM_AIA & flag_accept_bad_gem==1)))
+            if ( !( m_NodeStatusCH[in] == OK_GEM_AIA || ((m_NodeStatusCH[in] == BAD_GEM_AIA && flag_accept_bad_gem==1)) ) )
             {
                 // exit
                 rwmutex.lock();
@@ -6119,7 +6140,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
         m_fluid_density[in] = m_mPS[in * nPS + 0] / m_vPS[in * nPS + 0 ];
 
         if ( ( m_flow_pcs->GetRestartFlag() < 2 ) ) // we do not need the second pass for complete restart
-
+	{
             // scale data so that second pass gives the normalized volume of 1m^3
             if (m_Vs[in] >= 0.0)
             {   // this should be not done for restart,  decoupled porosity runs do not change volumes and the other runs should be ok
@@ -6136,18 +6157,12 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 
                 }
             }
-        // end if for restart
         
   	REACT_GEM::CheckConstraints(in,t_Node);
         REACT_GEM::SetReactInfoBackGEM ( in,t_Node ); // this is necessary, otherwise the correct data is not available
 
         // Order GEM to run
-// DEBUG set for initialization to Karpov
-//        t_Node->SetNumericalMethod('K');
-        tdBR->NodeStatusCH = NEED_GEM_AIA;
-        m_NodeStatusCH[in] = t_Node->GEM_run ( false );
-
-// END TEST
+// 
 	
 	/*            if (in == 1)    
                 {
@@ -6241,7 +6256,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 
         // get results and process
         REACT_GEM::GetReactInfoFromGEM ( in, t_Node );
-//        } // end if for restart
+        } // end if for restart
 
         // calculate the chemical porosity
         if ( m_flow_pcs->GetRestartFlag() < 2 )
@@ -6254,7 +6269,6 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 
         // and now also calculate charge
         REACT_GEM::CalculateChargeFromGEMS ( in, t_Node);
-
 
     }                                    // end for loop for all nodes
 
@@ -6487,15 +6501,15 @@ void REACT_GEM::SynchronizeData(double* data)   //pass pointer to the vector we 
 
 int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
 {
-    int node_fail;
-    long ii, iisplit,j;
+    int node_fail=0;
+    long ii, iisplit;
     double oldvolume, dtchem,dummy, subtime;
   //  double debug_time1, debug_time2; //performance analysis
   //  double *dulb, *dllb;
 
     // create backup arrays for DUL and DLL!
-    double dllb[nDC]; //create vector for holding sum of constraints
-    double dulb[nDC]; //create vector for holding sum of constraints
+   //  double dllb[nDC]; //create vector for holding sum of constraints
+   // double dulb[nDC]; //create vector for holding sum of constraints
 
     
     DATACH* dCH;                            //pointer to DATACH
@@ -6517,11 +6531,11 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
     dummy=dt;
     subtime=0.0;
 
-    for ( j = 0; j < nDC; j++ )
+ /*   for ( j = 0; j < nDC; j++ )
     {
         dllb[j]=m_dll[in * nDC + j] ;          //store the old values for dll and dul
         dulb[j]=m_dul[in * nDC + j] ;      //
-    }
+    } */
 
     REACT_GEM::CheckConstraints(in,m_Node);
 
@@ -6673,7 +6687,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
         {
             {
               rwmutex.lock();
-              cout <<   "DEBUG: node failed: " << in << " at timestep " << aktueller_zeitschritt << " needed " << ii << " kinetic substeps and failed with error" << m_NodeStatusCH[in] << "\n";
+              cout <<   "DEBUG: node failed: " << in << " at timestep " << aktueller_zeitschritt << " needed " << ii << " kinetic substeps and failed with error" << m_NodeStatusCH[in] << " volume change " << ( fabs ( oldvolume - dBR->Vs ) / oldvolume ) <<"\n";
 	      /*
                         cout << "GEMS: " << repeated_fail <<
                              " nodes failed this timestep, check chemical system!"
@@ -6737,12 +6751,12 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
         if (dtchem <=1.0e-12) break;  // some kind of error or numerical inaccuracy
 
         // new backup for limits
-        for ( j = 0; j < nDC; j++ )
+/*        for ( j = 0; j < nDC; j++ )
         {
             dllb[j]=m_dll[in * nDC + j] ;          //
             dulb[j]=m_dul[in * nDC + j] ;      //
         }
-
+*/
     } //end while loop
  
  /*
