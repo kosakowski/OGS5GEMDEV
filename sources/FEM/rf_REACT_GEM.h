@@ -119,7 +119,7 @@ public:
     double *m_Node_Volume;                      // Volume around the node;
 
     // this we need for kinetics
-    double *mol_phase, *mol_phase_initial, *omega_phase,*omega_components;
+    double *mol_phase, *mol_phase_initial, *omega_phase,*omega_components, *rate_components;
 
     double *dmdt;                               // kinetically controlled rates
     int CalcLimits ( long in, double deltat, TNode* m_Node);
@@ -276,7 +276,7 @@ public:
 
     //kg44 11/2008 for kinetics
     int CalcReactionRate ( long node,  TNode* m_Node );
-    double SurfaceAreaPh ( long kin_phasenr,long in ,  TNode* m_Node );
+    double SurfaceAreaPh ( long kin_phasenr,long in ,  TNode* m_Node , double surf_area);
 
     // concentration related
     int ConcentrationToMass (long l /*idx of node*/,int i_timestep );
