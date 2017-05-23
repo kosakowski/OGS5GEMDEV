@@ -307,7 +307,7 @@ Problem::Problem (char* filename) :
 	}
 	else // something is wrong and we stop execution
 	{
-	 		              cout << " GEMS: Error in Init_RUN..check input " << "\n";
+	 		              cout << " GEMS: Error in Init_RUN... GEM did not load properly? Init_nodes returned: "<< m_vec_GEM -> Init_Nodes(path) << "\n";
 #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
             MPI_Finalize();                       //make sure MPI exits
 #endif
