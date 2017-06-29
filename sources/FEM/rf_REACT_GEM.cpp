@@ -5279,7 +5279,7 @@ int REACT_GEM::CalcLimits ( long in,double deltat, TNode* m_Node)
                                 m_dll[in * nDC + j] += dummy;  //experimental: avoid completely wrong limits due to broken amounts
 //                                m_dll[in * nDC + j] = m_xDC[in * nDC + j]+dummy;
                                 if (flag_loose_kinetics)
-                                    m_dul[in * nDC + j] = m_xDC[in * nDC + j] + 1.0e-3;
+                                    m_dul[in * nDC + j] = m_xDC[in * nDC + j]; // + 1.0e-3;
                                 else
                                     m_dul[in * nDC + j] = m_dll[in * nDC + j];
                             }
@@ -5288,7 +5288,7 @@ int REACT_GEM::CalcLimits ( long in,double deltat, TNode* m_Node)
                                 m_dul[in * nDC + j] += dummy;   //experimental: avoid completely wrong limits due to broken amounts
 //                                m_dul[in * nDC + j] = m_xDC[in * nDC + j]+dummy;
                                 if (flag_loose_kinetics)
-                                    m_dll[in * nDC + j] = m_xDC[in * nDC + j] - 1.0e-3;
+                                    m_dll[in * nDC + j] = m_xDC[in * nDC + j] ; //- 1.0e-3;
                                 else
                                     m_dll[in * nDC + j] = m_dul[in * nDC + j];
                             }
