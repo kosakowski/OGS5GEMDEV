@@ -2763,7 +2763,10 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
                         m_soluteB[i] = m_bPS[ii];
                 }
 //better not..might cause problems at the moment                m_soluteB[i] += m_soluteB_corr[i]; // corrected for substracted negative concentrations
-                m_soluteB[i] /=  m_fluid_volume[in];              //m_fluid_volume[in]; // now these are the concentrations
+                if (flag_porosity_change)
+		   m_soluteB[i] /=  m_fluid_volume[in];              //m_fluid_volume[in]; // now these are the concentrations
+		 else
+		   m_soluteB[i] /=  m_porosity[in];  // if porosity change is not applied, we would avoid using a changig volume like flud volume...fluxes should be constant in time
             }
     } // flowflag < 3 is finished
 
@@ -2896,8 +2899,11 @@ int REACT_GEM::ConcentrationToMass ( long in /*idx of node*/, int i_timestep )
         for ( j = 0; j < nIC; j++ )
         {
             i = in * nIC + j;
-
-            m_soluteB[i] *= water_volume;  // old volumes for groundwater_flow and liquid_flow..."new volume" for Richards flow
+            if (flag_porosity_change)
+	      m_soluteB[i] *= water_volume;  // old volumes for groundwater_flow and liquid_flow..."new volume" for Richards flow
+	    else
+	      m_soluteB[i] *= m_porosity[in];  // here we scale it with porosity (which is not changing during the course of simulation)
+	      
             // also check if xDC values is negative
 	    m_soluteB_corr[i]=0.0;
             if ( (m_soluteB[i] < 0.0) && (j != nIC-1))
