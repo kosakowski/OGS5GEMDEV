@@ -93,7 +93,7 @@ public:
     *m_Eh;
 
     double *m_xDC, *m_gam, *m_xPH, *m_aPH, *m_vPS, *m_mPS, *m_bPS,
-    *m_xPA, *m_dul, *m_dll, *m_bIC, *m_bIC_dummy, *m_rMB, *m_uIC, *m_bSP;
+    *m_xPA, *m_dul, *m_dll, *m_bIC, *m_bIC_dummy, *m_rMB, *m_uIC, *m_bSP, *m_phase_volume;
 
     double  *m_porosity_Elem;
 

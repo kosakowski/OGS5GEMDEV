@@ -213,6 +213,7 @@ REACT_GEM::~REACT_GEM ( void )
 		delete [] m_gas_volume_pi;
 		delete [] m_fluid_volume_pi;
 		delete [] m_fluid_density;
+		delete [] m_phase_volume;
 		delete [] m_soluteB;
 		delete [] m_soluteB_corr;		
 		delete [] m_chargeB;
@@ -438,7 +439,8 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 		m_aPH = new double [nNodes * nPH];  // surface area for surface species ..input to GEMS!
 		m_xPH = new double [nNodes * nPH];  // amount of carrier...used for smart initial aproximation
 		m_xPA = new double [nNodes * nPS];
-
+		m_phase_volume = new double [nNodes * nPH];
+		
 		m_bSP = new double [nNodes * nIC]; //Bulk composition of all solids, moles [nIC] ...not yet buffered via MPI, because we do not use the data yet
 		// ----------------------------------
 		// this is for kinetics
@@ -596,6 +598,7 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 				dmdt_pts[in * nPH + ii ] = 0.0;
 				dmdt_pi[in * nPH + ii ] = 0.0;
 				m_volumes_initial[in * nPH + ii ] = 0.0;
+				m_phase_volume[in*nPH + ii] = 0.0;
 			}
 
 			for ( ii = 0; ii < nPS; ii++ )
@@ -1454,7 +1457,7 @@ double REACT_GEM::GetPressureValue_MT ( long node_Index, int timelevel )
 		{
 		case 1:                 // for "GROUNDWATER_FLOW";
 
-			if ( gem_pressure_flag < 1 )
+			if ( gem_pressure_flag == 1 )
 			{
 				// just set to 1.0 bar.
 				pressure = m_gem_pressure;
@@ -1484,11 +1487,18 @@ double REACT_GEM::GetPressureValue_MT ( long node_Index, int timelevel )
 			break;
 
 		case 2:                 // for "LIQUID_FLOW", not tested!!!
-
+			if ( gem_pressure_flag == 1 )
+			{
+				// just set to 1.0 bar.
+				pressure = m_gem_pressure;
+				break;
+			}
+			else
+			{
 			indx = m_flow_pcs->GetNodeValueIndex ( "PRESSURE1" ) + timelevel;
 			// The unit of HEAD is in meters
 			pressure = m_flow_pcs->GetNodeValue ( node_Index, indx );
-
+			}
 			// change the pressure unit from meters of water to bar.
 			// pressure = Pressure_M_2_Bar ( pressure , m_FluidProp->Density() );
 			// add atmospheric pressure
@@ -5936,6 +5946,15 @@ void REACT_GEM::WriteVTKGEMValues ( fstream &vtk_file )
 		for ( j = 0; j < nNodes; j++ )
 			vtk_file << " " << ( float ) m_xDC[j * nDC + i ] << "\n";
 	}
+		// loop over phase vector
+	for ( i = 0; i < nPH; i++ )
+	{
+		vtk_file << "SCALARS Volume_" << m_PHNL[i] << " double 1" << "\n";
+		vtk_file << "LOOKUP_TABLE default" << "\n";
+		//....................................................................
+		for ( j = 0; j < nNodes; j++ )
+			vtk_file << " " << ( float ) m_phase_volume[j * nPH + i ] << "\n";
+	}
 	// eh, pe, pH, Nodeporosity
 	vtk_file << "SCALARS " << " pH " << " double 1" << "\n";
 	vtk_file << "LOOKUP_TABLE default" << "\n";
@@ -6309,6 +6328,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
         // calculate density of fluid phase, which is normally the first phase
         m_fluid_density[in] = m_mPS[in * nPS + 0] / m_vPS[in * nPS + 0 ];
 
+	    
         if ( ( m_flow_pcs->GetRestartFlag() < 2 ) ) // we do not need the second pass for complete restart
 	{
             // scale data so that second pass gives the normalized volume of 1m^3
@@ -6431,6 +6451,13 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
         // calculate the chemical porosity
         if ( m_flow_pcs->GetRestartFlag() < 2 )
             REACT_GEM::CalcPorosity ( in, t_Node);                         //during init it should be always done, except for restart !!!
+
+	// make sure we have the correct phase volumes
+	for ( int j = 0; j < tdCH->nPHb; j++ )
+        {
+	  m_phase_volume[in*nPH+j]=t_Node->Ph_Volume(j);
+	}
+	  
 
         REACT_GEM::CalcReactionRate ( in, t_Node); //moved it after porosity calculation because of chrunchflow kinetics (model 4)!
         // Convert to concentration: should be done always...
@@ -6913,6 +6940,11 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
             if (flag_porosity_change) REACT_GEM::CalcPorosity ( in, m_Node);
 
             REACT_GEM::CalcReactionRate ( in, m_Node); //moved it after porosity calculation because of chrunchflow kinetics (model 4)!
+	    	// fill vector with phase volumes
+	    for ( int j = 0; j < dCH->nPHb; j++ )
+            {
+	      m_phase_volume[in*nPH+j]=m_Node->Ph_Volume(j);
+	    }
         }
         // do stuff for time stepping
         subtime +=dtchem; // increase subtime first, as kinetic step is finished successfully
