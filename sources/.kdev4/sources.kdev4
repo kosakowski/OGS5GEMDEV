@@ -2,13 +2,21 @@
 BuildItems=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x01\x00\x00\x00\x0b\x00\x00\x00\x00\x01\x00\x00\x00\x0e\x00O\x00G\x00S\x005\x00G\x00E\x00M)
 
 [CMake]
-Build Directory Count=1
+Build Directory Count=2
 Current Build Directory Index=0
 ProjectRootRelative=./
 
 [CMake][CMake Build Directory 0]
 Build Directory Path=file:///home/kosakowski/GitMigration/sources/build
 Build Type=Release
+CMake Binary=file:///usr/bin/cmake
+Environment Profile=
+Extra Arguments=
+Install Directory=file:///usr/local
+
+[CMake][CMake Build Directory 1]
+Build Directory Path=file:///home/kosakowski/GitMigration/sources/builddebug
+Build Type=Debug
 CMake Binary=file:///usr/bin/cmake
 Environment Profile=
 Extra Arguments=

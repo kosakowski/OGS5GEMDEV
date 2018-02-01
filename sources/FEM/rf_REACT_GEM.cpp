@@ -124,7 +124,7 @@ REACT_GEM::REACT_GEM ( void )
         calc_limits=1; // default value if no iterative mode
 	gem_nThread = 1; // default number of threads
 	string tinit_path = " ";
-
+        max_kinetic_timestep = 1.0e+99;             // restrict time step for kinetics
 	boost::barrier* gem_barrier_start;
 	boost::barrier*  gem_barrier_finish;
 	boost::thread* gemThread;
@@ -143,19 +143,19 @@ REACT_GEM::~REACT_GEM ( void )
 	  {
 	      gemThread[i].interrupt();
 	  }
-	  for (unsigned int i = 0; i < gem_nThread; ++i) // here we interrupt the threads! 
-	  {
-	      gemThread[i].detach();
-	  }
+//	  for (unsigned int i = 0; i < gem_nThread; ++i) // here we interrupt the threads! 
+//	  {
+//	      gemThread[i].detach();
+//	  }
 	  for (unsigned int i = 0; i < gem_nThread; ++i) // here we join the threads! otherwise it might be that boost/phtread throws an assertion, because condition variables are still in use when destroyed!
 	  {
 	    gemThread[i].join();
 	  }
 
 
+		delete [] gemThread ; //each mpi task creates gem_nThread workers
   	        delete  gem_barrier_finish;
 		delete  gem_barrier_start;
-		delete [] gemThread ; //each mpi task creates gem_nThread workers
 		delete [] m_xDC;
 		delete [] m_gam;
 		delete [] m_xPH;
@@ -221,6 +221,8 @@ REACT_GEM::~REACT_GEM ( void )
 		delete [] m_ICNL;
 		delete [] m_DCNL;
                 delete [] m_PHNL;
+		delete [] m_co2;
+		delete [] m_co2_transport;
 
 
 
@@ -372,7 +374,7 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 		m_IterDoneCumulative = new long [nNodes];
 		m_IterDoneIndex = new long[nNodes];
 
-		m_boundary = new int [nNodes];      // this marks boundary nodes with fixed concentrations!?
+		m_boundary = new long [nNodes];      // this marks boundary nodes with fixed concentrations!?
 		m_T  = new double [nNodes];
 		m_P  = new double [nNodes];
 
@@ -609,7 +611,7 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 			}
 
 			for ( ii = 0; ii < nIC; ii++ )
-				for ( int jj = 0; jj < nPS; jj++ )
+				for ( long jj = 0; jj < nPS; jj++ )
 				{
 					m_bPS[in * ii * nPS + jj ] = 0.0;
 				}
@@ -768,7 +770,7 @@ short REACT_GEM::Init_RUN(string Project_path)
         REACT_GEM::GetReactInfoFromGEM ( i, m_Node); // get the data even if GEMS failed...this is necessary for initializing the arrays for example m_aPH
     // unfortunately aPH is passed to GEMS and needs correct input for working with sorption
 
-    for ( ii = 0; ii < ( int ) m_kin.size(); ii++ ) // this loop is for identifying kinetically controlled phases
+    for ( ii = 0; ii < ( long ) m_kin.size(); ii++ ) // this loop is for identifying kinetically controlled phases
     {
         m_kin[ii].phase_number = -1;
         m_kin[ii].dc_counter = 0;        //this is the starting dc
@@ -802,7 +804,7 @@ short REACT_GEM::Init_RUN(string Project_path)
                  " in phase number " << m_kin[ii].phase_number << "\n"; 
     }
     // and now identify the componets that are kinetically controlled
-    for ( ii = 0; ii < ( int ) m_constraints.size(); ii++ ) // this loop is for identifying kinetically controlled phases
+    for ( ii = 0; ii < ( long ) m_constraints.size(); ii++ ) // this loop is for identifying kinetically controlled phases
     {
         m_constraints[ii].n_comp = -1; // set to something outside range
         // component numbers are not yet set...do it!
@@ -920,7 +922,7 @@ short REACT_GEM::Init_RUN(string Project_path)
 	        // now we can check if gems should be calculated at this node!
 	for ( i = 0; i < nNodes; i++ )
 	{
-	     	for ( ii = 0; ii < ( int ) m_calc.size(); ii++ ) // this loop is for identifying kinetically controlled phases
+	     	for ( ii = 0; ii < ( long ) m_calc.size(); ii++ ) // this loop is for identifying kinetically controlled phases
 		  {
 		    if (m_calc[ii].condition_type == 1) // condition 1 ...given lower and upper limit for a specific initial component and gems should be NOT calculated
 		      {
@@ -1406,7 +1408,7 @@ long REACT_GEM::GetElemNumber_MT ( void )
 
 double REACT_GEM::GetTempValue_MT ( long node_Index, int timelevel )
 {
-	int indx;
+	long indx;
 	double temp;
 	CRFProcess* m_pcs = NULL;
 
@@ -1423,7 +1425,7 @@ double REACT_GEM::GetTempValue_MT ( long node_Index, int timelevel )
 }
 short REACT_GEM::SetTempValue_MT ( long node_Index, int timelevel, double temp )
 {
-	int indx;
+	long indx;
 	CRFProcess* m_pcs = NULL;
 	if ( heatflag == 1 )
 	{
@@ -1445,7 +1447,7 @@ double REACT_GEM::GetPressureValue_MT ( long node_Index, int timelevel )
 {
 	//Get pressure value
 	double pressure;
-	int indx;
+	long indx;
 	pressure = 0.0;
 
 	CFluidProperties* m_FluidProp;
@@ -1559,8 +1561,8 @@ short REACT_GEM::SetPressureValue_MT ( long node_Index, int timelevel, double pr
 	CFluidProperties* m_FluidProp;
 	m_FluidProp = MFPGet ( "LIQUID" );
 
-	//Set pressure value
-	int indx;
+	//Set pressure valueF
+	long indx;
 	indx = 0;
 	if ( flowflag > 0 )
 	{
@@ -1617,7 +1619,7 @@ short REACT_GEM::GetDCValue_MT ( long node_Index,
 	string str;
 	double /*DC_MT_pre,*/ DC_MT_cur;
 	CRFProcess* m_pcs = NULL;
-	int i = -1;
+	long i = -1;
 
 	for ( size_t j = 0; j < pcs_vector.size(); j++ )
 	{
@@ -1647,7 +1649,7 @@ short REACT_GEM::GetCO2Value_MT ( long node_Index,
 	string str;
 	double /*DC_MT_pre,*/ DC_MT_cur;
 	CRFProcess* m_pcs = NULL;
-	int i = -1;
+	long i = -1;
         DC_MT_cur=-9.9e99;
 	
 	for ( size_t j = 0; j < pcs_vector.size(); j++ )
@@ -1774,7 +1776,7 @@ short REACT_GEM::GetSoComponentValue_MT ( long node_Index,
                                           TNode* m_Node )
 {
 	string str;
-	int x_Component = 0;
+	long x_Component = 0;
 	CRFProcess* m_pcs = NULL;
 	for ( size_t i = 0; i < pcs_vector.size(); i++ )
 	{
@@ -1968,7 +1970,7 @@ short REACT_GEM::SetCO2Value_MT ( long node_Index, int timelevel, double co2valu
 // i_timestep 0: old timestep 1: new timestep
 int REACT_GEM::SetPorosityValue_MT ( long ele_Index,  double m_porosity_Elem, int i_timestep )
 {
-	int idx;
+	long idx;
 	idx = -1;
 
 	CRFProcess* m_pcs = NULL;
@@ -2063,8 +2065,8 @@ int REACT_GEM::SetSourceSink_MT ( long in, double time_step_size /*in sec*/ )
 int REACT_GEM::FindWater_xDC ( TNode* m_Node )
 {
 	// initialization
-	int rt = -1;
-	int i;
+	long rt = -1;
+	long i;
 	DATACH* dCH;                            //pointer to DATACH
 	DATABR* dBR;
 	// Getting direct access to DataCH structure in GEMIPM2K memory
@@ -2099,8 +2101,8 @@ int REACT_GEM::FindWater_xDC ( TNode* m_Node )
 int REACT_GEM::Findhydrogen_bIC ( TNode* m_Node)
 {
 	// initialization
-	int rt = -1;
-	int i;
+	long rt = -1;
+	long i;
 	DATACH* dCH;                            //pointer to DATACH
 	DATABR* dBR;
 	// Getting direct access to DataCH structure in GEMIPM2K memory
@@ -2136,7 +2138,7 @@ int REACT_GEM::Findoxygen_bIC (TNode* m_Node)
 {
 	// initialization
 	int rt = -1;
-	int i;
+	long i;
 	DATACH* dCH;                            //pointer to DATACH
 	DATABR* dBR;
 	// Getting direct access to DataCH structure in GEMIPM2K memory
@@ -2172,7 +2174,7 @@ int REACT_GEM::Findcarbon_bIC (TNode* m_Node)
 {
 	// initialization
 	int rt = -1;
-	int i;
+	long i;
 	DATACH* dCH;                            //pointer to DATACH
 	DATABR* dBR;
 	// Getting direct access to DataCH structure in GEMIPM2K memory
@@ -2212,7 +2214,7 @@ int REACT_GEM::Findco2g_bIC (TNode* m_Node)
 {
 	// initialization
 	int rt = -1;
-	int i;
+	long i;
 	DATACH* dCH;                            //pointer to DATACH
 	DATABR* dBR;
 	// Getting direct access to DataCH structure in GEMIPM2K memory
@@ -2283,7 +2285,7 @@ double REACT_GEM::GetNodeAdjacentVolume ( long Idx_Node)
 {
 	double volume;
 	long Idx_Ele;
-	int number_of_nodes;
+	long number_of_nodes;
 	volume = 0.0;
 	number_of_nodes = 0;
 
@@ -2294,7 +2296,7 @@ double REACT_GEM::GetNodeAdjacentVolume ( long Idx_Node)
 	m_ogsNode =  m_flow_pcs->m_msh->nod_vector[Idx_Node];
 
 	// loop over all the elements that adjacent to this node;
-	for ( int i = 0; i < ( long ) m_ogsNode->getConnectedElementIDs().size(); i++ )
+	for ( long i = 0; i < ( long ) m_ogsNode->getConnectedElementIDs().size(); i++ )
 	{
 		// get the index of current element;
 		Idx_Ele = m_ogsNode->getConnectedElementIDs() [i];
@@ -2317,7 +2319,7 @@ double REACT_GEM::GetNodeAdjacentVolume ( long Idx_Node)
 void REACT_GEM::ConvPorosityNodeValue2Elem ( int i_timestep )
 {
 	long i,idx_Node, group;
-	int j, number_of_nodes;
+	long j, number_of_nodes;
 	double pormin = 2.0,pormax = 0.0;
 	double distance, weight, sum_weights;
 	MeshLib::CElem* m_Elem;
@@ -2341,7 +2343,7 @@ void REACT_GEM::ConvPorosityNodeValue2Elem ( int i_timestep )
 		{
 			// first set the parameters to zero;
 			m_porosity_Elem[i] = 0.0;
-			number_of_nodes = ( int ) m_Elem->GetNodesNumber ( false );
+			number_of_nodes = ( long ) m_Elem->GetNodesNumber ( false );
 			// then get the values from nodes
 			for ( j = 0; j < number_of_nodes; j++ )
 			{
@@ -2402,7 +2404,7 @@ void REACT_GEM::ConvPorosityNodeValue2Elem ( int i_timestep )
 double REACT_GEM::FluidDensity(long elem, int gaussnode,  CFiniteElementStd* fem)
 {
 	long idx_Node;
-	int number_of_nodes, j,i;
+	long number_of_nodes, j,i;
 	MeshLib::CElem* m_Elem;
 	MeshLib::CNode* m_ogsNode;
 	double density;
@@ -2416,7 +2418,7 @@ double REACT_GEM::FluidDensity(long elem, int gaussnode,  CFiniteElementStd* fem
 	//  cout << "GEMS DEBUG: FluidDensity " << density << "elem " << elem << " gaussnode " << gaussnode<< "\n";
 
 	m_Elem =  m_flow_pcs->m_msh->ele_vector[elem];
-	number_of_nodes = ( int ) m_Elem->GetNodesNumber ( false );
+	number_of_nodes = ( long ) m_Elem->GetNodesNumber ( false );
 
 	if (gaussnode > -1) // gauss point like in InterpolatPorpertytoGausPoints
 	{
@@ -2520,7 +2522,7 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
 {
     // converting the value from moles to the value in mol/m^3 water.
     long i,j,k,ii;
-    int idx;
+    long idx;
     double gas_volume,fluid_volume;
     double skal_faktor = 0.0; //, old_h2o=0.0, new_h2o=0.0, diff_h2o=0.0;
     DATACH* dCH;                            //pointer to DATACH
@@ -2855,7 +2857,7 @@ int REACT_GEM::ConcentrationToMass ( long in /*idx of node*/, int i_timestep )
     // converting the value from mol/m^3 water to moles.
     long i,j;
     double water_volume = 0.0, scale_factor = 1.0;
-    int idx;
+    long idx;
     string ErrorOut;
 
     //	cout <<"water volume " << water_volume << "\n";
@@ -3067,7 +3069,7 @@ void REACT_GEM::UpdateXDCChemDelta ( void )
 
 void REACT_GEM::UpdatebICChemDelta ( void )
 {
-	unsigned int i,inod;
+	long i,inod;
 	for ( inod = 0; inod < nNodes; inod++ )
 	{
  	   for ( i = 0; i < nIC; i++ )
@@ -3077,7 +3079,7 @@ void REACT_GEM::UpdatebICChemDelta ( void )
 
 void REACT_GEM::ResetbICChemDelta ( void )
 {
-	unsigned int i,inod;
+	long i,inod;
 	for ( inod = 0; inod < nNodes; inod++ )
 	{
  	   for ( i = 0; i < nIC; i++ )
@@ -3087,7 +3089,7 @@ void REACT_GEM::ResetbICChemDelta ( void )
 
 void REACT_GEM::CopyCurBPre ( void )
 {
-	unsigned int i;
+	long i;
 	for ( i = 0; i < nNodes * nIC; i++ )
 	{
 		m_soluteB_pts[i] = m_soluteB[i];
@@ -3308,7 +3310,7 @@ double REACT_GEM::CalculateCharge (long in) //for a given node number ..data fro
     sum_change=0.0;
     m_chargeB_pre[in*nIC+nIC-1]=0.0;
 //    cout << "DEBUG precharge \n" ;
-    for (unsigned int i=0; i<nIC-1; i++)
+    for (long i=0; i<nIC-1; i++)
     {
         dummy = (m_chargeB[in*nIC+i] * m_soluteB[in*nIC+i] * m_porosity[in]); //+=(charge/per mol * concentration * porosity
         m_chargeB_pre[in*nIC+i]=dummy;
@@ -3436,7 +3438,7 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
 	Kinetic_GEMS d_kin;                        // dummy kinetic vector
 	Calculate_GEMS d_calculate;                // dummy calculate vector
 	Constraints_GEMS d_constraints;            // dummy constraint vector
-	int j;
+	long j;
 	long i;
 	// Initialization----------------
 	string sub_line;
@@ -3909,8 +3911,8 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
  */
 int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
 {
-    int idx = 0,ii;
-    int j,k;
+    long idx = 0,ii;
+    long j,k;
     double rrn = 0.0, rrb = 0.0,rra = 0.0, sa = 0.0;
     double R = 8.31451070;                     // molar gas konstant [J K-1 mol-1]
     double aa = 1.0,ab = 1.0,ac = 1.0;         // activity products ...species are input from material file
@@ -4060,7 +4062,7 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
                 aa = 1.0;
                 ab = 1.0;
                 ac = 1.0;                    // reset values for each phase!
-                int i;
+                long i;
                 for ( i = 0; i < m_kin[ii].n_activities; i++ ) // loop over all activites defined in kinetics
                 {
                     species = m_kin[ii].active_species[i].c_str();
@@ -4207,7 +4209,7 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
                 aa = 1.0;
                 ab = 1.0;
                 ac = 1.0;                    // reset values for each phase!
-                int i;
+                long i;
                 for ( i = 0; i < m_kin[ii].n_activities; i++ )
                 {
                     species = m_kin[ii].active_species[i].c_str();
@@ -4329,7 +4331,7 @@ double REACT_GEM::MaxDtKinetics(long in, TNode *m_Node)
 {
     double mxdt;
     double dummy, dummyc;
-    int ii,k,i,j;
+    long ii,k,i,j;
     DATACH* dCH;                            //pointer to DATACH
     DATABR* dBR;                            // pointer to DBR
 
@@ -4392,11 +4394,11 @@ double REACT_GEM::MaxDtKinetics(long in, TNode *m_Node)
 
 double REACT_GEM::MaxChangeKineticsPhase(long in, int ii, int i, TNode *m_Node) // in: node number, ii: counter for kinetics phase, i: endmember number in phase
 {
-    int idx=0;
+    long idx=0;
     const char* species;
     double mxchange;
     double dummy=0.0, dummyc=0.0;
-    int k,j;
+    long k,j;
     DATACH* dCH;                            //pointer to DATACH
     DATABR* dBR;                            // pointer to DBR
 
@@ -4989,7 +4991,7 @@ int REACT_GEM::CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration
  */
 int REACT_GEM::CheckConstraints ( long in,TNode* m_Node)
 {
-    long int jj,ii; // indices for loops
+    long jj,ii; // indices for loops
     int iret;
     double rel_error; // used for correction of constraints
     DATACH* dCH;                            //pointer to DATACH
@@ -5569,7 +5571,7 @@ int REACT_GEM::WriteReloadGem()
 	string rank_str;
 	rank_str = "0";
 #if defined(USE_PETSC)  //|| defined(other parallel libs)//03.3012. WW
-	int rank, msize;
+	long rank, msize;
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &msize);
 	stringstream ss (stringstream::in | stringstream::out);
@@ -5825,12 +5827,12 @@ void REACT_GEM::WriteVTKGEMValuesPETSC (PetscViewer viewer)
 	PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_VTK); //will cause a failure if cell data is written before this
 
 //******************************** B Vector ********************
-	for ( int j = 0; j < nIC; j++ )
+	for ( long j = 0; j < nIC; j++ )
 	{
 		const char* fieldname =  m_ICNL[j];
 		PetscObjectSetName((PetscObject)x,fieldname);
 		//....................................................................
-		for (int k = 0; k < count; k++ )
+		for (long k = 0; k < count; k++ )
 		{
 			bdummy = m_soluteB[k * nIC + j] * m_fluid_volume[k]; //soluteB contains volume based concentrations
 			// now we have to add water
@@ -5845,12 +5847,12 @@ void REACT_GEM::WriteVTKGEMValuesPETSC (PetscViewer viewer)
 		VecView(x, viewer);
 	}
 //***********************    speciation vector *********************************
-	for (int i = 0; i < nDC; i++ )
+	for (long i = 0; i < nDC; i++ )
 	{
 		const char* fieldname = m_DCNL[i];
 		PetscObjectSetName((PetscObject)x,fieldname);
 		//....................................................................
-		for (int j = 0; j < nNodes; j++ )
+		for (long j = 0; j < nNodes; j++ )
 			xp[j] = m_xDC[j * nDC + i ];
 		VecView(x, viewer);
 	}
@@ -5858,44 +5860,44 @@ void REACT_GEM::WriteVTKGEMValuesPETSC (PetscViewer viewer)
 // ******************* eh, pe, pH, Nodeporosity    ****************************
 	PetscObjectSetName((PetscObject)x,"Ph");
 	//....................................................................
-	for (int j = 0; j < nNodes; j++ )
+	for (long j = 0; j < nNodes; j++ )
 		xp[j] = m_pH[j];
 	VecView(x, viewer);
 
 	PetscObjectSetName((PetscObject)x,"pe");
 	//....................................................................
-	for (int j = 0; j < nNodes; j++ )
+	for (long j = 0; j < nNodes; j++ )
 		xp[j] = m_pe[j];
 	VecView(x, viewer);
 
 	PetscObjectSetName((PetscObject)x,"Eh");
 	//....................................................................
-	for (int j = 0; j < nNodes; j++ )
+	for (long j = 0; j < nNodes; j++ )
 		xp[j] = m_Eh[j];
 	VecView(x, viewer);
 // ***************************Nodeporosity, fluidvolume, excess volume, node volume
 
 	PetscObjectSetName((PetscObject)x,"NodePorosity");
 	//....................................................................
-	for (int j = 0; j < nNodes; j++ )
+	for (long j = 0; j < nNodes; j++ )
 		xp[j] = m_porosity[j];
 	VecView(x, viewer);
 
 	PetscObjectSetName((PetscObject)x,"FluidVolume");
 	//....................................................................
-	for (int j = 0; j < nNodes; j++ )
+	for (long j = 0; j < nNodes; j++ )
 		xp[j] = m_fluid_volume[j];
 	VecView(x, viewer);
 
 	PetscObjectSetName((PetscObject)x,"ExcessVolume");
 	//....................................................................
-	for (int j = 0; j < nNodes; j++ )
+	for (long j = 0; j < nNodes; j++ )
 		xp[j] = m_excess_water[j];
 	VecView(x, viewer);
 
 	PetscObjectSetName((PetscObject)x,"NodeVolume");
 	//....................................................................
-	for (int j = 0; j < nNodes; j++ )
+	for (long j = 0; j < nNodes; j++ )
 		xp[j] =  m_Vs[j];
 	VecView(x, viewer);
 
@@ -5903,7 +5905,7 @@ void REACT_GEM::WriteVTKGEMValuesPETSC (PetscViewer viewer)
 
 	PetscObjectSetName((PetscObject)x,"FluidDensity");
 	//....................................................................
-	for (int j = 0; j < nNodes; j++ )
+	for (long j = 0; j < nNodes; j++ )
 		xp[j] = m_fluid_density[j];
 	VecView(x, viewer);
 }
@@ -6153,7 +6155,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
     rwmutex.unlock(); //unlock and go to barrier
 
     // now we set the loop variables
-    int mycount,mystart;
+    long mycount,mystart;
     mycount = gem_nThread; //make sure the loop over the nodes counts only the threads!
     mystart = tid;
     //    cout << "thread " << tid << " waits for start barrier " << "\n";
@@ -6453,7 +6455,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
             REACT_GEM::CalcPorosity ( in, t_Node);                         //during init it should be always done, except for restart !!!
 
 	// make sure we have the correct phase volumes
-	for ( int j = 0; j < tdCH->nPHb; j++ )
+	for ( j = 0; j < tdCH->nPHb; j++ )
         {
 	  m_phase_volume[in*nPH+j]=t_Node->Ph_Volume(j);
 	}
@@ -6540,7 +6542,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
 
                     RestoreOldSolutionNode ( in );
                     GetBValue_MT ( in, 1, m_soluteB + in * nIC ); // This saves current concentrations into m_soluteB....after each time step m_soluteB is copied to the concentrations used for the next time step for mass transport equations
-                    for (int jj=0;jj<nIC;jj++) if (m_soluteB[in*nIC+jj] < 0.0) m_soluteB[in*nIC+jj]=fabs(m_soluteB[in*nIC+jj]); 
+                    for (long jj=0;jj<nIC;jj++) if (m_soluteB[in*nIC+jj] < 0.0) m_soluteB[in*nIC+jj]=fabs(m_soluteB[in*nIC+jj]); 
 		    node_fail = 0;
                 }
                 else   // restore old solution and no update on kinetic parameters, porosity and fluid/gas properties
@@ -6649,11 +6651,11 @@ void REACT_GEM::SynchronizeData(double* data)   //pass pointer to the vector we 
 // first fill data into global buffer...then get back data...
 // size of global buffer is m_size
 
-    int receivecount;
+    long receivecount;
     PetscInt low,high,otherlow;
     MPI_Status status;
     PetscInt count;
-    int tag = 9999;
+    long tag = 9999;
 
     // clean buffer, otherwise allreduce will not work
     for(i = 0; i < glob_NodesNumber_Linear; i++)
@@ -6699,7 +6701,7 @@ void REACT_GEM::SynchronizeData(double* data)   //pass pointer to the vector we 
 int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
 {
     int node_fail=0;
-    long ii, iisplit;
+    long j,ii, iisplit;
     double oldvolume, dtchem,dummy, subtime;
   //  double debug_time1, debug_time2; //performance analysis
   //  double *dulb, *dllb;
@@ -6941,7 +6943,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
 
             REACT_GEM::CalcReactionRate ( in, m_Node); //moved it after porosity calculation because of chrunchflow kinetics (model 4)!
 	    	// fill vector with phase volumes
-	    for ( int j = 0; j < dCH->nPHb; j++ )
+	    for ( j = 0; j < dCH->nPHb; j++ )
             {
 	      m_phase_volume[in*nPH+j]=m_Node->Ph_Volume(j);
 	    }

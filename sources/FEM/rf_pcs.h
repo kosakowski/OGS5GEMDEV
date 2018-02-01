@@ -1004,9 +1004,9 @@ extern int pcs_deformation;
 
 // ToDo
 //SB
-extern double PCSGetNODConcentration(long index, long component, long timelevel);
+extern double PCSGetNODConcentration(long index, long component, int timelevel);
 //SB
-extern void PCSSetNODConcentration(long index, long component, long timelevel, double value);
+extern void PCSSetNODConcentration(long index, long component, int timelevel, double value);
 extern char* GetCompNamehelp(char* name);         //SB:namepatch - superseded by GetPFNamebyCPName
                                                   //SB4218
 extern double PCSGetEleMeanNodeSecondary(long index,

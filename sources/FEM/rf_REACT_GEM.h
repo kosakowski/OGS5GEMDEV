@@ -128,7 +128,7 @@ public:
     int SetLimitsInitial ( long in, TNode* m_Node);    
     int CalcLimitsSolidSolution ( long in, long ii,int flag_equilibration ,TNode* m_Node);
     double CementHydrationKinetics (double oldvalue,  long kin_phasenr, double dt ); // calculates cement hydration kinetics according ot Lothenbach and Wieland (2008=
-    int *m_boundary;                            //holds marker for boundary nodes
+    long *m_boundary;                            //holds marker for boundary nodes
     double max_kinetic_timestep;               // variable used for limiting time step
     double MaxChangeKineticsPhase(long in, int ii, int i,TNode *m_Node); // maximum allowed change to 10% concentrations
     bool calc_limits;                          // do this for first Picard iteration
