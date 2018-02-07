@@ -789,7 +789,7 @@ if(mineral_density>0){
 double CompProperties::CalcDiffusionCoefficientCP(long index,double theta,CRFProcess* m_pcs)
 {
 	(void)theta;
-	int p_idx = -1, t_idx = -1;
+	size_t p_idx = -1, t_idx = -1;
 	/*int dependence = 0; */
 	double diffusion_coefficient = -1.0;
 	double pressure_average = 1e5;
@@ -800,11 +800,11 @@ double CompProperties::CalcDiffusionCoefficientCP(long index,double theta,CRFPro
 	// static long *element_nodes;
    CRFProcess* t_pcs = NULL;
 #ifdef GEM_REACT
-	static int count_nodes;
+	static size_t count_nodes;
 	// TF unused variable - fix a compiler warning
 //   static double eta = 0.0;                       //, theta = 1.0;
 	double porosity=1.0,saturation=1.0, dummy=0.0;
-	int i, flowflag;
+	size_t i, flowflag;
 	CRFProcess* f_pcs = NULL;
 #endif
 	// static int p_ind, t_ind;
@@ -1006,7 +1006,7 @@ double CompProperties::CalcDiffusionCoefficientCP(long index,double theta,CRFPro
 	      exit(1);
 	    }
                //t_pcs = PCSGet("HEAT_TRANSPORT");
-            int idx_t = t_pcs->GetNodeValueIndex("TEMPERATURE1")+1;
+            size_t idx_t = t_pcs->GetNodeValueIndex("TEMPERATURE1")+1;
 	    
 	   // now do the thing with  
             porosity = m_mat_mp->Porosity(index,theta);

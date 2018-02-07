@@ -125,10 +125,6 @@ REACT_GEM::REACT_GEM ( void )
 	gem_nThread = 1; // default number of threads
 	string tinit_path = " ";
         max_kinetic_timestep = 1.0e+99;             // restrict time step for kinetics
-	boost::barrier* gem_barrier_start;
-	boost::barrier*  gem_barrier_finish;
-	boost::thread* gemThread;
-	boost::mutex rwmutex, getnode_mutex;
 // the next two definitions are set to default values such that they can be used in serial version
 	myrank = 0;
 	mysize = 1;
@@ -149,7 +145,7 @@ REACT_GEM::~REACT_GEM ( void )
 //	  }
 	  for (unsigned int i = 0; i < gem_nThread; ++i) // here we join the threads! otherwise it might be that boost/phtread throws an assertion, because condition variables are still in use when destroyed!
 	  {
-	    gemThread[i].join();
+	    gemThread[i].join(); 
 	  }
 
 
@@ -1415,9 +1411,8 @@ double REACT_GEM::GetTempValue_MT ( long node_Index, int timelevel )
 	if ( heatflag == 1 )
 	{
 		m_pcs = PCSGet ( "HEAT_TRANSPORT" );
-
 		indx = m_pcs->GetNodeValueIndex ( "TEMPERATURE1" ) + timelevel;
-		temp = m_pcs->GetNodeValue ( node_Index, indx );
+		temp = m_pcs->GetNodeValue ( (size_t) node_Index, (int) indx );
 	}
 	else
 		temp = m_gem_temperature;
@@ -1432,7 +1427,7 @@ short REACT_GEM::SetTempValue_MT ( long node_Index, int timelevel, double temp )
 		m_pcs = PCSGet ( "HEAT_TRANSPORT" );
 
 		indx = m_pcs->GetNodeValueIndex ( "TEMPERATURE1" ) + timelevel;
-		m_pcs->SetNodeValue ( node_Index, indx, temp );
+		m_pcs->SetNodeValue ((size_t) node_Index,(int)indx, temp );
 
 		//sysT[i] = m_pcs->GetNodeValue(i, indx1);
 		//if (sysT0[i] <273.15) sysT0[i] += 273.15;  //ToDo �C->K
@@ -2652,8 +2647,7 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
         if ( m_fluid_volume[in] > 0.0 )
             m_xDC[in * nDC +
                   idx_water] *=
-                      m_pcs->GetNodeValue ( in,idx +
-                                            1 ) * m_porosity[in] / m_fluid_volume[in];
+                      m_pcs->GetNodeValue ( in,idx + 1 ) * m_porosity[in] / m_fluid_volume[in];
         else
             m_xDC[in * nDC + idx_water] = 0.0;
 
@@ -2668,7 +2662,7 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
 #if defined(USE_PETSC)
     //	if ( fabs ( m_excess_water_buff[in] ) >= 0.01 ) cout << "node "<< in <<" m_excess_water" << m_excess_water_buff[in] <<"\n";
     //	if ( fabs ( m_excess_gas_buff[in] ) >= 0.01 ) cout << "node "<< in <<" m_excess_gas" << m_excess_water_buff[in] <<"\n";
-#elsebench0025.vtk
+#else
     //	if ( fabs ( m_excess_water[in] ) >= 0.01 ) cout << "node "<< in <<" m_excess_water " << m_excess_water[in] <<"\n";
     //	if ( fabs ( m_excess_gas[in] ) >= 0.01 ) cout << "node "<< in <<" m_excess_gas " << m_excess_water[in] <<"\n";
 #endif
@@ -2918,7 +2912,7 @@ int REACT_GEM::ConcentrationToMass ( long in /*idx of node*/, int i_timestep )
 	      
             // also check if xDC values is negative
 	    m_soluteB_corr[i]=0.0;
-            if ( (m_soluteB[i] < 0.0) && (j != nIC-1))
+            if ( (m_soluteB[i] < 0.0) && (j != nIC-1)) // nIC-1 is charge!
 	    {
 	      m_soluteB_corr[i]=m_soluteB[i]; //store amounts for later correction
 	      m_soluteB[i]=fabs(m_soluteB_corr[i]);
@@ -5554,7 +5548,7 @@ double REACT_GEM::GetNodeFluidDensityValue ( long node_Index )
 //taken from rf_REACT_BRNS
 int REACT_GEM::IsThisPointBCIfYesStoreValue ( long index, CRFProcess* m_pcs, double& value )
 {
-	for ( long p = 0; p < ( int ) m_pcs->bc_node_value.size(); ++p )
+	for ( long p = 0; p < ( long ) m_pcs->bc_node_value.size(); ++p )
 		if ( index == m_pcs->bc_node_value[p]->msh_node_number )
 		{
 			value = m_pcs->bc_node_value[p]->node_value;

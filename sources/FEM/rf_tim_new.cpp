@@ -174,7 +174,8 @@ std::ios::pos_type CTimeDiscretization::Read(std::ifstream* tim_file)
 	int i;
 	CRFProcess* m_pcs = NULL;
 	//    m_pcs = PCSGet("RICHARDS_FLOW");
-	m_pcs = PCSGet("GROUNDWATER_FLOW");   //kg44 changed default
+	if (!(m_pcs = pcs_vector[0]))
+	  exit(0);   //kg44 changed default and exit for case of error
 
 	//========================================================================
 	// Schleife ueber alle Phasen bzw. Komponenten
@@ -722,7 +723,7 @@ void TIMWrite(std::string base_file_name)
 **************************************************************************/
 void CTimeDiscretization::Write(std::fstream* tim_file)
 {
-	int i;
+	size_t i;
 	//--------------------------------------------------------------------
 	// KEYWORD
 	*tim_file << "#TIME_STEPPING" << "\n";
@@ -740,7 +741,7 @@ void CTimeDiscretization::Write(std::fstream* tim_file)
 	if(time_control_type == TimeControlType::FIXED_STEPS)
 	{
 		*tim_file << " $TIME_STEPS" << "\n";
-		for(i = 0; i < (int)time_step_vector.size(); i++)
+		for(i = 0; i < (size_t)time_step_vector.size(); i++)
 			*tim_file << "  " << 1 << " " << time_step_vector[i] << "\n";
 	}
 	else
@@ -782,7 +783,7 @@ void CTimeDiscretization::Write(std::fstream* tim_file)
 double CTimeDiscretization::CalcTimeStep(double current_time)
 {
 	double tval, next;
-	int no_time_steps = (int)time_step_vector.size();
+	size_t no_time_steps = time_step_vector.size();
 	//
 	// TIME STEP VECTOR
 	// -----------------------------------
@@ -876,7 +877,7 @@ double CTimeDiscretization::CalcTimeStep(double current_time)
 **************************************************************************/
 CTimeDiscretization::CTimeDiscretization(const CTimeDiscretization& a_tim, std::string pcsname)
 {
-	int i;
+	size_t i;
 	safty_coe = a_tim.safty_coe;
 	dt_sum = a_tim.dt_sum;
 	this_stepsize = a_tim.this_stepsize;
@@ -899,9 +900,9 @@ CTimeDiscretization::CTimeDiscretization(const CTimeDiscretization& a_tim, std::
 	tim_discrete = a_tim.tim_discrete;
 	nonlinear_iteration_error = a_tim.nonlinear_iteration_error;
 	//
+	time_independence = false; // this seemed to overwrite the following statemente...
 	time_independence = a_tim.time_independence;
 	minimum_dt_reached = a_tim.minimum_dt_reached;
-	time_independence = false;
 	time_active = true;
 	last_active_time = 0.0;
 	next_active_time = 0.0;				  //JT
@@ -909,11 +910,11 @@ CTimeDiscretization::CTimeDiscretization(const CTimeDiscretization& a_tim, std::
 	time_step_vector.clear();
 	time_adapt_tim_vector.clear();
 	time_adapt_coe_vector.clear();
-	for(i = 0; i < (int)a_tim.time_step_vector.size(); i++)
+	for(i = 0; i < (size_t)a_tim.time_step_vector.size(); i++)
 		time_step_vector.push_back(a_tim.time_step_vector[i]);
-	for(i = 0; i < (int)a_tim.time_adapt_tim_vector.size(); i++)
+	for(i = 0; i < (size_t)a_tim.time_adapt_tim_vector.size(); i++)
 		time_adapt_tim_vector.push_back(a_tim.time_adapt_tim_vector[i]);
-	for(i = 0; i < (int)a_tim.time_adapt_coe_vector.size(); i++)
+	for(i = 0; i < (size_t)a_tim.time_adapt_coe_vector.size(); i++)
 		time_adapt_coe_vector.push_back(a_tim.time_adapt_coe_vector[i]);
 }
 
@@ -1257,7 +1258,7 @@ double CTimeDiscretization::DynamicVariableTimeControl(void)
 double CTimeDiscretization::DynamicTimeSmoothing(double suggested_time_step_change)
 {
 	double ddt, val, time_step;
-	int number_of_time_steps_to_smooth = 2;
+	long number_of_time_steps_to_smooth = 2;
 	//
 	ddt = fabs(suggested_time_step_change);
 	val = 1.0 - ddt/(time_step_length + ddt);			// how different is the suggestion from the current value
@@ -1709,8 +1710,8 @@ double CTimeDiscretization::CheckCourant(void)
 	CMediumProperties* m_mmp = NULL;
 	MeshLib::CElem* elem = NULL;
 	ElementValue* gp_ele;
-	long critical_element_no = -1;
-	double recommended_time_step = 0.0;
+	long critical_element_no = -1; // is -1 a good choice? should be nowhere used in the code
+	double recommended_time_step = 1.0e10; //set to a big number
 	double stable_time_step = 0.0;
 	//  int edx;
 
@@ -1733,7 +1734,7 @@ double CTimeDiscretization::CheckCourant(void)
 		elem->SetCourant(courant);
 		//    edx = m_pcs->GetElementValueIndex("COURANT"); //kg44 does this work?
 		//    m_pcs->SetElementValue(index,edx,courant);    // kg44 seems not to work
-		stable_time_step = (1. / courant) * dt;
+		stable_time_step = (1. / (courant+10*DBL_EPSILON)) * dt; //dangerous for courant =0.0 !
 		if (index == 0)
 			recommended_time_step = stable_time_step;
 		if (stable_time_step < recommended_time_step)
@@ -1936,7 +1937,7 @@ double CTimeDiscretization::CheckTime(double const c_time, const double dt0)
 	double pcs_step;
 	double time_forward;
 	bool ontime = false;
-	if((int)time_vector.size() == 1)
+	if((size_t)time_vector.size() == 1)
 		return dt0;
 	//
 	//WW please check +1
@@ -1944,9 +1945,9 @@ double CTimeDiscretization::CheckTime(double const c_time, const double dt0)
 	if(time_step_vector.size() > 0)       // 16.09.2008. WW
 	{
 		//OK
-		if(step_current >= (int)time_step_vector.size())
+		if(step_current >= (size_t)time_step_vector.size())
 			//OK
-			pcs_step = time_step_vector[(int)time_step_vector.size() - 1];
+			pcs_step = time_step_vector[(size_t)time_step_vector.size() - 1];
 		else
 			//OK
 			pcs_step = time_step_vector[step_current];

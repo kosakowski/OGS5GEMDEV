@@ -95,7 +95,7 @@ class Problem
 	bool external_coupling_exists;
 	int cpl_overall_max_iterations;
 	int cpl_overall_min_iterations;
-	int loop_process_number;
+	size_t loop_process_number;
 	size_t max_time_steps;
 	//
       int lop_coupling_iterations;

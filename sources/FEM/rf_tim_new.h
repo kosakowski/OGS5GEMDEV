@@ -54,7 +54,7 @@ private:
 	double erracc;
 	double dynamic_control_tolerance[DOF_NUMBER_MAX+1];	//JT2012
 	std::string dynamic_control_error_method;			//JT2012
-	int dynamic_time_buffer;							//JT2012
+	long dynamic_time_buffer;							//JT2012
 	double dynamic_minimum_suggestion;				    //JT2012
 	double dynamic_failure_threshold;					//JT2012
 public:                                           //OK
@@ -67,7 +67,7 @@ public:
 	std::string file_base_name;
 	// TIM
 	std::vector<double>time_step_vector;
-	std::vector<int> time_adapt_tim_vector;
+	std::vector<long> time_adapt_tim_vector;
 	std::vector<double>time_adapt_coe_vector;
 	//WW vector<double>fixed_point_vector;
 
@@ -80,7 +80,7 @@ public:
 	double last_active_time;
 	double recommended_time_step;
 	double dt_failure_reduction_factor;
-	int step_current;
+	size_t step_current;
 	bool repeat;                          //OK/YD
 	bool time_active;					//JT2012
 	bool time_independence;				//JT2012

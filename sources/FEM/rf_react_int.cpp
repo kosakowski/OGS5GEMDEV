@@ -541,7 +541,7 @@ void REACTINT::InitREACTINT(void){
 
 
   if(icOutput)
-    OUTData(0.0,aktueller_zeitschritt, true);
+    OUTData(0.0, (int) aktueller_zeitschritt, true);
 
   //CompProperties *m_cp = NULL;
   CRFProcess *m_pcs = NULL;

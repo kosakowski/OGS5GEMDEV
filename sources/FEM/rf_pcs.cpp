@@ -10951,8 +10951,8 @@ Programming:
 **************************************************************************/
 void CRFProcess::CalcSecondaryVariablesLiquidFlow()
 {
-   long i;
-   int ndx_dens;
+   size_t i;
+   size_t ndx_dens;
    double  var[3]={0,0,0};
    bool heattransport = false;
 
@@ -10961,12 +10961,14 @@ void CRFProcess::CalcSecondaryVariablesLiquidFlow()
    CRFProcess *m_pcs = NULL;
    if((m_pcs = PCSGet("HEAT_TRANSPORT"))) 
      heattransport=true;
+   else 
+     heattransport = false;
 
    CFluidProperties* m_mfp = NULL;
    m_mfp = mfp_vector[0];
 
    double dens;
-   for(i=0;i<(long)m_msh->GetNodesNumber(false);i++)
+   for(i=0;i<(size_t)m_msh->GetNodesNumber(false);i++)
    {
 #ifdef GEM_REACT
       var[0]=-1;
@@ -10975,8 +10977,7 @@ void CRFProcess::CalcSecondaryVariablesLiquidFlow()
      // get pressure
 	   var[0] = this->GetNodeValue(i,this->GetNodeValueIndex("PRESSURE1"));
 	   // get temperature
-		  if(heattransport) 
-      var[1] = m_pcs->GetNodeValue(i,m_pcs->GetNodeValueIndex("TEMPERATURE1"));
+      if(heattransport) var[1] = m_pcs->GetNodeValue(i,m_pcs->GetNodeValueIndex("TEMPERATURE1"));
 	   // Set salinity
 		  var[2] = 0.0;
 #endif
@@ -12850,7 +12851,7 @@ CRFProcess* PCSGetMass(size_t component_number)
 		}
 		//
 		int j;
-		int idx[20];
+		size_t idx[20];
 		for (j = 0; j < pcs_number_of_primary_nvals; j++)
 		{
 			os << pcs_primary_function_name[j] << " ";

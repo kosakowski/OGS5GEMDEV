@@ -99,8 +99,8 @@ CFiniteElementStd:: CFiniteElementStd(CRFProcess* Pcs, const int C_Sys_Flad, con
 	  FluidProp(NULL), MediaProp(NULL),
 	  pcs(Pcs), dm_pcs(NULL), HEAD_Flag(false)
 {
-	int i;
-      int size_m = 64;                            //25.2.2007
+	long i;
+        int size_m = 64;                            //25.2.2007
 	string name2;
 	char name1[MAX_ZEILE];
 	cpl_pcs = NULL;
@@ -138,7 +138,7 @@ CFiniteElementStd:: CFiniteElementStd(CRFProcess* Pcs, const int C_Sys_Flad, con
 	NodalVal_p20 = new double [size_m];   //AKS
 	mat = new double[9];    
 	NodalVal_t0 = new double[size_m];                     // for TEMPERATURE1
-    NodalVal_t1 = new double[size_m];                     //AKS
+        NodalVal_t1 = new double[size_m];                     //AKS
 	NodalVal_t2_0 = new double[size_m];                   // FOR TEMPERATURE2 previous time step
 	NodalVal_t2_1 = new double[size_m];                   // for TEMPERATURE2 current time step
 	NodalVal_X0 = new double[size_m];                     // for CONCENTRATION previous time step
@@ -590,7 +590,7 @@ CFiniteElementStd::~CFiniteElementStd()
 **************************************************************************/
 void CFiniteElementStd::SetMemory()
 {
-	int Size = nnodes;
+	long Size = nnodes;
 	if(PcsType == EPT_MULTIPHASE_FLOW || PcsType == EPT_PSGLOBAL) //4.3.2009 PCH
 		Size *= 2;
 
@@ -874,7 +874,7 @@ void CFiniteElementStd::SetMaterial(int /*phase*/)
 {
 	//----------------------------------------------------------------------
 	// MMP
-	int mmp_index = 0;
+	long mmp_index = 0;
 	long group = MeshElement->GetPatchIndex();
 	mmp_index = group;
 	// Single continua thermal:
@@ -1065,7 +1065,7 @@ void CFiniteElementStd::CalcOverlandNLTERMSRills(double* haa,
 	double rill_height = MediaProp->rill_height;
 	double eps = MediaProp->rill_epsilon;
 
-	for(int i = 0; i < nnodes; i++)
+	for(long i = 0; i < nnodes; i++)
 	{
 		WDepth[i] = haa[i] - Z[i];
 		WDepthOld[i] = haaOld[i] - Z[i];
@@ -1259,8 +1259,8 @@ void CFiniteElementStd::CalcOverlandUpwindedCoefficients(double** amat,
 	//  for (int j = 0; j < nnodes; j++)
 	//    amat[i][j]= 0.0;
 
-	for (int i = 0; i < nnodes; i++)
-		for (int j = (i + 1); j < nnodes; j++)
+	for (long i = 0; i < nnodes; i++)
+		for (long j = (i + 1); j < nnodes; j++)
 		{
 			gammaij =
 			        ckwr[i * nnodes +
@@ -1504,7 +1504,7 @@ void CFiniteElementStd::CalcOverlandCoefficientsTri(double* head,
 **************************************************************************/
 void CFiniteElementStd::CalNodalEnthalpy()
 {
-	int i;
+	long i;
 	double temp, dT;
 	for(i = 0; i < nnodes; i++)
 	{
@@ -1546,13 +1546,13 @@ void CFiniteElementStd::CalNodalEnthalpy()
 **************************************************************************/
 double CFiniteElementStd::CalCoefMass()
 {
-	int Index = MeshElement->GetIndex();
+	long Index = MeshElement->GetIndex();
 	double val = 0.0;
 	double humi = 1.0;
 	double rhov = 0.0;
 	double arg[2];
 	double biot_val, poro_val = 0.0, rho_val = 0.0, Se;
-	int tr_phase = 0;                     // SB, BG
+	long tr_phase = 0;                     // SB, BG
 	double saturation = 0.0;              // SB, BG
 	CompProperties* m_cp = NULL;
 	double drho_dp_rho=0.0;                  // drho/dp * 1/rho 
@@ -1656,7 +1656,7 @@ double CFiniteElementStd::CalCoefMass()
 			// PCH cpl_pcs gives a funny process number.
 			// It is just the opposite of the phase. So, I get the value the other way around.
 			idxS = cpl_pcs->GetNodeValueIndex("SATURATION2");
-			for(int i = 0; i < nnodes; i++)
+			for(long i = 0; i < nnodes; i++)
 				NodalVal_Sat[i] = cpl_pcs->GetNodeValue(nodes[i],idxS + 1);
 			Sw = 1.0 - interpolate(NodalVal_Sat);
 			// Is this really needed?
@@ -1791,7 +1791,7 @@ double CFiniteElementStd::CalCoefMass()
 **************************************************************************/
 double CFiniteElementStd::CalCoefMass2(int dof_index)
 {
-	int Index = MeshElement->GetIndex();
+	long Index = MeshElement->GetIndex();
 	double val = 0.0;
 	double expfactor = 0.0;
 	double dens_arg[3];                   //08.05.2008 WW
@@ -1925,7 +1925,7 @@ double CFiniteElementStd::CalCoefMass2(int dof_index)
 **************************************************************************/
 void CFiniteElementStd::CalCoefMassMCF()
 {
-	int in, nDF = pcs->dof, Index = MeshElement->GetIndex();
+	long in, nDF = pcs->dof, Index = MeshElement->GetIndex();
     double arg_PV[6], retardation_factore[4], rho, beta_T, beta_p; 
     for(in = 0; in<nDF*nDF; in++) MassMatrixElements[in] = 0.0;
 	//ComputeShapefct(1);
@@ -1964,7 +1964,7 @@ void CFiniteElementStd::CalCoefMassMCF()
 **************************************************************************/
 double CFiniteElementStd::CalCoefMassPSGLOBAL(int dof_index)
 {
-	int Index = MeshElement->GetIndex();
+	long Index = MeshElement->GetIndex();
 	double val = 0.0, variables[3];
 	double P,T;
 	//OK411 double expfactor = 0.0;
@@ -2023,10 +2023,10 @@ double CFiniteElementStd::CalCoefMassPSGLOBAL(int dof_index)
 **************************************************************************/
 double CFiniteElementStd::CalCoefStorage()
 {
-	int Index = MeshElement->GetIndex();
+	long Index = MeshElement->GetIndex();
 	double val = 0.0;
 	double saturation = 0.0;              // SB, BG
-	int tr_phase = 0;                     // SB, BG
+	long tr_phase = 0;                     // SB, BG
 	CompProperties* m_cp = NULL;          //CMCD
 	//CompProperties *m_cp = cp_vec[pcs->pcs_component_number]; //SB4200
 	switch(PcsType)
@@ -2090,7 +2090,7 @@ double CFiniteElementStd::CalCoefStorage()
 **************************************************************************/
 double CFiniteElementStd::CalCoefContent()
 {
-	int Index = MeshElement->GetIndex();
+	long Index = MeshElement->GetIndex();
 	double val = 0.0;
 	double dS = 0.0;
 	double nodeval0, nodeval1, porval0, porval1;

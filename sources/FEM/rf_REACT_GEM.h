@@ -392,7 +392,7 @@ public:
 	double ul_constraint;
     } Constraints_GEMS; 
     vector<Constraints_GEMS> m_constraints;
-    
+
     
     // here we define the variables we need for the threads
     unsigned int gem_nThread, gem_nbar; // number of threads, number of threads + 1 (number of threads + master that have to cross a barrier)

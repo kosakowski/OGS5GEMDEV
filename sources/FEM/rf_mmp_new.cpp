@@ -2892,7 +2892,7 @@ double* CMediumProperties::MassDispersionTensorNew(int ip, int tr_phase) // SB +
 {
 	static double advection_dispersion_tensor[9]; //Name change due to static conflict
 	int component = Fem_Ele_Std->pcs->pcs_component_number;
-	int i;
+	long i;
 	long index = Fem_Ele_Std->GetMeshElement()->GetIndex();
 	double molecular_diffusion[9], molecular_diffusion_value;
 	double vg;
@@ -4261,9 +4261,9 @@ double CMediumProperties::PorosityEffectiveConstrainedSwellingConstantIonicStren
 double* CMediumProperties::PermeabilityTensor(long index)
 {
 	static double tensor[9];
-	int perm_index = 0;
+	long perm_index = 0;
 
-	int idx_k, idx_n;
+	long idx_k, idx_n;
 	double /*k_old, n_old,*/ k_new, n_new, k_rel, n_rel;
 	CRFProcess* m_pcs_tmp(NULL);
 	if ((permeability_model==8) && (porosity_model==13))
@@ -4326,7 +4326,7 @@ double* CMediumProperties::PermeabilityTensor(long index)
 			{
 				// get the permeability.
 //				KC_permeability_initial = k_new = tensor[0];
-//				KC_porosity_initial = n_new;
+//				KC_porosity_initial = n_new;Index = MeshElement->GetIndex();
 			}
 			// save old permeability
 			pcs_tmp->SetElementValue( index, idx_k, k_new  );
@@ -4335,10 +4335,10 @@ double* CMediumProperties::PermeabilityTensor(long index)
 		        MeshLib::CElem* m_Elem;
                         m_Elem =  m_pcs->m_msh->ele_vector[index];
 			// calculate new permeability as harmonic mean over all node based permeabilities
-			int count_nodes = m_Elem->GetNodesNumber ( false );
+			size_t count_nodes = m_Elem->GetNodesNumber ( false );
                         double permeability_average = 0.0;
                         double dummy,dummy0,pdummy;
-                        for (int ii = 0; ii < count_nodes; ii++) //calculate harmonic mean of node based diffusion coefficients
+                        for (size_t ii = 0; ii < count_nodes; ii++) //calculate harmonic mean of node based diffusion coefficients
                         {
                         // then get the values from nodes
                            dummy = m_vec_GEM->REACT_GEM::GetNodePorosityValue(m_Elem->GetNodeIndex ( ii )); //current node based prosity

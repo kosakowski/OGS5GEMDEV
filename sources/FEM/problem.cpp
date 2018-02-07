@@ -1053,7 +1053,7 @@ void Problem::Euler_TimeDiscretize()
 	long accepted_times = 0;
 	long rejected_times = 0;
 	double dt_rec;
-	int i;
+	size_t i;
 	bool force_output;
 	last_dt_accepted = false; // JT: false first. Thus copy node values after first dt.
 	//
@@ -1066,7 +1066,7 @@ void Problem::Euler_TimeDiscretize()
 	if(mrank == 0)
 		{
 #endif
-	OUTData(current_time,aktueller_zeitschritt,true);
+	OUTData(current_time,(int) aktueller_zeitschritt,true);
 #if defined(USE_MPI) || defined(USE_MPI_KRC) 
 		}
 #endif
@@ -1091,7 +1091,7 @@ void Problem::Euler_TimeDiscretize()
 	{
 		// Get time step
 		dt = dt_rec = DBL_MAX;
-		for(i=0; i<(int)active_process_index.size(); i++)
+		for(i=0; i<(size_t)active_process_index.size(); i++)
 		{
 			m_tim = total_processes[active_process_index[i]]->Tim;
 			if(!m_tim->time_active) continue; // JT
@@ -1151,7 +1151,7 @@ void Problem::Euler_TimeDiscretize()
 				{
 #endif
 					//
-				OUTData(current_time, aktueller_zeitschritt,force_output);
+				OUTData(current_time, (int) aktueller_zeitschritt,force_output);
 #if defined(USE_MPI)
 				}
 #endif
@@ -1262,7 +1262,8 @@ void Problem::Euler_TimeDiscretize()
    -------------------------------------------------------------------------*/
 bool Problem::CouplingLoop()
 {
-	int i, index, cpl_index;
+	int i;
+	size_t index, cpl_index;
 	double max_outer_error, max_inner_error; //, error;
         bool transient_bc = false;
 	bool run_flag[max_processes];
@@ -1893,7 +1894,6 @@ inline double Problem::MultiPhaseFlow()
 			m_pcs->Phase_Transition_CO2(m_pcs, 0);
 		}
 	}
-
 	if(m_pcs->tim_type == TimType::STEADY)
 		m_pcs->selected = false;
 
@@ -2015,7 +2015,7 @@ void Problem::TestOutputDuMux(CRFProcess* m_pcs)
 	mass_CO2 = mass_CO2_gas + mass_CO2_water;
 	//calculating time
 	time = 0;
-	for (int k = 0; k < m_pcs->Tim->step_current; k++)
+	for (size_t k = 0; k < m_pcs->Tim->step_current; k++)
 		time += m_pcs->Tim->time_step_vector[k];
 	temp.str("");
 	temp.clear();
@@ -2129,7 +2129,7 @@ void Problem::TestOutputDuMux(CRFProcess* m_pcs)
 	mass_CO2 = mass_CO2_gas + mass_CO2_water;
 	//calculating time
 	time = 0;
-	for (int k = 0; k < m_pcs->Tim->step_current; k++)
+	for (size_t k = 0; k < m_pcs->Tim->step_current; k++)
 		time += m_pcs->Tim->time_step_vector[k];
 	temp.str("");
 	temp.clear();
@@ -2279,7 +2279,7 @@ void Problem::TestOutputEclipse(CRFProcess* m_pcs)
 	mass_CO2 = mass_CO2_gas + mass_CO2_water;
 	//calculating time
 	time = 0;
-	for (int k = 0; k < m_pcs->Tim->step_current; k++)
+	for (size_t k = 0; k < m_pcs->Tim->step_current; k++)
 		time += m_pcs->Tim->time_step_vector[k];
 	temp.str("");
 	temp.clear();
@@ -2403,7 +2403,7 @@ void Problem::TestOutputEclipse(CRFProcess* m_pcs)
 	mass_CO2 = mass_CO2_gas + mass_CO2_water;
 	//calculating time
 	time = 0;
-	for (int k = 0; k < m_pcs->Tim->step_current; k++)
+	for (size_t k = 0; k < m_pcs->Tim->step_current; k++)
 		time += m_pcs->Tim->time_step_vector[k];
 	temp.str("");
 	temp.clear();
@@ -2609,7 +2609,7 @@ void Problem::OutputMassOfGasInModel(CRFProcess* m_pcs)
 	mass_Gas = mass_Gas_gas + mass_Gas_water;
 	//calculating time
 	time = 0;
-	for (int k = 0; k < m_pcs->Tim->step_current; k++)
+	for (size_t k = 0; k < m_pcs->Tim->step_current; k++)
 		time += m_pcs->Tim->time_step_vector[k];
 	temp.str("");
 	temp.clear();
@@ -2759,7 +2759,7 @@ void Problem::OutputMassOfComponentInModel(std::vector<CRFProcess*> flow_pcs, CR
 
 	ComponentMass = TotalVolume = SourceTerm = 0;
 
-	for (long i = 0; i < (long)m_msh->nod_vector.size(); i++)
+	for (size_t i = 0; i < (size_t)m_msh->nod_vector.size(); i++)
 	{
    		m_node = m_msh->nod_vector[i]; // get element
 		node_volume = 0;
@@ -2771,7 +2771,7 @@ void Problem::OutputMassOfComponentInModel(std::vector<CRFProcess*> flow_pcs, CR
 //		else
 //			density_water = mfp_vector[0]->Density(); // 2012-08 TF, variable ‘density_water’ set but not used [-Wunused-but-set-variable]
 
-		for (int j = 0; j < int(m_node->getConnectedElementIDs().size()); j++)
+		for (size_t j = 0; j < size_t(m_node->getConnectedElementIDs().size()); j++)
 		{
 			m_ele = m_msh->ele_vector[m_node->getConnectedElementIDs()[j]];
 
@@ -2799,7 +2799,7 @@ void Problem::OutputMassOfComponentInModel(std::vector<CRFProcess*> flow_pcs, CR
 	}
 
 	//calculating source term
-	for (long i = 0; i < (long)transport_pcs->st_node_value.size(); i++)
+	for (size_t i = 0; i < (size_t)transport_pcs->st_node_value.size(); i++)
 	{
 		SourceTerm = transport_pcs->st_node_value[i]->node_value;
 	}
@@ -2807,7 +2807,7 @@ void Problem::OutputMassOfComponentInModel(std::vector<CRFProcess*> flow_pcs, CR
 
 	//calculating time
 	time = 0;
-	for (int k = 0; k < transport_pcs->Tim->step_current; k++)
+	for (size_t k = 0; k < transport_pcs->Tim->step_current; k++)
 	{
 		time += transport_pcs->Tim->time_step_vector[k];
 	}
@@ -3154,10 +3154,10 @@ inline double Problem::HeatTransport()
 inline double Problem::MassTrasport()
 {
     double error = 1.0e+8;
-    double minimum_error;
+    double minimum_error=1e8;
     bool capvec = false;
     // bool prqvec = false;
-    int  max_gems_iteration_loop;
+    long  max_gems_iteration_loop;
     CRFProcess* m_pcs = total_processes[11];
     //
     if(!m_pcs->selected)
@@ -3189,11 +3189,11 @@ inline double Problem::MassTrasport()
             //MW reduce CONCENTRATION1 to non-negative values above water table for stability for Sugio approach with RICHARDS
             if (mmp_vector[0]->permeability_saturation_model[0] == 10)
             {
-                int nidx0 = m_pcs->GetNodeValueIndex("CONCENTRATION1",0);
+                size_t nidx0 = m_pcs->GetNodeValueIndex("CONCENTRATION1",0);
                 CRFProcess *local_richards_flow = PCSGet("PRESSURE1",true);
                 if (local_richards_flow != NULL)
                 {
-                    int nidx1 = local_richards_flow->GetNodeValueIndex("PRESSURE1",0);
+                    size_t nidx1 = local_richards_flow->GetNodeValueIndex("PRESSURE1",0);
 				for (size_t j=0; j<m_pcs->m_msh->GetNodesNumber(false);j++)
                     {
                         double local_conc = m_pcs->GetNodeValue(j,nidx0+1);
@@ -3251,7 +3251,6 @@ inline double Problem::MassTrasport()
                 m_vec_GEM->Run_MainLoop(); // Run GEM to get initial values for coupled step
                 // calculate difference vector
 //                cout << "GEMS: Picard iteration no " << gems_iteration_loop << " sum of max diff in b vector: " << m_vec_GEM->CalcSoluteBDelta()/(m_vec_GEM->nNodes*m_vec_GEM->nIC) << " \n";
-                cout << "GEMS: Picard iteration no " << gems_iteration_loop << " sum of max diff in b vector: " << minimum_error << " current " << m_vec_GEM->CalcMaxSoluteBDelta() << " \n";
                 // test for finishing loop
 		if (gems_iteration_loop==0) 
 		{
@@ -3270,6 +3269,7 @@ inline double Problem::MassTrasport()
 		    break;
 		  }
 		}
+                cout << "GEMS: Picard iteration no " << gems_iteration_loop << " sum of max diff in b vector: " << minimum_error << " current " << m_vec_GEM->CalcMaxSoluteBDelta() << " \n";		
                 if ( minimum_error <= m_vec_GEM->iteration_eps) break;
                 if (gems_iteration_loop+1 < max_gems_iteration_loop) // increase counter and check for maximum iterations
                 {
@@ -3332,12 +3332,12 @@ inline double Problem::MassTrasport()
 		//MW reduce CONCENTRATION1 to non-negative values above water table for stability for Sugio approach with RICHARDS
 		if (mmp_vector[0]->permeability_saturation_model[0] == 10)
 		{
-			int nidx0 = m_pcs->GetNodeValueIndex("CONCENTRATION1",0);
+			long nidx0 = m_pcs->GetNodeValueIndex("CONCENTRATION1",0);
 			CRFProcess *local_richards_flow = PCSGet("PRESSURE1",true);
 			if (local_richards_flow != NULL)
 			{http://www.presseportal.de/blaulicht/pm/110970/3063173
-				int nidx1 = local_richards_flow->GetNodeValueIndex("PRESSURE1",0);
-				for (int j=0; j<m_pcs->m_msh->GetNodesNumber(false);j++)
+				long nidx1 = local_richards_flow->GetNodeValueIndex("PRESSURE1",0);
+				for (long j=0; j<m_pcs->m_msh->GetNodesNumber(false);j++)
 				{
 					double local_conc = m_pcs->GetNodeValue(j,nidx0+1);
 					double local_pressure = local_richards_flow->GetNodeValue(j,nidx1+1);
