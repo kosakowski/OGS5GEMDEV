@@ -1,0 +1,86 @@
+
+#GEM_PROPERTIES
+ $GEM_THREADS
+   32
+ $CONCENTRATIONS_WITH_WATER
+   1
+ $MINIMUM_KINETIC_TIME_STEP
+  50.0
+ $FLAG_GAS_DIFFUSION
+   1
+ $LOOSE_KINETICS
+   1
+ $FLAG_GEM_USE_SIA
+   0
+ $FLAG_ACCEPT_BAD_GEM
+   0
+ $CALCULATE_BOUNDARY_NODES
+   1
+ $GEM_INIT_FILE
+    OPC-norm-gas-dat.lst  ;  concrete-dat.lst    ; only file name, no path
+  $FLAG_POROSITY_CHANGE
+    1    ; 0-not coupled;1=coupled;
+  $MIN_POROSITY
+    1.e-4  
+  $MAX_POROSITY
+    1.0  
+  $FLAG_COUPLING_HYDROLOGY
+   0    ; 0-not coupled;1=coupled;
+  $ITERATIVE_SCHEME
+    0      ; 0-not iteration;1=iteration. Not implemented yet.
+  $TEMPERATURE_GEM
+    298.15       ; temperature for GEMS in degree Celsius
+  $MAX_FAILED_NODES
+    200  ; number of nodes alowed to fail
+ $KINETIC_GEM     ; Palandri
+   Quartz 1   1     0.0 0.0 0.0   0.0 -13.99 -16.29  0.0 1.0  1.0 1.0  1.0 1.0   H+  0.0  0.0 -0.5
+   1  4000.0     ;     2143.0  monokorn 0.0028m durchmesser.....fuer Kugel A/V=6/d
+ $KINETIC_GEM     ; Palandri
+   Silica-amorph 1   1     0.0 0.0 0.0   0.0 -13.99 -16.29  0.0 1.0  1.0 1.0  1.0 1.0   H+  0.0  0.0 -0.5
+   1 0.0       ;  corresponds to 1.5 mm set contstant surface  
+ $CONSTRAINT_GEMS
+   Amor-Sl 0.0 0.0 1 0 1.6e2 1.8e2          ; should be everywhere zero
+ $CONSTRAINT_GEMS
+   Qtz  3.19999541657500e+04 1.0e6 1 0 1.6e+02 1.8e+02   ; dll, dul, 1, number of phase for criteria, lower amount, upper amount of phase
+#STOP
+
+ $CONSTRAINT_GEMS
+   CO2 0.0 0.0 1 0 1.6e2 1.8e2          ; should be everywhere zero
+ $CONSTRAINT_GEMS
+   CH4 0.0 0.0 1 0 1.6e2 1.8e2          ; should be everywhere zero
+ $CONSTRAINT_GEMS
+   H2 0.0 0.0 1 0 1.6e2 1.8e2          ; should be everywhere zero
+ $CONSTRAINT_GEMS
+   O2 0.0 0.0 1 0 1.6e2 1.8e2          ; should be everywhere zero
+ $CONSTRAINT_GEMS
+   H2S 0.0 0.0 1 0 1.6e2 1.8e2          ; should be everywhere zero
+#STOP
+
+ $KINETIC_GEM     ; Palandri
+   gas_gen 1   1     0.0 0.0 0.0   0.0 -13.99 0.0  0.0 1.0  0.0 1.0  0.0 1.0   H+  0.0  0.0 0.0
+   1  0.0     ;     2143.0  monokorn 0.0028m durchmesser.....fuer Kugel A/V=6/d
+#STOP
+
+  $CONSTRAINT_GEMS            ; we set this to a specific value in the concrete
+   Sand 27300.0 27301.0 1 7 80.0 90.0
+ $KINETIC_GEM     ; Palandri
+   Sand 1   1     0.0 0.0 0.0   0.0 -13.99 -16.29  0.0 1.0  1.0 1.0  1.0 1.0   H+  0.0  0.0 -0.5
+   1 1.0e2
+ $KINETIC_GEM     ; Palandri
+   Gravel 1   1     0.0 0.0 0.0   0.0 -13.99 -16.29  0.0 1.0  1.0 1.0  1.0 1.0   H+  0.0  0.0 -0.5
+   1 1.0e2
+
+
+
+
+ $KINETIC_GEM       ; Quartz phase no 45 (starts at 0) wie Fernandez et al 2009       
+   Quartz 1  1   0.0  0.0  0.0  0.0   -13.99 -16.29   0.0 1.0 0.0 1.0 1.0 1.0   H+  0.0  0.0 -0.5 
+  1 1.0    
+ $KINETIC_GEM     ; default  like Mäcer
+  hemihydrate  1   1     0.0 0.0 0.0   0.0 -7.00 0.0  0.0 1.0  1.0 1.0  0.0 1.0  H+  0.0  0.0 0.0
+   1 1.0e+2
+ $KINETIC_GEM     ; default Palandri
+  Magnesite  1   1     0.0 0.0 0.0   0.0 -9.34 0.0  0.0 1.0  1.0 1.0  0.0 1.0   H+  0.0  0.0 0.0
+   1 1.0e+2
+
+#STOP

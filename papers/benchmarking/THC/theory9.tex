@@ -1,5 +1,0 @@
-
-\section{Theory}
-
-The coupling between the simulation of mass transport by GeoSys/RockFlow and the calculation of chemical reactions under equilibrium conditions works by a coupling to the external equilibrium chemical solver PHREEQC.
-Once the hydraulic and thermal transport has been calculated, the mass transport is solved, the velocity vector being taken from the solution of the hydraulic equations. The concentrations of the species transported and the minerals present are given by the solution of the mass transport equations. The temperature is known from the solution of the heat transport equations. Temperature and concentration of the individual species are passed to PHREEQC (Parkhurst and Appelo 1999). PHREEQC calculates the equilibrium conditions and returns the concentrations of the various phases after reaction (McDermott et al., 2007).

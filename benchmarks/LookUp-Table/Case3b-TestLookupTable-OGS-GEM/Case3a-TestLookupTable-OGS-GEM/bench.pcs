@@ -1,0 +1,196 @@
+GeoSys-PCS: Processes ------------------------------------------------
+#PROCESS
+ $PCS_TYPE
+ LIQUID_FLOW
+ $NUM_TYPE
+   NEW   
+ $ELEMENT_MATRIX_OUTPUT 
+  0
+ $RELOAD
+  1 1000   ; write restart file every 100th timestep
+#PROCESS  ;1
+ $PCS_TYPE
+  MASS_TRANSPORT
+ $NUM_TYPE
+   NEW   
+ $ELEMENT_MATRIX_OUTPUT 
+  0
+ $RELOAD
+  1 1000   ; write restart file every 100th timestep
+#PROCESS    ;2
+ $PCS_TYPE
+  MASS_TRANSPORT
+ $NUM_TYPE
+   NEW   
+ $ELEMENT_MATRIX_OUTPUT 
+  0
+ $RELOAD
+  1 1000   ; write restart file every 100th timestep
+#PROCESS ;3
+ $PCS_TYPE
+  MASS_TRANSPORT
+ $NUM_TYPE
+   NEW   
+ $ELEMENT_MATRIX_OUTPUT 
+  0
+ $RELOAD
+  1 1000   ; write restart file every 100th timestep
+#PROCESS      ;4
+ $PCS_TYPE
+  MASS_TRANSPORT
+ $NUM_TYPE
+   NEW   
+ $ELEMENT_MATRIX_OUTPUT 
+  0
+ $RELOAD
+  1 1000   ; write restart file every 100th timestep
+#PROCESS        ;5
+ $PCS_TYPE
+  MASS_TRANSPORT
+ $NUM_TYPE
+   NEW   
+ $ELEMENT_MATRIX_OUTPUT 
+  0
+ $RELOAD
+  1 1000   ; write restart file every 100th timestep
+#PROCESS     ;6
+ $PCS_TYPE
+  MASS_TRANSPORT
+ $NUM_TYPE
+   NEW   
+ $ELEMENT_MATRIX_OUTPUT 
+  0
+ $RELOAD
+  1 1000   ; write restart file every 100th timestep
+#PROCESS     ;7
+ $PCS_TYPE
+  MASS_TRANSPORT
+ $NUM_TYPE
+   NEW   
+ $ELEMENT_MATRIX_OUTPUT 
+  0
+ $RELOAD
+  1 1000   ; write restart file every 100th timestep
+#PROCESS         ;8
+ $PCS_TYPE
+  MASS_TRANSPORT
+ $NUM_TYPE
+   NEW   
+ $ELEMENT_MATRIX_OUTPUT 
+  0
+ $RELOAD
+  1 1000   ; write restart file every 100th timestep
+#PROCESS          ;9
+ $PCS_TYPE
+  MASS_TRANSPORT
+ $NUM_TYPE
+   NEW   
+ $ELEMENT_MATRIX_OUTPUT 
+  0
+ $RELOAD
+  1 1000   ; write restart file every 100th timestep
+#PROCESS        ;10
+ $PCS_TYPE
+  MASS_TRANSPORT
+ $NUM_TYPE
+   NEW   
+ $ELEMENT_MATRIX_OUTPUT 
+  0
+ $RELOAD
+  1 1000   ; write restart file every 100th timestep
+#PROCESS      ;11
+ $PCS_TYPE
+  MASS_TRANSPORT
+ $NUM_TYPE
+   NEW   
+ $ELEMENT_MATRIX_OUTPUT 
+  0
+ $RELOAD
+  1 1000   ; write restart file every 100th timestep
+#PROCESS       ;12
+ $PCS_TYPE
+  MASS_TRANSPORT
+ $NUM_TYPE
+   NEW   
+ $ELEMENT_MATRIX_OUTPUT 
+  0
+ $RELOAD
+  1 1000   ; write restart file every 100th timestep
+#PROCESS     ;13
+ $PCS_TYPE
+  MASS_TRANSPORT
+ $NUM_TYPE
+   NEW   
+ $ELEMENT_MATRIX_OUTPUT 
+  0
+ $RELOAD
+  1 1000   ; write restart file every 100th timestep
+#PROCESS       ;14
+ $PCS_TYPE
+  MASS_TRANSPORT
+ $NUM_TYPE
+   NEW   
+ $ELEMENT_MATRIX_OUTPUT 
+  0
+ $RELOAD
+  1 1000   ; write restart file every 100th timestep
+#PROCESS           ;15
+ $PCS_TYPE
+  MASS_TRANSPORT
+ $NUM_TYPE
+   NEW   
+ $ELEMENT_MATRIX_OUTPUT 
+  0
+ $RELOAD
+  1 1000   ; write restart file every 100th timestep
+#PROCESS      ;16
+ $PCS_TYPE
+  MASS_TRANSPORT
+ $NUM_TYPE
+   NEW   
+ $ELEMENT_MATRIX_OUTPUT 
+  0
+ $RELOAD
+  1 1000   ; write restart file every 100th timestep
+#PROCESS      ;17   CO2*****************
+ $PCS_TYPE
+  MASS_TRANSPORT
+ $NUM_TYPE
+   NEW   
+ $ELEMENT_MATRIX_OUTPUT 
+  0
+ $RELOAD
+  1 1000   ; write restart file every 100th timestep
+#STOP
+
+
+
+
+#PROCESS      ;18
+ $PCS_TYPE
+  MASS_TRANSPORT
+ $NUM_TYPE
+   NEW   
+ $ELEMENT_MATRIX_OUTPUT 
+  0
+ $RELOAD
+  1 1000   ; write restart file every 100th timestep
+#PROCESS      ;19
+ $PCS_TYPE
+  MASS_TRANSPORT
+ $NUM_TYPE
+   NEW   
+ $ELEMENT_MATRIX_OUTPUT 
+  0
+ $RELOAD
+  1 1000   ; write restart file every 100th timestep
+#PROCESS      ;20
+ $PCS_TYPE
+  MASS_TRANSPORT
+ $NUM_TYPE
+   NEW   
+ $ELEMENT_MATRIX_OUTPUT 
+  0
+ $RELOAD
+  1 1000   ; write restart file every 100th timestep
+#STOP
