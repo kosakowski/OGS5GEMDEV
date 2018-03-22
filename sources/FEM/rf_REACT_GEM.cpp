@@ -3912,6 +3912,7 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
     double aa = 1.0,ab = 1.0,ac = 1.0;         // activity products ...species are input from material file
     double sactivity;                          // dummy variable for extracting activities
     double omega_comp=0.0, surf_area=0.0;
+    double dummy;    // dummy variable for storing direction of reaction -1 or 1
     const char* species;
     DATACH* dCH;                            //pointer to DATACH
     DATABR* dBR;
@@ -4099,31 +4100,38 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
 
                     }
                 }
-                //      cout << "activities " <<aa << " " << ab << " " << ac <<" " << temp << "\n";
+//                     cout << "activities " <<aa << " " << ab << " " << ac <<" " << "\n";
+                // 1- omega gives the direction of reaction (dissolution negative....precipitation positive)
+                // when using exponents (1-omega^p)^q with (negative_number)^q this causes an error...therefore absolute value has to be taken and the sign is extracted into a dummy variable
                 // terms for each case
-                rra =
+                dummy =1.0;
+                if ((1.0 - pow ( omega_comp, m_kin[ii].kinetic_parameters[6] )) < 0.0) dummy=-1.0;
+                rra = dummy *
                     exp ( -1.0 * m_kin[ii].kinetic_parameters[0] / R *
                           ( 1.0 / m_T[in] - 1.0 /
                             298.15 ) ) * aa *
-                    pow ( ( 1.0 -
+                    pow ( abs( 1.0 -
                             pow ( omega_comp,
                                   m_kin[ii].kinetic_parameters[6] ) ),
                           m_kin[ii].kinetic_parameters[7] );
 
-                rrn =
+                 dummy =1.0;
+                if ((1.0 - pow ( omega_comp, m_kin[ii].kinetic_parameters[8] )) < 0.0) dummy=-1.0;
+		rrn = dummy *
                     exp ( -1.0 * m_kin[ii].kinetic_parameters[1] / R *
                           ( 1.0 /  m_T[in] - 1.0 /
                             298.15 ) ) * ab *
-                    pow ( ( 1.0 -
+                    pow ( abs( 1.0 -
                             pow ( omega_comp,
                                   m_kin[ii].kinetic_parameters[8] ) ),
                           m_kin[ii].kinetic_parameters[9] );
-
-                rrb =
+                dummy =1.0;
+                if ((1.0 - pow ( omega_comp, m_kin[ii].kinetic_parameters[10] )) < 0.0) dummy=-1.0;
+                rrb = dummy *
                     exp ( -1.0 * m_kin[ii].kinetic_parameters[2] / R *
                           ( 1.0 /  m_T[in] - 1.0 /
                             298.15 ) ) * ac *
-                    pow ( ( 1.0 -
+                    pow ( abs( 1.0 -
                             pow ( omega_comp,
                                   m_kin[ii].kinetic_parameters[10] ) ),
                           m_kin[ii].kinetic_parameters[11] );
@@ -4246,32 +4254,40 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
 
                     }
                 }
-                //      cout << "activities " <<aa << " " << ab << " " << ac <<" " << temp << "\n";
+              //  cout << "activities " <<aa << " " << ab << " " << ac <<" " << "\n";
                 // terms for each case
-                rra =
+                // 1- omega gives the direction of reaction (dissolution negative....precipitation positive)
+                // when using exponents (1-omega^p)^q with (negative_number)^q this causes an error...therefore absolute value has to be taken and the sign is extracted into a dummy variable
+                // terms for each case
+                dummy =1.0;
+                if ((1.0 - pow ( omega_comp, m_kin[ii].kinetic_parameters[6] )) < 0.0) dummy=-1.0;
+                rra = dummy *
                     exp ( -1.0 * m_kin[ii].kinetic_parameters[0] / R *
                           ( 1.0 / m_T[in] - 1.0 /
                             298.15 ) ) * aa *
-                    pow ( ( 1.0 -
-                            pow ( omega_phase[in * nPH + k],
+                    pow ( abs( 1.0 -
+                            pow ( omega_comp,
                                   m_kin[ii].kinetic_parameters[6] ) ),
                           m_kin[ii].kinetic_parameters[7] );
 
-                rrn =
+                 dummy =1.0;
+                if ((1.0 - pow ( omega_comp, m_kin[ii].kinetic_parameters[8] )) < 0.0) dummy=-1.0;
+		rrn = dummy *
                     exp ( -1.0 * m_kin[ii].kinetic_parameters[1] / R *
                           ( 1.0 /  m_T[in] - 1.0 /
                             298.15 ) ) * ab *
-                    pow ( ( 1.0 -
-                            pow ( omega_phase[in * nPH + k],
+                    pow ( abs( 1.0 -
+                            pow ( omega_comp,
                                   m_kin[ii].kinetic_parameters[8] ) ),
                           m_kin[ii].kinetic_parameters[9] );
-
-                rrb =
+                dummy =1.0;
+                if ((1.0 - pow ( omega_comp, m_kin[ii].kinetic_parameters[10] )) < 0.0) dummy=-1.0;
+                rrb = dummy *
                     exp ( -1.0 * m_kin[ii].kinetic_parameters[2] / R *
                           ( 1.0 /  m_T[in] - 1.0 /
                             298.15 ) ) * ac *
-                    pow ( ( 1.0 -
-                            pow ( omega_phase[in * nPH + k],
+                    pow ( abs( 1.0 -
+                            pow ( omega_comp,
                                   m_kin[ii].kinetic_parameters[10] ) ),
                           m_kin[ii].kinetic_parameters[11] );
 
@@ -4296,6 +4312,9 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
                          dmdt[in * nPH +
                               k] << " omegaPhase " <<
                          omega_phase[in * nPH + k] << "\n";
+			cout << "kinetic parts rra " <<  exp ( -1.0 * m_kin[ii].kinetic_parameters[0] / R * ( 1.0 / m_T[in] - 1.0 / 298.15 ) ) 
+			<< " " <<  pow ( ( 1.0 - pow ( omega_phase[in * nPH + k],m_kin[ii].kinetic_parameters[6] ) ), m_kin[ii].kinetic_parameters[7] ) << " "<<
+			pow ( omega_phase[in * nPH + k],m_kin[ii].kinetic_parameters[6] )  << "\n";
 
                     dmdt[in * nPH + k] = 0.0; // no change!
                 }
