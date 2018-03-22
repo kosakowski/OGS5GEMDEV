@@ -1481,6 +1481,13 @@ std::ios::pos_type CMediumProperties::Read(std::ifstream* mmp_file)
 				            permeability_porosity_updating_type = 1;
 				            in >> permeability_porosity_updating_values[0]; // critical porosity
 				            in >> permeability_porosity_updating_values[1]; // n: a power law exponent
+			            case 'G': // Verma-Pruess formulation 
+				            permeability_porosity_updating_type = 2;
+				            in >> permeability_porosity_updating_values[0]; // critical porosity
+				            in >> permeability_porosity_updating_values[1]; // n: a power law exponent
+				            in >> permeability_porosity_model_values[2]; // inital permeability
+				            KC_permeability_initial=permeability_porosity_model_values[2];
+					    cout << "read " << permeability_porosity_updating_type_name[0] << " " << permeability_porosity_updating_values[0] << " " <<permeability_porosity_updating_values[1] << " " << KC_permeability_initial << "\n";
                             break;
                 }
                 if(this->permeability_tensor_type==2)
@@ -4545,6 +4552,71 @@ double* CMediumProperties::PermeabilityTensor(long index)
 				tensor[0] = k_new;
 			}
 		}
+		else if((permeability_model==8)&&(porosity_model==15))
+		{
+		  	k_new=tensor[0];
+			CRFProcess* pcs_tmp(NULL);
+			for (size_t i = 0; i < pcs_vector.size(); i++)
+			{
+				pcs_tmp = pcs_vector[i];
+				if ( pcs_tmp->getProcessType () == FiniteElement::GROUNDWATER_FLOW ||
+				     pcs_tmp->getProcessType () == FiniteElement::LIQUID_FLOW ||
+				     pcs_tmp->getProcessType () == FiniteElement::RICHARDS_FLOW)
+					break;
+			}
+			// get indexes
+			idx_k = pcs_tmp->GetElementValueIndex("PERMEABILITY");
+			idx_n = pcs_tmp->GetElementValueIndex("POROSITY");
+
+			// get values of k0, n0, and n.
+			k_new = pcs_tmp->GetElementValue( index, idx_k + 1 );
+			n_new = pcs_tmp->GetElementValue( index, idx_n + 1 );
+
+			// if first time step, get the k_new from material class
+			if ( aktueller_zeitschritt == 1) // for the first time step.....
+			{
+				// get the permeability.
+//				KC_permeability_initial = k_new = tensor[0];
+//				KC_porosity_initial = n_new;
+			}
+			// save old permeability
+			pcs_tmp->SetElementValue( index, idx_k, k_new  );
+
+#ifdef GEM_REACT
+		        MeshLib::CElem* m_Elem;
+                        m_Elem =  m_pcs->m_msh->ele_vector[index];
+			// calculate new permeability as harmonic mean over all node based permeabilities
+			int count_nodes = m_Elem->GetNodesNumber ( false );
+                        double permeability_average = 0.0;
+                        double dummy,dummy0,pdummy;
+                        for (int ii = 0; ii < count_nodes; ii++) //calculate harmonic mean of node based diffusion coefficients
+                        {
+                        // then get the values from nodes
+                           dummy = m_vec_GEM->REACT_GEM::GetNodePorosityValue(m_Elem->GetNodeIndex ( ii ));
+                           dummy0 = m_vec_GEM->REACT_GEM::GetNodePorosityValueInitial(m_Elem->GetNodeIndex ( ii ));
+//			   pdummy = CMediumProperties::KozenyCarman_normalized( KC_permeability_initial,
+//			                                                    dummy0,
+//			                                                    dummy );
+		//	   cout << "inital permeability " << KC_permeability_initial << "\n";
+                           pdummy = CMediumProperties::VermaPruess(KC_permeability_initial, dummy0, dummy);
+			   permeability_average += 1.0 / pdummy;
+
+                        }
+                        k_new =  count_nodes / permeability_average; // This is now harmonic mean of node permeabilities
+                    
+#else			
+			
+			// calculate new permeability
+			k_new = CMediumProperties::KozenyCarman_normalized( KC_permeability_initial,
+			                                                    KC_porosity_initial,
+			                                                    n_new );
+#endif
+			// save new permeability
+			pcs_tmp->SetElementValue( index, idx_k + 1, k_new   );
+			// now gives the newly calculated value to tensor[]
+			tensor[0] = k_new;
+		  
+		}
 		else if((permeability_model==8)&&(porosity_model==13))
 		{                                           // ABM 11.2010
 			idx_k = m_pcs_tmp->GetElementValueIndex("PERMEABILITY");
@@ -6411,7 +6483,8 @@ double CMediumProperties::VermaPruess(double k_init, double n_init, double n_t)
 
 	n_crit = permeability_porosity_updating_values[0]; // critical porosity
 	a = permeability_porosity_updating_values[1];      // a power law exponent
-
+      //  cout << " vermapruess " << permeability_porosity_updating_values[1] << "\n";
+	
 	// Limit minimum and maximum values.
 	if (k_init <= 0.0 || k_init >= 1.0 || n_init <=0 || n_init >= 1 || n_t <=0 || n_t >= 1 )
 		return k_init;
