@@ -1487,7 +1487,8 @@ std::ios::pos_type CMediumProperties::Read(std::ifstream* mmp_file)
 				            in >> permeability_porosity_updating_values[1]; // n: a power law exponent
 				            in >> permeability_porosity_model_values[2]; // inital permeability
 				            KC_permeability_initial=permeability_porosity_model_values[2];
-					    cout << "read " << permeability_porosity_updating_type_name[0] << " " << permeability_porosity_updating_values[0] << " " <<permeability_porosity_updating_values[1] << " " << KC_permeability_initial << "\n";
+				            in >> permeability_porosity_model_values[3]; // minimal permeability
+//					    cout << "read " << permeability_porosity_updating_type_name[0] << " " << permeability_porosity_updating_values[0] << " " <<permeability_porosity_updating_values[1] << " " << KC_permeability_initial << "\n";
                             break;
                 }
                 if(this->permeability_tensor_type==2)
@@ -6479,10 +6480,11 @@ last modification:
 double CMediumProperties::VermaPruess(double k_init, double n_init, double n_t)
 {
 	double k_t = 0.0;
-	double n_crit, a;
+	double n_crit, a,k_zero;
 
 	n_crit = permeability_porosity_updating_values[0]; // critical porosity
 	a = permeability_porosity_updating_values[1];      // a power law exponent
+	k_zero = permeability_porosity_updating_values[3];
       //  cout << " vermapruess " << permeability_porosity_updating_values[1] << "\n";
 	
 	// Limit minimum and maximum values.
@@ -6492,7 +6494,7 @@ double CMediumProperties::VermaPruess(double k_init, double n_init, double n_t)
 	{
 		k_t = k_init * (pow( (n_t - n_crit) / (n_init - n_crit) , a));
 	}
-	if (k_t < 1e-30) k_t=1e-30; // arbitrary small value for hydraulic conductivity and permeability
+	if (k_t < k_zero ) k_t=k_zero ; // arbitrary small value for hydraulic conductivity and permeability
 
 return k_t;
 }
