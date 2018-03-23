@@ -6492,6 +6492,7 @@ double CMediumProperties::VermaPruess(double k_init, double n_init, double n_t)
 	{
 		k_t = k_init * (pow( (n_t - n_crit) / (n_init - n_crit) , a));
 	}
+	if (k_t < 1e-30) k_t=1e-30; // arbitrary small value for hydraulic conductivity and permeability
 
 return k_t;
 }
