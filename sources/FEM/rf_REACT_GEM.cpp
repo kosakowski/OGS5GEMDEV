@@ -1586,7 +1586,6 @@ short REACT_GEM::SetPressureValue_MT ( long node_Index, int timelevel, double pr
 		case 4:
 			m_pcs = PCSGet ( "MULTI_PHASE_FLOW" );
 			indx = m_pcs->GetNodeValueIndex ( "PRESSURE1" ) + timelevel;
-
 			m_pcs->SetNodeValue ( node_Index, indx, pressure );
 		default:
 #if defined(USE_PETSC)
@@ -2890,7 +2889,7 @@ int REACT_GEM::ConcentrationToMass ( long in /*idx of node*/, int i_timestep )
         break;
     }
 
-    if ( ( water_volume < min_possible_porosity ) || ( water_volume > 1.0 ) )
+    if ( ( water_volume < (0.99*min_possible_porosity) ) || ( water_volume > 1.0 ) )
     {
         cout << "conctomass water volume " << water_volume << " at node: " << in << "\n";
 #if defined(USE_PETSC)
@@ -5303,13 +5302,29 @@ int REACT_GEM::CalcLimits ( long in,double deltat, TNode* m_Node)
 //                                m_dll[in * nDC + j] = m_xDC[in * nDC + j];
 //                                  m_dul[in * nDC + j] = m_dll[in * nDC +j];
 //  	      			  m_xDC[in * nDC + j] = m_dll[in * nDC +j];
-
+			      dummy=0.0;
                             }
-                            else if (dummy <= 0.0)
+                            
+                            
+                    // kinetic_model==2 or 7  only dissolution is controlled (no precipitation allowed)
+                    // kinetic_mocel==3 only precipitation is copntroleld (no dissolution allowed)
+                    // these cases are not possible with reaktoro (as implemented..needs change?)
+                            if ((m_kin[ii].kinetic_model == 2 || m_kin[ii].kinetic_model == 7) && (dummy>0.0) )// dissolution only 
+			    {
+			      dummy=0.0;
+			    }
+                            if ((m_kin[ii].kinetic_model == 3) && (dummy<0.0)) // precipitation only 
+			    {
+			      dummy=0.0;
+			    }
+			    
+			    
+                            if (dummy < 0.0 )
                             {
                                 m_dll[in * nDC + j] += dummy;  //experimental: avoid completely wrong limits due to broken amounts
 //                                m_dll[in * nDC + j] = m_xDC[in * nDC + j]+dummy;
-                                if (flag_loose_kinetics)
+                                if ( m_dll[in * nDC + j]>  m_dul[in * nDC + j] ) m_dul[in * nDC + j] = m_dll[in * nDC + j];
+                                if (flag_loose_kinetics && (m_xDC[in * nDC + j]>m_dul[in * nDC + j]))
                                     m_dul[in * nDC + j] = m_xDC[in * nDC + j]; // + 1.0e-3;
                                 else
                                     m_dul[in * nDC + j] = m_dll[in * nDC + j];
@@ -5317,8 +5332,9 @@ int REACT_GEM::CalcLimits ( long in,double deltat, TNode* m_Node)
                             else if (dummy > 0.0)
                             {
                                 m_dul[in * nDC + j] += dummy;   //experimental: avoid completely wrong limits due to broken amounts
+                                if ( m_dll[in * nDC + j]>  m_dul[in * nDC + j] ) m_dll[in * nDC + j] = m_dul[in * nDC + j];
 //                                m_dul[in * nDC + j] = m_xDC[in * nDC + j]+dummy;
-                                if (flag_loose_kinetics)
+                                if (flag_loose_kinetics&& (m_xDC[in * nDC + j]<m_dll[in * nDC + j]))
                                     m_dll[in * nDC + j] = m_xDC[in * nDC + j] ; //- 1.0e-3;
                                 else
                                     m_dll[in * nDC + j] = m_dul[in * nDC + j];
@@ -5358,24 +5374,12 @@ int REACT_GEM::CalcLimits ( long in,double deltat, TNode* m_Node)
                     } //end else for kinetics not SS
                     // do some corrections
 
-                    // kinetic_model==2 or 7  only dissolution is controlled KG44 changed it to free precipitation
+                    // kinetic_model==2 or 7  only dissolution is controlled (no precipitation)
                     // kinetic_mocel==3 only precipitation is copntroleld (no dissolution)
                     // these cases are not possible with reaktoro (as implemented..needs change?)
-                    if ( ( (m_kin[ii].kinetic_model == 2) || (m_kin[ii].kinetic_model == 7)) )
-                    {
-                        m_dul[in*nDC+j]= 1.0e6; //m_xDC[in*nDC+j];
-                        // m_dll[in*nDC+j]= 0.0;
 
-                    }
-                    if ( ( m_kin[ii].kinetic_model == 3 ) &&
-                            ( m_dll[in * nDC + j] < m_xDC[in * nDC + j] ) )
-                    {
-                        m_dll[in * nDC + j] = 0.0 ; //m_xDC[in * nDC + j]; // m_dll[in*nDC+j]= m_xDC[in*nDC+j];
-                        // m_dul[in*nDC+j]= 1.0e6;
-                    }
 
-                    if ( ( m_xDC[in * nDC + j] < 1.0e-6 ) &&
-                            ( omega_phase[in * nPH + k] >= 1.1 ) &&
+                    if ( ( m_xDC[in * nDC + j] < 1.0e-6 ) && !(m_kin[ii].kinetic_model == 2 || m_kin[ii].kinetic_model == 7) && ( omega_phase[in * nPH + k] >= 1.1 ) &&
                             ( m_dul[in * nDC + j] < 1.0e-6 ) && !(dummy==0.0)) // one has to provide some starting value, otherwise some surface area models that are multiplicative doe not start precipitating
                     {
                         m_dul[in * nDC + j] = 1.0e-6; // allow some kind of precipitation...based on saturation index for component value...here we set 10-6 mol per m^3 ..which is maybe 10-10 per litre ...?
