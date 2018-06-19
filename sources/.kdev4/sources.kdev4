@@ -37,15 +37,23 @@ Name=New Compiled Binary Launcher
 Type=Native Application
 
 [Launch][Launch Configuration 0][Data]
-Arguments=bench
+Arguments=cebama
+Debugger Shell=
 Dependencies=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x00)
 Dependency Action=Nothing
+Display Demangle Names=true
+Display Static Members=false
 EnvironmentGroup=
 Executable=file:///home/kosakowski/GitMigration/sources/build/bin/ogs
 External Terminal=konsole --noclose --workdir %workdir -e %exe
+GDB Path=
 Project Target=OGS5GEM,OGS,ogs
+Remote GDB Config Script=
+Remote GDB Run Script=
+Remote GDB Shell Script=
+Start With=ApplicationOutput
 Use External Terminal=false
-Working Directory=file:///scratch/ISLAND/400C_500bar/
+Working Directory=file:///scratch/CEBAMA_BENCH/NONREACT/
 isExecutable=true
 
 [MakeBuilder]

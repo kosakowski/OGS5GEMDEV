@@ -795,6 +795,7 @@ double CompProperties::CalcDiffusionCoefficientCP(long index,double theta,CRFPro
 	double pressure_average = 1e5;
 	double temperature_average = 293.;
 	double diffusion_average = 0.0;
+	double tortuosity = 1.0;	
 	double* k = NULL;
 	double Dm;
 	// static long *element_nodes;
@@ -885,8 +886,9 @@ double CompProperties::CalcDiffusionCoefficientCP(long index,double theta,CRFPro
 
             if (count_of_diffusion_model_values < 2)
                 return 0.0;
-
+ 	//    double g[3] = {0.,0.,0.};
             porosity = m_mat_mp->Porosity(index,theta);
+	//    tortuosity = m_mat_mp->TortuosityFunction(index,g, theta);
 
             m_Elem =  m_pcs->m_msh->ele_vector[index];
             // we average the diffusion coefficient directly

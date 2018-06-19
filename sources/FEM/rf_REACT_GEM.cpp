@@ -3766,7 +3766,7 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
               exit ( 1 );
 	    }
             in.str ( GetLineFromFile1 ( gem_file ) );
-            in >> d_kin.phase_name >> d_kin.kinetic_model;
+            in >> d_kin.phase_name >> d_kin.kinetic_model;  // kinetic_model 1-7 are defined 
             if ( d_kin.kinetic_model >= 1 && d_kin.kinetic_model < 8 ) // this is lasaga kinetics with formulas according to plandri
             {
                 cout << " found kinetics " << d_kin.kinetic_model << " " <<
@@ -5323,21 +5323,21 @@ int REACT_GEM::CalcLimits ( long in,double deltat, TNode* m_Node)
                             {
                                 m_dll[in * nDC + j] += dummy;  //experimental: avoid completely wrong limits due to broken amounts
 //                                m_dll[in * nDC + j] = m_xDC[in * nDC + j]+dummy;
-                                if ( m_dll[in * nDC + j]>  m_dul[in * nDC + j] ) m_dul[in * nDC + j] = m_dll[in * nDC + j];
-                                if (flag_loose_kinetics && (m_xDC[in * nDC + j]>m_dul[in * nDC + j]))
+                                if (flag_loose_kinetics && (m_xDC[in * nDC + j]>m_dll[in * nDC + j]))
                                     m_dul[in * nDC + j] = m_xDC[in * nDC + j]; // + 1.0e-3;
                                 else
                                     m_dul[in * nDC + j] = m_dll[in * nDC + j];
+				if ( m_dll[in * nDC + j]>  m_dul[in * nDC + j] ) m_dul[in * nDC + j] = m_dll[in * nDC + j];
                             }
                             else if (dummy > 0.0)
                             {
                                 m_dul[in * nDC + j] += dummy;   //experimental: avoid completely wrong limits due to broken amounts
-                                if ( m_dll[in * nDC + j]>  m_dul[in * nDC + j] ) m_dll[in * nDC + j] = m_dul[in * nDC + j];
 //                                m_dul[in * nDC + j] = m_xDC[in * nDC + j]+dummy;
-                                if (flag_loose_kinetics&& (m_xDC[in * nDC + j]<m_dll[in * nDC + j]))
+                                if (flag_loose_kinetics && (m_xDC[in * nDC + j]<m_dul[in * nDC + j]))
                                     m_dll[in * nDC + j] = m_xDC[in * nDC + j] ; //- 1.0e-3;
                                 else
                                     m_dll[in * nDC + j] = m_dul[in * nDC + j];
+                                if ( m_dll[in * nDC + j]>  m_dul[in * nDC + j] ) m_dll[in * nDC + j] = m_dul[in * nDC + j];
                             }
 
                             /*
@@ -6826,7 +6826,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
 //               (only if dBR->NodeStatusCH = NEED_GEM_SIA has been set before GEM_run() call).
 //               false  (0) -  use speciation and activity coefficients from previous GEM_run() calculation
 //               true  (1)  -  use speciation provided in the DATABR memory structure (e.g. after reading the DBR file)
-            m_NodeStatusCH[in] = m_Node->GEM_run ( true );
+            m_NodeStatusCH[in] = m_Node->GEM_run ( false ); // uprimalsol must be always false....we do not have old data in memory (like in node array)
         }
         else
         {
