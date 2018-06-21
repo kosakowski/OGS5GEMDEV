@@ -717,7 +717,7 @@ short REACT_GEM::Init_RUN(string Project_path)
     }
     else
     {
-                boost::this_thread::sleep( boost::posix_time::seconds(3.1) );
+                boost::this_thread::sleep( boost::posix_time::seconds(3) );
          if ( Load_Init_File ( Project_path, m_Node ) )
     {
         // The init file is successfully loaded
@@ -6137,10 +6137,10 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
     t_Node = new TNode();
     if ( t_Node->GEM_init ( tinit_path.c_str()  ) )
     {
-        boost::this_thread::sleep( boost::posix_time::seconds(1.0) );
+        boost::this_thread::sleep( boost::posix_time::seconds(1) );
         if ( t_Node->GEM_init ( tinit_path.c_str()  ) )
         {
-            boost::this_thread::sleep( boost::posix_time::seconds(5.0) );
+            boost::this_thread::sleep( boost::posix_time::seconds(5) );
             if ( t_Node->GEM_init ( tinit_path.c_str()  ) )
             {
                 // error occured during reading the files
