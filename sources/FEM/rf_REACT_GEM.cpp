@@ -3906,12 +3906,12 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
 int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
 {
     long idx = 0,ii;
-    long j,k;
+    long i,j,k;
     double rrn = 0.0, rrb = 0.0,rra = 0.0, sa = 0.0;
     double R = 8.31451070;                     // molar gas konstant [J K-1 mol-1]
     double aa = 1.0,ab = 1.0,ac = 1.0;         // activity products ...species are input from material file
     double sactivity;                          // dummy variable for extracting activities
-    double omega_comp=0.0, surf_area=0.0;
+    double omega_comp=0.0, volume_component=0.0;
     double dummy;    // dummy variable for storing direction of reaction -1 or 1
     const char* species;
     DATACH* dCH;                            //pointer to DATACH
@@ -3927,7 +3927,7 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
     if ( !dBR )
         return 0;
     /**
-       int kinetic_model;  // only 1 = GEMS implemented right now
+       int kinetic_model;  // 
          int n_activities;  // number of species for activities
          string active_species[10];  // name for species ...maximum 10 names
        double kinetic_parameters[32];
@@ -4183,16 +4183,31 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
 */
             {
 	      	      // here the rate should be defined for each end-member
-               for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )
+               for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ ) // loop over all member of a phase
 	       {
 		 // take saturation of end member..-> NOT divided my number of endmembers...for single component phases the endmember and phase omega are identical!
-		 omega_comp=omega_components[in * nDC + j] ; //   /dCH->nDCinPH[k];
-	        // first calculate reactive surface area scaled with number of endmembers
-	        surf_area = m_Node->Ph_Volume ( m_kin[ii].phase_number )/dCH->nDCinPH[k];
-                sa = REACT_GEM::SurfaceAreaPh ( ii,in,m_Node,surf_area); // value for surface area in m^2...(specific surface area multiplied with volume of the phase)
+		// omega_comp=omega_components[in * nDC + j] ; //   /dCH->nDCinPH[k];
+		 // calculate over/under saturation for endmember relative to mole fraction for single component phases the mole fraction is 1
+		 // normalization of omega comp like this is problematic if mol_phase is zero! -> for single component phases this is always 1..except if mol_phase is zero ...
+		 dummy=(m_xDC[in * nDC + j]/mol_phase[in * nPH + k]);
+		 if (!(std::isfinite(dummy))) dummy=1.0 ;
+		 omega_comp=omega_components[in * nDC + j] / dummy; //this is divided by mole fraction in order to get relative over/undersaturation with respect to phase omega
+	        // first calculate reactive surface area scaled with mole fraction of endmember...for single component phases the mole fraction is 1
+		     /// Retrieves (interpolated, if necessary) molar volume V0(P,TK) value for Dependent Component (in J/Pa)
+               
+		/// from the DATACH structure.
+                // \param xCH is the DC DCH index
+                // \param P pressure, Pa
+                // \param TK temperature, Kelvin
+                // \return V0(P,TK) (in J/Pa) or 0.0, if TK or P  go beyond the valid lookup array intervals or tolerances.-> units are m3/mol I would guess
+               // double DC_V0(const long int xCH, const double P, const double TK);
+		volume_component = m_Node->DC_V0(j,GetPressureValue_MT(in,1),GetTempValue_MT(in,1))*m_xDC[in * nDC + j];
+                sa = REACT_GEM::SurfaceAreaPh ( ii,in,m_Node,volume_component); // value for surface area in m^2...(specific surface area multiplied with volume of the phase)
+         //       if (in==1) cout << "DEBUG KINETICS: phase volume, component volume, surface area " << m_Node->Ph_Volume ( m_kin[ii].phase_number ) << " , " <<volume_component << " , "<< sa << "\n";
+                
                 aa = 1.0;
                 ab = 1.0;
-                ac = 1.0;                    // reset values for each phase!
+                ac = 1.0;                    // reset values for each member in a phasephase!
 /*
                 if ( m_kin[ii].kinetic_model == 4 ) // in the next part we try to mimic Crunchflow (at least partially)..could be also done in CalcLimits if this makes the code easier to read
                 {
@@ -4222,12 +4237,9 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
                         sa = 0.0;
                 }
 */
-                aa = 1.0;
-                ab = 1.0;
-                ac = 1.0;                    // reset values for each phase!
-                long i;
-                for ( i = 0; i < m_kin[ii].n_activities; i++ )
-                {
+
+                for ( i = 0; i < m_kin[ii].n_activities; i++ ) // loop over all activities that are defined!
+                {	  
                     species = m_kin[ii].active_species[i].c_str();
                     // loop over all the names in the list
                     idx = m_Node->DC_name_to_xCH ( species );
@@ -4238,7 +4250,7 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
                         if ( m_porosity_initial[in] < min_possible_porosity )
                             m_porosity_initial[in] = min_possible_porosity;
 
-                        cout << "failed CalcReactionRate: no DC-name " <<    m_kin[ii].active_species[i] << " found" << "\n";
+                        cout << "DEBUG: failed CalcReactionRate: no DC-name " <<    m_kin[ii].active_species[i] << " found" << "\n";
 #if defined(USE_PETSC)
                         PetscEnd(); //make sure MPI exits
 #endif
@@ -4249,7 +4261,6 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
                     {
                         //      cout << "activities " <<aa << " " << ab << " " << ac <<" " << temp << "\n";
                         sactivity = m_Node->DC_a ( idx ); // extract activities (not activity coefficients!)
-                        //	if (in == 1 && ii==0)  cout << "Activity " << sactivity << aa << ab << ac<< "\n";
                         aa *=
                             pow ( sactivity,
                                   m_kin[ii].kinetic_parameters[12 + i] );
@@ -4258,23 +4269,21 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
                                   m_kin[ii].kinetic_parameters[13 + i] );
                         ac *=
                             pow ( sactivity,
-                                  m_kin[ii].kinetic_parameters[14 + i] );
+                                  m_kin[ii].kinetic_parameters[14 + i] );    
                         //    *Y_m,     // Molalities of aqueous species and sorbates [0:Ls-1]
                         //    *Y_la,    // log activity of DC in multi-component phases (mju-mji0) [0:Ls-1]
                         //    *Y_w,     // Mass concentrations of DC in multi-component phases,%(ppm)[Ls]
                         //    *Gamma,   // DC activity coefficients in molal or other phase-specific scale [0:L-1]
-//								if (in == 1 && ii==0)  cout << "Activity " << sactivity << aa << ab << ac<< "\n";
-
-
+		//	if (in == 1)  cout << "DEBUG KINETICS: species, Activity, aa ab ac " << species << " , " << sactivity << " " << aa << " " << ab << " " << ac<< "\n";
                     }
                 }
-              //  cout << "activities " <<aa << " " << ab << " " << ac <<" " << "\n";
+
                 // terms for each case
                 // 1- omega gives the direction of reaction (dissolution negative....precipitation positive)
                 // when using exponents (1-omega^p)^q with (negative_number)^q this causes an error...therefore absolute value has to be taken and the sign is extracted into a dummy variable
                 // terms for each case
-                omega_comp=omega_components[in * nDC + j] ;
-                dummy =1.0;
+ 
+                dummy =1.0; // dummy changes direction of reaction (+ or -) ....this is necessary, as we have abs(1-omega) in calculations below....
                 if ((1.0 - pow ( omega_comp, m_kin[ii].kinetic_parameters[6] )) < 0.0) dummy=-1.0;
                 rra = dummy *
                     exp ( -1.0 * m_kin[ii].kinetic_parameters[0] / R *
@@ -4284,6 +4293,7 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
                             pow ( omega_comp,
                                   m_kin[ii].kinetic_parameters[6] ) ),
                           m_kin[ii].kinetic_parameters[7] );
+
 
                  dummy =1.0;
                 if ((1.0 - pow ( omega_comp, m_kin[ii].kinetic_parameters[8] )) < 0.0) dummy=-1.0;
@@ -4295,7 +4305,9 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
                             pow ( omega_comp,
                                   m_kin[ii].kinetic_parameters[8] ) ),
                           m_kin[ii].kinetic_parameters[9] );
-                dummy =1.0;
+
+
+		    dummy =1.0;
                 if ((1.0 - pow ( omega_comp, m_kin[ii].kinetic_parameters[10] )) < 0.0) dummy=-1.0;
                 rrb = dummy *
                     exp ( -1.0 * m_kin[ii].kinetic_parameters[2] / R *
@@ -4306,22 +4318,23 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
                                   m_kin[ii].kinetic_parameters[10] ) ),
                           m_kin[ii].kinetic_parameters[11] );
 
-                // rate is scaled to the total amount available via the surface area
+
+                // rate is scaled to the total amount available via the surface area ....we use the -1 to revert sign to the correct direction
                 dmdt[in * nPH + k] = -1.0 * sa *
                                      ( pow ( 10.0,m_kin[ii].kinetic_parameters[3] ) * rra +
                                        pow ( 10.0,m_kin[ii].kinetic_parameters[4] ) * rrn +
                                        pow ( 10.0,m_kin[ii].kinetic_parameters[5] ) * rrb );
-//               	if (in == 1 && ii==0) cout << " Debug rate is "<< dmdt[in * nPH + k] << " raa " << rra << " rrn " << rrn << " rrb " << rrb << " omega_comp " <<  omega_comp<<"\n";
+              // 	if (in == 1 ) cout << " DEBUG KINETICS rate is "<< dmdt[in * nPH + k] << " raa " << rra << " rrn " << rrn << " rrb " << rrb << " omega_comp " <<  omega_comp<<"\n";
 
                 // test for NaN!! ---seems necessary as sometimes rra, rrn, rrb get Inf! ---seems enough to test the upper limit---this test does not resolve the real problem ;-)...probably pow(0.0,0.0) for rra,rrn,rrb ?
                 if ( !(std::isfinite(dmdt[in * nPH + k])) )
                 {
-                    cout << "failed " << m_kin[ii].phase_name << " at node " << in <<
+                    cout << "DEBUG failed " << m_kin[ii].phase_name << " at node " << in <<
                          " dmdt " << dmdt[in * nPH + k] << " is NaN " << " sa " << sa << " rra " <<
                          rra <<
                          " rrn " << rrn << " rrb " << rrb << "\n";
 
-                    cout << "mol_phase " <<
+                    cout << "DEBUG mol_phase " <<
                          mol_phase[in * nPH +
                                    k] << " m_gam " << m_gam[idx] << " dmdt " <<
                          dmdt[in * nPH +
