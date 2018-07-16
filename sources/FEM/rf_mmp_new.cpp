@@ -6475,7 +6475,7 @@ Task: Returns the new permeability which will be calculated using
 	  the new/updated porosity, critical porosity and a power law exponent as an input.
 Programing:
 11.2010 AB Implementation
-last modification:
+last modification: for increase in porosity we changed behaviour to KozenyCarmanNew
 *************************************************************************************/
 double CMediumProperties::VermaPruess(double k_init, double n_init, double n_t)
 {
@@ -6490,7 +6490,11 @@ double CMediumProperties::VermaPruess(double k_init, double n_init, double n_t)
 	// Limit minimum and maximum values.
 	if (k_init <= 0.0 || k_init >= 1.0 || n_init <=0 || n_init >= 1 || n_t <=0 || n_t >= 1 )
 		return k_init;
-	else
+        else if (n_t >= n_init)
+	{
+ 	        k_t = k_init * (pow( (1. - n_init) / (1 - n_t) , 2))*(pow( n_t / n_init , 3 )) ;
+	}
+	else 
 	{
 		k_t = k_init * (pow( (n_t - n_crit) / (n_init - n_crit) , a));
 	}
