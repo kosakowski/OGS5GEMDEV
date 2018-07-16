@@ -3327,9 +3327,10 @@ void REACT_GEM::CalculateChargeFromGEMS (long in, TNode* m_Node)
 {
     long i,j;
     double total;
-	double mycharge[nIC];
+    double *mycharge;
+    mycharge = new double [nIC];
     DATACH* dCH;                            //pointer to DATACH
-    DATABR* dBR;
+    DATABR* dBR;    
     // Getting direct access to DataCH structure in GEMIPM2K memory
     dCH = m_Node->pCSD();
     if ( !dCH )
@@ -3815,6 +3816,115 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
                        d_kin.kinetic_parameters[j + 14];
                 }
             } // end input for kinetic models  
+            // else if model is 4 -> new numbering...this is different kinetics for precipitation and dissolution....essentially we read a line for dissolution and one for precipitation
+            // ****************************************
+            else if ( d_kin.kinetic_model == 4 ) // this is lasaga kinetics with formulas according to plandri 
+            {
+                cout << " found kinetics " << d_kin.kinetic_model << " " <<
+                     d_kin.phase_name << "\n";
+		// this is identical to models 1-3 ...default parameters are used for dissolution          
+                in >> d_kin.n_activities;
+                if ( d_kin.n_activities > 10 )
+                {
+                    cout <<
+                         "To many dependent species for GEM kinetic model "
+                         <<
+                         d_kin.n_activities << "\n";
+#if defined(USE_PETSC)
+                    PetscEnd(); //make sure MPI exits
+#endif
+                    exit ( 1 );
+                }
+                //                cout <<" activities " << n_activities << "\n";
+                // first general kinetic parameters
+                //	0,1,2  double E_acid,E_neutral,E_base; // activation energies
+                in >> d_kin.kinetic_parameters[0] >> d_kin.kinetic_parameters[1] >>
+                   d_kin.kinetic_parameters[2];
+                //			cout << kinetic_parameters[0] << kinetic_parameters[1] << kinetic_parameters[1]<<"\n";
+
+                //      3-5  double k_acid, k_neutral,k_base; // dissolution/precipitation rate constants
+                in >> d_kin.kinetic_parameters[3] >> d_kin.kinetic_parameters[4] >>
+                   d_kin.kinetic_parameters[5];
+                //			cout << kinetic_parameters[3] << kinetic_parameters[4] << kinetic_parameters[5]<<"\n";
+
+                //      6-11  double q1,p1,q2,q3,p2,p3; // exponents for omega
+                in >> d_kin.kinetic_parameters[6] >> d_kin.kinetic_parameters[7] >>
+                   d_kin.kinetic_parameters[8] >> d_kin.kinetic_parameters[9] >>
+                   d_kin.kinetic_parameters[10] >> d_kin.kinetic_parameters[11];
+                for ( j = 0; j < d_kin.n_activities; j++ )
+                {
+                    in >> d_kin.active_species[j];
+                    //				cout << active_species[j] ;
+                    //      12,13,14  double n_1, n_2,n_3; // exponents for acidic, neutral and base cases for species one
+
+                    in >>
+                       d_kin.kinetic_parameters[j +
+                                                12] >>
+                       d_kin.kinetic_parameters[j +
+                                                13] >>
+                       d_kin.kinetic_parameters[j + 14];
+                }
+                // default dissolution kinetics is finished! move to next line
+                in.clear();
+             // next line is dissolution kinetics...some parameters have to be the some!
+                in.str ( GetLineFromFile1 ( gem_file ) );
+                in >> d_kin.phase_name2 >> d_kin.kinetic_model2;  // kinetic_model 1-7 are defined 
+                if ( !((d_kin.phase_name2 == d_kin.phase_name) && (d_kin.kinetic_model2==d_kin.kinetic_model)) )
+		{
+		         cout <<
+                         " for kinetic model 4 the phase name and the kinetic model no. have to be identical: "
+                         << d_kin.phase_name << " " << d_kin.phase_name2 << " model numbers " << d_kin.kinetic_model << " " << d_kin.kinetic_model2<< "\n";
+#if defined(USE_PETSC)
+                    PetscEnd(); //make sure MPI exits
+#endif
+                    exit ( 1 );
+                }
+                // now read in the rest, but only second set of variables!
+                		// this is identical to models 1-3 ...default parameters are used for dissolution          
+                in >> d_kin.n_activities2;
+                if ( d_kin.n_activities2 > 10 )
+                {
+                    cout <<
+                         "To many dependent species for GEM kinetic model 4 in second set of parameters"
+                         <<
+                         d_kin.n_activities2 << "\n";
+#if defined(USE_PETSC)
+                    PetscEnd(); //make sure MPI exits
+#endif
+                    exit ( 1 );
+                }
+                //                cout <<" activities " << n_activities << "\n";
+                // first general kinetic parameters
+                //	0,1,2  double E_acid,E_neutral,E_base; // activation energies
+                in >> d_kin.kinetic_parameters2[0] >> d_kin.kinetic_parameters2[1] >>
+                   d_kin.kinetic_parameters2[2];
+                //			cout << kinetic_parameters[0] << kinetic_parameters[1] << kinetic_parameters[1]<<"\n";
+
+                //      3-5  double k_acid, k_neutral,k_base; // dissolution/precipitation rate constants
+                in >> d_kin.kinetic_parameters2[3] >> d_kin.kinetic_parameters2[4] >>
+                   d_kin.kinetic_parameters2[5];
+                //			cout << kinetic_parameters[3] << kinetic_parameters[4] << kinetic_parameters[5]<<"\n";
+
+                //      6-11  double q1,p1,q2,q3,p2,p3; // exponents for omega
+                in >> d_kin.kinetic_parameters2[6] >> d_kin.kinetic_parameters2[7] >>
+                   d_kin.kinetic_parameters2[8] >> d_kin.kinetic_parameters2[9] >>
+                   d_kin.kinetic_parameters2[10] >> d_kin.kinetic_parameters2[11];
+                for ( j = 0; j < d_kin.n_activities2; j++ )
+                {
+                    in >> d_kin.active_species2[j];
+                    //				cout << active_species[j] ;
+                    //      12,13,14  double n_1, n_2,n_3; // exponents for acidic, neutral and base cases for species one
+
+                    in >>
+                       d_kin.kinetic_parameters2[j +
+                                                12] >>
+                       d_kin.kinetic_parameters2[j +
+                                                13] >>
+                       d_kin.kinetic_parameters2[j + 14];
+                }
+
+            } // end input for kinetic model number 4
+            // *************************************************************
             else if (d_kin.kinetic_model == 33)
 	    {		              
 // for kinetic model = 33 (cement hydration according to Parrot & Killoh and as described in Lothenbach & Winnefeld (2006) Thermodynamic modelling of the hydration fo Portland cement, Cement and concrete Research, 36,209-226
@@ -3927,7 +4037,7 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
     if ( !dBR )
         return 0;
     /**
-       int kinetic_model;  // 
+       int kinetic_model;  //
          int n_activities;  // number of species for activities
          string active_species[10];  // name for species ...maximum 10 names
        double kinetic_parameters[32];
@@ -3967,7 +4077,7 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
             // kinetic_model==1 dissolution+precipitation kinetics
             // kinetic_model==2 only dissolution (no precipitation)aktueller
             // kinetic_mocel==3 only precipitation (no dissolution)
-	   // following models are currently not supported
+            // following models are currently not supported
             // kinetic_model==4 mimic kinetics in crunchflow -----ATTENTION: model implementation needs to be verified!!!!!!!!!!!
             // kinetic_model==5 dissolution+precipitation for solid solutions
             // kinetic_model==6 scale surface area according to spherical particles -----ATTENTION: model implementation needs to be verified !!!!!!!!!!!!!!!
@@ -3976,34 +4086,9 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
             mol_phase[in * nPH + k] = 0.0;
             omega_phase[in * nPH + k] = 0.0;
             dmdt[in * nPH + k] = 0.0;
-/*
-            if ( m_kin[ii].kinetic_model == 5 || m_kin[ii].kinetic_model == 7) // special treatment of solid solution phases with e.g. vanselow convention
             {
                 omega_phase[in * nPH + k] =  m_Node->Ph_SatInd(k); // m_Node->DC_a ( j ); // omega_components[in * nDC + j];     //m_Node->DC_a ( j );
-                for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )
-                    // do not include surface complexation species!
-                    if ( !( dCH->ccDC[j]  == '0' ) &&
-                            !( dCH->ccDC[j]  == 'X' ) &&
-                            !( dCH->ccDC[j]  == 'Y' ) &&
-                            !( dCH->ccDC[j]  == 'Z' ) )
-                    {
-                        // we need this later for solid solutions....passing false to Get_aDC gives log10 scale
-                        omega_components[in * nDC + j] =   m_Node->Get_aDC ( j ,true); //m_Node->Get_aDC ( j)/m_Node->Get_gDC(j);       //  m_Node->DC_a ( j );//
-// TESTING: here I insert a cutoff for very high values
-// if oversaturation is very high it does not matter if it is 1e300 or 1e10
-                        if (omega_components[in * nDC + j] > 1.e12) omega_components[in * nDC + j]=1.0e12;
-                        // loop over all components of the phase
-//                                                omega_phase[in * nPH + k] +=   omega_components[in * nDC + j];     //m_Node->DC_a ( j );
-                        mol_phase[in * nPH + k] +=( m_xDC[in * nDC + j] );
-                        //	mol_phase[in * nPH + k] +=( m_xDC[in * nDC + j] * m_kin[ii].ss_scaling[j - m_kin[ii].dc_counter] ); // this is charge of phase for SS
-//				        if (in == 3)	cout << " j " << j << " DC_a " << m_Node->DC_a ( j ) << "  " << pow(10,m_Node->DC_a (j)) << " ph_satindex " << m_Node->Ph_SatInd(k)<< " Debug kin omega phase "<< omega_phase[in*nPH+k] << " fraction component " << omega_components[in*nDC+j]/omega_phase[in*nPH+k] << "  mol component " <<  m_xDC[in * nDC + j] << "  mol phase " << mol_phase[in*nPH+k] << " volume " << m_Node->Ph_Volume ( k )<< "\n"; // debug
-                    }
-            }
-            else // normal behabviour for single component phases and SS which do have all the same endmember characteristics
-*/
-	    {
-                omega_phase[in * nPH + k] =  m_Node->Ph_SatInd(k); // m_Node->DC_a ( j ); // omega_components[in * nDC + j];     //m_Node->DC_a ( j );
- //               if ((in==1) && (k==0)) cout << " j " << j << " DC_a " << m_Node->DC_a ( j ) << "  " << pow(10,m_Node->DC_a (j)) << " ph_satindex " << m_Node->Ph_SatInd(k)<< " Debug kin omega phase "<< omega_phase[in*nPH+k] << " fraction component " << omega_components[in*nDC+j]/omega_phase[in*nPH+k] << "  mol component " <<  m_xDC[in * nDC + j] << "  mol phase " << mol_phase[in*nPH+k] << " volume " << m_Node->Ph_Volume ( k )<< "\n"; // debug
+//               if ((in==1) && (k==0)) cout << " j " << j << " DC_a " << m_Node->DC_a ( j ) << "  " << pow(10,m_Node->DC_a (j)) << " ph_satindex " << m_Node->Ph_SatInd(k)<< " Debug kin omega phase "<< omega_phase[in*nPH+k] << " fraction component " << omega_components[in*nDC+j]/omega_phase[in*nPH+k] << "  mol component " <<  m_xDC[in * nDC + j] << "  mol phase " << mol_phase[in*nPH+k] << " volume " << m_Node->Ph_Volume ( k )<< "\n"; // debug
                 for ( j = m_kin[ii].dc_counter;
                         j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )
                     // do not include surface complexation species!
@@ -4019,350 +4104,384 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
                         //	omega_phase[in * nPH + k] +=  m_Node->Get_aDC ( j,true );     //m_Node->DC_a ( j );
 
                         mol_phase[in * nPH + k] += m_xDC[in * nDC + j];
-			// if (in == 1)  cout << "Debug kin omega phase "<< omega_phase[in*nPH+k] << " fraction component " << omega_components[in*nDC+j] << "  mol phase " <<  mol_phase[in*nPH+k] << "\n"; // debug
+                        // if (in == 1)  cout << "Debug kin omega phase "<< omega_phase[in*nPH+k] << " fraction component " << omega_components[in*nDC+j] << "  mol phase " <<  mol_phase[in*nPH+k] << "\n"; // debug
                     }
                 if (aktueller_zeitschritt < 1)
                     mol_phase_initial[in * nPH + k]=mol_phase[in * nPH + k];  // this is for kinetic law 6...similar to crunch...
             }
 
-            /*			if (fabs(omega_phase[in * nPH + k]) >saturation_cutoff)  // here we limit the saturation index to a smaller value, as e.g. 1e18 possibly make a lot of trouble..
-            			 {
-            //	                        cout <<"DEBUG omega phase to high: old, new "<< omega_phase[in * nPH + k] << " "; // debug
-            			   		for ( j = m_kin[ii].dc_counter;j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )
-            					// do not include surface complexation species!
-            					if ( !( dCH->ccDC[j]  == '0' ) &&
-            					     !( dCH->ccDC[j]  == 'X' ) &&
-            					     !( dCH->ccDC[j]  == 'Y' ) &&
-            					     !( dCH->ccDC[j]  == 'Z' ) )
-            					{
-            						//				omega_phase[k] += CalcSaturationIndex ( j, in,tempC,press ); // loop over all components of the phase
-            						// we need this later for solid solutions....
-            						omega_components[in * nDC + j] /= omega_phase[in * nPH + k] * saturation_cutoff ;
-            					}
-            						// correct phase
-            					omega_phase[in * nPH + k] = saturation_cutoff;
-            //				cout << omega_phase[in * nPH + k] << "\n"; // debug
-            			 }
-            */
-//			if (in == 1 && ii==0)   cout <<"DEBUG CSH omega phase and mol_phase "<< omega_phase[k] << " " <<  mol_phase[k] << "\n"; // debug
-
-//***********************************************now SS part *********************************
-/*
-            if ( m_kin[ii].kinetic_model == 5 || m_kin[ii].kinetic_model == 7) // special treatment of solid solution phases with e.g. vanselow convention
-            {
-	      // here the rate should be defined for each end-member
-               for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )
-	       {
-		 // calculate over/under saturation for endmember relative to mole fraction
-		 omega_comp=omega_components[in * nDC + j] / (m_xDC[in * nDC + j]/mol_phase[in * nPH + k]);
-	        // first calculate reactive surface area scaled with mole fraction
-	        surf_area = m_Node->Ph_Volume ( m_kin[ii].phase_number )*m_xDC[in * nDC + j]/mol_phase[in * nPH + k];
-                sa = REACT_GEM::SurfaceAreaPh ( ii,in,m_Node,surf_area); // value for surface area in m^2...(specific surface area multiplied with volume of the phase)
-                aa = 1.0;
-                ab = 1.0;
-                ac = 1.0;                    // reset values for each phase!
-                long i;
-                for ( i = 0; i < m_kin[ii].n_activities; i++ ) // loop over all activites defined in kinetics
+            // ***********************************************now regular part *********************************
+            // this is the same for all models
+                // here the rate should be defined for each end-member
+                for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ ) // loop over all member of a phase
                 {
-                    species = m_kin[ii].active_species[i].c_str();
-                    // loop over all the names in the list
-                    idx = m_Node->DC_name_to_xCH ( species );
-                    if ( idx < 0 )
-                    {
-                        if ( m_porosity_initial[in] < min_possible_porosity )
-                            m_porosity_initial[in] = m_porosity[in];                                      //make sure m_porosity_initial is not zero! ...does not work properly with RESTART!!!!!
-                        if ( m_porosity_initial[in] < min_possible_porosity )
-                            m_porosity_initial[in] = min_possible_porosity;
+                    // take saturation of end member..-> NOT divided my number of endmembers...for single component phases the endmember and phase omega are identical!
+                    // omega_comp=omega_components[in * nDC + j] ; //   /dCH->nDCinPH[k];
+                    // calculate over/under saturation for endmember relative to mole fraction for single component phases the mole fraction is 1
+                    // normalization of omega comp like this is problematic if mol_phase is zero! -> for single component phases this is always 1..except if mol_phase is zero ...
+                    dummy=(m_xDC[in * nDC + j]/mol_phase[in * nPH + k]);
+                    if (!(std::isfinite(dummy))) dummy=1.0 ;
+                    omega_comp=omega_components[in * nDC + j] / dummy; //this is divided by mole fraction in order to get relative over/undersaturation with respect to phase omega
+                    // first calculate reactive surface area scaled with mole fraction of endmember...for single component phases the mole fraction is 1
+                    /// Retrieves (interpolated, if necessary) molar volume V0(P,TK) value for Dependent Component (in J/Pa)
 
-                        cout << "failed CalcReactionRate: no DC-name " <<    m_kin[ii].active_species[i] << " found" << "\n";
+                    /// from the DATACH structure.
+                    // \param xCH is the DC DCH index
+                    // \param P pressure, Pa
+                    // \param TK temperature, Kelvin
+                    // \return V0(P,TK) (in J/Pa) or 0.0, if TK or P  go beyond the valid lookup array intervals or tolerances.-> units are m3/mol I would guess
+                    // double DC_V0(const long int xCH, const double P, const double TK);
+                    volume_component = m_Node->DC_V0(j,GetPressureValue_MT(in,1),GetTempValue_MT(in,1))*m_xDC[in * nDC + j];
+                    sa = REACT_GEM::SurfaceAreaPh ( ii,in,m_Node,volume_component); // value for surface area in m^2...(specific surface area multiplied with volume of the phase)
+                    //       if (in==1) cout << "DEBUG KINETICS: phase volume, component volume, surface area " << m_Node->Ph_Volume ( m_kin[ii].phase_number ) << " , " <<volume_component << " , "<< sa << "\n";
+
+                    aa = 1.0;
+                    ab = 1.0;
+                    ac = 1.0;                    // reset values for each member in a phasephase!
+                    /*
+                                    if ( m_kin[ii].kinetic_model == 4 ) // in the next part we try to mimic Crunchflow (at least partially)..could be also done in CalcLimits if this makes the code easier to read
+                                    {
+                                        if ( omega_phase[in * nPH + k] < 1.0 ) // this is the dissolution case
+
+                                            sa *= pow ( m_porosity[in] / m_porosity_initial[in] * m_Node->Ph_Volume(
+                                                            k) / m_volumes_initial[in * nPH + k],
+                                                        0.66666666667 );
+
+                                        else if ( omega_phase[in * nPH + k] > 1.0 ) // this is the precipitation case
+
+
+                                            sa *= pow ( m_porosity[in] / m_porosity_initial[in],
+                                                        0.66666666667 );
+
+                                    }
+                                    if ( m_kin[ii].kinetic_model == 6 ) // in the next part we try to scale surface area accoridng to spherical particles
+                                    {
+                                        if ( omega_phase[in * nPH + k] < 1.001 ) // this is the dissolution case
+
+                                            sa *= pow ( mol_phase[in*nPH+k] / mol_phase_initial[in*nPH+k], 0.66666666667 );
+
+                                        else if ( omega_phase[in * nPH + k] >= 0.999 ) // this is the precipitation case
+
+                    //					sa *= pow ( mol_phase[in*nPH+k] / mol_phase_initial[in*nPH+k], 0.66666666667 );
+
+                                            sa = 0.0;
+                                    }
+                    */
+
+                    for ( i = 0; i < m_kin[ii].n_activities; i++ ) // loop over all activities that are defined!
+                    {
+                        species = m_kin[ii].active_species[i].c_str();
+                        // loop over all the names in the list
+                        idx = m_Node->DC_name_to_xCH ( species );
+                        if ( idx < 0 )
+                        {
+                            if ( m_porosity_initial[in] < min_possible_porosity )
+                                m_porosity_initial[in] = m_porosity[in];                                      //make sure m_porosity_initial is not zero! ...does not work properly with RESTART!!!!!
+                            if ( m_porosity_initial[in] < min_possible_porosity )
+                                m_porosity_initial[in] = min_possible_porosity;
+
+                            cout << "DEBUG: failed CalcReactionRate: no DC-name " <<    m_kin[ii].active_species[i] << " found" << "\n";
 #if defined(USE_PETSC)
-                        PetscEnd(); //make sure MPI exits
+                            PetscEnd(); //make sure MPI exits
 #endif
 
-                        exit ( 1 );
+                            exit ( 1 );
+                        }
+                        else
+                        {
+                            //      cout << "activities " <<aa << " " << ab << " " << ac <<" " << temp << "\n";
+                            sactivity = m_Node->DC_a ( idx ); // extract activities (not activity coefficients!)
+                            aa *=
+                                pow ( sactivity,
+                                      m_kin[ii].kinetic_parameters[12 + i] );
+                            ab *=
+                                pow ( sactivity,
+                                      m_kin[ii].kinetic_parameters[13 + i] );
+                            ac *=
+                                pow ( sactivity,
+                                      m_kin[ii].kinetic_parameters[14 + i] );
+                            //    *Y_m,     // Molalities of aqueous species and sorbates [0:Ls-1]
+                            //    *Y_la,    // log activity of DC in multi-component phases (mju-mji0) [0:Ls-1]
+                            //    *Y_w,     // Mass concentrations of DC in multi-component phases,%(ppm)[Ls]
+                            //    *Gamma,   // DC activity coefficients in molal or other phase-specific scale [0:L-1]
+                            //	if (in == 1)  cout << "DEBUG KINETICS: species, Activity, aa ab ac " << species << " , " << sactivity << " " << aa << " " << ab << " " << ac<< "\n";
+                        }
                     }
-                    else
+
+                    // terms for each case
+                    // 1- omega gives the direction of reaction (dissolution negative....precipitation positive)
+                    // when using exponents (1-omega^p)^q with (negative_number)^q this causes an error...therefore absolute value has to be taken and the sign is extracted into a dummy variable
+                    // terms for each case
+
+                    dummy =1.0; // dummy changes direction of reaction (+ or -) ....this is necessary, as we have abs(1-omega) in calculations below....
+                    if ((1.0 - pow ( omega_comp, m_kin[ii].kinetic_parameters[6] )) < 0.0) dummy=-1.0;
+                    rra = dummy *
+                          exp ( -1.0 * m_kin[ii].kinetic_parameters[0] / R *
+                                ( 1.0 / m_T[in] - 1.0 /
+                                  298.15 ) ) * aa *
+                          pow ( abs( 1.0 -
+                                     pow ( omega_comp,
+                                           m_kin[ii].kinetic_parameters[6] ) ),
+                                m_kin[ii].kinetic_parameters[7] );
+
+
+                    dummy =1.0;
+                    if ((1.0 - pow ( omega_comp, m_kin[ii].kinetic_parameters[8] )) < 0.0) dummy=-1.0;
+                    rrn = dummy *
+                          exp ( -1.0 * m_kin[ii].kinetic_parameters[1] / R *
+                                ( 1.0 /  m_T[in] - 1.0 /
+                                  298.15 ) ) * ab *
+                          pow ( abs( 1.0 -
+                                     pow ( omega_comp,
+                                           m_kin[ii].kinetic_parameters[8] ) ),
+                                m_kin[ii].kinetic_parameters[9] );
+
+
+                    dummy =1.0;
+                    if ((1.0 - pow ( omega_comp, m_kin[ii].kinetic_parameters[10] )) < 0.0) dummy=-1.0;
+                    rrb = dummy *
+                          exp ( -1.0 * m_kin[ii].kinetic_parameters[2] / R *
+                                ( 1.0 /  m_T[in] - 1.0 /
+                                  298.15 ) ) * ac *
+                          pow ( abs( 1.0 -
+                                     pow ( omega_comp,
+                                           m_kin[ii].kinetic_parameters[10] ) ),
+                                m_kin[ii].kinetic_parameters[11] );
+
+
+                    // rate is scaled to the total amount available via the surface area ....we use the -1 to revert sign to the correct direction
+                    dmdt[in * nPH + k] = -1.0 * sa *
+                                         ( pow ( 10.0,m_kin[ii].kinetic_parameters[3] ) * rra +
+                                           pow ( 10.0,m_kin[ii].kinetic_parameters[4] ) * rrn +
+                                           pow ( 10.0,m_kin[ii].kinetic_parameters[5] ) * rrb );
+                    // 	if (in == 1 ) cout << " DEBUG KINETICS rate is "<< dmdt[in * nPH + k] << " raa " << rra << " rrn " << rrn << " rrb " << rrb << " omega_comp " <<  omega_comp<<"\n";
+
+                    // test for NaN!! ---seems necessary as sometimes rra, rrn, rrb get Inf! ---seems enough to test the upper limit---this test does not resolve the real problem ;-)...probably pow(0.0,0.0) for rra,rrn,rrb ?
+                    if ( !(std::isfinite(dmdt[in * nPH + k])) )
                     {
-                        //      cout << "activities " <<aa << " " << ab << " " << ac <<" " << temp << "\n";
-                        sactivity = m_Node->DC_a ( idx ); // extract activities (not activity coefficients!)
-                        //	if (in == 1 && ii==0)  cout << "Activity " << sactivity << aa << ab << ac<< "\n";
-                        aa *=
-                            pow ( sactivity,
-                                  m_kin[ii].kinetic_parameters[12 + i] );
-                        ab *=
-                            pow ( sactivity,
-                                  m_kin[ii].kinetic_parameters[13 + i] );
-                        ac *=
-                            pow ( sactivity,
-                                  m_kin[ii].kinetic_parameters[14 + i] );
-                        //    *Y_m,     // Molalities of aqueous species and sorbates [0:Ls-1]
-                        //    *Y_la,    // log activity of DC in multi-component phases (mju-mji0) [0:Ls-1]
-                        //    *Y_w,     // Mass concentrations of DC in multi-component phases,%(ppm)[Ls]
-                        //    *Gamma,   // DC activity coefficients in molal or other phase-specific scale [0:L-1]
-//								if (in == 1 && ii==0)  cout << "Activity " << sactivity << aa << ab << ac<< "\n";
+                        cout << "DEBUG failed " << m_kin[ii].phase_name << " at node " << in <<
+                             " dmdt " << dmdt[in * nPH + k] << " is NaN " << " sa " << sa << " rra " <<
+                             rra <<
+                             " rrn " << rrn << " rrb " << rrb << "\n";
 
+                        cout << "DEBUG mol_phase " <<
+                             mol_phase[in * nPH +
+                                       k] << " m_gam " << m_gam[idx] << " dmdt " <<
+                             dmdt[in * nPH +
+                                  k] << " omegaPhase " <<
+                             omega_phase[in * nPH + k] << "\n";
+                        cout << "kinetic parts rra " <<  exp ( -1.0 * m_kin[ii].kinetic_parameters[0] / R * ( 1.0 / m_T[in] - 1.0 / 298.15 ) )
+                             << " " <<  pow ( ( 1.0 - pow ( omega_phase[in * nPH + k],m_kin[ii].kinetic_parameters[6] ) ), m_kin[ii].kinetic_parameters[7] ) << " "<<
+                             pow ( omega_phase[in * nPH + k],m_kin[ii].kinetic_parameters[6] )  << "\n";
 
+                        dmdt[in * nPH + k] = 0.0; // no change!
                     }
-                }
-//                     cout << "activities " <<aa << " " << ab << " " << ac <<" " << "\n";
-                // 1- omega gives the direction of reaction (dissolution negative....precipitation positive)
-                // when using exponents (1-omega^p)^q with (negative_number)^q this causes an error...therefore absolute value has to be taken and the sign is extracted into a dummy variable
-                // terms for each case
-                dummy =1.0;
-                if ((1.0 - pow ( omega_comp, m_kin[ii].kinetic_parameters[6] )) < 0.0) dummy=-1.0;
-                rra = dummy *
-                    exp ( -1.0 * m_kin[ii].kinetic_parameters[0] / R *
-                          ( 1.0 / m_T[in] - 1.0 /
-                            298.15 ) ) * aa *
-                    pow ( abs( 1.0 -
-                            pow ( omega_comp,
-                                  m_kin[ii].kinetic_parameters[6] ) ),
-                          m_kin[ii].kinetic_parameters[7] );
 
-                 dummy =1.0;
-                if ((1.0 - pow ( omega_comp, m_kin[ii].kinetic_parameters[8] )) < 0.0) dummy=-1.0;
-		rrn = dummy *
-                    exp ( -1.0 * m_kin[ii].kinetic_parameters[1] / R *
-                          ( 1.0 /  m_T[in] - 1.0 /
-                            298.15 ) ) * ab *
-                    pow ( abs( 1.0 -
-                            pow ( omega_comp,
-                                  m_kin[ii].kinetic_parameters[8] ) ),
-                          m_kin[ii].kinetic_parameters[9] );
-                dummy =1.0;
-                if ((1.0 - pow ( omega_comp, m_kin[ii].kinetic_parameters[10] )) < 0.0) dummy=-1.0;
-                rrb = dummy *
-                    exp ( -1.0 * m_kin[ii].kinetic_parameters[2] / R *
-                          ( 1.0 /  m_T[in] - 1.0 /
-                            298.15 ) ) * ac *
-                    pow ( abs( 1.0 -
-                            pow ( omega_comp,
-                                  m_kin[ii].kinetic_parameters[10] ) ),
-                          m_kin[ii].kinetic_parameters[11] );
-
-                // rate is scaled to the total amount available via the surface area
-                rate_components[in * nDC + j] = -1.0 * sa *
-                                     ( pow ( 10.0,m_kin[ii].kinetic_parameters[3] ) * rra +
-                                       pow ( 10.0,m_kin[ii].kinetic_parameters[4] ) * rrn +
-                                       pow ( 10.0,m_kin[ii].kinetic_parameters[5] ) * rrb );
-           //     if (in == 1 && ii==0) cout << "DEBUG rate is "<< rate_components[in * nDC + j] << "\n";
-
-                // test for NaN!! ---seems necessary as sometimes rra, rrn, rrb get Inf! ---seems enough to test the upper limit---this test does not resolve the real problem ;-)...probably pow(0.0,0.0) for rra,rrn,rrb ?
-                if ( !(std::isfinite(rate_components[in * nDC + j])) )
-                {
-                    cout << "failed " << m_kin[ii].phase_name << " at node " << in <<
-                         " dmdt rate component" << rate_components[in * nDC + j] << " is NaN " << " sa " << sa << " rra " <<
-                         rra <<
-                         " rrn " << rrn << " rrb " << rrb << "\n";
-
-                    cout << "mol_phase " <<
-                         mol_phase[in * nPH +
-                                   k] << " m_gam " << m_gam[idx] << " dmdt " <<
-                         dmdt[in * nPH +
-                              k] << " omega components " <<
-                        omega_components[in * nDC + j] << "\n";
-
-                    rate_components[in * nDC + j] = 0.0; // no change!
-                }
-                // calculate max kinetic time step
+                } // end loop over all members of multi-component phase
 
 
-                if ( fabs(rate_components[in * nDC + j]) > 0.0 && fabs(m_xDC[in * nDC + j]) > 0.0)
-                {
-                    rwmutex.lock(); //
-                    max_kinetic_timestep = min(max_kinetic_timestep,fabs(m_xDC[in * nDC + j] / rate_components[in * nDC + j]));
-                    rwmutex.unlock(); // avoid mutual exclusion in the MPI version
-                }
-	       
-	       
-	       } // end for loop over all components of multi-component model
- 
-            } // end kinetic model 5 or 7
-// ***********************************************now regular part *********************************
-  //         else // this is needed
-*/
-            {
-	      	      // here the rate should be defined for each end-member
-               for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ ) // loop over all member of a phase
-	       {
-		 // take saturation of end member..-> NOT divided my number of endmembers...for single component phases the endmember and phase omega are identical!
-		// omega_comp=omega_components[in * nDC + j] ; //   /dCH->nDCinPH[k];
-		 // calculate over/under saturation for endmember relative to mole fraction for single component phases the mole fraction is 1
-		 // normalization of omega comp like this is problematic if mol_phase is zero! -> for single component phases this is always 1..except if mol_phase is zero ...
-		 dummy=(m_xDC[in * nDC + j]/mol_phase[in * nPH + k]);
-		 if (!(std::isfinite(dummy))) dummy=1.0 ;
-		 omega_comp=omega_components[in * nDC + j] / dummy; //this is divided by mole fraction in order to get relative over/undersaturation with respect to phase omega
-	        // first calculate reactive surface area scaled with mole fraction of endmember...for single component phases the mole fraction is 1
-		     /// Retrieves (interpolated, if necessary) molar volume V0(P,TK) value for Dependent Component (in J/Pa)
-               
-		/// from the DATACH structure.
-                // \param xCH is the DC DCH index
-                // \param P pressure, Pa
-                // \param TK temperature, Kelvin
-                // \return V0(P,TK) (in J/Pa) or 0.0, if TK or P  go beyond the valid lookup array intervals or tolerances.-> units are m3/mol I would guess
-               // double DC_V0(const long int xCH, const double P, const double TK);
-		volume_component = m_Node->DC_V0(j,GetPressureValue_MT(in,1),GetTempValue_MT(in,1))*m_xDC[in * nDC + j];
-                sa = REACT_GEM::SurfaceAreaPh ( ii,in,m_Node,volume_component); // value for surface area in m^2...(specific surface area multiplied with volume of the phase)
-         //       if (in==1) cout << "DEBUG KINETICS: phase volume, component volume, surface area " << m_Node->Ph_Volume ( m_kin[ii].phase_number ) << " , " <<volume_component << " , "<< sa << "\n";
+
+             // *********************************************** end regular part *********************************
+           
+
                 
-                aa = 1.0;
-                ab = 1.0;
-                ac = 1.0;                    // reset values for each member in a phasephase!
-/*
-                if ( m_kin[ii].kinetic_model == 4 ) // in the next part we try to mimic Crunchflow (at least partially)..could be also done in CalcLimits if this makes the code easier to read
+                if ((m_kin[ii].kinetic_model == 4) && (omega_phase[in*nPH +k]>1.0))  // here we do precipitation kinetics for model == 4 only do this for oversaturation and overwrite dmdt
+		{
+                // here the rate should be defined for each end-member
+                for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ ) // loop over all member of a phase
                 {
-                    if ( omega_phase[in * nPH + k] < 1.0 ) // this is the dissolution case
+                    // take saturation of end member..-> NOT divided my number of endmembers...for single component phases the endmember and phase omega are identical!
+                    // omega_comp=omega_components[in * nDC + j] ; //   /dCH->nDCinPH[k];
+                    // calculate over/under saturation for endmember relative to mole fraction for single component phases the mole fraction is 1
+                    // normalization of omega comp like this is problematic if mol_phase is zero! -> for single component phases this is always 1..except if mol_phase is zero ...
+                    dummy=(m_xDC[in * nDC + j]/mol_phase[in * nPH + k]);
+                    if (!(std::isfinite(dummy))) dummy=1.0 ;
+                    omega_comp=omega_components[in * nDC + j] / dummy; //this is divided by mole fraction in order to get relative over/undersaturation with respect to phase omega
+                    // first calculate reactive surface area scaled with mole fraction of endmember...for single component phases the mole fraction is 1
+                    /// Retrieves (interpolated, if necessary) molar volume V0(P,TK) value for Dependent Component (in J/Pa)
 
-                        sa *= pow ( m_porosity[in] / m_porosity_initial[in] * m_Node->Ph_Volume(
-                                        k) / m_volumes_initial[in * nPH + k],
-                                    0.66666666667 );
+                    /// from the DATACH structure.
+                    // \param xCH is the DC DCH index
+                    // \param P pressure, Pa
+                    // \param TK temperature, Kelvin
+                    // \return V0(P,TK) (in J/Pa) or 0.0, if TK or P  go beyond the valid lookup array intervals or tolerances.-> units are m3/mol I would guess
+                    // double DC_V0(const long int xCH, const double P, const double TK);
+                    volume_component = m_Node->DC_V0(j,GetPressureValue_MT(in,1),GetTempValue_MT(in,1))*m_xDC[in * nDC + j];
+                    sa = REACT_GEM::SurfaceAreaPh ( ii,in,m_Node,volume_component); // value for surface area in m^2...(specific surface area multiplied with volume of the phase)
+                    //       if (in==1) cout << "DEBUG KINETICS: phase volume, component volume, surface area " << m_Node->Ph_Volume ( m_kin[ii].phase_number ) << " , " <<volume_component << " , "<< sa << "\n";
 
-                    else if ( omega_phase[in * nPH + k] > 1.0 ) // this is the precipitation case
+                    aa = 1.0;
+                    ab = 1.0;
+                    ac = 1.0;                    // reset values for each member in a phasephase!
+                    /*
+                                    if ( m_kin[ii].kinetic_model == 4 ) // in the next part we try to mimic Crunchflow (at least partially)..could be also done in CalcLimits if this makes the code easier to read
+                                    {
+                                        if ( omega_phase[in * nPH + k] < 1.0 ) // this is the dissolution case
+
+                                            sa *= pow ( m_porosity[in] / m_porosity_initial[in] * m_Node->Ph_Volume(
+                                                            k) / m_volumes_initial[in * nPH + k],
+                                                        0.66666666667 );
+
+                                        else if ( omega_phase[in * nPH + k] > 1.0 ) // this is the precipitation case
 
 
-                        sa *= pow ( m_porosity[in] / m_porosity_initial[in],
-                                    0.66666666667 );
+                                            sa *= pow ( m_porosity[in] / m_porosity_initial[in],
+                                                        0.66666666667 );
 
-                }
-                if ( m_kin[ii].kinetic_model == 6 ) // in the next part we try to scale surface area accoridng to spherical particles
-                {
-                    if ( omega_phase[in * nPH + k] < 1.001 ) // this is the dissolution case
+                                    }
+                                    if ( m_kin[ii].kinetic_model == 6 ) // in the next part we try to scale surface area accoridng to spherical particles
+                                    {
+                                        if ( omega_phase[in * nPH + k] < 1.001 ) // this is the dissolution case
 
-                        sa *= pow ( mol_phase[in*nPH+k] / mol_phase_initial[in*nPH+k], 0.66666666667 );
+                                            sa *= pow ( mol_phase[in*nPH+k] / mol_phase_initial[in*nPH+k], 0.66666666667 );
 
-                    else if ( omega_phase[in * nPH + k] >= 0.999 ) // this is the precipitation case
+                                        else if ( omega_phase[in * nPH + k] >= 0.999 ) // this is the precipitation case
 
-//					sa *= pow ( mol_phase[in*nPH+k] / mol_phase_initial[in*nPH+k], 0.66666666667 );
+                    //					sa *= pow ( mol_phase[in*nPH+k] / mol_phase_initial[in*nPH+k], 0.66666666667 );
 
-                        sa = 0.0;
-                }
-*/
+                                            sa = 0.0;
+                                    }
+                    */
 
-                for ( i = 0; i < m_kin[ii].n_activities; i++ ) // loop over all activities that are defined!
-                {	  
-                    species = m_kin[ii].active_species[i].c_str();
-                    // loop over all the names in the list
-                    idx = m_Node->DC_name_to_xCH ( species );
-                    if ( idx < 0 )
+                    for ( i = 0; i < m_kin[ii].n_activities2; i++ ) // loop over all activities that are defined!
                     {
-                        if ( m_porosity_initial[in] < min_possible_porosity )
-                            m_porosity_initial[in] = m_porosity[in];                                      //make sure m_porosity_initial is not zero! ...does not work properly with RESTART!!!!!
-                        if ( m_porosity_initial[in] < min_possible_porosity )
-                            m_porosity_initial[in] = min_possible_porosity;
+                        species = m_kin[ii].active_species2[i].c_str();
+                        // loop over all the names in the list
+                        idx = m_Node->DC_name_to_xCH ( species );
+                        if ( idx < 0 )
+                        {
+                            if ( m_porosity_initial[in] < min_possible_porosity )
+                                m_porosity_initial[in] = m_porosity[in];                                      //make sure m_porosity_initial is not zero! ...does not work properly with RESTART!!!!!
+                            if ( m_porosity_initial[in] < min_possible_porosity )
+                                m_porosity_initial[in] = min_possible_porosity;
 
-                        cout << "DEBUG: failed CalcReactionRate: no DC-name " <<    m_kin[ii].active_species[i] << " found" << "\n";
+                            cout << "DEBUG: failed CalcReactionRate: no DC-name " <<    m_kin[ii].active_species2[i] << " found" << "\n";
 #if defined(USE_PETSC)
-                        PetscEnd(); //make sure MPI exits
+                            PetscEnd(); //make sure MPI exits
 #endif
 
-                        exit ( 1 );
+                            exit ( 1 );
+                        }
+                        else
+                        {
+                            //      cout << "activities " <<aa << " " << ab << " " << ac <<" " << temp << "\n";
+                            sactivity = m_Node->DC_a ( idx ); // extract activities (not activity coefficients!)
+                            aa *=
+                                pow ( sactivity,
+                                      m_kin[ii].kinetic_parameters2[12 + i] );
+                            ab *=
+                                pow ( sactivity,
+                                      m_kin[ii].kinetic_parameters2[13 + i] );
+                            ac *=
+                                pow ( sactivity,
+                                      m_kin[ii].kinetic_parameters2[14 + i] );
+                            //    *Y_m,     // Molalities of aqueous species and sorbates [0:Ls-1]
+                            //    *Y_la,    // log activity of DC in multi-component phases (mju-mji0) [0:Ls-1]
+                            //    *Y_w,     // Mass concentrations of DC in multi-component phases,%(ppm)[Ls]
+                            //    *Gamma,   // DC activity coefficients in molal or other phase-specific scale [0:L-1]
+                            //	if (in == 1)  cout << "DEBUG KINETICS: species, Activity, aa ab ac " << species << " , " << sactivity << " " << aa << " " << ab << " " << ac<< "\n";
+                        }
                     }
-                    else
+
+                    // terms for each case
+                    // 1- omega gives the direction of reaction (dissolution negative....precipitation positive)
+                    // when using exponents (1-omega^p)^q with (negative_number)^q this causes an error...therefore absolute value has to be taken and the sign is extracted into a dummy variable
+                    // terms for each case
+
+                    dummy =1.0; // dummy changes direction of reaction (+ or -) ....this is necessary, as we have abs(1-omega) in calculations below....
+                    if ((1.0 - pow ( omega_comp, m_kin[ii].kinetic_parameters2[6] )) < 0.0) dummy=-1.0;
+                    rra = dummy *
+                          exp ( -1.0 * m_kin[ii].kinetic_parameters2[0] / R *
+                                ( 1.0 / m_T[in] - 1.0 /
+                                  298.15 ) ) * aa *
+                          pow ( abs( 1.0 -
+                                     pow ( omega_comp,
+                                           m_kin[ii].kinetic_parameters2[6] ) ),
+                                m_kin[ii].kinetic_parameters2[7] );
+
+
+                    dummy =1.0;
+                    if ((1.0 - pow ( omega_comp, m_kin[ii].kinetic_parameters2[8] )) < 0.0) dummy=-1.0;
+                    rrn = dummy *
+                          exp ( -1.0 * m_kin[ii].kinetic_parameters2[1] / R *
+                                ( 1.0 /  m_T[in] - 1.0 /
+                                  298.15 ) ) * ab *
+                          pow ( abs( 1.0 -
+                                     pow ( omega_comp,
+                                           m_kin[ii].kinetic_parameters2[8] ) ),
+                                m_kin[ii].kinetic_parameters2[9] );
+
+
+                    dummy =1.0;
+                    if ((1.0 - pow ( omega_comp, m_kin[ii].kinetic_parameters2[10] )) < 0.0) dummy=-1.0;
+                    rrb = dummy *
+                          exp ( -1.0 * m_kin[ii].kinetic_parameters2[2] / R *
+                                ( 1.0 /  m_T[in] - 1.0 /
+                                  298.15 ) ) * ac *
+                          pow ( abs( 1.0 -
+                                     pow ( omega_comp,
+                                           m_kin[ii].kinetic_parameters2[10] ) ),
+                                m_kin[ii].kinetic_parameters2[11] );
+
+
+                    // rate is scaled to the total amount available via the surface area ....we use the -1 to revert sign to the correct direction
+                    dmdt[in * nPH + k] = -1.0 * sa *
+                                         ( pow ( 10.0,m_kin[ii].kinetic_parameters2[3] ) * rra +
+                                           pow ( 10.0,m_kin[ii].kinetic_parameters2[4] ) * rrn +
+                                           pow ( 10.0,m_kin[ii].kinetic_parameters2[5] ) * rrb );
+                    // 	if (in == 1 ) cout << " DEBUG KINETICS rate is "<< dmdt[in * nPH + k] << " raa " << rra << " rrn " << rrn << " rrb " << rrb << " omega_comp " <<  omega_comp<<"\n";
+
+                    // test for NaN!! ---seems necessary as sometimes rra, rrn, rrb get Inf! ---seems enough to test the upper limit---this test does not resolve the real problem ;-)...probably pow(0.0,0.0) for rra,rrn,rrb ?
+                    if ( !(std::isfinite(dmdt[in * nPH + k])) )
                     {
-                        //      cout << "activities " <<aa << " " << ab << " " << ac <<" " << temp << "\n";
-                        sactivity = m_Node->DC_a ( idx ); // extract activities (not activity coefficients!)
-                        aa *=
-                            pow ( sactivity,
-                                  m_kin[ii].kinetic_parameters[12 + i] );
-                        ab *=
-                            pow ( sactivity,
-                                  m_kin[ii].kinetic_parameters[13 + i] );
-                        ac *=
-                            pow ( sactivity,
-                                  m_kin[ii].kinetic_parameters[14 + i] );    
-                        //    *Y_m,     // Molalities of aqueous species and sorbates [0:Ls-1]
-                        //    *Y_la,    // log activity of DC in multi-component phases (mju-mji0) [0:Ls-1]
-                        //    *Y_w,     // Mass concentrations of DC in multi-component phases,%(ppm)[Ls]
-                        //    *Gamma,   // DC activity coefficients in molal or other phase-specific scale [0:L-1]
-		//	if (in == 1)  cout << "DEBUG KINETICS: species, Activity, aa ab ac " << species << " , " << sactivity << " " << aa << " " << ab << " " << ac<< "\n";
+                        cout << "DEBUG failed " << m_kin[ii].phase_name2 << " at node " << in <<
+                             " dmdt " << dmdt[in * nPH + k] << " is NaN " << " sa " << sa << " rra " <<
+                             rra <<
+                             " rrn " << rrn << " rrb " << rrb << "\n";
+
+                        cout << "DEBUG mol_phase " <<
+                             mol_phase[in * nPH +
+                                       k] << " m_gam " << m_gam[idx] << " dmdt " <<
+                             dmdt[in * nPH +
+                                  k] << " omegaPhase " <<
+                             omega_phase[in * nPH + k] << "\n";
+                        cout << "kinetic parts rra " <<  exp ( -1.0 * m_kin[ii].kinetic_parameters2[0] / R * ( 1.0 / m_T[in] - 1.0 / 298.15 ) )
+                             << " " <<  pow ( ( 1.0 - pow ( omega_phase[in * nPH + k],m_kin[ii].kinetic_parameters2[6] ) ), m_kin[ii].kinetic_parameters2[7] ) << " "<<
+                             pow ( omega_phase[in * nPH + k],m_kin[ii].kinetic_parameters2[6] )  << "\n";
+
+                        dmdt[in * nPH + k] = 0.0; // no change!
+                    }
+
+                } // end loop over all members of multi-component phase
+
+                for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )
+                {
+                    // calculate max kinetic time step
+                    if ( fabs(dmdt[in * nPH + k]) > 0.0 && fabs(m_xDC[in * nDC + j]) > 0.0)
+                    {
+                        rwmutex.lock(); //
+                        max_kinetic_timestep = min(max_kinetic_timestep,fabs(m_xDC[in * nDC + j] / dmdt[in * nPH + k]));
+                        rwmutex.unlock(); // avoid mutual exclusion in the MPI version
+                    }
+                }
+	} // end for model no. 4 precipitation kinetics
+
+// adjust time step!
+
+                for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )
+                {
+                    // calculate max kinetic time step
+                    if ( fabs(dmdt[in * nPH + k]) > 0.0 && fabs(m_xDC[in * nDC + j]) > 0.0)
+                    {
+                        rwmutex.lock(); //
+                        max_kinetic_timestep = min(max_kinetic_timestep,fabs(m_xDC[in * nDC + j] / dmdt[in * nPH + k]));
+                        rwmutex.unlock(); // avoid mutual exclusion in the MPI version
                     }
                 }
 
-                // terms for each case
-                // 1- omega gives the direction of reaction (dissolution negative....precipitation positive)
-                // when using exponents (1-omega^p)^q with (negative_number)^q this causes an error...therefore absolute value has to be taken and the sign is extracted into a dummy variable
-                // terms for each case
- 
-                dummy =1.0; // dummy changes direction of reaction (+ or -) ....this is necessary, as we have abs(1-omega) in calculations below....
-                if ((1.0 - pow ( omega_comp, m_kin[ii].kinetic_parameters[6] )) < 0.0) dummy=-1.0;
-                rra = dummy *
-                    exp ( -1.0 * m_kin[ii].kinetic_parameters[0] / R *
-                          ( 1.0 / m_T[in] - 1.0 /
-                            298.15 ) ) * aa *
-                    pow ( abs( 1.0 -
-                            pow ( omega_comp,
-                                  m_kin[ii].kinetic_parameters[6] ) ),
-                          m_kin[ii].kinetic_parameters[7] );
+        }                                   //end if for kinetic model >1 and not 33/44
 
-
-                 dummy =1.0;
-                if ((1.0 - pow ( omega_comp, m_kin[ii].kinetic_parameters[8] )) < 0.0) dummy=-1.0;
-		rrn = dummy *
-                    exp ( -1.0 * m_kin[ii].kinetic_parameters[1] / R *
-                          ( 1.0 /  m_T[in] - 1.0 /
-                            298.15 ) ) * ab *
-                    pow ( abs( 1.0 -
-                            pow ( omega_comp,
-                                  m_kin[ii].kinetic_parameters[8] ) ),
-                          m_kin[ii].kinetic_parameters[9] );
-
-
-		    dummy =1.0;
-                if ((1.0 - pow ( omega_comp, m_kin[ii].kinetic_parameters[10] )) < 0.0) dummy=-1.0;
-                rrb = dummy *
-                    exp ( -1.0 * m_kin[ii].kinetic_parameters[2] / R *
-                          ( 1.0 /  m_T[in] - 1.0 /
-                            298.15 ) ) * ac *
-                    pow ( abs( 1.0 -
-                            pow ( omega_comp,
-                                  m_kin[ii].kinetic_parameters[10] ) ),
-                          m_kin[ii].kinetic_parameters[11] );
-
-
-                // rate is scaled to the total amount available via the surface area ....we use the -1 to revert sign to the correct direction
-                dmdt[in * nPH + k] = -1.0 * sa *
-                                     ( pow ( 10.0,m_kin[ii].kinetic_parameters[3] ) * rra +
-                                       pow ( 10.0,m_kin[ii].kinetic_parameters[4] ) * rrn +
-                                       pow ( 10.0,m_kin[ii].kinetic_parameters[5] ) * rrb );
-              // 	if (in == 1 ) cout << " DEBUG KINETICS rate is "<< dmdt[in * nPH + k] << " raa " << rra << " rrn " << rrn << " rrb " << rrb << " omega_comp " <<  omega_comp<<"\n";
-
-                // test for NaN!! ---seems necessary as sometimes rra, rrn, rrb get Inf! ---seems enough to test the upper limit---this test does not resolve the real problem ;-)...probably pow(0.0,0.0) for rra,rrn,rrb ?
-                if ( !(std::isfinite(dmdt[in * nPH + k])) )
-                {
-                    cout << "DEBUG failed " << m_kin[ii].phase_name << " at node " << in <<
-                         " dmdt " << dmdt[in * nPH + k] << " is NaN " << " sa " << sa << " rra " <<
-                         rra <<
-                         " rrn " << rrn << " rrb " << rrb << "\n";
-
-                    cout << "DEBUG mol_phase " <<
-                         mol_phase[in * nPH +
-                                   k] << " m_gam " << m_gam[idx] << " dmdt " <<
-                         dmdt[in * nPH +
-                              k] << " omegaPhase " <<
-                         omega_phase[in * nPH + k] << "\n";
-			cout << "kinetic parts rra " <<  exp ( -1.0 * m_kin[ii].kinetic_parameters[0] / R * ( 1.0 / m_T[in] - 1.0 / 298.15 ) ) 
-			<< " " <<  pow ( ( 1.0 - pow ( omega_phase[in * nPH + k],m_kin[ii].kinetic_parameters[6] ) ), m_kin[ii].kinetic_parameters[7] ) << " "<<
-			pow ( omega_phase[in * nPH + k],m_kin[ii].kinetic_parameters[6] )  << "\n";
-
-                    dmdt[in * nPH + k] = 0.0; // no change!
-                }
-                
-	       } // end loop over all members of multi-component phase
-	       
-              for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )
-	       {
-                // calculate max kinetic time step
-                if ( fabs(dmdt[in * nPH + k]) > 0.0 && fabs(m_xDC[in * nDC + j]) > 0.0)
-                {
-                    rwmutex.lock(); //
-                    max_kinetic_timestep = min(max_kinetic_timestep,fabs(m_xDC[in * nDC + j] / dmdt[in * nPH + k]));
-                    rwmutex.unlock(); // avoid mutual exclusion in the MPI version
-                }
-	       }
-	       
-            }
-        }                                   //end if for kinetic model >1
-    }
+    } // end for loop over all models
 //	      cout <<"DEBUG Rate2 "<< omega_phase[2] << "\n";
 
     return 1;

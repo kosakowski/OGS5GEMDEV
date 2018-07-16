@@ -24,6 +24,7 @@
 #include <cmath>
 #include <string>
 #include <boost/thread.hpp>
+#include <boost/date_time.hpp>
 //#include <thread.hpp>
 #include "rf_pcs.h"
 // #include "rfmat_cp.h"
@@ -353,12 +354,12 @@ public:
     {
         //kg44 25.11.2008 kinetics...for coupling with GEMS
         //
-        string phase_name;
+        string phase_name,phase_name2;
         int phase_number;
         int dc_counter;
-        int kinetic_model;                       // only 1 = GEMS implemented right now
-        int n_activities;                        // number of species for activities
-        string active_species[10];               // name for species ...maximum 10 names
+        int kinetic_model,kinetic_model2;                       // only 1 = GEMS implemented right now
+        int n_activities, n_activities2;                        // number of species for activities
+        string active_species[10],active_species2[10];               // name for species ...maximum 10 names
         /**	this vector holds the kinetic material parameters
         *      0,1,2  double E_acid,E_neutral,E_base; // activation energies
         *      3-5  double k_acid, k_neutral,k_base; // dissolution/precipitation rate constants
@@ -366,7 +367,7 @@ public:
         *      12,13, 14  double n_1, n_2, n_3; // exponents for acidic neutral and base cases for species one
         *      append for each species another set of n_1, n_2, n_3 (up to 10 sets -> up to ten species)
         **/
-        double kinetic_parameters[41];
+        double kinetic_parameters[41],kinetic_parameters2[41];
         int surface_model;                       // currently only 1 implemented
         double surface_area[10];
         int ss_endmembers; // special model for solid solutions...only read for kinetic model == 5
