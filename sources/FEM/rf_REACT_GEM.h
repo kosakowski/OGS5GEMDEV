@@ -370,6 +370,10 @@ public:
         double kinetic_parameters[41],kinetic_parameters2[41];
         int surface_model;                       // currently only 1 implemented
         double surface_area[10];
+	int cover_phase_nr; // for surface area model number 7 ...number of phases that may cover this phase (not more than 10)
+	string cover_phase_name[10]; // for surface area model number 7 ...name of mineral phase that convers the corresponding mineral with name phase_name
+	double cover_kp[10]; // proportionality for surface area model number 7
+	double cover_p[10]; //exponent for power law in surface area model number 7
         int ss_endmembers; // special model for solid solutions...only read for kinetic model == 5
         double *ss_scaling; // special model for solid solutions...only read for kinetic model == 5
         string endmember_species[10]; // species for cation exchange with endmembers( maximum  10 endmembers) same order as endmembers

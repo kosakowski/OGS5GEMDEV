@@ -110,7 +110,7 @@ REACT_GEM::REACT_GEM ( void )
 	flag_iterative_scheme = 0;                 //0-not iteration;1=iteration;
 	flag_disable_gems = 0;                    // always calculate gems
 	flag_gem_sia = 0;                         // default: do not allow GEM_SIA
-	flag_hayekit = 1;                         // default is to use scaling for hayekit: for porosity change this is necessary, otherwise results are not ok....for coupling hydrology it should not be done!
+	flag_hayekit = 1;                         // default is to use scaling for hayekit: 1: remove solvent (water only) in order to scale volume....0: remove complete solution, including solutes
 	// flag for different iterative scheme
 	// 0 - sequential non-iterative scheme
 	// 1 - standard iterative scheme
@@ -3944,8 +3944,8 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
             // next line is surface area
             in.str ( GetLineFromFile1 ( gem_file ) );
             in >> d_kin.surface_model;
-            cout << " reading surface data for model 1:" << d_kin.surface_model << "\n";
-            if ( d_kin.surface_model >= 1 || d_kin.surface_model < 4 ) // surface model 1, 2 and 3....only one parameter...
+            cout << " reading surface data for model 1: it is" << d_kin.surface_model << "\n";
+            if ( d_kin.surface_model == 1 || d_kin.surface_model < 4 ) // surface model 1, 2 and 3....only one parameter...
             {
                 in >> d_kin.surface_area[0]; // surface: m*m / mol
                 cout << "surface area " << d_kin.surface_area[0] << "\n";
@@ -3966,6 +3966,31 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
             {
                 in >> d_kin.surface_area[0]>>d_kin.surface_area[1] ; // surface: m*m 
                 cout << "surfacearea = surfacearea[0] * exp(alpha * pow(porosity,-1/3), surfacearea[0]: " << d_kin.surface_area[0] << " alpha: " << d_kin.surface_area[1] << "\n";
+
+            }
+            else if ( d_kin.surface_model == 7 ) // kinetic model accounting for surface precipitates
+            {
+                in >> d_kin.surface_area[0] >> d_kin.cover_phase_nr; // number of phases
+                cout << "surfacearea depends on " << d_kin.cover_phase_nr << "phases \n";
+                if (d_kin.cover_phase_nr > 10) 
+		{
+		                     cout <<
+                         "To many phases for GEM surface model 7 (max 10)"
+                         <<
+                         d_kin.n_activities2 << "\n";
+#if defined(USE_PETSC)
+                    PetscEnd(); //make sure MPI exits
+#endif
+                    exit ( 1 ); 
+		}
+		int inr=0;
+                for (inr=0; inr<d_kin.cover_phase_nr;inr++)
+		{
+		  in >> d_kin.cover_phase_name[inr];
+		  in >> d_kin.cover_kp[inr];
+		  in >> d_kin.cover_p[inr];
+		  cout << "surface area " << d_kin.surface_area[0] << "  considers convering of phase_name, kp, p: " << d_kin.cover_phase_name[inr] << " " << d_kin.cover_kp[inr] << " " << d_kin.cover_p[inr]<<"\n";
+		}
 
             }
             else if ( d_kin.surface_model == 33 ) // model 33 is kinetic for cement hydration
@@ -5623,6 +5648,29 @@ double REACT_GEM::SurfaceAreaPh ( long kin_phasenr,long in,  TNode* m_Node , dou
 	  }		
 	else if ( m_kin[kin_phasenr].surface_model == 6 ) // exponential model: S = Sr x exp (alpha*pow(porosity,-1/3))    alpha: parameter
 		surf_area *= m_kin[kin_phasenr].surface_area[0] * exp(m_kin[kin_phasenr].surface_area[1] * pow(m_porosity[in],-1.0/3.0)) ; 	// independent from phase volume!	
+	else if ( m_kin[kin_phasenr].surface_model == 7 ) // surface area calculated according to Equ. 13 of Daval et al. 2009: Chemical Geology 265, 63-78, doi:10.1016/j.chemgeo.2009.01.022
+	{
+          string str ;
+          double volume_cover_phase;
+	  // double dummy;
+	  // the surface area is calculated A = SSA * n(mineral to be dissolved) - k * pow(n(mineral that precipitations as crust),p)
+	  // cover_phase_name is mineral that covers phase_name
+	  // conver_p is exponent
+	 // cout << "DEBUG surface kinetics: original surface " << surf_area ;
+	  // ******* surface_area is set to phase volume! *****************
+	  int inr=0;
+	  for (inr=0; inr<m_kin[kin_phasenr].cover_phase_nr;inr++)
+		{	  
+	         str = m_kin[kin_phasenr].cover_phase_name[inr];                
+	         //get the index of certain compound, -1: no match
+	         volume_cover_phase = m_Node->Ph_Volume(m_Node->Ph_name_to_xDB ( str.c_str() ));
+	         surf_area -= pow(volume_cover_phase,m_kin[kin_phasenr].cover_p[inr]) * m_kin[kin_phasenr].cover_kp[inr]; // here substract correction from volume
+		// if (in==341) cout << " after " <<  m_kin[kin_phasenr].cover_phase_name[inr] << " " << surf_area << " reduced by "<< pow(volume_cover_phase,m_kin[kin_phasenr].cover_p[inr]) * m_kin[kin_phasenr].cover_kp[inr] <<"\n";
+		}
+	if (surf_area < 0.0) surf_area = 0.0; // for safety no negative surface area is allowed
+	surf_area *= m_kin[kin_phasenr].surface_area[0]; // now multiply with surface area
+		// cout << "\n";
+	}	
 	else if ( m_kin[kin_phasenr].surface_model == 33 ) // independent from phase volume!
 		// constant surface area value for cement hydration!
 		surf_area = m_kin[kin_phasenr].surface_area[0];		
@@ -5633,6 +5681,7 @@ double REACT_GEM::SurfaceAreaPh ( long kin_phasenr,long in,  TNode* m_Node , dou
 		surf_area = 0.0;                    // no kinetics...safe solution
 
 	// cout << "phase " << kin_phasenr << " area default " << m_kin[kin_phasenr].surface_area[0] << " model " << m_kin[kin_phasenr].surface_model <<  " surface area: " << surf_area << "\n";
+	if (surf_area < 0.0) surf_area = 0.0; // for safety no negative surface area is allowed -> would change sign of rate law!
 	return surf_area;
 }
 
