@@ -1,0 +1,29 @@
+#OUTPUT
+ $NOD_VALUES
+  1-Al 
+  2-C 
+  3-Ca 
+  4-Cl 
+  5-Fe 
+  6-H 
+  7-K 
+  8-Mg 
+  9-Na 
+  10-O 
+  11-Si 
+  12-Zz 
+  pH
+  pe
+  Eh
+  NodePorosity
+ $ELE_VALUES
+  POROSITY
+ $GEO_TYPE
+  DOMAIN
+ $DAT_TYPE
+  VTK
+ $TIM_TYPE
+   STEPS 316
+#STOP
+
+

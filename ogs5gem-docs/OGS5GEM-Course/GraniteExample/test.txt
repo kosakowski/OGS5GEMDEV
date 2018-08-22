@@ -1,0 +1,165 @@
+GEM-Selektor v.2-PSI: Thermodynamic data for the modelling project: 
+Geotherm:GeothermBench:   23/11/2011    18:29 
+ 
+P(bar)= 1  T= 25 (C) = 298.15 (K)  RT= 2478.97 
+Water: Ro(g/cm3)= 0.997061  Eps= 78.2451  Visc= 0.000554753 
+ 
+                                                         Table 1 
+ Thermodynamic data for Dependent Components (Species) 
+============================|=====|===========|=========|=========== 
+   Record Key               |Flags|    gTP    |   gEx_  |   VTP      
+============================|=====|===========|=========|=========== 
+a   Al      Al+3             d + +     -483708         0    -4.5243 
+a   Al      AlO+             d + +     -661859         0     0.0307 
+a   Al      AlO2-            d + +     -831332         0     0.9467 
+a   Al      AlO2H@           d + +     -869017         0     1.3009 
+a   Al      AlOH+2           d + +     -692347         0    -0.2728 
+a   Ca      Ca(CO3)@         d + +    -1099764         0    -1.4329 
+a   Ca      Ca(HCO3)+        d + +    -1145705         0     1.3330 
+a   Ca      Ca+2             d + +     -552790         0    -1.8439 
+a   Ca      CaCl+            d + +     -682410         0     0.5591 
+a   Ca      CaCl2@           d + +     -811696         0     3.2652 
+a   Ca      CaOH+            d + +     -716719         0     0.5762 
+a   CaSi    Ca(HSiO3)+       d + +    -1574435         0    -0.6737 
+a   Fe+2    Fe+2             d + +      -91504         0    -2.2640 
+a   Fe+2    FeCl+            d + +     -221878         0     0.0846 
+a   Fe+2    FeCl2@           d + +     -307440         0     2.7442 
+a   Fe+2    FeO2H-           d + +     -399154         0    -1.3468 
+a   Fe+2    FeO@             d + +     -212212         0    -1.6491 
+a   Fe+2    FeOH+            d + +     -275516         0    -1.6714 
+a   Fe+3    Fe+3             d + +      -17238         0    -3.7790 
+a   Fe+3    FeCl+2           d + +     -156975         0    -2.2857 
+a   Fe+3    FeO+             d + +     -222170         0    -4.2021 
+a   Fe+3    FeO2-            d + +     -368192         0     0.0452 
+a   Fe+3    FeO2H@           d + +     -423002         0     0.7209 
+a   Fe+3    FeOH+2           d + +     -241835         0    -2.5341 
+a   K       K+               d + +     -282462         0     0.9009 
+a   K       KCl@             d + +     -399279         0     3.8312 
+a   K       KOH@             d + +     -437228         0     1.4909 
+a   Mg      Mg(CO3)@         d + +     -998972         0    -1.6776 
+a   Mg      Mg(HCO3)+        d + +    -1046837         0     0.9343 
+a   Mg      Mg+2             d + +     -453985         0    -2.2014 
+a   Mg      MgCl+            d + +     -584505         0     0.1002 
+a   Mg      MgOH+            d + +     -624483         0     0.1641 
+a   MgSi    Mg(HSiO3)+       d + +    -1477057         0    -1.0850 
+a   Na      Na+              d + +     -261881         0    -0.1208 
+a   Na      NaCl@            d + +     -388735         0     2.4012 
+a   Na      NaOH@            d + +     -417982         0     0.3509 
+a   NaSi    Na(HSiO3)@       d + +    -1288212         0     1.2732 
+a   Si      HSiO3-           d + +    -1015879         0     0.4530 
+a   Si      SiO2@            d + +     -833411         0     1.6063 
+a   wC+2    CO@              d + +     -120005         0     3.3714 
+a   wC+4    CO2@             d + +     -385974         0     3.2807 
+a   wC+4    CO3-2            d + +     -527983         0    -0.6058 
+a   wC+4    HCO3-            d + +     -586940         0     2.4211 
+a   wC-4    CH4@             d + +      -34451         0     3.7398 
+a   wCl+1   ClO-             d + +      -36819         0     0.0248 
+a   wCl+1   HClO@            d + +      -79914         0     2.8454 
+a   wCl+3   ClO2-            d + +       17154         0     2.1714 
+a   wCl+3   HClO2@           d + +        5858         0     4.4105 
+a   wCl+5   ClO3-            d + +       -7950         0     3.6582 
+a   wCl+7   ClO4-            d + +       -8535         0     4.3904 
+a   wCl-1   Cl-              d + +     -131290         0     1.7341 
+a   wCl-1   HCl@             d + +     -127235         0    -0.1786 
+a   wH0     H2@              d + +       17723         0     2.5264 
+a   wO0     O2@              d + +       16544         0     3.0501 
+a   wOH     H2O2@            d + +     -134014         0     3.2856 
+a   wOH     HO2-             d + +      -67321         0     0.2227 
+a   wX      OH-              d + +     -157297         0    -0.4708 
+a   w_      H+               d + +           0         0     0.0000 
+a   w_      H2O@             d + +     -237181         0     1.8068 
+g   C+2     CO               d + +     -137168         0  2478.9712 
+g   C+4     CO2              d + +     -394359         0  2478.9712 
+g   C-4     CH4              d + +      -50720         0  2478.9712 
+g   H0      H2               d + +           0         0  2478.9712 
+g   O0      O2               d + +           0         0  2478.9712 
+g   Steam   H2O              d - +     -237181         0     1.8068 
+s   AlO     Crn              d + +    -1568264         0     2.5575 
+s   AlOH    Bhm              d + +     -908974         0     1.9535 
+s   AlOH    Dsp              d + +     -913794         0     1.7760 
+s   AlOH    Gbs              d + +    -1155487         0     3.1956 
+s   AlSiO   And              d + +    -2429176         0     5.1530 
+s   AlSiO   Ky               d + +    -2430720         0     4.4090 
+s   AlSiO   Sil              d + +    -2427101         0     4.9900 
+s   AlSiOH  Kln              d + +    -3789089         0     9.9520 
+s   AlSiOH  Prl              d + +    -5255091         0    12.6600 
+s   C0      Gr               d + +           0         0     0.5298 
+s   CaAlSiO An               d + +    -3991862         0    10.0790 
+s   CaAlSiO Ca-Al-Px         d + +    -3104808         0     6.3500 
+s   CaAlSiO Czo              d + +    -6482020         0    13.6200 
+s   CaAlSiO Gh               d + +    -3778771         0     9.0240 
+s   CaAlSiO Grs              d + +    -6260549         0    12.5300 
+s   CaAlSiO Lws              d + +    -4491139         0    10.1320 
+s   CaAlSiO Mrg              d + +    -5833124         0    12.9400 
+s   CaAlSiO Prh              d + +    -5816166         0    14.0330 
+s   CaAlSiO Zo               d + +    -6481765         0    13.5900 
+s   CaCO    Arg              d + +    -1128354         0     3.4150 
+s   CaCO    Cal              d + +    -1129178         0     3.6934 
+s   CaFeSiO Adr              d + +    -5425891         0    13.1850 
+s   CaFeSiO Ep               d + +    -6070591         0    13.9200 
+s   CaFeSiO Fe-Tr            d + +    -9828634         0    28.2800 
+s   CaFeSiO Hd               d + +    -2673568         0     6.8270 
+s   CaMgCO  Dis-Dol          d + +    -2157492         0     6.4390 
+s   CaMgCO  Hun              d + +    -4203707         0    12.2900 
+s   CaMgSiO Ak               d + +    -3679251         0     9.2810 
+s   CaMgSiO Di               d + +    -3028296         0     6.6090 
+s   CaMgSiO Mer              d + +    -4336825         0    10.4400 
+s   CaMgSiO Mtc              d + +    -2145677         0     5.1470 
+s   CaMgSiO Tr               d + +   -11590705         0    27.2920 
+s   CaO     Lim              d + +     -604027         0     1.6764 
+s   CaSiO   Wo               d + +    -1544837         0     3.9930 
+s   CaZeol  Lamt             d + +    -6681107         0    20.7550 
+s   CaZeol  Wai              d + +    -6181576         0    18.6870 
+s   FeAlSiO Dph-14A          d + +    -6487217         0    21.3420 
+s   FeCO    Sd               d + +     -679540         0     2.9378 
+s   FeO     Frs-Ox           d + +     -251446         0     1.2000 
+s   FeO     Hem              d + +     -745401         0     3.0274 
+s   FeO     Mag              d + +    -1014930         0     4.4524 
+s   FeSiO   Fa               d + +    -1381695         0     4.6390 
+s   FeSiO   Fs               d + +    -1119588         0     3.2952 
+s   FeSiOH  Grn              d + +    -2992983         0    11.5000 
+s   KAlSiO  Kls              d + +    -2015642         0     5.9890 
+s   KAlSiO  K-Fs             d + +    -3746245         0    10.8870 
+s   KAlSiO  Ms               d + +    -5591083         0    14.0710 
+s   KCl     Sy               d + +     -408923         0     3.7524 
+s   KFeAlSi Ann              d + +    -4799701         0    15.4320 
+s   KMgAlSi Phl              d + +    -5841646         0    14.9660 
+s   KO      K-Ox             d + +     -322402         0     4.0380 
+s   MgAlO   Spn              d + +    -2163153         0     3.9710 
+s   MgAlSiO 14A-Cnc          d + +    -8207765         0    20.7100 
+s   MgAlSiO 7A-Cnc           d + +    -8188511         0    21.1500 
+s   MgAlSiO Crd              d + +    -8624391         0    23.3220 
+s   MgCO    Mgs              d + +    -1027833         0     2.8020 
+s   MgCOH   Art              d + +    -2568620         0     9.6900 
+s   MgCOH   Hydro-Mgs        d + +    -5864658         0    20.8800 
+s   MgCOH   Nsh              d + +    -1723954         0     7.4800 
+s   MgO     Per              d + +     -569384         0     1.1250 
+s   MgOH    Brc              d + +     -835319         0     2.4630 
+s   MgSiO   En               d + +    -1459923         0     3.1276 
+s   MgSiO   Fo               d + +    -2056704         0     4.3790 
+s   MgSiOH  Ath              d + +   -11361359         0    26.4400 
+s   MgSiOH  Atg              d + +   -66140756         0   174.9130 
+s   MgSiOH  Ctl              d + +    -4037020         0    10.8500 
+s   MgSiOH  Sep              d + +    -9251627         0    28.5600 
+s   MgSiOH  Tlc              d + +    -5523667         0    13.6250 
+s   NaAlSiO Ab               d + +    -3708313         0    10.0250 
+s   NaAlSiO Jd               d + +    -2842798         0     6.0400 
+s   NaAlSiO Ne               d + +    -1978496         0     5.4160 
+s   NaAlSiO Pg               d + +    -5548034         0    13.2530 
+s   NaCaSiO Fe-Prg           d + +   -10569566         0    27.9900 
+s   NaCaSiO Prg              d + +   -11910710         0    27.3500 
+s   NaCl    Hl               d + +     -384120         0     2.7015 
+s   NaO     Na-Ox            d + +     -376070         0     2.5000 
+s   NaZeol  Anl              d + +    -3088202         0     9.7100 
+s   SiO     Cha              d + +     -854691         0     2.2688 
+s   SiO     Cos              d + +     -851616         0     2.0641 
+s   SiO     Crs              d + +     -853097         0     2.5740 
+s   SiO     Qtz              d + +     -856239         0     2.2688 
+s   SiO     Amor-Sl          d + +     -848900         0     2.9000 
+============================|=====|===========|=========|=========== 
+Molar Gibbs energies are in J/mol, volumes in J/bar (0.1 cm3/mol).
+Flags: first column - data source (d-DComp, r-ReacDC); 
+second column - on/off in the current system definition;
+third column - within (+) or out of (e) the source TP intervals. 
+ 
+------ 

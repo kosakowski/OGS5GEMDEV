@@ -8,11 +8,11 @@ if(CMAKE_VERSION VERSION_GREATER 3.1)
 endif()
 
 # Suppress warning on setting policies
-cmake_policy(SET CMP0011 OLD)
+#cmake_policy(SET CMP0011 OLD)
 
 # Suppress warning on add_subdirectory(dir) where dir contains no CMakeLists.txt
 if (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 2.7)
-	cmake_policy(SET CMP0014 OLD)
+#	cmake_policy(SET CMP0014 OLD)
 endif ()
 
 # Load addional modules
