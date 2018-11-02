@@ -5373,7 +5373,7 @@ int REACT_GEM::CalcLimits ( long in,double deltat, TNode* m_Node)
                     m_dll[in * nDC + j+jAl]=0.0;
                 }
             }
-            else //foll all kinetics except 44
+            else //for all kinetics except 44
             {
 
                 for ( j = m_kin[ii].dc_counter; j < m_kin[ii].dc_counter + dCH->nDCinPH[k]; j++ )
@@ -5480,6 +5480,7 @@ int REACT_GEM::CalcLimits ( long in,double deltat, TNode* m_Node)
 //			    if (in==1) cout << " Kin debug before: mxDC, dll, dul " << m_xDC[in * nDC + j] << " " << m_dll[in * nDC + j] <<  " " << m_dul[in * nDC + j] <<"\n";
                             if ( !std::isfinite(dummy) ) // dummy is nan -> no change!
                             {
+                                cout << " CalcLimits: failed setting change to zero: rate is " << dmdt[in * nPH + k]  << " deltat is " << deltat <<  " dummy is " << dummy <<"\n";
                                 // no change!
 //                                m_dul[in * nDC + j] = m_xDC[in * nDC + j];
 //                                m_dll[in * nDC + j] = m_xDC[in * nDC + j];
@@ -5492,11 +5493,11 @@ int REACT_GEM::CalcLimits ( long in,double deltat, TNode* m_Node)
                     // kinetic_model==2 or 7  only dissolution is controlled (no precipitation allowed)
                     // kinetic_mocel==3 only precipitation is copntroleld (no dissolution allowed)
                     // these cases are not possible with reaktoro (as implemented..needs change?)
-                            if ((m_kin[ii].kinetic_model == 2) && (dummy>0.0) )// dissolution only 
+                            if ((m_kin[ii].kinetic_model == 2) && (omega_phase[in * nPH + k] >1.0) )// dissolution only 
 			    {
 			      dummy=0.0;
 			    }
-                            if ((m_kin[ii].kinetic_model == 3) && (dummy<0.0)) // precipitation only 
+                            if ((m_kin[ii].kinetic_model == 3) && (omega_phase[in * nPH + k] <1.0)) // precipitation only 
 			    {
 			      dummy=0.0;
 			    }
@@ -5509,7 +5510,6 @@ int REACT_GEM::CalcLimits ( long in,double deltat, TNode* m_Node)
                                     m_dul[in * nDC + j] = m_xDC[in * nDC + j]; // + 1.0e-3;
                                 else
                                     m_dul[in * nDC + j] = m_dll[in * nDC + j];
-				m_xDC[in * nDC + j] = m_dul[in * nDC + j] ; // set mass vector to upper limit in any case
 				if ( m_dll[in * nDC + j]>  m_dul[in * nDC + j] ) m_dul[in * nDC + j] = m_dll[in * nDC + j];
 				m_xDC[in * nDC + j] = m_dul[in * nDC + j] ; // set mass vector to upper limit in any case
                             }
@@ -5564,17 +5564,19 @@ int REACT_GEM::CalcLimits ( long in,double deltat, TNode* m_Node)
                     // these cases are not possible with reaktoro (as implemented..needs change?)
 
 
-                    if ( ( m_xDC[in * nDC + j] < 1.0e-6 ) && !(m_kin[ii].kinetic_model == 2) && ( omega_phase[in * nPH + k] >= 1.1 ) &&
-                            ( m_dul[in * nDC + j] < 1.0e-6 ) && !(dummy==0.0)) // one has to provide some starting value, otherwise some surface area models that are multiplicative doe not start precipitating
+                    if ( ( m_xDC[in * nDC + j] < 1.0e-6 ) && !(m_kin[ii].kinetic_model == 2) && ( omega_phase[in * nPH + k] >= 1.0001 ) &&
+                            ( m_dul[in * nDC + j] < 1.0e-6 ) ) // one has to provide some starting value, otherwise some surface area models that are multiplicative doe not start precipitating
                     {
                         m_dul[in * nDC + j] = 1.0e-6; // allow some kind of precipitation...based on saturation index for component value...here we set 10-6 mol per m^3 ..which is maybe 10-10 per litre ...?
                         m_dll[in * nDC + j] = m_dul[in * nDC + j];
+                        m_xDC[in * nDC + j] = 1.0e-6;
                     }
                     // no negative masses allowed..give some freedom
                     if ( m_dul[in * nDC + j] <= 0.0 )
                     {
                         m_dul[in * nDC + j] = 0.0;
                         m_dll[in * nDC + j] = 0.0;
+                        m_xDC[in * nDC + j] = 0.0;
                     }
                     // no negative masses allowed
                     if ( m_dll[in * nDC + j] < 0.0 )
@@ -5797,7 +5799,7 @@ int REACT_GEM::WriteReloadGem()
 	string rank_str;
 	rank_str = "0";
 #if defined(USE_PETSC)  //|| defined(other parallel libs)//03.3012. WW
-	long rank, msize;
+	int rank, msize;
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &msize);
 	stringstream ss (stringstream::in | stringstream::out);
