@@ -242,7 +242,11 @@ REACT_GEM::~REACT_GEM ( void )
 		delete [] mol_phase_pi;           // this we need for kinetics
 		delete [] omega_components_pi;    // this we need for kinetics
 		delete [] dmdt_pi;
-
+#if defined(USE_PETSC)
+      delete [] gem_glob_buff;
+      delete [] gem_glob_x0;
+      delete [] gem_glob_x1;
+#endif 
 		m_flow_pcs = NULL;
 		m_kin.clear();
 	}
@@ -1572,7 +1576,6 @@ short REACT_GEM::SetPressureValue_MT ( long node_Index, int timelevel, double pr
 		case 2:
 			m_pcs = PCSGet ( "LIQUID_FLOW" );
 			indx = m_pcs->GetNodeValueIndex ( "PRESSURE1" ) + timelevel;
-
 			m_pcs->SetNodeValue ( node_Index, indx, pressure );
 			break;
 		case 3:
@@ -1587,6 +1590,7 @@ short REACT_GEM::SetPressureValue_MT ( long node_Index, int timelevel, double pr
 			m_pcs = PCSGet ( "MULTI_PHASE_FLOW" );
 			indx = m_pcs->GetNodeValueIndex ( "PRESSURE1" ) + timelevel;
 			m_pcs->SetNodeValue ( node_Index, indx, pressure );
+                        break;
 		default:
 #if defined(USE_PETSC)
 			if ( myrank == 0 /*should be set to root*/ )
@@ -3380,7 +3384,7 @@ void REACT_GEM::CalculateChargeFromGEMS (long in, TNode* m_Node)
     }
 //    cout << mycharge[nIC-1] << "\n";
     //finished
-
+    delete []mycharge;
     return ;
 }
 
