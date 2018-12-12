@@ -22,6 +22,7 @@
 #include "rf_mmp_new.h" // this is for class CMediumProperties, what else???
 #include "rf_pcs.h"
 #include "rf_pcs.h"
+#include "rfmat_cp.h"
 
 #ifdef GEM_REACT
 #include "rf_REACT_GEM.h"
@@ -32,6 +33,7 @@
 
 #include "Output.h"
 #include "FileTools.h"
+#include <rfmat_cp.h>
 
 using namespace std;
 
@@ -800,7 +802,8 @@ void LegacyVtkInterface::WriteVTKCellData(fstream &vtk_file) const
 			vtk_file << " " << ele->getNodeIndices()[j];
 
 		vtk_file << "\n";
-	}
+	}                // get component properties 
+
 	vtk_file << "\n";
 
 	// write cell types
@@ -1123,35 +1126,84 @@ void LegacyVtkInterface::WriteVTKDataArrays(fstream &vtk_file) const
 		}
 		//--------------------------------------------------------------------
 		ele_value_index_vector.clear();
-	}
-	//======================================================================
-	// MAT data
-	if (!_materialPropertyArrayNames.empty())
-	{
-		int mmp_id = -1;
-		if (_materialPropertyArrayNames[0].compare("POROSITY") == 0)
-			mmp_id = 0;
-		// Let's say porosity
-		// write header for cell data
-		if (!wroteAnyEleData)
-			vtk_file << "CELL_DATA " << _mesh->ele_vector.size() << "\n";
-		wroteAnyEleData = true;
-		for (size_t i = 0; i < _mesh->ele_vector.size(); i++)
-		{
-			MeshLib::CElem* ele = _mesh->ele_vector[i];
-			double mat_value = 0.0;
-			switch (mmp_id)
-			{
-			case 0:
-				mat_value = mmp_vector[ele->GetPatchIndex()]->Porosity(i, 0.0);
-				break;
-			default:
-				cout << "COutput::WriteVTKValues: no MMP values specified" << "\n";
-				break;
-			}
-			vtk_file << mat_value << "\n";
-		}
-	}
+        }
+       //======================================================================
+       // MAT data
+       int mmp_id = -1;
+       if (!_materialPropertyArrayNames.empty())
+       {
+           if (_materialPropertyArrayNames[0].compare("POROSITY") == 0)
+               mmp_id = 0;
+           // Let's say porosity
+           // write header for cell data
+           if (!wroteAnyEleData)
+               vtk_file << "CELL_DATA " << _mesh->ele_vector.size() << "\n";
+           wroteAnyEleData = true;
+           for (size_t i = 0; i < _mesh->ele_vector.size(); i++)
+           {
+               MeshLib::CElem* ele = _mesh->ele_vector[i];
+               double mat_value = 0.0;
+               switch (mmp_id)
+               {
+               case 0:
+                   mat_value = mmp_vector[ele->GetPatchIndex()]->Porosity(i, 0.0);
+                   break;
+               default:
+                   cout << "COutput::WriteVTKValues: no MMP values specified" << "\n";
+                   break;
+               }
+               vtk_file << mat_value << "\n";
+           }
+       }
+        /***************************************************************************/
+        // KG44 12.12.2018 quick hack to give out effective diffusion coefficients for all components....ALWAYS!!!!
+        mmp_id = 0;
+        int j=-1; // number of transport process
+        CRFProcess* m_pcs = NULL;
+
+        for ( size_t k = 0; k < pcs_vector.size(); k++ )
+        {
+            m_pcs = pcs_vector[k];
+            if ( m_pcs->getProcessType() == FiniteElement::MASS_TRANSPORT )
+            {
+                j=j+1; // update j
+                int component = m_pcs->pcs_component_number;
+                CompProperties* m_cp = cp_vec[component];
+                // write header for cell data
+                if (!wroteAnyEleData)
+                    vtk_file << "CELL_DATA " << _mesh->ele_vector.size() << "\n";
+                wroteAnyEleData = true;
+
+                vtk_file << "SCALARS " << "De_" << cp_vec[component]->compname <<" float 1" << "\n";
+                vtk_file << "LOOKUP_TABLE default" << "\n";
+
+                for (size_t i = 0; i < _mesh->ele_vector.size(); i++) // loop over all elements
+                {
+                    MeshLib::CElem* ele = _mesh->ele_vector[i];
+                    int group = ele->GetPatchIndex();
+                    CMediumProperties *m_mat_mp = mmp_vector[group];
+                    double mat_value = 0.0;
+                    switch (mmp_id)
+                    {
+                    case 0:
+                    {
+                        //get porosity of the element
+                        double porosity = m_mat_mp->Porosity(ele->GetIndex(), 1); // CB Now provides also heterogeneous porosity, model 11
+                        //get diffusion coefficient ...taken from CalcELEMassFluxes
+                        double Dm = m_cp->CalcDiffusionCoefficientCP(0, 0, m_pcs);
+                        double tortuosity = m_mat_mp->TortuosityFunction(ele->GetIndex(),0,0);
+                        mat_value = Dm * tortuosity * porosity;// Dm_eff = Dm * tortuosity * porosity;
+                        break;
+                    }
+                    default:
+                        cout << "COutput::WriteVTKValues: problem writing diffusion coefficients" << "\n";
+                        break;
+                    }
+                    vtk_file << mat_value << "\n";
+                }
+            } // end if MASS_Transport
+        } // end loop over all processes
+/******************************************************************/
 	// PCH: Material groups from .msh just for temparary purpose
 	if (mmp_vector.size() > 1)
 	{
