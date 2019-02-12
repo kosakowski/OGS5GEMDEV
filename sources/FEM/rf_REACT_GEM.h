@@ -194,7 +194,8 @@ public:
     int flag_calculate_boundary_nodes;          // set to zero to avoid precipitation/dissolution (porosity change) at boundary nodes
     int gem_pressure_flag;                      //shall we give a constant user defined pressure to gems?
     int flag_transport_b;                       //1: transport only dissolved components of b vector; 0: transport full speciation
-    int flag_hayekit;                           // flag to force behaviour for hayekit benchmark...fluid phase is scaled by scaling water only and not solutes
+    int flag_hayekit;                           // flag to force behaviour for hayekit benchmark...0: fluid phase is scaled by scaling water only and not solutes
+    int flag_scale_fluidvolume_to_porosity;     // introduced for CEBAMA benchmark: scale fluid volume to porosity, even if porosity coupling is switched off
     long m_max_failed_nodes; ///maximum number of failed nodes
     int flag_disable_gems;             //disable gems calculations in main loop ..not for initialization!
     bool *m_calculate_gems;     // size: nNodes: =1 (default) =0 (switch off calculation for specific nodes)

@@ -111,6 +111,7 @@ REACT_GEM::REACT_GEM ( void )
 	flag_disable_gems = 0;                    // always calculate gems
 	flag_gem_sia = 0;                         // default: do not allow GEM_SIA
 	flag_hayekit = 1;                         // default is to use scaling for hayekit: 1: remove solvent (water only) in order to scale volume....0: remove complete solution, including solutes
+	flag_scale_fluidvolume_to_porosity = 0; // introduced for CEBAMA benchmark: scale fluid volume to porosity even if porosity coupling is switched off
 	// flag for different iterative scheme
 	// 0 - sequential non-iterative scheme
 	// 1 - standard iterative scheme
@@ -1148,12 +1149,7 @@ short REACT_GEM::SetReactInfoBackMassTransport ( int timelevel )
 		if ( flag_coupling_hydrology > 0 && !m_boundary[in] )
 			REACT_GEM::SetSourceSink_MT ( in, dt /*in sec*/ );
 	}
-	// kg44 31.01.2014 standard mpi non supported anymore
-//#if defined(USE_MPI_GEMS)
-//	if ( flag_coupling_hydrology > 0 )
-//		m_flow_pcs->SetSTWaterGemSubDomain ( myrank ); // necessary for domain decomposition
 
-//#endif
 	if ( flag_porosity_change > 0 )
 		ConvPorosityNodeValue2Elem ( 0 );                   // old timestep :copy current values to old timestep before updating porosity
 	if ( flag_porosity_change > 0 )
@@ -2743,6 +2739,23 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
             }
             m_fluid_volume[in] *= skal_faktor; //if we scale b-vector for water we also have to change fluid volume!
         }
+        else if (!flag_porosity_change && flag_scale_fluidvolume_to_porosity)  //scale liquid phase always to porosity, even if porosity is not changing -> for CEBAMA benchmark: mimics behaviour of LMA based codes that work with concentrations  
+        {
+                     // scale in xDC (for output only)
+            for ( j=0 ; j <= idx_water; j++ )
+            {
+                i = in * nDC + j;
+                m_xDC[i] *= skal_faktor;     //newly scaled xDC including water /excluding rest
+            }
+            // these changes are for each entry in b Vector
+            for ( j = 0; j < nIC; j++ )
+            {
+                i = in * nIC + j;
+		ii = in * nPS * nIC + 0 * nIC + j; // corresponding index of first phase (fluid) for m_bPS
+                m_bPS[ii] *= skal_faktor; // completely newly scaled first phase ...this is default!
+            }
+            m_fluid_volume[in] *= skal_faktor; //if we scale b-vector for water we also have to change fluid volume! -> it should be now equal to porosity for fully saturated conditions   
+        }
         else
         {
             // do nothing! no change in phase amount
@@ -3523,6 +3536,16 @@ ios::pos_type REACT_GEM::Read ( std::ifstream* gem_file )
 			// subkeyword found
 			in.str ( GetLineFromFile1 ( gem_file ) );
 			in >> flag_hayekit;
+			in.clear();
+			continue;
+		}
+		// ......................................................
+		/// Key word "$FLAG_FLUIDVOLUME_EQUAL_POROSITY": force scaling of water volume to porosity even if porosity change is disabled
+		if ( line_string.find ( "$FLAG_FLUIDVOLUME_EQUAL_POROSITY" ) != string::npos )
+		{
+			// subkeyword found
+			in.str ( GetLineFromFile1 ( gem_file ) );
+			in >> flag_scale_fluidvolume_to_porosity;
 			in.clear();
 			continue;
 		}
