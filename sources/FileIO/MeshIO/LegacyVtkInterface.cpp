@@ -1188,9 +1188,11 @@ void LegacyVtkInterface::WriteVTKDataArrays(fstream &vtk_file) const
                     case 0:
                     {
                         //get porosity of the element
-                        double porosity = m_mat_mp->Porosity(ele->GetIndex(), 1); // CB Now provides also heterogeneous porosity, model 11
+                        const size_t index = ele->GetIndex();
+                        const double theta = 1;
+                        double porosity = m_mat_mp->Porosity(index, theta); // CB Now provides also heterogeneous porosity, model 11
                         //get diffusion coefficient ...taken from CalcELEMassFluxes
-                        double Dm = m_cp->CalcDiffusionCoefficientCP(0, 0, m_pcs);
+                        double Dm = m_cp->CalcDiffusionCoefficientCP(index, theta, m_pcs);
                         double tortuosity = m_mat_mp->TortuosityFunction(ele->GetIndex(),0,0);
                         mat_value = Dm * tortuosity * porosity;// Dm_eff = Dm * tortuosity * porosity;
                         break;
