@@ -2739,7 +2739,7 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
             }
             m_fluid_volume[in] *= skal_faktor; //if we scale b-vector for water we also have to change fluid volume!
         }
-        else if (!flag_porosity_change && flag_scale_fluidvolume_to_porosity)  //scale liquid phase always to porosity, even if porosity is not changing -> for CEBAMA benchmark: mimics behaviour of LMA based codes that work with concentrations  
+        else if (!flag_porosity_change && flag_scale_fluidvolume_to_porosity && !flag_hayekit )  //scale liquid phase always to porosity, even if porosity is not changing -> for CEBAMA benchmark: mimics behaviour of LMA based codes that work with concentrations  
         {
                      // scale in xDC (for output only)
             for ( j=0 ; j <= idx_water; j++ )
@@ -2756,9 +2756,24 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
             }
             m_fluid_volume[in] *= skal_faktor; //if we scale b-vector for water we also have to change fluid volume! -> it should be now equal to porosity for fully saturated conditions   
         }
+        else if (!flag_porosity_change && flag_scale_fluidvolume_to_porosity && flag_hayekit ) 
+        {
+            i = in * nDC + idx_water;// scale only water
+             
+           // old_h2o=m_xDC[i];
+            m_xDC[i] *= skal_faktor;
+           // new_h2o=m_xDC[i];
+           // diff_h2o=old_h2o-new_h2o;// will be reused for scaling b_vector
+            // 23.Mar2017: new scaling based on H2O only....H,O in complexes, dissolved gases are ignored
+            ii = in * nPS * nIC + idx_hydrogen; // corresponding index of first phase (fluid) for m_bPS
+            m_bPS[ii] *= skal_faktor; //
+            ii = in * nPS * nIC + idx_oxygen; // corresponding index of first phase (fluid) for m_bPS
+            m_bPS[ii] *= skal_faktor; // 
+	    m_fluid_volume[in] *= skal_faktor; //if we scale b-vector for water we also have to change fluid volume! -> should be equal to porosity for fully saturated conditions
+        }
         else
         {
-            // do nothing! no change in phase amount
+          // do nothing   
         }
 
         // here we do not need to account for different flow processes ....
