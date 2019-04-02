@@ -507,12 +507,12 @@ FINISH: FIN( EPS, M, N, STR, NMB, BASE, UND, UP, U, AA, A, Q, &ITER);
 /// Main call to GEM IPM calculation of equilibrium state in MULTI
 /// (with internal re-scaling of the system).
 //
-double TMulti::CalculateEquilibriumState( long int typeMin, long int& NumIterFIA, long int& NumIterIPM )
+double TMulti::CalculateEquilibriumState(  long int& NumIterFIA, long int& NumIterIPM )
 {
  // const char *key;
   double ScFact=1.;
 
-  long int KMretCode = 0;
+//  long int KMretCode = 0;
 //#ifndef IPMGEMPLUGIN
 //  key = rt[RT_SYSEQ].UnpackKey();
 //#else
@@ -532,16 +532,16 @@ double TMulti::CalculateEquilibriumState( long int typeMin, long int& NumIterFIA
   {
     if( pm.ITau < 0 || pm.pKMM != 1 )
     {
-        KMretCode = CalculateKinMet( LINK_TP_MODE ); // Re-create TKinMet class instances
+      /*  KMretCode = */ CalculateKinMet( LINK_TP_MODE ); // Re-create TKinMet class instances
         pm.ITau = 0; pm.pKMM = 1;
-        KMretCode = CalculateKinMet( LINK_IN_MODE ); // Initial state calculation of rates
+      /*  KMretCode = */ CalculateKinMet( LINK_IN_MODE ); // Initial state calculation of rates
     }
 //    if( pm.ITau == 0 )
 //    {
 //        KMretCode = CalculateKinMet( LINK_IN_MODE ); // Initial state calculation of rates
 //    }
     else if( pm.ITau >= 0 ) {
-        KMretCode = CalculateKinMet( LINK_PP_MODE ); // Calculation of rates and metast.constraints at time step
+      /*  KMretCode = */ CalculateKinMet( LINK_PP_MODE ); // Calculation of rates and metast.constraints at time step
     }
 //  switch(KMretCode)
 //  {
@@ -878,10 +878,10 @@ void TMulti::InitalizeGEM_IPM_Data( ) // Reset internal data formerly MultiInit(
     Alloc_uDD( pm.N );      // Added 06.05.2011 DK
 
   // calculate mass of the system
-   pm.MBX = 0.0;
+  pm.MBX = 0.0;
   for(int i=0; i<pm.N; i++ )
-   pm.MBX += pm.B[i] * pm.Awt[i];
-   pm.MBX /= 1000.;
+     pm.MBX += pm.B[i] * pm.Awt[i];
+  pm.MBX /= 1000.;
 
    RescaleToSize( true );  // Added to set default cutoffs/inserts 30.08.2009 DK
 
@@ -1086,10 +1086,11 @@ void TMulti::DC_LoadThermodynamicData(TNode* aNa ) // formerly CompG0Load()
 {
   long int j, jj, k, xTP, jb, je=0;
   double Go, Gg=0., Ge=0., Vv, h0=0., S0 = 0., Cp0= 0., a0 = 0., u0 = 0.;
-  double T, TK, P, PPa;
+  double TK, P, PPa;
 
 #ifndef IPMGEMPLUGIN
   TNode* na;
+  double T;
   if( aNa )
    na = aNa;// for reading GEMIPM files task
   else
@@ -1104,11 +1105,13 @@ void TMulti::DC_LoadThermodynamicData(TNode* aNa ) // formerly CompG0Load()
 #endif
   DATACH  *dCH = na->pCSD();
   P = PPa/bar_to_Pa;
-  T = TK-C_to_K;
 
 #ifndef IPMGEMPLUGIN
+
   if( !aNa )
-  {  TMTparm::sm->GetTP()->curT=T;
+  {
+     double T = TK-C_to_K;
+     TMTparm::sm->GetTP()->curT=T;
      TMTparm::sm->GetTP()->curP=P;
    }
 #endif

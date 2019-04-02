@@ -6295,7 +6295,6 @@ void REACT_GEM::WriteVTKGEMValues ( fstream &vtk_file )
 	//....................................................................
 	for ( j = 0; j < nNodes; j++ )
 		vtk_file << " " <<  m_co2_transport[j] << "\n";
-
 }
 
 /** gems_worker:
@@ -7218,6 +7217,23 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
 	      m_phase_volume[in*nPH+j]=m_Node->Ph_Volume(j);
 	    }
         }
+// DEBUG output 1 april 2019
+/*        if (in == 0)
+        {
+                stringstream ss (stringstream::in | stringstream::out);
+                ss.clear();
+                ss.str("");
+                ss << "_node-"<<in<<"_time-"<< aktueller_zeitschritt;
+                string rank_str;
+                rank_str = ss.str();
+                ss.clear();
+                // write out a separate time stamp into file
+                string m_file_namet = "DBR/gems_dbr_domain-" + rank_str + ".dat";
+
+                m_Node->GEM_write_dbr ( m_file_namet.c_str() );
+        }       
+*/        
+// debug output end 
         // do stuff for time stepping
         subtime +=dtchem; // increase subtime first, as kinetic step is finished successfully
         ii+=1; //increase counter for successfull time steps!

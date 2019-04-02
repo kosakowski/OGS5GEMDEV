@@ -4,7 +4,7 @@
 /// \file ms_multi_format.cpp
 /// Implementation of writing/reading IPM, DCH and DBR text I/O files
 //
-// Copyright (c) 2006-2013 S.Dmytriyeva,D.Kulik
+// Copyright (c) 2006-2018 S.Dmytriyeva,D.Kulik
 // <GEMS Development Team, mailto:gems2.support@psi.ch>
 //
 // This file is part of the GEMS3K code for thermodynamic modelling
@@ -33,7 +33,7 @@
 #endif
 
 //bool _comment = true;
-const char *_GEMIPM_version_stamp = " GEMS3K v.3.3.4 c.8df0cc1 ";
+const char *_GEMIPM_version_stamp = " GEMS3K v.3.4.5 c.39b782e ";
 
 //===================================================================
 // in the arrays below, the first field of each structure contains a string
@@ -721,13 +721,13 @@ void TMulti::from_text_file_gemipm( const char *path,  DATACH  *dCH )
     pm.ICC[ii] =  dCH->ccIC[ii];
   }
 
-if( fabs(dCH->DCmm[0]) < 1e-32 )  // Restore DCmm if skipped from the DCH file
-  for( long int jj=0; jj< dCH->nDC; jj++ )  // Added by DK on 03.03.2007
-  {
-    dCH->DCmm[jj] = 0.0;
-    for( ii=0; ii< dCH->nIC; ii++ )
-       dCH->DCmm[jj] += dCH->ICmm[ii]*dCH->A[jj*dCH->nIC+ii];
-  }
+  if( fabs(dCH->DCmm[0]) < 1e-32 )  // Restore DCmm if skipped from the DCH file
+      for( long int jj=0; jj< dCH->nDC; jj++ )  // Added by DK on 03.03.2007
+      {
+          dCH->DCmm[jj] = 0.0;
+          for( ii=0; ii< dCH->nIC; ii++ )
+              dCH->DCmm[jj] += dCH->ICmm[ii]*dCH->A[jj*dCH->nIC+ii];
+      }
 
   for( ii=0; ii< dCH->nDC; ii++ )
   {
