@@ -5535,11 +5535,11 @@ int REACT_GEM::CalcLimits ( long in,double deltat, TNode* m_Node)
                     // kinetic_model==2 or 7  only dissolution is controlled (no precipitation allowed)
                     // kinetic_mocel==3 only precipitation is copntroleld (no dissolution allowed)
                     // these cases are not possible with reaktoro (as implemented..needs change?)
-                            if ((m_kin[ii].kinetic_model == 2) && (omega_phase[in * nPH + k] >1.0) )// dissolution only 
+                            if ((m_kin[ii].kinetic_model == 2) && (dummy>0.0) )// dissolution only 
 			    {
 			      dummy=0.0;
 			    }
-                            if ((m_kin[ii].kinetic_model == 3) && (omega_phase[in * nPH + k] <1.0)) // precipitation only 
+                            if ((m_kin[ii].kinetic_model == 3) && (dummy<0.0)) // precipitation only 
 			    {
 			      dummy=0.0;
 			    }
