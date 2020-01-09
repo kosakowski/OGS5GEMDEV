@@ -1151,9 +1151,10 @@ short REACT_GEM::SetReactInfoBackMassTransport ( int timelevel )
 	}
 
 	if ( flag_porosity_change > 0 )
+        {
 		ConvPorosityNodeValue2Elem ( 0 );                   // old timestep :copy current values to old timestep before updating porosity
-	if ( flag_porosity_change > 0 )
 		ConvPorosityNodeValue2Elem ( timelevel );                   // new timestep :update element porosity and push back values
+        }
 	return 0;
 }
 
