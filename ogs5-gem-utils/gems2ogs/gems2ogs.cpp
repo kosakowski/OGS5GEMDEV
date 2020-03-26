@@ -125,7 +125,8 @@ void MyFrame::OnOpenDCH ( wxCommandEvent &event )
 		}
 
 		// Initializing GEM
-		m_Node->GEM_init ( path.mb_str() , dbrfiles_lst_name, mp_nodeTypes , false );
+		//m_Node->GEM_init ( path.mb_str() , dbrfiles_lst_name, mp_nodeTypes , false );
+		m_Node->GEM_init (dbrfiles_lst_name);
 
 		// Getting direct access to DataCH structure in GEMIPM2K memory
 		dCH = m_Node->pCSD();
