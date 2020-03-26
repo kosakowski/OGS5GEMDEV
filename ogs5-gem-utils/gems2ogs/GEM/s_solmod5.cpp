@@ -950,7 +950,7 @@ double TPitzer::setvalue(long int ii, int Gex_or_Sex)
         else if( NPcoef == 8 ){
             value = G_ex_par8(ii);
         }
-        else Error( "", "PitzerHMW: Invalid number of coefficients to describe T dependence");
+        else Error( "PTcalc", "PitzerHMW: Invalid number of coefficients to describe T dependence");
     }
     else if(Gex_or_Sex==1)
     {
@@ -962,7 +962,7 @@ double TPitzer::setvalue(long int ii, int Gex_or_Sex)
         {
             value = S_ex_par8(ii);
         }
-        else Error( "", "PitzerHMW: Invalid number of coefficients to describe T dependence");
+        else Error( "PTcalc", "PitzerHMW: Invalid number of coefficients to describe T dependence");
     }
     else if(Gex_or_Sex==2)
     {
@@ -974,9 +974,9 @@ double TPitzer::setvalue(long int ii, int Gex_or_Sex)
         {
         value = CP_ex_par8(ii);
         }
-        else Error( "", "PitzerHMW: Invalid number of coefficients to describe T dependence");
+        else Error( "PTcalc", "PitzerHMW: Invalid number of coefficients to describe T dependence");
     }
-    else Error ( "", "PitzerHMW: Only first and second temperature derivatives of activity function are implemented" );
+    else Error ( "PTcalc", "PitzerHMW: Only first and second temperature derivatives of activity function are implemented" );
 
     return value;
 }
@@ -1018,7 +1018,7 @@ void TPitzer::PTcalc( int Gex_or_Sex )
                 }
                 else
                     ia = getIa( aIPx[ii * MaxOrd + 1] );
-                ErrorIf( ia<0||ic<0, "", "Cation and anion index needed here"  );
+                ErrorIf( ia<0||ic<0, "PTcalc", "Cation and anion index needed here"  );
                 Bet0[ic][ia] = setvalue(ii, Gex_or_Sex);
                 break;
 
@@ -1031,7 +1031,7 @@ void TPitzer::PTcalc( int Gex_or_Sex )
                 }
                 else
                     ia = getIa( aIPx[ii * MaxOrd + 1] );
-                ErrorIf( ia<0||ic<0, "", "Cation and anion index needed here"  );
+                ErrorIf( ia<0||ic<0, "PTcalc", "Cation and anion index needed here"  );
                 Bet1[ic][ia] = setvalue(ii, Gex_or_Sex);
                 break;
 
@@ -1044,7 +1044,7 @@ void TPitzer::PTcalc( int Gex_or_Sex )
                 }
                 else
                     ia = getIa( aIPx[ii * MaxOrd + 1] );
-                ErrorIf( ia<0||ic<0, "", "Cation and anion indexes needed here"  );
+                ErrorIf( ia<0||ic<0, "PTcalc", "Cation and anion indexes needed here"  );
 
                 Bet2[ic][ia] = setvalue(ii, Gex_or_Sex);
                 break;
@@ -1058,7 +1058,7 @@ void TPitzer::PTcalc( int Gex_or_Sex )
                 }
                 else
                     ia = getIa( aIPx[ii * MaxOrd + 1] );
-                ErrorIf( ia<0||ic<0, "", "Cation and anion indexes needed here"  );
+                ErrorIf( ia<0||ic<0, "PTcalc", "Cation and anion indexes needed here"  );
 
                 Cphi[ic][ia] = setvalue(ii, Gex_or_Sex);
                 break;
@@ -1072,7 +1072,7 @@ void TPitzer::PTcalc( int Gex_or_Sex )
                 }
                 else
                     ic = getIc( aIPx[ii * MaxOrd + 1] );
-                ErrorIf( in<0||ic<0, "", "Cation and neutral species indexes needed here"  );
+                ErrorIf( in<0||ic<0, "PTcalc", "Cation and neutral species indexes needed here"  );
 
                 Lam[in][ic] = setvalue(ii, Gex_or_Sex);
                 break;
@@ -1086,7 +1086,7 @@ void TPitzer::PTcalc( int Gex_or_Sex )
                 }
                 else
                     ia = getIa( aIPx[ii * MaxOrd + 1] );
-                ErrorIf( in<0||ia<0, "", "Parameters must be anion and neutral species index"  );
+                ErrorIf( in<0||ia<0, "PTcalc", "Parameters must be anion and neutral species index"  );
 
                 Lam1[in][ia] = setvalue(ii, Gex_or_Sex);
                 break;
@@ -1094,7 +1094,7 @@ void TPitzer::PTcalc( int Gex_or_Sex )
             case Theta_:
                 ic = getIc( aIPx[ii * MaxOrd + 0] );
                 i = getIc( aIPx[ii * MaxOrd + 1] );
-                ErrorIf( i<0||ic<0, "", "Only indexes of cations needed here"  );
+                ErrorIf( i<0||ic<0, "PTcalc", "Only indexes of cations needed here"  );
 
                 Theta[ic][i] = setvalue(ii, Gex_or_Sex);
                 break;
@@ -1102,7 +1102,7 @@ void TPitzer::PTcalc( int Gex_or_Sex )
             case Theta1_:
                 ia = getIa( aIPx[ii * MaxOrd + 0] );
                 i = getIa( aIPx[ii * MaxOrd + 1] );
-                ErrorIf( i<0||ia<0, "", "Only indexes of anions needed here"  );
+                ErrorIf( i<0||ia<0, "PTcalc", "Only indexes of anions needed here"  );
 
                 Theta1[ia][i] = setvalue(ii, Gex_or_Sex);
                 break;
@@ -1126,7 +1126,7 @@ void TPitzer::PTcalc( int Gex_or_Sex )
                     else
                         ia = getIa( aIPx[ii * MaxOrd + 2] );
                 }
-                ErrorIf( ic<0||ia<0||i<0, "", "Index of anion and 2 indexes of cations needed here"  );
+                ErrorIf( ic<0||ia<0||i<0, "PTcalc", "Index of anion and 2 indexes of cations needed here"  );
 
                 Psi[ic][i][ia] = setvalue(ii, Gex_or_Sex);
                 break;
@@ -1150,7 +1150,7 @@ void TPitzer::PTcalc( int Gex_or_Sex )
                     else
                         ic = getIc( aIPx[ii * MaxOrd + 2] );
                 }
-                ErrorIf( ic<0||ia<0||i<0, "", "Indexes of 2 anions and one cation needed here"  );
+                ErrorIf( ic<0||ia<0||i<0, "PTcalc", "Indexes of 2 anions and one cation needed here"  );
 
                 Psi1[ia][i][ic] = setvalue(ii, Gex_or_Sex);
                 break;
@@ -1177,7 +1177,7 @@ void TPitzer::PTcalc( int Gex_or_Sex )
                     if( ia < 0 )
                         ia = getIa( aIPx[ii * MaxOrd + 1] );
                 }
-                ErrorIf( ic<0||ia<0||in<0, "",
+                ErrorIf( ic<0||ia<0||in<0, "PTcalc",
                         "Index of neutral species, index of cation and index of anion needed here"  );
                 Zeta[in][ic][ia] = setvalue(ii, Gex_or_Sex);
                 break;
@@ -1631,7 +1631,7 @@ double TPitzer::lnGammaM( long int M, double DH_term  )
     long int a, n, c1, a1;
     double GM1, GM2, alp, alp1, g1, g2, B2, C, x_alp,
                 GM3, GM3a, Phi, z, z1, Q, GM4, GM5a, GM5, GM6a, GM6, GM;
-    double actcoeffM;
+    //double actcoeffM;
 
     // Calculate GM1
     GM1 = (zc[M]*zc[M])*Ffac;
@@ -1714,7 +1714,7 @@ double TPitzer::lnGammaM( long int M, double DH_term  )
     // Term GM
     GM = GM1+GM2+GM3+GM4+GM5+GM6;
 
-    actcoeffM = exp(GM);
+    //actcoeffM = exp(GM);
     return GM;
 }
 
@@ -1730,7 +1730,7 @@ double TPitzer::lnGammaX( long int X, double DH_term )
     double GX4;
     double GX5a, GX5;
     double GX6a, GX6;
-    double GX, actcoeffX;
+    double GX;//, actcoeffX;
 
     // Term GX1 (Pitzer-Toughreact Report 2006, equation A4)
     GX1=(za[X]*za[X])*Ffac;
@@ -1808,7 +1808,7 @@ double TPitzer::lnGammaX( long int X, double DH_term )
     // Term GX
     GX = GX1+GX2+GX3+GX4+GX5+GX6;
 
-    actcoeffX = exp(GX);
+    //actcoeffX = exp(GX);
 
     return GX;
 }
@@ -1818,7 +1818,7 @@ double TPitzer::lnGammaX( long int X, double DH_term )
 double TPitzer::lnGammaN( long int N )
 {
     long int c, a;
-    double GN1, GN2, GN3, GN, actcoeffN;
+    double GN1, GN2, GN3, GN;//, actcoeffN;
 
     // Term GN1
     GN1 = 0.;
@@ -1843,7 +1843,7 @@ double TPitzer::lnGammaN( long int N )
     // Term GN
     GN = GN1+GN2+GN3;
 
-    actcoeffN = exp(GN);
+    //actcoeffN = exp(GN);
 
   return GN;
 }
@@ -1864,7 +1864,7 @@ double TPitzer::McInnes_KCl( )
     double B0_KOH = McI_PT_array[3];
     double B1_KOH = McI_PT_array[4];
     double Cphi_KOH = McI_PT_array[5];
-    double B0_HCl = McI_PT_array[6];
+    //double B0_HCl = McI_PT_array[6];
     double B1_HCl = McI_PT_array[7];
     double Cphi_HCl = McI_PT_array[8];
     double Theta_KH = McI_PT_array[9];
@@ -1874,7 +1874,7 @@ double TPitzer::McInnes_KCl( )
 
     double C_KCl, C_KOH, C_HCl;
     double alp = 2.0;
-    double B_KCl, B_KOH, B_HCl;
+    double B_KCl, B_KOH;//, B_HCl;
     double g;
     long int M, N, X;
 
@@ -1890,7 +1890,7 @@ double TPitzer::McInnes_KCl( )
     g = 2.*(1.-(1.+v)*exp(-v))/(v*v);
     B_KCl = B0_KCl + B1_KCl*g;
     B_KOH = B0_KOH + B1_KOH*g;
-    B_HCl = B0_HCl + B1_HCl*g;
+    //B_HCl = B0_HCl + B1_HCl*g;
 
     // Calculation of molalities from Ionic Strength of Solution (pH fixed at 7)
     mH = 1.0e-7;
@@ -2234,12 +2234,12 @@ long int TEUNIQUAC::PTparam()
 long int TEUNIQUAC::MixMod()
 {
     long int j, i, l, k, w;
-    double Mw, Xw, b, RR, QQ, K, L, M, gamDH, gamC, gamR, lnGam, Gam;
+    double Mw, /*Xw,*/ b, RR, QQ, K, L, M, gamDH, gamC, gamR, lnGam;//, Gam;
     b = 1.5; Mw = 0.01801528;
 
     // get index of water (assumes water is last species in phase)
     w = NComp - 1;
-    Xw = x[w];
+    //Xw = x[w];
 
     // calculation of ionic strength
     IonicStrength();
@@ -2290,7 +2290,7 @@ long int TEUNIQUAC::MixMod()
             lnGamma[j] = lnGam;
 
             // write debug results
-            Gam = exp(lnGam);
+            //Gam = exp(lnGam);
             gammaDH[j] = gamDH;
             gammaC[j] = gamC;
             gammaR[j] = gamR;
@@ -2321,7 +2321,7 @@ long int TEUNIQUAC::MixMod()
             lnGamma[j] = lnGam;
 
             // write debug results
-            Gam = exp(lnGam);
+            //Gam = exp(lnGam);
             gammaDH[j]=gamDH;
             gammaC[j] = gamC;
             gammaR[j] = gamR;
@@ -2335,15 +2335,15 @@ long int TEUNIQUAC::MixMod()
 long int TEUNIQUAC::ExcessProp( double *Zex )
 {
     long int j, i, w;
-    double Mw, Xw, b, phiti, phthi, RR, QQ, N, TPI, tpx, TPX,
+    double Mw, /*Xw,*/ b, phiti, phthi, RR, QQ, N, TPI, tpx, TPX,
                 dtpx, DTPX, con;
-    double gDH, gC, gR, hR, cpR, gCI, gRI, gCX, gRX, dg, d2g, dgRI, d2gRI,
+    double gDH, gCI, gRI, gCX, gRX, dg, d2g, dgRI, d2gRI,
                 dgRX, d2gRX, dgDH, d2gDH, dgDHdP;
     b = 1.5; Mw = 0.01801528;
 
     // get index of water (assumes water is last species in phase)
     w = NComp - 1;
-    Xw = x[w];
+   // Xw = x[w];
 
     // calculation of ionic strength
     IonicStrength();
@@ -2364,7 +2364,6 @@ long int TEUNIQUAC::ExcessProp( double *Zex )
 
     // calculation of bulk phase excess properties
     Gex = 0.0; Hex = 0.0; Sex = 0.0; CPex = 0.0; Vex = 0.0;
-    gC = 0.0; gR = 0.0; hR = 0.0; cpR = 0.0;
 
     // infinite dilution part
     gCI = 0.; gRI = 0.; dgRI = 0.; d2gRI = 0.;

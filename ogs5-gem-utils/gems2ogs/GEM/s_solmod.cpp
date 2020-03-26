@@ -78,14 +78,18 @@ TSolMod::TSolMod( SolutionData *sd ):
     lnGamConf = sd->arlnCnft;  // new double[NComp];
     lnGamRecip = sd->arlnRcpt; // new double[NComp];
     lnGamEx = sd->arlnExet;    // new double[NComp];
+    lnGamCorr = sd->arlnCnft;  // new double[NComp];
     lnGamDQF = sd->arlnDQFt;   // new double[NComp];
+    CTerm = sd->arCTermt;     // Coulombic terms (new)
    // Arrays for lnGamma components - should we zero off?
     for (long int i=0; i<NComp; i++)
     {
        lnGamConf[i] = 0.0;
        lnGamRecip[i] = 0.0;
        lnGamEx[i] = 0.0;
+       lnGamCorr[i] = 0.0;
        lnGamDQF[i] = 0.0;
+       CTerm[i] = 0.0;
     }
     // initialize phase properties
     Gex = 0.0; Hex = 0.0; Sex = 0.0; CPex = 0.0; Vex = 0.0; Aex = 0.0; Uex = 0.0;
@@ -120,6 +124,7 @@ TSolMod::TSolMod( long int NSpecies, char Mod_Code,  double T_k, double P_bar ):
     lnGamConf = 0;
     lnGamRecip = 0;
     lnGamEx = 0;
+    CTerm = 0;
 
     // initialize phase properties
     Gex = 0.0; Hex = 0.0; Sex = 0.0; CPex = 0.0; Vex = 0.0; Aex = 0.0; Uex = 0.0;
@@ -142,9 +147,6 @@ TSolMod::~TSolMod()
    if( aIP )        // Bugfix 07.12.2010 DK
       delete[] aIP;
 
-//   delete[] lnGamConf;
-//   delete[] lnGamRecip;
-//   delete[] lnGamEx;
    free_multisite();
 }
 

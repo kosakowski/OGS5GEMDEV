@@ -29,7 +29,7 @@
 
 //#include "s_fgl.h"
 
-// const int   MAXDCNAME = 16, MAXPHASENAME = 16, MST =   6,
+// const int   MAXDCNAME = 16, MAXPHASENAME = 16, MST =   6;
 
 const int MAXEILAYERS = 4;
 
@@ -330,22 +330,22 @@ double q_Cst;    // Standard sorption capacity, mol/kg(sorbent) or eq/kg(sorbent
     virtual long int SorptionSpecies()
     {
             return 0;
-    };
+    }
 
     virtual long int PTparam()
     {
             return 0;
-    };
+    }
 
     virtual long int IsothermMod()
     {
             return 0;
-    };
+    }
 
     virtual long int ElstatMod()
     {
             return 0;
-    };
+    }
 /*
     virtual long int ExcessProp( double *Zex )
     {

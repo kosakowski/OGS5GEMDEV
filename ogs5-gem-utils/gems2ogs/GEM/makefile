@@ -1,65 +1,17 @@
+src = $(wildcard *.cpp)
+obj = $(src:.cpp=.o)
 CXX = g++
-CCFLAGS =   -c -g -O3 -DIPMGEMPLUGIN -D__unix 
+LDFLAGS =
+CPPFLAGS = 
+CXXFLAGS = -c -g -O3 -DIPMGEMPLUGIN -D__unix
+LIB =libgem.a
 LINK = ar
-LIB = libgem.a
 
-${LIB}:  gdatastream.o s_solmod.o s_solmod5.o s_solmod6.o s_solmod2.o s_solmod3.o s_solmod4.o \
-       node.o node_format.o ms_multi_file.o io_arrays.o \
-       ms_multi_format.o ms_multi_file.cpp ipm_chemical.o ipm_chemical2.o ipm_chemical3.o ipm_chemical4.o \
-       ipm_main.o ipm_simplex.o io_arrays.o ms_param.o num_methods.o s_kinmet.o s_sorpmod.o
-# mcotac.o mcotac1d.o datio.o erech.o inistat2.o inparf.o setpar_.o walk2_.o wegdat1d_.o hydro1d_.o 
-             
-	$(LINK) -rvs ${LIB} *.o
+$(LIB): $(obj)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+	$(LINK) -rvs $(LIB) $(obj)
 
-gdatastream.o: gdatastream.cpp 
-	$(CXX)  $(CCFLAGS) gdatastream.cpp
-s_solmod.o: s_solmod.cpp 
-	$(CXX)  $(CCFLAGS) s_solmod.cpp
-s_solmod5.o: s_solmod5.cpp 
-	$(CXX)  $(CCFLAGS) s_solmod5.cpp
-s_solmod6.o: s_solmod6.cpp 
-	$(CXX)  $(CCFLAGS) s_solmod6.cpp
-s_solmod2.o: s_solmod2.cpp 
-	$(CXX)  $(CCFLAGS) s_solmod2.cpp
-s_solmod3.o: s_solmod3.cpp  
-	$(CXX)  $(CCFLAGS) s_solmod3.cpp
-s_solmod4.o: s_solmod4.cpp  
-	$(CXX)  $(CCFLAGS) s_solmod4.cpp
-node.o: node.cpp node.h 
-	$(CXX)  $(CCFLAGS) node.cpp
-node_format.o: node_format.cpp 
-	$(CXX)  $(CCFLAGS) node_format.cpp
-ms_multi_file.o: ms_multi_file.cpp  
-	$(CXX)  $(CCFLAGS) ms_multi_file.cpp
-ms_multi_format.o: ms_multi_format.cpp  
-	$(CXX)  $(CCFLAGS) ms_multi_format.cpp
-ipm_chemical.o: ipm_chemical.cpp 
-	$(CXX)  $(CCFLAGS) ipm_chemical.cpp
-ipm_chemical2.o: ipm_chemical2.cpp 
-	$(CXX)  $(CCFLAGS) ipm_chemical2.cpp
-ipm_chemical3.o: ipm_chemical3.cpp 
-	$(CXX)  $(CCFLAGS) ipm_chemical3.cpp
-ipm_chemical4.o: ipm_chemical4.cpp 
-	$(CXX)  $(CCFLAGS) ipm_chemical4.cpp
-ipm_main.o: ipm_main.cpp m_param.h 
-	$(CXX)  $(CCFLAGS) ipm_main.cpp
-ipm_simplex.o: ipm_simplex.cpp  
-	$(CXX)  $(CCFLAGS) ipm_simplex.cpp
-io_arrays.o: io_arrays.cpp 
-	$(CXX)  $(CCFLAGS) io_arrays.cpp
-ms_param.o: ms_param.cpp 
-	$(CXX)  $(CCFLAGS) ms_param.cpp
-num_methods.o: num_methods.cpp 
-	$(CXX)  $(CCFLAGS) num_methods.cpp
-s_kinmet.o: s_kinmet.cpp 
-	$(CXX)  $(CCFLAGS) s_kinmet.cpp
-s_sorpmod.o: s_sorpmod.cpp 
-	$(CXX)  $(CCFLAGS) s_sorpmod.cpp
+clean:
+	rm -f $(obj) $(LIB)
 
-#gwheader.h: gwheader.h
-#f_gem_node.h: f_gem_node.h
-#gwheader.inc: gwheader.inc
-#kinetics.inc: kinetics.inc
 
-clean: 
-	rm -f *.o *.ti *.a

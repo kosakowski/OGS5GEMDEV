@@ -29,6 +29,10 @@
 #include "node.h"
 #include "gdatastream.h"
 #include "num_methods.h"
+#include "kinetics.h"
+#include "activities.h"
+
+
 #include <cmath>
 #include <algorithm>
 
@@ -767,7 +771,7 @@ long int TNode::Ph_xCH_to_xDB( const long int xCH ) const
     if( xTP >= 0 )
     {
        CSD->G0[ jj + xTP ]=new_G0;
-       multi->set_load(false);
+       load_thermodynamic_data = false;
     }
     else
         cout << "ERROR P and TK pair not present in the DATACH";
@@ -828,7 +832,7 @@ long int TNode::Ph_xCH_to_xDB( const long int xCH ) const
    // Retrieves (interpolated) molar enthalpy H0(P,TK) value for Dependent Component (in J/mol)
    // from the DATACH structure ( xCH is the DC DCH index) or 7777777., if TK (temperature, Kelvin)
    // or P (pressure, Pa) parameters go beyond the valid lookup array intervals or tolerances.
-   double TNode::DC_H0(const long int xCH, const double P, const double TK)
+   double TNode::DC_H0(const long int xCH, const double P, const double TK) const
    {
     long int xTP, jj;
     double H0;
@@ -850,7 +854,7 @@ long int TNode::Ph_xCH_to_xDB( const long int xCH ) const
    // Retrieves (interpolated) absolute molar enropy S0(P,TK) value for Dependent Component (in J/K/mol)
    // from the DATACH structure ( xCH is the DC DCH index) or 0.0, if TK (temperature, Kelvin)
    // or P (pressure, Pa) parameters go beyond the valid lookup array intervals or tolerances.
-   double TNode::DC_S0(const long int xCH, const double P, const double TK)
+   double TNode::DC_S0(const long int xCH, const double P, const double TK) const
    {
     long int xTP, jj;
     double s0;
@@ -872,7 +876,7 @@ long int TNode::Ph_xCH_to_xDB( const long int xCH ) const
    // Retrieves (interpolated) constant-pressure heat capacity Cp0(P,TK) value for Dependent Component (in J/K/mol)
    // from the DATACH structure ( xCH is the DC DCH index) or 0.0, if TK (temperature, Kelvin)
    // or P (pressure, Pa) parameters go beyond the valid lookup array intervals or tolerances.
-   double TNode::DC_Cp0(const long int xCH, const double P, const double TK)
+   double TNode::DC_Cp0(const long int xCH, const double P, const double TK) const
    {
     long int xTP, jj;
     double cp0;
@@ -894,7 +898,7 @@ long int TNode::Ph_xCH_to_xDB( const long int xCH ) const
    // Retrieves (interpolated) Helmholtz energy  of Dependent Component (in J/mol)
    // from the DATACH structure ( xCH is the DC DCH index) or 7777777., if TK (temperature, Kelvin)
    // or P (pressure, Pa) parameters go beyond the valid lookup array intervals or tolerances.
-   double TNode::DC_A0(const long int xCH, const double P, const double TK)
+   double TNode::DC_A0(const long int xCH, const double P, const double TK) const
    {
     long int xTP, jj;
     double a0;
@@ -916,7 +920,7 @@ long int TNode::Ph_xCH_to_xDB( const long int xCH ) const
    // Retrieves (interpolated) Internal energy of  Dependent Component (in J/mol)
    // from the DATACH structure ( xCH is the DC DCH index) or 7777777., if TK (temperature, Kelvin)
    // or P (pressure, Pa) parameters go beyond the valid lookup array intervals or tolerances.
-   double TNode::DC_U0(const long int xCH, const double P, const double TK)
+   double TNode::DC_U0(const long int xCH, const double P, const double TK) const
    {
        long int xTP, jj;
        double u0;
@@ -1109,11 +1113,39 @@ long int TNode::Ph_xCH_to_xDB( const long int xCH ) const
     vol = CNode->vPS[xBR];
    else
    {
-     long int xDC = Phx_to_DCx( Ph_xDB_to_xCH( xBR ));
-     vol = DC_V0( xDC, CNode->P, CNode->TK );
-     vol *= CNode->xDC[DC_xCH_to_xDB(xDC)];
+     long int xdc = Phx_to_DCx( Ph_xDB_to_xCH( xBR ));
+     vol = DC_V0( xdc, CNode->P, CNode->TK );
+     vol *= CNode->xDC[DC_xCH_to_xDB(xdc)];
    }
+   
+   // Perhaps not yet accounting for the volume of mixing!
    return vol;
+ }
+ 
+ //Retrieves the current phase enthalpy in J ( xph is DBR phase index) in the reactive sub-system.
+ // Works both for multicomponent and for single-component phases. Returns 0.0 if the phase mole amount is zero.
+ double  TNode::Ph_Enthalpy( const long int xph ) const
+ {
+   double ent, enth = 0.0;
+   long int xdc, xdcb, xdce, nDCinPh, xch;
+   
+   // Getting the DBR index of the first DC belonging to the phase with DBR index xBR,
+   // with nDCinPh being the number of DCs included into DBR for this phase
+   xdcb = PhtoDC_DBR( xph, nDCinPh );
+   xdce = xdcb + nDCinPh;
+//std::cout << "xph: " << xph << " xdcb: " << xdcb <<  " xdce: " << xdce << std::endl;
+   for(xdc = xdcb; xdc < xdce; xdc++ )
+   {
+        xch = DC_xDB_to_xCH( xdc ); // getting DCH index from DBR index of DC  
+        // Retrieves (interpolated) molar enthalpy H0(P,TK) value for Dependent Component (in J/mol)
+        ent = DC_H0( xch, CNode->P, CNode->TK );
+        if( ent < 7777777.0 )
+            enth += ent * CNode->xDC[xdc];
+        // else out of P or T range of interpolation
+//        std::cout << "        xdc: " << xdc << " xch: " << xch << " ent: " << ent << " enth: " << enth << std::endl;
+   }
+   // Not yet accounting for the enthalpy of mixing!
+   return enth;
  }
 
  //Retrieves the current phase amount in moles ( xph is DBR phase index) in the reactive sub-system.
@@ -1758,7 +1790,7 @@ void TNode::getDataBridgeNames( QWidget* par, bool select_all,
 
     aList.Clear();
     for(long int ii=0; ii< pmm->L; ii++ )
-    {  if( select_all )
+   {  if( select_all )
          aSelDC.Add( ii );
        else
        aList.Add( gstring( pmm->SM[ii], 0, MAXDCNAME));
@@ -2008,6 +2040,7 @@ TNode::TNode()
   //na = this;
   dbr_file_name = "dbr_file_name";
   ipmlog_file_name = "ipmlog.txt";
+  load_thermodynamic_data = false;
 }
 
 #endif
@@ -2103,8 +2136,9 @@ void TNode::unpackDataBr( bool uPrimalSol )
  char buf[300];
  sprintf( buf, "Node:%ld:time:%lg:dt:%lg", CNode->NodeHandle, CNode->Tm, CNode->dt );
  strncpy( pmm->stkey, buf, EQ_RKLEN );
- multi->CheckMtparam(); // T or P change detection - moved to here from InitalizeGEM_IPM_Data() 11.10.2012
+ //multi->CheckMtparam(); // T or P change detection - moved to here from InitalizeGEM_IPM_Data() 11.10.2012
 #endif
+  CheckMtparam(); // T or P change detection - moved to here from InitalizeGEM_IPM_Data() 11.10.2012
   pmm->kTau = CNode->Tm;  // added 18.12.14 DK
   pmm->kdT = CNode->dt;   // added 18.12.14 DK
 

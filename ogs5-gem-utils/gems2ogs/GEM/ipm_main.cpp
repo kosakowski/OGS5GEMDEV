@@ -35,6 +35,8 @@
 #include "m_param.h"
 #include "jama_lu.h"
 #include "jama_cholesky.h"
+#include "kinetics.h"
+
 using namespace TNT;
 using namespace JAMA;
 
@@ -53,7 +55,6 @@ using namespace JAMA;
 void TMulti::GibbsEnergyMinimization()
 {
   bool IAstatus;
-  int KMretCode;
   Reset_uDD( 0L, uDDtrace); // Experimental - added 06.05.2011 KD
 
 // fstream f_log(node->ipmLogFile().c_str(), ios::out|ios::app );
@@ -115,7 +116,7 @@ FORCED_AIA:
 ///  rLoop is the index of the primal solution refinement loop (for tracing)
 ///   or -1 if this is main GEM_IPM call
 //
-void TMulti::GEM_IPM( long int rLoop )
+void TMulti::GEM_IPM( long int /*rLoop*/ )
 {
     long int i, j, eRet, status=0; long int csRet=0;
 // bool CleanAfterIPM = true;
@@ -153,7 +154,7 @@ STEP_POINT("After FIA");
     switch( eRet )
     {
      case 0:  // OK
-              break;
+         break;
      case 5:  // Initial Lagrange multiplier for metastability broken for DC
      case 4:  // Initial mass balance broken for IC
      case 3:  // too small step length in descent algorithm
@@ -173,7 +174,7 @@ STEP_POINT("After FIA");
     }
 
    // calling the MainIPMDescent() minimization algorithm
-   eRet = InteriorPointsMethod( status, pm.K2 );
+   eRet = InteriorPointsMethod( status/*, pm.K2*/ );
 
 #ifdef GEMITERTRACE
 to_text_file( "MultiDumpD.txt" );   // Debugging
@@ -191,6 +192,8 @@ to_text_file( "MultiDumpD.txt" );   // Debugging
    switch( eRet )
    {
      case 0:  // OK
+       CalculateActivityCoefficients( LINK_PP_MODE);
+//       std::cout << "  CalculateActivityCoefficients( LINK_PP_MODE); " << std::endl;
               break;
      case 2:  // max number of iterations has been exceeded in InteriorPointsMethod()
      case 1: // degeneration in R matrix  for InteriorPointsMethod()
@@ -337,6 +340,8 @@ to_text_file( "MultiDumpD.txt" );   // Debugging
      //          goto mEFD;   // Forced after cleanup ( check what to do with pm.K2 )
            }
         } // end cleanup
+
+        CalculateActivityCoefficients( LINK_PP_MODE);
 
         switch( ps_rcode )
            {
@@ -513,7 +518,7 @@ to_text_file( "MultiDumpE.txt" );   // Debugging
 bool TMulti::GEM_IPM_InitialApproximation(  )
 {
     long int i, j, k, NN, eCode=-1L;
-    double minB, sfactor;
+    double minB;//, sfactor;
     char buf[512];
     SPP_SETTING *pa = paTProfil;
 
@@ -554,7 +559,7 @@ to_text_file( "MultiDumpA.txt" );   // Debugging
        setErrorMessage( -1, "" , "");
     }
 
-    sfactor = RescaleToSize( false ); //  replacing calcSfactor();
+    /*sfactor =*/ RescaleToSize( false ); //  replacing calcSfactor();
 
 #ifndef IPMGEMPLUGIN
 #ifndef Use_mt_mode
@@ -747,7 +752,7 @@ long int TMulti::MassBalanceRefinement( long int WhereCalledFrom )
 {
     long int IT1;
     long int I, J, Z,  N, sRet, iRet=0, j, jK;
-    double LM, pmp_PCI;
+    double LM;//, pmp_PCI;
     SPP_SETTING *pa = paTProfil;
 
     ErrorIf( !pm.MU || !pm.W, "MassBalanceRefinement()",
@@ -836,7 +841,7 @@ long int TMulti::MassBalanceRefinement( long int WhereCalledFrom )
 
       // SOLVED: solution of linear matrix has been obtained
          //          pm.PCI = calcDikin( N, true);
-      pmp_PCI = DikinsCriterion( N, true);  // calc of MU values and Dikin criterion
+      /*pmp_PCI =*/ DikinsCriterion( N, true);  // calc of MU values and Dikin criterion
 
       LM = StepSizeEstimate( true ); // Estimation of the MBR() iteration step size LM
 
@@ -904,7 +909,7 @@ STEP_POINT("FIA Iteration");
 ///          4, Mass balance broken  in DualTH (Mol_u)
 ///          5, Divergence in dual solution u vector has been detected
 //
-long int TMulti::InteriorPointsMethod( long int &status, long int rLoop )
+long int TMulti::InteriorPointsMethod( long int &status/*, long int rLoop*/ )
 {
     bool StatusDivg;
     long int N, IT1,J,Z,iRet,i,  nDivIC;
@@ -1147,7 +1152,9 @@ double TMulti::OptimizeStepSize( double LM )
     FX2= GX( LM2 );
 
 SH1:
-    if( FX1>FX2)
+    if( fabs(FX1 - FX2) <= ( (fabs(FX1) < fabs(FX2) ? fabs(FX2) : fabs(FX1)) * 1e-13 ) )
+          goto OCT; // Important fix of loss of IPM3 convergence (fix by Svitlana SD on 5.Mar.2020)
+    if( FX1>FX2 )  // && fabs(FX1 - FX2) > ( (fabs(FX1) < fabs(FX2) ? fabs(FX2) : fabs(FX1)) * 1e-16 ))
         goto SH2;
     else goto SH3;
 SH2:
@@ -1222,6 +1229,7 @@ void TMulti::DC_RaiseZeroedOff( long int jStart, long int jEnd, long int k )
        case DC_GAS_N2:
        case DC_GAS_COMP:
        case DC_SOL_IDEAL:
+case DC_SCM_SPECIES:
             if( k >= 0 || pm.Y[j] < pm.DFYidM )
                   pm.Y[j] = pm.DFYidM;
              break;
@@ -1355,8 +1363,9 @@ long int TMulti::MakeAndSolveSystemOfLinearEquations( long int N, bool initAppr 
       (*(AA+(ii)+(kk)*N)) = 0.;
 
   for( jj=0; jj < pm.L; jj++ )
-   if( pm.Y[jj] > min( pm.lowPosNum, pm.DcMinM ) )
-   {
+  {
+    if( pm.Y[jj] > min( pm.lowPosNum, pm.DcMinM ) )
+    {
       for( k = arrL[jj]; k < arrL[jj+1]; k++)
         for( i = arrL[jj]; i < arrL[jj+1]; i++ )
         { ii = arrAN[i];
@@ -1365,7 +1374,8 @@ long int TMulti::MakeAndSolveSystemOfLinearEquations( long int N, bool initAppr 
            continue;
           (*(AA+(ii)+(kk)*N)) += a(jj,ii) * a(jj,kk) * pm.W[jj];
         }
-   }
+    }
+  }
 
    if( initAppr )
      for( ii = 0; ii < N; ii++ )
@@ -1585,7 +1595,7 @@ void TMulti::Restore_Y_YF_Vectors()
 
 /// Calculation of the system size scaling factor and modified thresholds/cutoffs/insertion values
 /// Replaces calcSfactor()
-double TMulti::RescaleToSize( bool standard_size )
+double TMulti::RescaleToSize( bool /*standard_size*/ )
 {
     double SizeFactor=1.;
     SPP_SETTING *pa = paTProfil;
@@ -1784,7 +1794,7 @@ void TMulti::Reset_uDD( long int nr, bool trace )
 void TMulti::Increment_uDD( long int r, bool trace )
 {
     long int i;
-    double delta;
+    //double delta;
     cnr = r; // r+1;
     if( cnr == 0 )
         return;
@@ -1820,7 +1830,7 @@ void TMulti::Increment_uDD( long int r, bool trace )
       }
       U_CVo[i] = U_CV[i];
       U_CV[i] = U_mean[i] - U_M2[i];
-      delta = fabs(U_CV[i] - U_CVo[i]);
+      //delta = fabs(U_CV[i] - U_CVo[i]);
       if( trace )
       {
 //      cout << pm.U[i] << " ";

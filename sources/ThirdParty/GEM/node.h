@@ -53,21 +53,21 @@
 /// Copyright (C) 2012 GEMS Development Team
 /// Available on web at http://gems.web.psi.ch/GEMS3K
 
-#ifndef _node_h_
-#define _node_h_
+#ifndef NODE_H
+#define NODE_H
 
 #include "m_param.h"
 // #include "allan_ipm.h"
 #include "datach.h"
 #include "databr.h"
 #include "activities.h"
-#include "kinetics.h"
 
 #ifndef IPMGEMPLUGIN
-class QWidget;
+ class QWidget;
 #endif
 
 class TActivity;
+class TKinetics;
 
 extern const double bar_to_Pa,
                m3_to_cm3,
@@ -192,6 +192,11 @@ protected:
         databr_reset( CNode, 1 );
         databr_realloc();
     }*/
+
+    /// Test to reload thermodynamic data from grid
+    void CheckMtparam();
+    /// false - Ensures the re-reading of the system properties into GEM IMP data structure
+    bool load_thermodynamic_data = true; // false; // internal value
 
 #ifndef IPMGEMPLUGIN
     // Integration in GEMS-PSI GUI environment
@@ -834,7 +839,7 @@ long int GEM_step_MT( const long int step )
      /// \param P pressure, Pa
      /// \param TK temperature, Kelvin
      /// \return H0(P,TK) (in J/mol) or 7777777., if TK or P  go beyond the valid lookup array intervals or tolerances.
-     double DC_H0(const long int xCH, const double P, const double TK);
+     double DC_H0(const long int xCH, const double P, const double TK) const;
 
      /// Retrieves (interpolated) absolute molar enropy S0(P,TK) value for Dependent Component (in J/K/mol)
      /// from the DATACH structure.
@@ -842,7 +847,7 @@ long int GEM_step_MT( const long int step )
      /// \param P pressure, Pa
      /// \param TK temperature, Kelvin
      /// \return S0(P,TK) (in J/K/mol) or 0.0, if TK or P  go beyond the valid lookup array intervals or tolerances.
-     double DC_S0(const long int xCH, const double P, const double TK);
+     double DC_S0(const long int xCH, const double P, const double TK) const;
 
      /// Retrieves (interpolated) constant-pressure heat capacity Cp0(P,TK) value for Dependent Component (in J/K/mol)
      /// from the DATACH structure.
@@ -850,7 +855,7 @@ long int GEM_step_MT( const long int step )
      /// \param P pressure, Pa
      /// \param TK temperature, Kelvin
      /// \return Cp0(P,TK) (in J/K/mol) or 0.0, if TK or P  go beyond the valid lookup array intervals or tolerances.
-     double DC_Cp0(const long int xCH, const double P, const double TK);
+     double DC_Cp0(const long int xCH, const double P, const double TK) const;
 
      /// Retrieves (interpolated) Helmholtz energy  of Dependent Component (in J/mol)
      /// from the DATACH structure.
@@ -858,7 +863,7 @@ long int GEM_step_MT( const long int step )
      /// \param P pressure, Pa
      /// \param TK temperature, Kelvin
      /// \return Helmholtz energy (in J/mol) or 7777777., if TK or P  go beyond the valid lookup array intervals or tolerances.
-     double DC_A0(const long int xCH, const double P, const double TK);
+     double DC_A0(const long int xCH, const double P, const double TK) const;
 
      /// Retrieves (interpolated) Internal energy of  Dependent Component (in J/mol)
      /// from the DATACH structure.
@@ -866,7 +871,7 @@ long int GEM_step_MT( const long int step )
      /// \param P pressure, Pa
      /// \param TK temperature, Kelvin
      /// \return Internal energy (in J/mol) or 7777777., if TK or P  go beyond the valid lookup array intervals or tolerances.
-     double DC_U0(const long int xCH, const double P, const double TK);
+     double DC_U0(const long int xCH, const double P, const double TK) const;
 
      /// Retrieves (interpolated) density and its derivatives of liquid water at (P,TK) from the DATACH structure or 0.0,
      /// if TK (temperature, Kelvin) or P (pressure, Pa) parameters go beyond the valid lookup array intervals or tolerances.
@@ -918,6 +923,12 @@ long int GEM_step_MT( const long int step )
      /// \param xph is DBR phase index
      /// \return the current phase volume in m3 or 0.0, if the phase mole amount is zero.
       double  Ph_Volume( const long int xBR ) const;
+      
+     /// Retrieves the current phase enthalpy in J in the reactive sub-system.
+     /// Works both for multicomponent and for single-component phases.
+     /// \param xph is DBR phase index
+     /// \return the current phase volume in m3 or 0.0, if the phase mole amount is zero.
+      double  Ph_Enthalpy( const long int xBR ) const;
 
       /// Retrieves the current phase amount (in equilibrium) in moles in the reactive sub-system.
       /// Works both for multicomponent and for single-component phases.
@@ -944,7 +955,7 @@ long int GEM_step_MT( const long int step )
       /// \return pointer to ARout which may also be  allocated inside of Ph_BC()
       /// in the case if parameter ARout = NULL is specified;
       /// to avoid a memory leak, you will have to free this memory wherever appropriate.
-      double *Ph_BC( const long int xph, double* ARout = NULL );
+      double *Ph_BC( const long int xph, double* ARout = nullptr );
 
       /// Retrieves total dissolved aqueous molality of Independent Component with DBR index xic.
       /// \param xic is IC DBR index
@@ -1071,18 +1082,18 @@ long int GEM_step_MT( const long int step )
       /// Sets the mLook Mode of lookup-interpolation: 0 interpolation (on nTp*nPp grid).
        /// \param mLook is 0 or 1
         void Set_mLook(const double mLook)
-        {  CSD->mLook = (long)mLook;  multi->set_load(false);}
+        {  CSD->mLook = static_cast<long>(mLook);  load_thermodynamic_data = false;}
 
       /// Sets the value of the interaction parameter.
       /// Internal re-scaling to mass of the system is applied.
       /// These methods can only be used for the current work node (direct access to GEM IPM data)
       /// \param xPMC is the index of the interaction parameter
       inline void Set_PMc( const double PMc_val, const long int xPMc)
-      { pmm->PMc[xPMc] = PMc_val; multi->set_load(false); }
+      { pmm->PMc[xPMc] = PMc_val; load_thermodynamic_data = false; }
 
       /// Gets the value of the interaction parameter.
       inline void Get_PMc( double &PMc_val, const long int xPMc)
-      {  PMc_val = pmm->PMc[xPMc]; multi->set_load(false); }
+      {  PMc_val = pmm->PMc[xPMc]; load_thermodynamic_data = false; }
 
       /// Gets code of the aquesous solution model
       inline void Get_sMod( int ndx, string &sMod)
@@ -1093,7 +1104,7 @@ long int GEM_step_MT( const long int step )
       /// These methods can only be used for the current work node (direct access to GEM IPM data)
       /// \param xDMC is the index of the interaction parameter
       inline void Set_DMc( const double DMc_val, const long int xDMc)
-      { pmm->DMc[xDMc] = DMc_val; multi->set_load(false); }
+      { pmm->DMc[xDMc] = DMc_val; load_thermodynamic_data = false; }
 #endif
 
       /// Retrieves the current total amount of Independent Component.

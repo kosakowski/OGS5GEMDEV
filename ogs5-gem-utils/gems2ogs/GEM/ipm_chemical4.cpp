@@ -35,10 +35,10 @@
 long int
 TMulti::CalculateKinMet( long int LinkMode  )
 {
-   long int k, j, jb, je=0, kf, kfe=0, kp, kpe=0, ka, kae=0, ks, kse=0,
+   long int k, jb, je=0, kf, kfe=0, kp, kpe=0, ka, kae=0, ks, kse=0,
             kc, kd, kce=0, kde=0, ku, kue=0, ki, kie=0, jphl=0, jlphc=0;
 
-   SPP_SETTING *pa = paTProfil;
+   //SPP_SETTING *pa = paTProfil;
    char *kMod;
 
    for( k=0; k<pm.FI; k++ )
@@ -69,7 +69,7 @@ TMulti::CalculateKinMet( long int LinkMode  )
              break;  // skip for this phase
          switch( pm.PHC[k] )
          {
-           //   case PH_AQUEL:
+           //   case PH_AQUEL: case PH_ADSORPT: case PH_IONEX:
               case PH_LIQUID: case PH_SINCOND: case PH_SINDIS: // case PH_HCARBL:
            // case PH_SIMELT: case PH_GASMIX: case PH_PLASMA: case PH_FLUID:
                 KM_Create( jb, k, kc, kp, kf, ka, ks, kd, ku, ki, kMod, jphl, jlphc );
@@ -91,7 +91,7 @@ TMulti::CalculateKinMet( long int LinkMode  )
            break;  // skip for this phase
         switch( pm.PHC[k] )
         {
-         //   case PH_AQUEL:
+         //   case PH_AQUEL: case PH_ADSORPT: case PH_IONEX:
              case PH_LIQUID: case PH_SINCOND: case PH_SINDIS: // case PH_HCARBL:
          // case PH_SIMELT: case PH_GASMIX: case PH_PLASMA: case PH_FLUID:
              // Correction for T,P
@@ -99,11 +99,11 @@ TMulti::CalculateKinMet( long int LinkMode  )
                 KM_InitTime( k, kMod );
                 KM_UpdateFSA( jb, k, kMod );
                 KM_InitRates( k, kMod );
-                KM_SetAMRs( jb, k, kMod );
+                KM_SetAMRs( /*jb,*/ k, kMod );
                 if( k < pm.FIs )
                 {
-                    KM_InitUptake( jb, k, kMod );
-                    KM_InitSplit( jb, k, kMod );
+                    KM_InitUptake(/* jb,*/ k, kMod );
+                    KM_InitSplit( /*jb,*/ k, kMod );
                 }
                 KM_ReturnFSA( k, kMod );
                 break;
@@ -118,7 +118,7 @@ TMulti::CalculateKinMet( long int LinkMode  )
            break;  // skip for this phase
        switch( pm.PHC[k] )
         {
-        //   case PH_AQUEL:
+        //   case PH_AQUEL: case PH_ADSORPT: case PH_IONEX:
             case PH_LIQUID: case PH_SINCOND: case PH_SINDIS: // case PH_HCARBL:
         // case PH_SIMELT: case PH_GASMIX: case PH_PLASMA: case PH_FLUID:
         // Correction for T,P
@@ -126,11 +126,11 @@ TMulti::CalculateKinMet( long int LinkMode  )
                 KM_UpdateTime( k, kMod );
                 KM_UpdateFSA( jb, k, kMod );
                 KM_CalcRates( k, kMod );
-                KM_SetAMRs( jb, k, kMod );
+                KM_SetAMRs( /*jb,*/ k, kMod );
                 if( k < pm.FIs )
                 {
-                    KM_CalcUptake( jb, k, kMod );
-                    KM_CalcSplit( jb, k, kMod );
+                    KM_CalcUptake( /*jb,*/ k, kMod );
+                    KM_CalcSplit( /*jb,*/ k, kMod );
                 }
                 KM_ReturnFSA( k, kMod );
                 break;
@@ -168,7 +168,7 @@ void TMulti::KM_Create( long int jb, long int k, long int kc, long int kp,
                            long int kf, long int ka, long int ks, long int kd, long int ku, long int ki,
                            const char *kmod, long int jphl, long int jlphc )
 {
-    double *aZ, *aM, PUL, PLL;
+    double PUL, PLL;
     KinMetData kmd;
     char KinProCode;
 
@@ -271,7 +271,7 @@ void TMulti::KM_Create( long int jb, long int k, long int kc, long int kp,
 // More stuff here, if needed
 
     KinProCode = kmd.KinProCod_;
-    TKinMet* myKM = NULL;
+    TKinMet* myKM = nullptr;
 
    // creating instances of derived classes from the TKinMet base class
     switch( KinProCode )
@@ -280,7 +280,7 @@ void TMulti::KM_Create( long int jb, long int k, long int kc, long int kp,
         {
                 TMWReaKin* myPT = new TMWReaKin( &kmd );
 //                myPT->GetPhaseName( pm.SF[k] );
-                myKM = (TKinMet*)myPT;
+                myKM = myPT;
                 break;
         }
         case KM_PRO_UPT_:  // Kinetics of uptake/entrapment (of minor/trace element) into solid solution
@@ -289,33 +289,33 @@ void TMulti::KM_Create( long int jb, long int k, long int kc, long int kp,
              {
                 TUptakeKin* myPT = new TUptakeKin( &kmd, pm.LsUpt[k*2], pm.N, pm.UMpcC+ku, pm.xICuC+ki,
                         pm.IC_m, pm.emRd+jb, pm.emDf+jb );
-                myKM = (TKinMet*)myPT;
+                myKM = myPT;
              }
              break;
         }
         case KM_PRO_IEX_:  // Kinetics of ion exchange (clays, C-S-H, zeolites, ...)
         {
                 TIonExKin* myPT = new TIonExKin( &kmd );
-                myKM = (TKinMet*)myPT;
+                myKM = myPT;
                 break;
         }
         case KM_PRO_ADS_:  // Kinetics of adsorption (on MWI), redox
         {
                 TAdsorpKin* myPT = new TAdsorpKin( &kmd );
-                myKM = (TKinMet*)myPT;
+                myKM = myPT;
                 break;
         }
         case KM_PRO_NUPR_:  // Kinetics of nucleation followed by precipitation
         {
            // new:new: array of nucleation model parameters here (A.Testino?)
                 TNucleKin* myPT = new TNucleKin( &kmd );
-                myKM = (TKinMet*)myPT;
+                myKM = myPT;
                 break;
         }
 
         // case KM_USERDEF:
         default:
-            myKM = NULL;
+            myKM = nullptr;
         	break;
     }
     if(phKinMet[k])
@@ -335,14 +335,14 @@ TMulti::KM_ParPT( long int k, const char* kMod )
         case KM_PRO_MWR_:
         {
             ErrorIf( !phKinMet[k], "KinMetParPT: ","Invalid index of phase");
-            TMWReaKin* myKM = (TMWReaKin*)phKinMet[k];
+            TMWReaKin* myKM = dynamic_cast<TMWReaKin*>(phKinMet[k]);
              myKM->PTparam( pm.Tc, pm.Pc );
              break;
         }
         case KM_PRO_UPT_:
         {
             ErrorIf( !phKinMet[k], "KinMetParPT: ","Invalid index of phase");
-            TUptakeKin* myKM = (TUptakeKin*)phKinMet[k];
+            TUptakeKin* myKM = dynamic_cast<TUptakeKin*>(phKinMet[k]);
             myKM->PTparam( pm.Tc, pm.Pc );
             myKM->UptKinPTparam( pm.Tc, pm.Pc );
             break;
@@ -550,7 +550,7 @@ TMulti::KM_CalcRates( long int k, const char *kMod )
 // Calculation of initial AMR splitting for end members of SS phase
 //
 void
-TMulti::KM_InitSplit( long int jb, long int k, const char *kMod )
+TMulti::KM_InitSplit( /*long int jb,*/ long int k, const char *kMod )
 {
     //
     switch( kMod[0] )
@@ -578,7 +578,7 @@ TMulti::KM_InitSplit( long int jb, long int k, const char *kMod )
 // Calculation of current AMR splitting for end members of SS phase
 //
 void
-TMulti::KM_CalcSplit( long int jb, long int k, const char *kMod )
+TMulti::KM_CalcSplit( /*long int jb,*/ long int k, const char *kMod )
 {
     //
     switch( kMod[0] )
@@ -606,7 +606,7 @@ TMulti::KM_CalcSplit( long int jb, long int k, const char *kMod )
 // Sets new metastability constraints based on updated kinetic rates
 //
 void
-TMulti::KM_SetAMRs( long int jb, long int k,const char *kMod )
+TMulti::KM_SetAMRs( /*long int jb,*/ long int k,const char *kMod )
 {
     //
     switch( kMod[0] )
@@ -632,7 +632,7 @@ TMulti::KM_SetAMRs( long int jb, long int k,const char *kMod )
 }
 
 void
-TMulti::KM_CalcUptake( long int jb, long int k, const char *kMod )
+TMulti::KM_CalcUptake( /*long int jb,*/ long int k, const char *kMod )
 {
     //
     switch( kMod[0] )
@@ -659,7 +659,7 @@ TMulti::KM_CalcUptake( long int jb, long int k, const char *kMod )
 
 
 void
-TMulti::KM_InitUptake( long int jb, long int k, const char *kMod )
+TMulti::KM_InitUptake( /*long int jb,*/ long int k, const char *kMod )
 {   
     switch( kMod[0] )
     {      
@@ -705,10 +705,10 @@ void TMulti::Free_TKinMet()
   long int kk;
 
   if( phKinMet )
-  {  for(  kk=0; kk<sizeFI; kk++ )
-      if( phKinMet[kk] )
-           delete phKinMet[kk];
-
+  {
+      for(  kk=0; kk<sizeFI; kk++ )
+          if( phKinMet[kk] )
+               delete phKinMet[kk];
       delete[]  phKinMet;
   }
   phKinMet = 0;

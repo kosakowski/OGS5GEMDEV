@@ -9,7 +9,7 @@
 /// development of coupled reactive transport codes.
 /// Works with DATACH and an array of DATABR structures; uses TNode class
 //
-// Copyright (C) 2006-2012 S.Dmytriyeva, D.Kulik
+// Copyright (C) 2006-2017 S.Dmytriyeva, D.Kulik
 // <GEMS Development Team, mailto:gems2.support@psi.ch>
 //
 // This file is part of the GEMS3K code for thermodynamic modelling
@@ -33,7 +33,11 @@
 #ifndef _nodearray_h_
 #define _nodearray_h_
 
+#include <functional>
 #include "node.h"
+
+/// The function is executed when ProcessProgress
+using  ProcessProgressFunction = std::function<bool( const gstring& message, long point )>;
 
 // These structures are needed for implementation of Random Walk and
 // similar particle-based transport algorithms
@@ -54,7 +58,7 @@ struct  LOCATION /// Location (coordinates) of a point in space
   LOCATION():
    x(0.), y (0.), z(0.) {}
 
-  LOCATION( float ax, float ay=0., float az=0. ):
+  LOCATION( double ax, double ay=0., double az=0. ):
      x(ax), y (ay), z(az) {}
 
   LOCATION( const LOCATION& loc ):
@@ -68,10 +72,29 @@ struct  LOCATION /// Location (coordinates) of a point in space
 //    }
 };
 
+/// Struct to setup GEMRun properties
+struct TestModeGEMParam
+{
+    char mode;        ///   mode can be NEED_GEM_PIA (smart algorithm) or NEED_GEM_AIA
+    char useSIA;      /// Use smart initial approximation in GEM IPM (+); SIA internal (*); AIA (-)
+    long int step;    /// extern actual time iterator
+    double cdv;       /// cutoff for IC amount differences in the node between time steps (mol, 1e-9)
+    double cez;       /// cutoff for minimal amounts of IC in node bulk compositions (mol, 1e-12)
+
+    TestModeGEMParam( char amode, char  auseSIA,
+                      long int astep,   double acdv,  double acez ):
+       mode(amode), useSIA(auseSIA), step(astep), cdv(acdv), cez(acez) {}
+};
+
+
+class TParticleArray;
+
 // Definition of TNodeArray class
-class TNodeArray : public TNode
+class TNodeArray
 {
 protected:
+
+    TNode calcNode;
 
     DATABR* (*NodT0);  ///< array of nodes for previous time point
     DATABR* (*NodT1);  ///< array of nodes for current time point
@@ -101,9 +124,86 @@ protected:
    /// Test if the location cxyz resides in the node with absolute index iNode
    bool isLocationInNode( long int iNode, LOCATION cxyz ) const;
 
+   /// Copies data from the work DATABR structure into the node ndx in
+   /// the node arrays NodT0 and NodT1  (as specified in nodeTypes array)
+   void  setNodeArray( long int ndx, long int* nodeTypes  );
+
+   /// Test setup of the boundary condition for all nodes in the task
+   void  checkNodeArray( long int i, long int* nodeTypes, const char*  datachbr_file );
+
+   ///  Copies data for a node ndx from the array of nodes anyNodeArray that
+   /// contains nNodes into the work node data bridge structure
+   ///  (implementation thread-safe)
+   void CopyWorkNodeFromArray( TNode& wrkNode, long int ndx, long int nNodes, DATABRPTR* anyNodeArray );
+
+   ///  Moves work node data to the ndx element of the node array anyNodeArray
+   /// that has nNodes. Previous contents of the ndx element will be lost,
+   /// work node will be allocated new and will contain no data
+   ///  (implementation thread-safe)
+   void MoveWorkNodeToArray( TNode& wrkNode, long int ndx, long int nNodes, DATABRPTR* anyNodeArray );
+
+   /// New Stuff--------------------------------------------------------------
+
+   /// Here we compare this node for current time and for previous time to test need to recalculate equilibrium
+   /// in this node because its vector b has changed
+   /// Zeroing charge off in bulk composition
+   bool NeedGEMS( TNode& wrkNode, const TestModeGEMParam& modeParam, DATABR* C0, DATABR* C1  );
+
+   ///  Testing indicators for IA in the ii node for smart algorithm
+   long int SmartMode( const TestModeGEMParam& modeParam, long int ii,  bool* piaN  );
+
+   /// Build bad GEM result message
+   gstring ErrorGEMsMessage( long int RetCode,  long int ii, long int step  );
+
+   ///  Here we do a GEM calculation in box ii (implementation thread-safe)
+   bool CalcIPM_Node(  const TestModeGEMParam& modeParam, TNode& wrkNode,
+                       long int ii, DATABRPTR* C0, DATABRPTR* C1, bool* iaN, FILE* diffile  );
+
+   // alloc new memory
+    DATABR * allocNewDBR( TNode& wrkNode)
+    {
+        DATABR *node = new DATABR;
+        wrkNode.databr_reset( node, 1 );
+        wrkNode.databr_realloc(node);
+        return node;
+    }
+
+    // end of new stuff -------------------------------------------------------
+
 public:
 
   static TNodeArray* na;   ///< static pointer to this class
+
+  const TNode& getCalcNode()
+  { return calcNode;}
+
+  DATACH* pCSD() const  /// Get the pointer to chemical system definition data structure
+  {  return calcNode.pCSD();   }
+
+  /// Returns number of temperature and  pressure grid points for one dependent component
+  inline long int gridTP() const
+  {  return calcNode.gridTP();   }
+
+
+  /// Retrieves the stoichiometry coefficient a[xdc][xic] of IC in the formula of DC.
+  /// \param xdc is DC DBR index
+  /// \param xic is IC DBR index
+  inline double DCaJI( const long int xdc, const long int xic) const
+  { return calcNode.DCaJI( xdc, xic); }
+
+  /// Retrieves the molar mass of Independent Component in kg/mol.
+  /// \param xic is IC DBR index
+  inline double ICmm( const long int xic ) const
+  { return calcNode.ICmm(  xic); }
+
+  /// Retrieves the molar mass of Dependent Component in kg/mol.
+  /// \param xdc is DC DBR index
+  inline double DCmm( const long int xdc ) const
+  { return calcNode.DCmm( xdc); }
+
+  /// Converts the Phase DBR index into the Phase DCH index
+  inline long int Ph_xDB_to_xCH( const long int xBR ) const
+  { return calcNode.Ph_xDB_to_xCH( xBR ); }
 
 #ifndef IPMGEMPLUGIN
 // These calls are used only inside of GEMS-PSI GEM2MT module
@@ -126,10 +226,101 @@ public:
        bool bin_mode = false, bool brief_mode = false, bool with_comments = true,
        bool putNodT1=false, bool addMui=false );
 
+  /// Generate MULTI, DATACH and DATABR files structure prepared from GEMS.
+  /// Prints files for separate coupled FMT-GEM programs that use GEMS3K module
+  /// or if putNodT1 == true  as a break point for the running FMT calculation
+  /// \param filepath - IPM work structure file path&name
+  /// \param message - callback message function
+  /// \param nIV - Number of allocated nodes
+  /// \param bin_mode - Write IPM, DCH and DBR files in binary mode ( false - txt mode)
+  /// \param brief_mode - Do not write data items that contain only default values
+  /// \param with_comments -Write files with comments for all data entries ( in text mode)
+  /// \param addMui - Print internal indices in RMULTS to IPM file for reading into Gems back
+  /// \return DATABR list file name
+  gstring genGEMS3KInputFiles(  const gstring& filepath, ProcessProgressFunction message,
+          long int nIV, bool bin_mode, bool brief_mode, bool with_comments,
+          bool putNodT1, bool addMui );
+
    /// Reads DATABR files saved by GEMS as a break point of the FMT calculation.
    /// Copying data from work DATABR structure into the node array NodT0
    /// and read DATABR structure into the node array NodT1 from file dbr_file
    void  setNodeArray( gstring& dbr_file, long int ndx, bool binary_f );
+
+   /// Overloaded variant - takes lists of ICs, DCs and phases according to
+   /// already existing index vectors axIC, axDC, axPH (with anICb, anDCb,
+   /// anPHb, respectively)
+   void InitCalcNodeStructures(  long int anICb, long int anDCb,  long int anPHb,
+               long int* axIC, long int* axDC,  long int* axPH, bool no_interpolat,
+            double* Tai, double* Pai,  long int nTp_,
+            long int nPp_, double Ttol_, double Ptol_  )
+   {
+       calcNode.MakeNodeStructures(  anICb, anDCb,  anPHb,
+                axIC, axDC,  axPH, no_interpolat,
+                Tai,  Pai,  nTp_,  nPp_, Ttol_,  Ptol_  ) ;
+   }
+
+   /// Makes start DATACH and DATABR data using GEMS internal data (MULTI and other)
+   /// interaction variant. The user must select ICs, DCs and phases to be included
+   /// in DATABR lists
+   /// Lookup arays from iterators
+   void MakeNodeStructuresOne( QWidget* par, bool select_all,
+       double Tai[4], double Pai[4]  )
+   {
+     calcNode.MakeNodeStructures( par, select_all,  Tai, Pai  );
+     // setup dataBR and NodeT0 data
+     NodT0[0] = allocNewDBR( calcNode);
+     NodT1[0] = allocNewDBR( calcNode);
+     MoveWorkNodeToArray( calcNode, 0, 1, na->pNodT0() );
+     MoveWorkNodeToArray( calcNode, 0, 1, na->pNodT1() );
+   }
+
+   /// Makes start DATACH and DATABR data using GEMS internal data (MULTI and other)
+   /// interaction variant. The user must select ICs, DCs and phases to be included
+   /// in DATABR lists
+   void MakeNodeStructuresOne( QWidget* par, bool select_all,bool no_interpolat,
+            double *Tai, double *Pai, long int nTp_ = 1 ,
+            long int nPp_ = 1 , double Ttol_ = 1., double Ptol_ =1. )
+   {
+     calcNode.MakeNodeStructures( par, select_all, no_interpolat,
+                Tai, Pai, nTp_, nPp_, Ttol_, Ptol_ );
+     NodT0[0] = allocNewDBR( calcNode);
+     NodT1[0] = allocNewDBR( calcNode);
+     MoveWorkNodeToArray( calcNode, 0, 1, na->pNodT0() );
+     MoveWorkNodeToArray( calcNode, 0, 1, na->pNodT1() );
+   }
+
+   const TNode& LinkToNode( long int ndx, long int nNodes, DATABRPTR* anyNodeArray )
+   {
+     CopyWorkNodeFromArray( calcNode, ndx, nNodes, anyNodeArray );
+     return calcNode;
+   }
+
+   void SaveToNode( long int ndx, long int nNodes, DATABRPTR* anyNodeArray )
+   {
+       // Save databr
+       calcNode.packDataBr();
+       if( !NodT0[ndx] )
+         NodT0[ndx] = allocNewDBR( calcNode);
+       if( !NodT1[ndx] )
+         NodT1[ndx] = allocNewDBR( calcNode);
+       MoveWorkNodeToArray( calcNode, ndx, nNodes, anyNodeArray );
+  }
+
+   DATABR *reallocDBR( long int ndx, long int nNodes, DATABRPTR* anyNodeArray)
+   {
+       if( ndx < 0 || ndx>= nNodes )
+         return nullptr;
+       // free old memory
+       if( anyNodeArray[ndx] )
+       {
+            anyNodeArray[ndx] = calcNode.databr_free( anyNodeArray[ndx] );
+            delete[] anyNodeArray[ndx];
+       }
+      anyNodeArray[ndx] = allocNewDBR( calcNode );
+      if( !NodT1[ndx] )
+        NodT1[ndx] = allocNewDBR( calcNode);
+      return anyNodeArray[ndx];
+   }
 
 #else
 // Used in GEMIPM2 standalone module only
@@ -189,12 +380,50 @@ public:
     char* ptcNode() const /// Get pointer to boundary condition codes for nodes
     { return tcNode; }
     
+    /// New Stuff--------------------------------------------------------------
+
+    ///  Here we do a GEM calculation in box ii
+    bool CalcIPM_One(  const TestModeGEMParam& modeParam, long int ii, FILE* diffile )
+    {
+        return CalcIPM_Node(  modeParam, calcNode, ii, pNodT0(), pNodT1(), piaNode(), diffile );
+    }
+
+    ///  Here we do a GEM calculation in boxes from  start_node to end_node
+    bool CalcIPM_List( const TestModeGEMParam& modeParam, long int start_node, long int end_node, FILE* diffile );
+
+    ///
+    /// Initialization of GEM IPM3 data structures in coupled programs
+    /// that use GEMS3K module. Also reads in the IPM, DCH and one or many DBR text input files.
+    ///  \param ipmfiles_lst_name  pointer to a null-terminated C string with a path to a text file
+    ///                      containing the list of names of  GEMS3K input files.
+    ///                      Example: file "test.lst" with a content:    -t "dch.dat" "ipm.dat" "dbr-0.dat"
+    ///                      (-t  tells that input files are in text format)
+    ///  \param dbrfiles_lst_name  a pointer to a null-terminated C string with a path to a text file
+    ///                      containing the list of comma-separated names of  DBR input files.
+    ///                      Example: file "test-dbr.lst" with a content:    "dbr-0.dat" , "dbr-1.dat" , "dbr-2.dat"
+    ///  \param nodeTypes    the initial node contents
+    ///                      from DATABR files will be distributed among nodes in array according to the
+    ///                      distribution index list nodeTypes
+    ///  \param getNodT1     used only when reading multiple DBR files after the modeling
+    ///                      task interruption  in GEM-Selektor
+    ///  \return 0  if successful; 1 if input file(s) were not found or corrupt;
+    ///                      -1 if internal memory allocation error occurred.
+    long int  GEM_init( const char* ipmfiles_lst_name,
+             const char* dbrfiles_lst_name, long int* nodeTypes, bool getNodT1);
+
+    // end of new stuff -------------------------------------------------------
+
     /// Calls GEM IPM calculation for a node with absolute index ndx
-    long int RunGEM( long int ndx, long int Mode );
+    long int RunGEM( TNode& wrkNode,  long int  iNode, long int Mode, DATABRPTR* nodeArray );
+    
+    /// Calls GEM IPM calculation for a selected group of nodes of TNodeArray (that have nodeFlag = 1) 
+    /// in a loop with an optional openmp parallelization
+    void RunGEM( long int Mode, int nNodes, DATABRPTR* nodeArray, long int* nodeFlags, long int* retCodes );
 
     /// Calls GEM IPM for one node with three indexes (along x,y,z)
-    long int  RunGEM( long int indN, long int indM, long int indK, long int Mode )
-    { return RunGEM( iNode( indN, indM, indK ), Mode); }
+    long int  RunGEM( TNode& wrkNode, long int indN, long int indM, long int indK,
+                      long int Mode, DATABRPTR* nodeArray  )
+    { return RunGEM( wrkNode, iNode( indN, indM, indK ), Mode, nodeArray ); }
         // (both calls clean the work node DATABR structure)
 
     /// Initialization of TNodeArray data structures. Reads in the DBR text input files and
@@ -208,13 +437,6 @@ public:
     ///                      task interruption  in GEM-Selektor
     void  InitNodeArray( const char *dbrfiles_lst_name, long int *nodeTypes, bool getNodT1, bool binary_f  );
 
-    /// Copies data from the work DATABR structure into the node ndx in
-    /// the node arrays NodT0 and NodT1  (as specified in nodeTypes array)
-    void  setNodeArray( long int ndx, long int* nodeTypes  );
-
-   /// Test setup of the boundary condition for all nodes in the task
-    void  checkNodeArray( long int i, long int* nodeTypes, const char*  datachbr_file );
-
    //---------------------------------------------------------
    // Methods for working with node arrays (access to data from DBR)
    /// Calculate phase (carrier) mass, kg  of single component phase
@@ -227,15 +449,6 @@ public:
 
    //---------------------------------------------------------
    // Methods for working with node arrays
-
-    ///  Copies data for a node ndx from the array of nodes anyNodeArray that
-    /// contains nNodes into the work node data bridge structure
-    void CopyWorkNodeFromArray( long int ndx, long int nNodes, DATABRPTR* anyNodeArray );
-
-    ///  Moves work node data to the ndx element of the node array anyNodeArray
-    /// that has nNodes. Previous contents of the ndx element will be lost,
-    /// work node will be allocated new and will contain no data
-    void MoveWorkNodeToArray( long int ndx, long int nNodes, DATABRPTR* anyNodeArray );
 
     /// Copies a node from the node array arr_From to the same place in the
     /// node array arr_To. Previous contents of the ndx element in arr_To
@@ -258,7 +471,7 @@ public:
     void logProfileTotIC( FILE* logfile, long int t, double at, long int nx, long int every_t );
 
     /// Prints amounts of phases in all cells for time point t / at
-    void logProfilePhMol( FILE* logfile, long int t, double at, long int nx, long int every_t );
+    void logProfilePhMol( FILE* logfile, TParticleArray* pa, long int t, double at, long int nx, long int every_t );
     
     /// Prints volumes of phases in all cells for time point t / at
     void logProfilePhVol( FILE* logfile, long int t, double at, long int nx, long int every_t );
@@ -271,7 +484,7 @@ public:
 
     ///  Set grid coordinate array use predefined array aGrid
     /// or set up regular scale
-     void SetGrid( double aSize[3], double (*aGrid)[3] = 0 );
+     void SetGrid( double aSize[3], double (*aGrid)[3] = nullptr );
 
      /// Finds a node absolute index for the current
      /// point location. Uses grid coordinate array grid[].
@@ -298,7 +511,7 @@ public:
 
      /// Writes work node (DATABR structure) to a text VTK file
      void databr_to_vtk( fstream& ff, const char*name, double time, long cycle,
-                               long int nFields=0, long int (*Flds)[2]=0);
+                               long int nFields=0, long int (*Flds)[2]=nullptr);
 
 };
 
@@ -501,6 +714,11 @@ Hi,     ///< Total enthalpy of inert subsystem (J) (reserved)            +      
 #define node0_xPH( nodex, PHx ) (TNodeArray::na->pNodT0()[(nodex)]->xPH[(PHx)])
   // amount of phase with index PHx from T1 node with index nodex
 #define node1_xPH( nodex, PHx ) (TNodeArray::na->pNodT1()[(nodex)]->xPH[(PHx)])
+
+// amount of phase with index PHx from T0 node with index nodex
+#define node0_omPH( nodex, PHx ) (TNodeArray::na->pNodT0()[(nodex)]->omPH[(PHx)])
+// amount of phase with index PHx from T1 node with index nodex
+#define node1_omPH( nodex, PHx ) (TNodeArray::na->pNodT1()[(nodex)]->omPH[(PHx)])
 
   // volume of multicomponent phase with index PHx from T0 node with index nodex
 #define node0_vPS( nodex, PHx ) (TNodeArray::na->pNodT0()[(nodex)]->vPS[(PHx)])

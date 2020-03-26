@@ -34,17 +34,21 @@
 
 // re-declaration of enums below required for GEMS3K
 // dc_class_codes for fluids will be replaced by tp_codes
-enum fluid_mix_rules {  /// codes for mixing rules in EoS models (see m_phase.h)
-    MR_UNDEF_ = 'N',
-    MR_WAAL_ = 'W',
-    MR_CONST_ = 'C',
-    MR_TEMP_ = 'T',
-    MR_LJ_ = 'J',
-    MR_KW1_ = 'K',
-    MR_PITZ5_ = '5',
-    MR_PITZ6_ = '6',
-    MR_PITZ8_ = '8',
-    MR_B_RCPT_ = 'R'
+enum fluid_mix_rules {  /// Codes to identify specific mixing rules and temperature functions in EoS and activity models (see m_phase.h)
+    MR_UNDEF_ = 'N', // Default mixing rule or form of interaction parameter coefficients; NEM for adsorption 'A'
+    MR_WAAL_ = 'W',	// Basic Van der Waals mixing rules in cubic EoS models
+    MR_CONST_ = 'C',	// Constant one-term interaction parameter kij; CCM for sorption 'A'
+    MR_TEMP_ = 'T',	// Temperature-dependent one-term interaction parameter kij (Jaubert et al. 2005); TLM for adsorption 'A'
+    MR_LJ_ = 'J',    // Lemmon-Jacobsen mixing rule (Lemmon and Jacobsen, 1999)
+    MR_KW1_ = 'K',       // Kunz-Wagner mixing rule (Kunz and Wagner, 2007)
+    MR_PITZ5_ = '5',     // 5-term Pitzer model temperature dependence (TOUGHREACT variant)
+    MR_PITZ6_ = '6',     // 6-term Pitzer model temperature dependence (FREZCHEM variant)
+    MR_PITZ8_ = '8',     // 8-term Pitzer model temperature dependence
+    MR_B_RCPT_ = 'R',    // Use CEF reciprocal non-ideality terms in Berman multi-site ss model
+    MR_A_DLM_  = 'D',    // Diffuse-layer electrostatic model (DLM) for adsorption 'A'
+    MR_A_BSM_  = 'B',    // Basic Stern electrostatic model (BSM) for adsorption 'A'
+    MR_A_CDLM_  = 'M',    // CD-MUSIC (3-layer) electrostatic model (DLM) for adsorption 'A'
+    MR_A_ETLM_  = 'E'     // Extended TLM electrostatic model (ETLM) for adsorption 'A'
 };
 
 enum dc_class_codes {  /// codes for fluid types in EoS models (see v_mod.h)
@@ -117,6 +121,7 @@ struct SolutionData {
     double *arlnRcpt; ///< new: reciprocal terms adding to overall activity coefficients [Ls_]
     double *arlnExet; ///< new: excess energy terms adding to overall activity coefficients [Ls_]
     double *arlnCnft; ///< new: configurational terms adding to overall activity [Ls_]
+ double *arCTermt; ///< new: Coulombic terms adding to overall activity coefficients [Ls_]
 
     double *arVol;      ///< molar volumes of end-members (species) cm3/mol ->NSpecies
     double *aphVOL;     ///< phase volumes, cm3/mol (now obsolete) !!!!!!! check usage!
@@ -129,7 +134,7 @@ class TSolMod
 {
 	protected:
         char ModCode;   ///< Code of the mixing model
-        char MixCode;	///< Code for specific EoS mixing rules
+        char MixCode;	///< Code for specific EoS mixing rules or site-balance based electrostatic SCMs
                 char *DC_Codes; ///< Class codes of end members (species) ->NComp
 
         char PhaseName[MAXPHASENAME+1];    ///< Phase name (for specific built-in models)
@@ -144,11 +149,11 @@ class TSolMod
 
 //   long int NlPh;     ///< new: Number of linked phases
 //   long int NlPc;     ///< new: Number of linked phase parameter coefficient per link (default 0)
-   long int NDQFpc;   ///< new: Number of DQF parameters per species (end member), 0 or 4
+        long int NDQFpc;   ///< new: Number of DQF parameters per species (end member), 0 or 4
 //   long int NrcPpc;   ///< new: Number of reciprocal parameters per species (end member)
 
         //        long int NPTP_DC;  // Number of properties per one DC at T,P of interest (columns in aDC)  !!!! Move to CG EOS subclass
-                long int *aIPx;    // Pointer to list of indexes of non-zero interaction parameters
+        long int *aIPx;    // Pointer to list of indexes of non-zero interaction parameters
 //   long int (*PhLin)[2];  ///< new: indexes of linked phase and link type codes [NlPhs][2] read-only
 
         double R_CONST; ///< R constant
@@ -182,8 +187,9 @@ class TSolMod
         double Gid, Hid, Sid, CPid, Vid, Aid, Uid;   ///< molar ideal mixing properties
         double Gdq, Hdq, Sdq, CPdq, Vdq, Adq, Udq;   ///< molar Darken quadratic terms
         double Grs, Hrs, Srs, CPrs, Vrs, Ars, Urs;   ///< molar residual functions (fluids)
-        double *lnGamConf, *lnGamRecip, *lnGamEx, *lnGamDQF;    ///< Work pointers for lnGamma components
+        double *lnGamConf, *lnGamRecip, *lnGamEx, *lnGamDQF, *CTerm; ///< Work pointers for lnGamma components
         double *lnGamma;   ///< Pointer to ln activity coefficients of end members (check that it is collected from three above arrays)
+        double *lnGamCorr;   ///< Pointer to ln activity coefficients of correction term for Modified Bragg-Williams model, [Vinograd et al. 2018]
 
         double **y;       ///< table of moiety site fractions [NSub][NMoi]
         double ***mn;     ///< array of end member moiety-site multiplicity numbers [NComp][NSub][NMoi]
@@ -217,27 +223,32 @@ class TSolMod
 		virtual long int PureSpecies()
 		{
 			return 0;
-		};
+        }
 
 		virtual long int PTparam()
 		{
 			return 0;
-		};
+        }
 
 		virtual long int MixMod()
 		{
 			return 0;
-		};
+        }
 
-		virtual long int ExcessProp( double *Zex )
+        virtual long int ExcessProp( double */*Zex*/ )
 		{
 			return 0;
-		};
+        }
 
-		virtual long int IdealProp( double *Zid )
+        virtual long int IdealProp( double */*Zid*/ )
 		{
 			return 0;
-		};
+        }
+
+        virtual long int StandardProp( double */*Zid*/ )
+        {
+            return 0;
+        }
 
         /// Set new system state
 		long int UpdatePT ( double T_k, double P_bar );
@@ -352,7 +363,7 @@ class EOSPARAM
 			if ( i==j ) return epspar[i];
                         if (i<j) return mixpar[j][i];
                             else return mixpar[i][j];
-		};
+        }
 
                 double SIG3( long int i){ return sig3par[i]; }
                 double M2R( long int i) { return m2par[i]; }
@@ -513,7 +524,7 @@ class TCGFcalc: public TSolMod
 		double GetDELTA( void )
 		{
 			return DELTA;
-		};
+        }
 };
 
 
@@ -1129,9 +1140,11 @@ class TBerman: public TSolMod
                 long int NrcR;   ///< max. possible number of reciprocal reactions (allocated)
                 long int Nrc;    ///< number of reciprocal reactions (actual)
                 long int *NmoS;  ///< number of different moieties (in end members) on each sublattice
-            long int ***XrcM;  ///< Table of indexes of end members, sublattices and moieties involved in
+
+                long int ***XrcM;  ///< Table of indexes of end members, sublattices and moieties involved in
                                ///< reciprocal reactions [NrecR][4][2], two left and two right side.
                                ///< for each of 4 reaction components: j, mark, // s1, m1, s2, m2.
+            long int ns;       ///< number of sites (sublattices) that have two or more different moieties
 
                 double *Wu;    ///< Interaction parameter coefficients a
                 double *Ws;    ///< Interaction parameter coefficients b (f(T))
@@ -1215,25 +1228,27 @@ class TCEFmod: public TSolMod
                 void alloc_internal();
                 void free_internal();
                 long int ExcessPart();
+                double dGm_dysi(const long int s);
+
                                ///< Arrays for ideal conf part must exist in base TSolMod instance
                 double PYproduct( const long int j );
                 long int em_which(const long int s, const long int m , const long int jb, const long int je);
                 long int em_howmany( long int s, long int m );
                 double ysm( const long int j, const long int s );
-                double KronDelta( const long int j, const long int m );
+                bool KronDelta( const long int j, const long int s, const long int m );
                 double dGref_dysigma(const long int l, const long int s );
                 double dGref_dysm(const long int s, const long m );
                 double dGm_dysm(const long int s, const long m ); // added by Nichenko
                 long int ReciprocalPart();   ///< Calculation of reciprocal contributions to activity coefficients
-
+                long int ReferenceFramePart(); ///< Calculation of reference frame contributions to activity coefficients
                 double RefFrameTerm( const long int j, double G_ref );
+                double dGr_dysi( const long int i, const long int s, const long int ex_j );
                 long int IdealMixing(); // NSergii: added by Nichenko to rewrite the ideal part contribution
                 long int CalcSiteFractions(); // NSergii:
                 long int SLatt(const long int m);
-                double Gmix(); // NSergii:
-                double Gexc();
+                double Hmix(); // NSergii:
                 double Gref();
-                double Gidmix();
+                double idealSmix();
         public:
 
                 /// Constructor
@@ -1256,6 +1271,79 @@ class TCEFmod: public TSolMod
 
 };
 
+
+// -------------------------------------------------------------------------------------
+// TEST MODEL
+// Modified Bragg-Williams model, [Vinograd et al. 2018]
+// Emulation of short-range ordering within the frame of the Bragg-Williams model: Application to the solid solution of calcite and magnesite"
+
+class TMBWmod: public TSolMod
+{
+        private:
+                long int *NmoS;  ///< number of different moieties (in end members) on each sublattic
+                long int *Sub;  ///< lookup table for sublattice index for each moiety.
+                long int *InCf;   ///< Vector of moieties in interaction parameter table (moiesties in columns in aIPx)
+
+                double *Wu;    ///< Interaction parameter coefficients a
+                double *Ws;    ///< Interaction parameter coefficients b (f(T))
+                double *Wc;    ///< Interaction parameter coefficients b (f(TlnT))
+                double *Wv;    ///< Interaction parameter coefficients c (f(P))
+                double *Wpt;   ///< Interaction parameters corrected at P-T of interest
+                double **fjs;      ///< array of site activity coefficients for end members [NComp][NSub]
+
+                double *Grc;  ///< standard molar reciprocal energies (constant)
+                double *oGf;   ///< molar Gibbs energies of end-member compounds
+                double *G0f;   ///< standard molar Gibbs energies of end members (constant)
+                double *pyp;  ///< Products of site fractions for end members (CEF mod.) [NComp]
+//            double *pyn;  // Products of site fractions for sites not in the end member [NComp]
+                void alloc_internal();
+                void free_internal();
+                long int ExcessPart();
+                               ///< Arrays for ideal conf part must exist in base TSolMod instance
+                double PYproduct( const long int j );
+                long int em_which(const long int s, const long int m , const long int jb, const long int je);
+                long int em_howmany( long int s, long int m );
+                double ysm( const long int j, const long int s );
+                bool KronDelta( const long int j, const long int s, const long int m );
+                double dGref_dysigma(const long int l, const long int s );
+                double dGref_dysm(const long int s, const long m );
+                double dGm_dysi( const long int i, const long int s);
+                double dGr_dysi( const long int i, const long int s, const long int x);
+                double dGm_dysm(const long int s, const long m ); // added by Nichenko
+                long int ReciprocalPart();   ///< Calculation of reciprocal contributions to activity coefficients
+                long int CorrPart();   ///< The correction term which is constrained to be identically zero both in the disordered and fully ordered limits
+                long int ReferenceFramePart();///< Calculation of reference frame contributions to activity coefficients
+                double RefFrameTerm( const long int j, double G_ref );
+                long int IdealMixing(); // NSergii: added by Nichenko to rewrite the ideal part contribution
+                long int CalcSiteFractions(); // NSergii:
+                long int SLatt(const long int m);
+                double Gmix(); // NSergii:
+                //double calcGex();
+                double Hmix();
+                double Gref();
+                //double Gidmix();
+                double idealSmix();
+        public:
+
+                /// Constructor
+                TMBWmod( SolutionData *sd, double *G0 );
+
+                /// Destructor
+                ~TMBWmod();
+
+                /// Calculates T,P corrected interaction parameters
+                long int PTparam();
+
+                /// Calculates activity coefficients
+                long int MixMod();
+
+                /// Calculates excess properties
+                long int ExcessProp( double *Zex );
+
+                /// Calculates ideal mixing properties
+                long int IdealProp( double *Zid );
+
+};
 
 // -------------------------------------------------------------------------------------
 /// SIT model reimplementation for aqueous electrolyte solutions.
@@ -2277,8 +2365,40 @@ class TGuggenheim: public TSolMod
 
 };
 
+// -------------------------- Site-balance-based SCMs ----------------------
+/// Subclass for the non-electrostatic SCM (single- and multisite)
+class TSCM_NEM: public TSolMod
+{
+            private:
 
+            public:
+
+                    /// Constructor
+                    TSCM_NEM( SolutionData *sd );
+
+                    /// Destructor
+                    ~TSCM_NEM();
+
+                    /// Calculates T,P corrected interaction parameters
+                    long int PTparam();
+
+                    /// Calculates (fictive) activity coefficients
+                    long int MixMod();
+
+                    /// Calculates EDL (Coulombic) terms
+                    long int EDLmod();
+
+                    /// Calculates excess properties
+                    long int ExcessProp( double *Zex );
+
+                    /// Calculates ideal mixing properties
+                    long int IdealProp( double *Zid );
+
+                    /// Calculates SCM configurational entropy
+                    double SCM_conf_entropy();
+
+};
 
 #endif
 
-/// _s_solmod_h
+/// end of _s_solmod_h

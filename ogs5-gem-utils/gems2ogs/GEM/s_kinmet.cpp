@@ -47,7 +47,7 @@ TKinMet::TKinMet( const KinMetData *kmd ):
     NComp(kmd->NComp_), nlPh(kmd->nlPh_), nlPc(kmd->nlPc_), nPRk(kmd->nPRk_), nSkr(kmd->nSkr_),
     nrpC(kmd->nrpC_), naptC(kmd->naptC_), nAscC(kmd->nAscC_), // numpC(kmd->numpC_), iRes4(kmd->iRes4_),
     R_CONST(8.31451), T_k(kmd->T_k_), P_bar(kmd->P_bar_), kTau(kmd->kTau_), kdT(kmd->kdT_),
-    sFact(kmd->sFact_), sSAi(kmd->sSA_), nPhi(kmd->nPh_), mPhi(kmd->mPh_), vPhi(kmd->vPh_),
+    sSAi(kmd->sSA_),  nPhi(kmd->nPh_), mPhi(kmd->mPh_), vPhi(kmd->vPh_), sFact(kmd->sFact_),
     IS(kmd->IS_), pH(kmd->pH_),  pe(kmd->pe_),  Eh(kmd->Eh_),
     sAPh(kmd->sAPh_), LaPh(kmd->LaPh_), OmPh(kmd->OmPh_),
     sgw(kmd->sgw_),  sgg(kmd->sgg_),  rX0(kmd->rX0_),  hX0(kmd->hX0_),
@@ -107,6 +107,7 @@ TKinMet::TKinMet( const KinMetData *kmd ):
     sSAcor = sSAi;  // Initialized corrected specific surface area (m2/kg)
     sAph_c = sAPh = mPh*sSA;  // Initialized corrected surface area of the phase (m2/kg)
     sSAV = sSAVcor = sAPh/vPh;
+    sFacti = sFact;
     // Calculation of total properties of linked phases
     if( nlPh )
        linked_phases_properties( true );
@@ -290,12 +291,12 @@ TKinMet::init_arPRt()
             arPRt[xj].rpCon = arrpCon[xj];
             if( nSkr && naptC )
                 arPRt[xj].apCon = arapCon[xj];
-            else arPRt[xj].apCon = NULL;
+            else arPRt[xj].apCon = nullptr;
             // work data: unpacked rpCon[nrpC]
             if( nrpC >=4 )
             {
                 arPRt[xj].ko = arPRt[xj].rpCon[0];  /// rate constant at standard temperature (mol/m2/s)
-                arPRt[xj].Ko = arPRt[xj].rpCon[1];  /// rate constant at standard temperature (mol/m2/s)
+                arPRt[xj].Ko = arPRt[xj].rpCon[1];  /// gross rate constant at standard temperature (mol/m2/s)
                 arPRt[xj].Ap = arPRt[xj].rpCon[2];  /// Arrhenius parameter
                 arPRt[xj].Ea = arPRt[xj].rpCon[3];  /// activation energy at st.temperature J/mol
             }
@@ -363,11 +364,13 @@ bool
 TKinMet::linked_phases_properties( bool if_init = false )
 {
     // this is a phase linked to one or more other phases!
-          long int klp, k, xlc, lpcode, i;
+          long int klp, k, xlc, lpcode=0, i;
           double lc[8], xpk, mpk, vpk, aspk;
 
           sSAlp = 0.;    sSAVlp = 0.;  sAPhlp = 0.;   // reset totals for linked phases
           mPhlp = 0.;    vPhlp = 0.;   Rholp =0.;  nPhlp = 0.;
+          for( i=0; i<8; i++ )
+              lc[i] =0.;
 
           // Checking if there is a phase linkage
           for( klp=0; klp<nlPh; klp++ )
@@ -646,7 +649,7 @@ TKinMet::UpdateTime( const double Tau, const double dTau )
 double
 TKinMet::PRrateCon( TKinReact &rk, const long int r )
 {
-   long int xj, j, atopc, facex;
+   long int xj, j, atopc;//, facex;
    double atp, ajp, aj, bc, tt;  // ,kr
 
 //cout << "kTau: " << kTau << " k: " << rk.k << " K: " << rk.K << " Omg: " << OmPh <<
@@ -659,7 +662,7 @@ TKinMet::PRrateCon( TKinReact &rk, const long int r )
 if( rk.xPR != r )     // index of this parallel reaction
         cout << rk.xPR << " <-> " << r << " mismatch" << endl;
    atopc = rk.ocPRk[0]; // operation code for this kinetic parallel reaction affinity term
-   facex = rk.ocPRk[1]; // particle face index (reserved)
+   //facex = rk.ocPRk[1]; // particle face index (reserved)
 
    // activity (catalysis) product term (f(prod(a))
    rk.cat = 1.;
@@ -669,7 +672,7 @@ if( rk.xPR != r )     // index of this parallel reaction
         {
             j = rk.xSKr[xj];
             bc = rk.apCon[xj][0];
-            if( bc )
+            if( bc  != 0.0 )
             {
                 aj = pow( 10., arla[j] );  // bugfix 4.10.2013 DK
                 ajp = pow( aj, bc );
@@ -677,15 +680,15 @@ if( rk.xPR != r )     // index of this parallel reaction
             }
         }
    }
-   if( rk.pPR )
+   if( rk.pPR != 0.0 )
        rk.cat = pow( rk.cat, rk.pPR );
-   if( rk.bI )
+   if( rk.bI  != 0.0 )
        rk.cat *= pow( IS, rk.bI );
-   if( rk.bpH )
+   if( rk.bpH != 0.0 )
        rk.cat *= pow( pH, rk.bpH );
-   if( rk.bpe )
+   if( rk.bpe != 0.0 )
        rk.cat *= pow( pe, rk.bpe );
-   if( rk.bEh )
+   if( rk.bEh != 0.0 )
        rk.cat *= pow( Eh, rk.bEh );
 
    // affinity term (f(Omega))
@@ -709,13 +712,13 @@ if( rk.xPR != r )     // index of this parallel reaction
 //       rk.aft *= -1.;
        break;
     case ATOP_SCHOTT_: // = 2,      Schott et al. 2012 fig. 1e
-       if( OmPh )
+       if( OmPh  != 0.0 )
            rk.aft = exp( -rk.uPR/OmPh );
        else
            rk.aft = 0.;
        break;
     case ATOP_HELLMANN_: // = 3,    Hellmann Tisserand 2006 eq 9
-       if( OmPh )
+       if( OmPh  >= 0.0 )
        {
           atp = pow( rk.qPR*log( OmPh ), rk.uPR );
           rk.aft = 1 - exp( -atp );
@@ -725,7 +728,7 @@ if( rk.xPR != r )     // index of this parallel reaction
        }
        break;
     case ATOP_TENG1_: // = 4,       Teng et al. 2000, eq 13
-       if( OmPh )
+       if( OmPh  >= 0.0 )
            atp = log( OmPh );
        else
            atp = 0.;
@@ -872,7 +875,7 @@ TKinMet::CorrSpecSurfArea( const double sFratio, const bool toinit = false )
 bool
 TKinMet::RateInit( )
 {   
-    double rPR, sSAcr;
+    double rPR;//, sSAcr;
     long int r, atopc;
 
     kTot = 0.;
@@ -906,7 +909,7 @@ TKinMet::RateInit( )
        gTot = kTot * mPh/nPh;  // initial rate in kg/m2/s
        vTot =  kTot * vPh/nPh;  // orthogonal mean growth/dissolution velocity in m/s
        if( KinSizedCode != KM_UNDEF_ )
-           sSAcr = CorrSpecSurfArea( 1.0, true );
+           /*sSAcr =*/ CorrSpecSurfArea( 1.0, true );
     }
     else {
 //        sSAcr = 0.;
@@ -923,7 +926,7 @@ TKinMet::RateInit( )
 bool
 TKinMet::RateMod( )
 {
-    double sFratio = 1., rPR, sSAcr;
+    double sFratio = 1., rPR;//, sSAcr;
     long int r, atopc;
 
     kTot = 0.;   // overall specific rate (mol/m2/s)
@@ -957,7 +960,7 @@ TKinMet::RateMod( )
        gTot = kTot * mPh/nPh;  // rate in kg/m2/s
        vTot = kTot * vPh/nPh;  // linear growth/dissolution velocity in m/s - see eq (2.11)
        if( KinSizedCode != KM_UNDEF_ )
-           sSAcr = CorrSpecSurfArea( sFratio, false );
+           /*sSAcr =*/ CorrSpecSurfArea( sFratio, false );
     }
     else {
         gTot = 0.;
@@ -1175,6 +1178,11 @@ TKinMet::SplitMod( )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //  Implementation of TMWReaKin class
 //
+// Destructor
+TMWReaKin::~TMWReaKin()
+{}
+
+
 // Initializes uptake rates
 bool
 TMWReaKin::SSReaKinInit()
@@ -1265,7 +1273,7 @@ TUptakeKin::free_upttabs()
 }
 
 bool
-TUptakeKin::UptKinPTparam( const double TK, const double P )
+TUptakeKin::UptKinPTparam( const double /*TK*/, const double /*P*/ )
 {
     // No T,P corrections so far ...
     return false;
@@ -1292,7 +1300,9 @@ TUptakeKin::UptakeInit()
        spcfl[j] = arWx[j];
      Rdj[j] = arWx[j]/arElm[i];
      Rd_rest = (1.-arWx[j])/(molSum-arElm[i]);
-     Dfj[j] = Rdj[j]/Rd_rest;
+     if( fabs(Rd_rest) >1e-20  )
+            Dfj[j] = Rdj[j]/Rd_rest;
+     //cout << "Rd_rest(UptakeInit) = " << Rd_rest << "  Dfj[j] = " <<  Dfj[j]<< endl;
     }
     return false;
 }
@@ -1307,7 +1317,7 @@ TUptakeKin::UptakeMod()
     {
         case  KM_UPT_ENTRAP_: //  = 'E',  //	Unified entrapment model (Thien,Kulik,Curti 2013)
         {
-            double FTr, DelTr0, Ds, Dl, l, m, xtTr, xtHc, CF, Rd_rest;
+            double FTr, DelTr0, Ds, /*Dl,*/ l, m, xtTr, xtHc, CF, Rd_rest;
             double DelTr, Vml, molSum=0., molMinSum=0., molMajSum=0., spMinSum=0, spMajSum=0;
 
 // Calculating the sums of tot.diss.molal. for all elements relevant to major and minor endmembers
@@ -1335,12 +1345,12 @@ TUptakeKin::UptakeMod()
                     continue; // not a minor/trace element
                 }
                 // Minor/trace component
-                FTr =    arUmpCon[j][0];  // d-less
-                DelTr0 = arUmpCon[j][1];  // eq tr fract.coeff.
-                Ds =     arUmpCon[j][2];  // in nm2/s
-                Dl =     arUmpCon[j][3];  // in nm2/s
-                l =      arUmpCon[j][4];  // in nm
-                m =      arUmpCon[j][5];  // d-less
+                FTr =    arUmpCon[j][0];  // FTr:    surface enrichment factor, dimensionless
+                DelTr0 = arUmpCon[j][1];  // DelTr0: trace element fractionation coefficient in ssas equilibrium
+                Ds =     arUmpCon[j][2];  // Ds:     effective diffusivity of trace element in surface layer, in nm2/s
+              //Dl =     arUmpCon[j][3];  // Dl:     effective diffusivity of trace element in crystal lattice, in nm2/s
+                l =      arUmpCon[j][4];  // l:      effective thickness of the surface layer, in nm
+                m =      arUmpCon[j][5];  // m:      d-less multiplier to effective thickness l, dimensionless
 
                 // Calculate orthogonal linear rate
                 Vml = -vTot * m * l * 1e9;     // here vTot is in m/s and Vml is in nm2/s
@@ -1365,7 +1375,9 @@ TUptakeKin::UptakeMod()
                 // Rd and Df calculation (on the bulk basis)
                 Rdj[j] = spcfu[j]/arElm[i];
                 Rd_rest = (1-spcfu[j])/(molSum-arElm[i]);
-                Dfj[j] = Rdj[j]/Rd_rest;
+                if( fabs(Rd_rest) >1e-20 )
+                    Dfj[j] = Rdj[j]/Rd_rest;
+                //cout << "Rd_rest(UptakeMod) = " << Rd_rest << "  Dfj[j] = " <<  Dfj[j]<< endl;
                 // Other ways of Dfj calculation are possible!
             }
             break;
@@ -1387,6 +1399,17 @@ TUptakeKin::UptakeMod()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+// Destructor
+TIonExKin::~TIonExKin()
+{}
+
+
+// Destructor
+TAdsorpKin::~TAdsorpKin()
+{}
+
+TNucleKin::~TNucleKin()
+{}
 
 /*
 // -----------------------------------------------------------------------------

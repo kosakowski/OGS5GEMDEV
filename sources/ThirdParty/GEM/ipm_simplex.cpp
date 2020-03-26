@@ -30,6 +30,9 @@
 #include "m_param.h"
 #include "node.h"
 #include "num_methods.h"
+#include "activities.h"
+#include "kinetics.h"
+
 
 #ifdef IPMGEMPLUGIN
 enum volume_code {  // Codes of volume parameter ???
@@ -1090,14 +1093,18 @@ void TMulti::DC_LoadThermodynamicData(TNode* aNa ) // formerly CompG0Load()
 
 #ifndef IPMGEMPLUGIN
   TNode* na;
-  double T;
   if( aNa )
-   na = aNa;// for reading GEMIPM files task
+  {
+      na = aNa;// for reading GEMIPM files task
+      TK =  na->cTK();
+      PPa = na->cP();
+  }
   else
-   na = node;
-  TK =  pm.TC+C_to_K;
-  PPa = pm.P*bar_to_Pa;
-
+  {
+      na = node;
+      TK =  pm.TC+C_to_K;
+      PPa = pm.P*bar_to_Pa;
+  }
 #else
   TNode* na = node;
   TK =  na->cTK();
@@ -1311,4 +1318,24 @@ double U_TP( double TC, double P)
 #endif
 }
 */
+
+#ifndef IPMGEMPLUGIN
+
+// Load System data to define lookup arrays
+void TMulti::rebuild_lookup(  double Tai[4], double Pai[4] )
+{
+   // copy intervals for minimizatiom
+   pm.Pai[0] = Pai[0];
+   pm.Pai[1] = Pai[1];
+   pm.Pai[2] = Pai[2];
+   pm.Pai[3] = Pai[3];
+   pm.Tai[0] = Tai[0];
+   pm.Tai[1] = Tai[1];
+   pm.Tai[2] = Tai[2];
+   pm.Tai[3] = Tai[3];
+   if( node )
+      node->MakeNodeStructures(window(), true, pm.Tai, pm.Pai );
+}
+#endif
+
 //--------------------- End of ipm_simplex.cpp ---------------------------

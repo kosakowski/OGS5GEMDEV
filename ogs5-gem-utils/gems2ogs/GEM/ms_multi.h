@@ -52,6 +52,8 @@ typedef int (tget_ndx)( int nI, int nO, int Xplace );
 #include "s_sorpmod.h"
 #include "s_kinmet.h"
 
+class GemDataStream;
+
 typedef struct
 {  // MULTI is base structure to Project (local values)
   char
@@ -232,15 +234,15 @@ double
      *Wb,     ///< Relative Born factors (HKF, reserved) [0:Ls-1]
      *Wabs,   ///< Absolute Born factors (HKF, reserved) [0:Ls-1]
      *Rion,   ///< Ionic or solvation radii, A (reserved) [0:Ls-1]
-     *HYM,    ///< reserved
-     *ENT,    ///< reserved no object
+     *HYM__,    ///< reserved
+     *ENT__,    ///< reserved no object
 
      *H0,     ///< DC pmolar enthalpies, reserved [L]
      *A0,     ///< DC molar Helmholtz energies, reserved [L]
      *U0,     ///< DC molar internal energies, reserved [L]
      *S0,     ///< DC molar entropies, reserved [L]
      *Cp0,    ///< DC molar heat capacity, reserved [L]
-     *Cv0,    ///< DC molar Cv, reserved [L]
+     *Cv0__,    ///< DC molar Cv, reserved [L]
 
     *VL,      ///< ln mole fraction of end members in phases-solutions
   // Old sorption stuff
@@ -249,6 +251,7 @@ double
     *Aalp,    ///< Full vector of specific surface areas of phases (m2/g) [0:FI-1]
     *Sigw,    ///< Specific surface free energy for phase-water interface (J/m2)   [0:FI-1]
     *Sigg,  	///< Specific surface free energy for phase-gas interface (J/m2) (not yet used)  [0:FI-1], reserved
+// from here move to --> datach.h
   // TSolMod stuff
   *lPhc,  ///< new: Collected array of phase link parameters (sum(LsPhl[k][1] over Fi)
   *DQFc,  ///< new: Collected array of DQF parameters for DCs in phases -> L1[k] x LsMdc2[k][0]
@@ -270,6 +273,8 @@ double
   *AscpC,   /// new: parameter coefficients of equation for correction of specific surface area k-> += LsKin[k][4]
   *UMpcC  ///< new: Collected array of uptake model coefficients k-> += L1[k]*LsUpt[k][0];
       ;
+  // until here move to --> datach.h
+
   //  Data for old surface comlexation and sorption models (new variant [Kulik,2006])
   double  (*Xr0h0)[2];   ///< mean r & h of particles (- pores), nm  [0:FI-1][2], reserved
   double  (*Nfsp)[MST];  ///< Fractions of the sorbent specific surface area allocated to surface types  [FIs][FIat]
@@ -299,14 +304,14 @@ double
 // TKinMet stuff (old DODs, new contents )
     *PUL,  ///< Vector of upper restrictions to multicomponent phases amounts [FIs]
     *PLL,  ///< Vector of lower restrictions to multicomponent phases amounts [FIs]
-*PfFact, /// new: phase surface area - volume shape factor (taken from TKinMet or set from TNode) [FI]
-*PrT,    /// new: Total MWR rate (mol/s) for phases - TKinMet output [FI]
-*PkT,    /// new: Total specific MWR rate (mol/m2/s) for phases - TKinMet output [FI]
-*PvT,    /// new: Total one-dimensional MWR surface propagation velocity (m/s) - TKinMet output [FI]
-//  potentially can be extended to all solution phases?
-*emRd,   /// new: output Rd values (partition coefficients) for end members (in uptake kinetics model) [Ls]
-*emDf,   /// new: output Df values (fractionation coeffs.) for end members (in uptake kinetics model) [Ls]
-//
+    *PfFact, /// new: phase surface area - volume shape factor (taken from TKinMet or set from TNode) [FI]
+    *PrT,    /// new: Total MWR rate (mol/s) for phases - TKinMet output [FI]
+    *PkT,    /// new: Total specific MWR rate (mol/m2/s) for phases - TKinMet output [FI]
+    *PvT,    /// new: Total one-dimensional MWR surface propagation velocity (m/s) - TKinMet output [FI]
+    //  potentially can be extended to all solution phases?
+    *emRd,   /// new: output Rd values (partition coefficients) for end members (in uptake kinetics model) [Ls]
+    *emDf,   /// new: output Df values (fractionation coeffs.) for end members (in uptake kinetics model) [Ls]
+    //
     *YOF,     ///< Surface free energy parameter for phases (J/g) (to accomodate for variable phase composition) [FI]
     *Vol,     ///< DC molar volumes, cm3/mol [L]
     *MM,      ///< DC molar masses, g/mol [L]
@@ -321,13 +326,13 @@ double
     *FVOL,    ///< phase volumes, cm3 comment corrected DK 04.08.2009  [0:FI-1]
     *FWGT,    ///< phase (carrier) masses, g                [0:FI-1]
 //
-    *G,       ///< Normalized DC energy function c(j), mole/mole [0:L-1]
-    *G0,      ///< Input normalized g0_j(T,P) for DC at unified standard scale[L]
-    *lnGam,   ///< ln of DC activity coefficients in unified (mole-fraction) scale [0:L-1]
+    *G,       ///< Normalized DC energy function c(j), mole/mole [0:L-1]            --> activities.h
+    *G0,      ///< Input normalized g0_j(T,P) for DC at unified standard scale[L]   --> activities.h
+    *lnGam,   ///< ln of DC activity coefficients in unified (mole-fraction) scale [0:L-1] --> activities.h
     *lnGmo;   ///< Copy of lnGam from previous IPM iteration (reserved)
   double  (*lnSAC)[4]; ///< former lnSAT ln surface activity coeff and Coulomb's term  [Lads][4]
 
-  // TSolMod stuff (detailed output on partial energies of mixing)
+  // TSolMod stuff (detailed output on partial energies of mixing)   --> activities.h
   double *lnDQFt; ///< new: DQF terms adding to overall activity coefficients [Ls_]
   double *lnRcpt; ///< new: reciprocal terms adding to overall activity coefficients [Ls_]
   double *lnExet; ///< new: excess energy terms adding to overall activity coefficients [Ls_]
@@ -375,7 +380,7 @@ double
     *XY,  ///< Copy of x_j from previous loop of Selekt2() [0:L-1]
     *Qp,  ///< Work variables related to non-ideal phases FIs*(QPSIZE=180)
     *Qd,  ///< Work variables related to DC in non-ideal phases FIs*(QDSIZE=60)
-    *MU,  ///< mu_j values of differences between dual DC chem.potentials [L]
+    *MU,  ///< mu_j values of differences between dual and primal DC chem.potentials [L]
     *EMU, ///< Exponents of DC increment to F_a criterion for phase [L]
     *NMU, ///< DC increments to F_a criterion for phase [L]
     *W,   ///< Weight multipliers for DC (incl restrictions) in IPM [L]
@@ -533,12 +538,11 @@ void KinMetModLoad();
 
 #else
 
-   bool load; // internal value
 
 #endif
 
 protected:
-
+// From here move to activities.h or node.h
    long int sizeFIs;     ///< current size of phSolMod
    TSolMod* (*phSolMod); ///< size current FIs - number of multicomponent phases
 
@@ -557,6 +561,7 @@ protected:
 
    void Alloc_TKinMet( long int newFI );
    void Free_TKinMet();
+// until here move to activities.h or node.h
 
 // Added for implementation of divergence detection in dual solution 06.05.2011 DK
    long int nNu;  ///< number of ICs in the system
@@ -631,13 +636,13 @@ protected:
 // Generic solution model calls
     void SolModCreate( long int jb, long int jmb, long int jsb, long int jpb, long int jdb,
                        long int k, long int ipb, char ModCode, char MixCode,
-                       /* long int jphl, long int jlphc, */ long int jdqfc, long int jrcpc );
+                       /* long int jphl, long int jlphc, */ long int jdqfc/*, long int jrcpc*/ );
     void SolModParPT( long int k, char ModCode );
     void SolModActCoeff( long int k, char ModCode );
     void SolModExcessProp( long int k, char ModCode );
-    void SolModIdealProp ( long int jb, long int k, char ModCode );
-    void SolModStandProp ( long int jb, long int k, char ModCode );
-    void SolModDarkenProp ( long int jb, long int k, char ModCode );
+    void SolModIdealProp ( /*long int jb,*/ long int k, char ModCode );
+    void SolModStandProp ( /*long int jb,*/ long int k, char ModCode );
+    void SolModDarkenProp ( /*long int jb,*/ long int k/*, char ModCode*/ );
 
     // Specific phase property calculation functions  // obsolete (29.11.10 TW)
     // void IdealGas( long int jb, long int k, double *Zid );
@@ -656,16 +661,16 @@ void KM_UpdateFSA(long jb, long int k, const char *kMod );
 void KM_ReturnFSA(long int k, const char *kMod );
 void KM_CalcRates( long int k, const char *kMod );
 void KM_InitRates( long int k, const char *kMod );
-void KM_CalcSplit( long int jb, long int k, const char *kMod );
-void KM_InitSplit( long int jb, long int k, const char *kMod );
-void KM_CalcUptake( long int jb, long int k, const char *kMod );
-void KM_InitUptake( long int jb, long int k, const char *kMod );
-void KM_SetAMRs( long int jb, long int k, const char *kMod );
+void KM_CalcSplit( /*long int jb,*/ long int k, const char *kMod );
+void KM_InitSplit( /*long int jb,*/ long int k, const char *kMod );
+void KM_CalcUptake( /*long int jb,*/ long int k, const char *kMod );
+void KM_InitUptake( /*long int jb,*/ long int k, const char *kMod );
+void KM_SetAMRs( /*long int jb,*/ long int k, const char *kMod );
 
 // ipm_main.cpp - numerical part of GEM IPM-2
     void GEM_IPM( long int rLoop );
     long int MassBalanceRefinement( long int WhereCalledFrom );
-    long int InteriorPointsMethod( long int &status, long int rLoop );
+    long int InteriorPointsMethod( long int &status/*, long int rLoop*/ );
     void AutoInitialApproximation( );
 
 // ipm_main.cpp - miscellaneous fuctions of GEM IPM-2
@@ -715,10 +720,12 @@ void KM_SetAMRs( long int jb, long int k, const char *kMod );
     void MultiConstInit(); // from MultiRemake
     void GEM_IPM_Init();
 
+
 public:
     TNode *node;
 
-    void set_def( long int i=0);
+
+    void set_def( int i=0);
 
 #ifndef IPMGEMPLUGIN
 
@@ -734,7 +741,7 @@ public:
 //      Free_TSolMod();     // Added 06.05.2011 DK - possible bugfix
        Free_internal();
        Free_uDD();
-    };
+    }
 
     void ods_link( int i=0);
     void dyn_set( int i=0);
@@ -751,15 +758,17 @@ public:
     void unpackData();
 
     void MultiKeyInit( const char*key );
-    void EqstatExpand( const char *key,  bool calcActivityModels, bool calcKineticModels );
+    void EqstatExpand( /*const char *key,*/  bool calcActivityModels/*, bool calcKineticModels*/ );
     void ET_translate( int nOet, int nOpex, int JB, int JE, int jb, int je,
-     tget_ndx *get_ndx = 0 );
+     tget_ndx *get_ndx = nullptr );
     void getNamesList( int nO, TCStringArray& lst );
 
    class UserCancelException {};
 
    /// connection to UnSpace
    double pb_GX( double *Gxx  );
+
+   void rebuild_lookup(double Tai[], double Pai[]);
 
 #else
 /// This allocation is used only in standalone GEMS3K
@@ -768,31 +777,30 @@ public:
      pmp = &pm;
      node = na_; // parent
      sizeN = 0;
-     AA = 0;
-     BB = 0;
-     arrL = 0;
-     arrAN = 0;
+     AA = nullptr;
+     BB = nullptr;
+     arrL = nullptr;
+     arrAN = nullptr;
 
- U_mean = 0;
- U_M2 = 0;
- U_CVo = 0;
- U_CV = 0;
- ICNud = 0;
+ U_mean = nullptr;
+ U_M2 = nullptr;
+ U_CVo = nullptr;
+ U_CV = nullptr;
+ ICNud = nullptr;
 
      sizeFIs = 0;
-     phSolMod = 0;
+     phSolMod = nullptr;
      sizeFIa = 0;
-     phSorpMod = 0;
+     phSorpMod = nullptr;
      sizeFI = 0;
-     phKinMet = 0;
+     phKinMet = nullptr;
 
-     pmp->Guns = 0;
-     pmp->Vuns = 0;
-     pmp->tpp_G = 0;
-     pmp->tpp_S = 0;
-     pmp->tpp_Vm = 0;
+     pmp->Guns = nullptr;
+     pmp->Vuns = nullptr;
+     pmp->tpp_G = nullptr;
+     pmp->tpp_S = nullptr;
+     pmp->tpp_Vm = nullptr;
 
-     load = false;
    }
 
     ~TMulti()
@@ -800,10 +808,6 @@ public:
 
     void multi_realloc( char PAalp, char PSigm );
     void multi_free();
-
-    void CheckMtparam(); // Test load thermodynamic data before
-
-    void set_load (bool what); // DM 20.05.2013 - Ensures the re-reading of the system properties into GEM IMP data structure
 
 #endif
 
@@ -827,6 +831,8 @@ public:
     void to_text_file_gemipm( const char *path, bool addMui,
     		bool with_comments = true, bool brief_mode = false );
     void from_text_file_gemipm( const char *path,  DATACH  *dCH );
+    void copyMULTI( const TMulti& otherMulti );
+
 
     // New functions for TSolMod, TKinMet and TSorpMod parameter arrays
        void getLsModsum( long int& LsModSum, long int& LsIPxSum );
@@ -848,12 +854,12 @@ public:
     // EXTERNAL FUNCTIONS
     // MultiCalc
     void Alloc_internal();
-double CalculateEquilibriumState( long int typeMin, long int& NumIterFIA, long int& NumIterIPM );
+double CalculateEquilibriumState( /*long int typeMin,*/ long int& NumIterFIA, long int& NumIterIPM );
     void InitalizeGEM_IPM_Data();
-    void DC_LoadThermodynamicData( TNode* aNa = 0 );
+    void DC_LoadThermodynamicData( TNode* aNa = nullptr );
     //DM 25.02.2014
     void Access_GEM_IMP_init();
-    int get_sizeFIs () {return sizeFIs;}
+    long get_sizeFIs () {return sizeFIs;}
     // acces for node class
     TSolMod * pTSolMod (int xPH);
 
@@ -864,6 +870,19 @@ double CalculateEquilibriumState( long int typeMin, long int& NumIterFIA, long i
 
     double HelmholtzEnergy( double x );
     double InternalEnergy( double TC, double P );
+
+    ///  Writes the contents of the work instance of the DATABR structure into a disk file with path name  fname.
+    ///   \param fname         null-terminated (C) string containing a full path to the DBR disk file to be written.
+    ///                 NULL  - the disk file name path stored in the  dbr_file_name  field of the TNode class instance
+    ///                 will be used, extended with ".out".  Usually the dbr_file_name field contains the path to the last input DBR file.
+    ///   \param binary_f      defines if the file is to be written in binary format (true or 1, good for interruption of coupled modeling task
+    ///                 if called in the loop for each node), or in text format (false or 0, default).
+    ///   \param with_comments (text format only): defines the mode of output of comments written before each data tag and  content
+    ///                 in the DBR file. If set to true (1), the comments will be written for all data entries (default).
+    ///                 If   false (0), comments will not be written.
+    ///  \param brief_mode     if true, tells that do not write data items,  that contain only default values in text format
+    void  GEMS3k_write_dbr( const char* fname,  bool binary_f=false,
+                              bool with_comments = true, bool brief_mode = false);
 
 };
 

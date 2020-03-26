@@ -30,6 +30,9 @@
 #include "m_param.h"
 #include "node.h"
 #include "num_methods.h"
+#include "activities.h"
+#include "kinetics.h"
+
 
 #ifdef IPMGEMPLUGIN
 enum volume_code {  // Codes of volume parameter ???
@@ -507,12 +510,12 @@ FINISH: FIN( EPS, M, N, STR, NMB, BASE, UND, UP, U, AA, A, Q, &ITER);
 /// Main call to GEM IPM calculation of equilibrium state in MULTI
 /// (with internal re-scaling of the system).
 //
-double TMulti::CalculateEquilibriumState( long int typeMin, long int& NumIterFIA, long int& NumIterIPM )
+double TMulti::CalculateEquilibriumState(  long int& NumIterFIA, long int& NumIterIPM )
 {
  // const char *key;
   double ScFact=1.;
 
-  long int KMretCode = 0;
+//  long int KMretCode = 0;
 //#ifndef IPMGEMPLUGIN
 //  key = rt[RT_SYSEQ].UnpackKey();
 //#else
@@ -532,16 +535,16 @@ double TMulti::CalculateEquilibriumState( long int typeMin, long int& NumIterFIA
   {
     if( pm.ITau < 0 || pm.pKMM != 1 )
     {
-        KMretCode = CalculateKinMet( LINK_TP_MODE ); // Re-create TKinMet class instances
+      /*  KMretCode = */ CalculateKinMet( LINK_TP_MODE ); // Re-create TKinMet class instances
         pm.ITau = 0; pm.pKMM = 1;
-        KMretCode = CalculateKinMet( LINK_IN_MODE ); // Initial state calculation of rates
+      /*  KMretCode = */ CalculateKinMet( LINK_IN_MODE ); // Initial state calculation of rates
     }
 //    if( pm.ITau == 0 )
 //    {
 //        KMretCode = CalculateKinMet( LINK_IN_MODE ); // Initial state calculation of rates
 //    }
     else if( pm.ITau >= 0 ) {
-        KMretCode = CalculateKinMet( LINK_PP_MODE ); // Calculation of rates and metast.constraints at time step
+      /*  KMretCode = */ CalculateKinMet( LINK_PP_MODE ); // Calculation of rates and metast.constraints at time step
     }
 //  switch(KMretCode)
 //  {
@@ -878,10 +881,10 @@ void TMulti::InitalizeGEM_IPM_Data( ) // Reset internal data formerly MultiInit(
     Alloc_uDD( pm.N );      // Added 06.05.2011 DK
 
   // calculate mass of the system
-   pm.MBX = 0.0;
+  pm.MBX = 0.0;
   for(int i=0; i<pm.N; i++ )
-   pm.MBX += pm.B[i] * pm.Awt[i];
-   pm.MBX /= 1000.;
+     pm.MBX += pm.B[i] * pm.Awt[i];
+  pm.MBX /= 1000.;
 
    RescaleToSize( true );  // Added to set default cutoffs/inserts 30.08.2009 DK
 
@@ -1086,17 +1089,22 @@ void TMulti::DC_LoadThermodynamicData(TNode* aNa ) // formerly CompG0Load()
 {
   long int j, jj, k, xTP, jb, je=0;
   double Go, Gg=0., Ge=0., Vv, h0=0., S0 = 0., Cp0= 0., a0 = 0., u0 = 0.;
-  double T, TK, P, PPa;
+  double TK, P, PPa;
 
 #ifndef IPMGEMPLUGIN
   TNode* na;
   if( aNa )
-   na = aNa;// for reading GEMIPM files task
+  {
+      na = aNa;// for reading GEMIPM files task
+      TK =  na->cTK();
+      PPa = na->cP();
+  }
   else
-   na = node;
-  TK =  pm.TC+C_to_K;
-  PPa = pm.P*bar_to_Pa;
-
+  {
+      na = node;
+      TK =  pm.TC+C_to_K;
+      PPa = pm.P*bar_to_Pa;
+  }
 #else
   TNode* na = node;
   TK =  na->cTK();
@@ -1104,11 +1112,13 @@ void TMulti::DC_LoadThermodynamicData(TNode* aNa ) // formerly CompG0Load()
 #endif
   DATACH  *dCH = na->pCSD();
   P = PPa/bar_to_Pa;
-  T = TK-C_to_K;
 
 #ifndef IPMGEMPLUGIN
+
   if( !aNa )
-  {  TMTparm::sm->GetTP()->curT=T;
+  {
+     double T = TK-C_to_K;
+     TMTparm::sm->GetTP()->curT=T;
      TMTparm::sm->GetTP()->curP=P;
    }
 #endif
@@ -1308,4 +1318,24 @@ double U_TP( double TC, double P)
 #endif
 }
 */
+
+#ifndef IPMGEMPLUGIN
+
+// Load System data to define lookup arrays
+void TMulti::rebuild_lookup(  double Tai[4], double Pai[4] )
+{
+   // copy intervals for minimizatiom
+   pm.Pai[0] = Pai[0];
+   pm.Pai[1] = Pai[1];
+   pm.Pai[2] = Pai[2];
+   pm.Pai[3] = Pai[3];
+   pm.Tai[0] = Tai[0];
+   pm.Tai[1] = Tai[1];
+   pm.Tai[2] = Tai[2];
+   pm.Tai[3] = Tai[3];
+   if( node )
+      node->MakeNodeStructures(window(), true, pm.Tai, pm.Pai );
+}
+#endif
+
 //--------------------- End of ipm_simplex.cpp ---------------------------

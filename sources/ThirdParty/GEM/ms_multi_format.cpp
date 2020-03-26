@@ -33,7 +33,7 @@
 #endif
 
 //bool _comment = true;
-const char *_GEMIPM_version_stamp = " GEMS3K v.3.4.5 c.39b782e ";
+const char *_GEMIPM_version_stamp = " GEMS3K v.3.7.0 c.fdcdd2b5 ";
 
 //===================================================================
 // in the arrays below, the first field of each structure contains a string
@@ -574,7 +574,7 @@ getLsMdcsum( LsMdcSum, LsMsnSum, LsSitSum );
 
  ff << endl;
  if( _comment )
-   ff << "\n# End of file" << endl;
+   ff << "\n# End of file\n" << endl;
 
 }
 

@@ -35,6 +35,8 @@
 #include "m_param.h"
 #include "jama_lu.h"
 #include "jama_cholesky.h"
+#include "kinetics.h"
+
 using namespace TNT;
 using namespace JAMA;
 
@@ -1150,7 +1152,9 @@ double TMulti::OptimizeStepSize( double LM )
     FX2= GX( LM2 );
 
 SH1:
-    if( FX1>FX2)
+    if( fabs(FX1 - FX2) <= ( (fabs(FX1) < fabs(FX2) ? fabs(FX2) : fabs(FX1)) * 1e-13 ) )
+          goto OCT; // Important fix of loss of IPM3 convergence (fix by Svitlana SD on 5.Mar.2020)
+    if( FX1>FX2 )  // && fabs(FX1 - FX2) > ( (fabs(FX1) < fabs(FX2) ? fabs(FX2) : fabs(FX1)) * 1e-16 ))
         goto SH2;
     else goto SH3;
 SH2:

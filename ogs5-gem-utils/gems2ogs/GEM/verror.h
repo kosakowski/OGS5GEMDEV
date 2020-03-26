@@ -55,8 +55,13 @@ struct TError
             title(titl)
     {}
 
-    virtual ~TError()
+    TError(const TError& other ):
+            mess(other.mess),
+            title(other.title)
     {}
+
+    virtual ~TError() = default;
+
 
 };
 
@@ -67,7 +72,7 @@ struct TFatalError:
     TFatalError()
     {}
 
-    TFatalError(TError& err):
+    TFatalError(const TError& err):
             TError(err)
     {}
 
@@ -79,13 +84,13 @@ struct TFatalError:
 
 
 inline
-void Error(const gstring& title, const gstring& message)
+void Error (const gstring& title, const gstring& message)
 {
     throw TError(title, message);
 }
 
 inline
-void ErrorIf(bool error, const gstring& title, const gstring& message)
+void ErrorIf (bool error, const gstring& title, const gstring& message)
 {
     if(error)
         throw TError(title, message);

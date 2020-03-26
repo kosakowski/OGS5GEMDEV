@@ -147,7 +147,6 @@ double sFact_;   /// phase surface area - volume shape factor ( >= 4.836 for sph
     double *arrpCon_;  /// Pointer to input array of kinetic rate constants for faces and 'parallel reactions' [nPRk*nrpC] read-only
     double *arapCon_;  /// Pointer to array of parameters per species involved in 'activity product' terms [nPRk * nSkr*naptC] read-only
     double *arAscp_;   /// Pointer to array of parameter coefficients of equation for correction of specific surface area [nAscC] read-only
-    // new:new: array of nucleation model parameters (A.Testino?)
 
     char  (*SM_)[MAXDCNAME_];  /// pointer to the classifier of DCs involved in sorption phase [NComp] read-only
     char  *arDCC_;       /// pointer to the classifier of DCs involved in the phase [NComp] read-only
@@ -473,7 +472,7 @@ class TMWReaKin: public TKinMet  // Generic MWR kinetics models no nucleation/up
             }
 
             // Destructor
-            ~TMWReaKin(){}
+            ~TMWReaKin();
 
             // Initializes uptake rates
             bool SSReaKinInit();
@@ -547,7 +546,7 @@ class TIonExKin: public TKinMet  // Ion exchange (layered) kinetics model TBD
     }
 
     // Destructor
-    ~TIonExKin(){}
+    ~TIonExKin();
 
     // Calculates ion exchange rates
     long int IonExRatesMod();
@@ -575,7 +574,7 @@ class TAdsorpKin: public TKinMet  // Adsorption (layered) kinetics model TBD
     }
 
     // Destructor
-    ~TAdsorpKin(){}
+    ~TAdsorpKin();
 
     // Calculates uptake rates
     long int AdsorpRatesMod();
@@ -604,7 +603,7 @@ class TNucleKin: public TKinMet  // Mineral nucleation/growth kinetics models TB
     }
 
     // Destructor
-    ~TNucleKin(){}
+    ~TNucleKin();
 
     // Calculates uptake rates
     long int NucleGrowthMod();
