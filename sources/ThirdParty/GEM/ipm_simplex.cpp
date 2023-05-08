@@ -27,18 +27,11 @@
 //-------------------------------------------------------------------
 //
 
-#include "m_param.h"
-#include "node.h"
-#include "num_methods.h"
+#include "ms_multi.h"
 #include "activities.h"
 #include "kinetics.h"
+#include "v_service.h"
 
-
-#ifdef IPMGEMPLUGIN
-enum volume_code {  // Codes of volume parameter ???
-    VOL_UNDEF, VOL_CALC, VOL_CONSTR
-};
-#endif
 /// Calculation of LPP-based automatic initial approximation of the primal vector x.
 /// Use the modified simplex method with two-side constraints on x
 //
@@ -46,7 +39,7 @@ void TMulti::AutoInitialApproximation( )
 {
     long int T,Q,*STR=0,*NMB=0;
     long int i,j,k;
-    double GZ,EPS,*DN=0,*DU=0,*AA=0,*B1=0;
+    double GZ,EPS,*DN=0,*DU=0,*AA1=0,*B1=0;
 
     try
     {  // Allocation of work arrays
@@ -62,7 +55,7 @@ void TMulti::AutoInitialApproximation( )
         ErrorIf( !DN || !DU || !B1, "AutoInitialApproximation()", "Memory alloc error." );
         for( i=0; i<pm.N; i++)
              DU[i+Q] = 0.;
-        EPS = paTProfil->p.EPS; //  13.10.00  KC  DK
+        EPS = base_param()->EPS; //  13.10.00  KC  DK
         GZ = 1./EPS;    
 
         T=0; // Calcuation of all non-zero values in A and G arrays
@@ -85,10 +78,10 @@ void TMulti::AutoInitialApproximation( )
 
         // for(i=Q;i<Q+pm.N;i++) DU[i]=0.;
         // Allocation of arrays on T
-        AA= new double[T];
+        AA1= new double[T];
         STR= new long int[T];
         NMB= new long int[Q+1];
-        ErrorIf( !AA || !STR || !NMB, "AutoInitialApproximation()",
+        ErrorIf( !AA1 || !STR || !NMB, "AutoInitialApproximation()",
             "Memory allocation error #2");
         for( k=0; k<T; k++)
          STR[k] = 0;
@@ -105,7 +98,7 @@ void TMulti::AutoInitialApproximation( )
             if(fabs(pm.G[i])>1E-19)
             {
                 k++;
-                AA[k]=-pm.G[i];
+                AA1[k]=-pm.G[i];
                 NMB[i]=k+1;
             }
             else NMB[i]=k+2;
@@ -113,13 +106,13 @@ void TMulti::AutoInitialApproximation( )
                 if(fabs(*(pm.A+i*pm.N+j))>1E-19)
                 {
                     k++;
-                    AA[k]=*(pm.A+i*pm.N+j);
+                    AA1[k]=*(pm.A+i*pm.N+j);
                     STR[k]=j+1;
                 }
         }
         NMB[Q]=T+1;
         // Calling generic simplex solver
-        SolveSimplex(pm.N,Q,T,GZ,EPS,DN,DU,B1,pm.U,AA,STR,NMB);
+        SolveSimplex(pm.N,Q,T,GZ,EPS,DN,DU,B1,pm.U,AA1,STR,NMB);
 
         // unloading simplex solution into a copy of x vector
         for(i=0;i<pm.L;i++)
@@ -130,12 +123,14 @@ void TMulti::AutoInitialApproximation( )
         pm.FX = GX( 0.0 ); // calculation of initial G(X) value
         MassBalanceResiduals( pm.N, pm.L, pm.A, pm.Y, pm.B, pm.C );
 
-//        	for(long int i=0; i<pm.N; i++)
-//             cout << i << " C " << pm.C[i] << " B " << pm.B[i] << endl;
+        if(ipm_logger->should_log(spdlog::level::trace)) {
+            ipm_logger->trace("AutoInitialApproximation C = {}", to_string(pm.C, pm.N));
+            ipm_logger->trace("AutoInitialApproximation B = {}", to_string(pm.B, pm.N));
+        }
         // Deleting work arrays
         if( DN) delete[]DN;
         if( DU) delete[]DU;
-        if( AA) delete[]AA;
+        if( AA1) delete[]AA1;
         if( B1) delete[]B1;
         if( STR) delete[]STR;
         if( NMB) delete[]NMB;
@@ -144,18 +139,18 @@ void TMulti::AutoInitialApproximation( )
     {
         if( DN) delete[]DN;
         if( DU) delete[]DU;
-        if( AA) delete[]AA;
+        if( AA1) delete[]AA1;
         if( B1) delete[]B1;
         if( STR) delete[]STR;
         if( NMB) delete[]NMB;
-        Error( xcpt.title.c_str(), xcpt.mess.c_str());
+        Error( xcpt.title, xcpt.mess );
     }
 }
 
 /// Generic simplex method with two sided constraints (c) K.Chudnenko 1992
 ///  SPOS function
 //
-void TMulti::SPOS( double *P, long int STR[],long int NMB[],long int J,long int M,double AA[])
+void TMulti::SPOS( double *P, long int STR[],long int NMB[],long int J,long int M,double AA1[])
 {
     long int I,K;
     K=0;
@@ -163,7 +158,7 @@ void TMulti::SPOS( double *P, long int STR[],long int NMB[],long int J,long int 
     {
         if( I==STR[NMB[J]+K-1])
         {
-            *(P+I)=AA[NMB[J]+K-1];
+            *(P+I)=AA1[NMB[J]+K-1];
             if( NMB[J]+K+1!=NMB[J+1])
                 K++;
         }
@@ -176,7 +171,7 @@ void TMulti::SPOS( double *P, long int STR[],long int NMB[],long int J,long int 
 //
 void TMulti::START( long int T,long int *ITER,long int M,long int N,long int NMB[],
            double GZ,double EPS,long int STR[],long int *BASE, double B[],
-           double UND[],double UP[],double AA[],double *A, double *Q )
+           double UND[],double UP[],double AA1[],double *A, double *Q )
 {
     long int I,J;
 
@@ -194,7 +189,7 @@ void TMulti::START( long int T,long int *ITER,long int M,long int N,long int NMB
             else if( UP[J]<0.)
                 Error("E00IPM: SolveSimplex()", "Inconsistent LP problem (negative UP[J] value(s) in START()) ");
         }
-        SPOS(Q, STR, NMB, J, M, AA);
+        SPOS(Q, STR, NMB, J, M, AA1);
         for( I=0;I<M;I++)
             B[I]-=Q[I+1]*UND[J];
     }
@@ -205,7 +200,7 @@ void TMulti::START( long int T,long int *ITER,long int M,long int N,long int NMB
             B[I]=fabs(B[I]);
             for( J=0;J<T;J++)
                 if(STR[J]==I)
-                    AA[J]=-AA[J];
+                    AA1[J]=-AA1[J];
         }
     }
     *A=0.;
@@ -227,7 +222,7 @@ void TMulti::START( long int T,long int *ITER,long int M,long int N,long int NMB
 //
 void TMulti::NEW(long int *OPT,long int N,long int M,double EPS,double *LEVEL,long int *J0,
                   long int *Z,long int STR[], long int NMB[], double UP[],
-                  double AA[], double *A)
+                  double AA1[], double *A)
 {
     long int I,J,J1;
     double MAX,A1;
@@ -238,7 +233,7 @@ void TMulti::NEW(long int *OPT,long int N,long int M,double EPS,double *LEVEL,lo
     MAX=0.;
     for( J=J1+1;J<=N;J++)
     {
-        SPOS( P, STR, NMB, J-1, M, AA);
+        SPOS( P, STR, NMB, J-1, M, AA1);
         A1=-P[0];
         for( I=1;I<=M;I++)
             A1+=P[I]*(*(A+I));
@@ -265,7 +260,7 @@ MK3:
 
     for( J=1;J<J1;J++)
     {
-        SPOS(P, STR, NMB, J-1, M, AA);
+        SPOS(P, STR, NMB, J-1, M, AA1);
         A1=-P[0];
         for( I=1;I<=M;I++)
             A1+=P[I]*(*(A+I));
@@ -304,7 +299,7 @@ MK4:
 ///  WORK function
 //
 void TMulti::WORK(double GZ,double EPS,long int *I0, long int *J0,long int *Z,long int *ITER,
-                   long int M, long int STR[],long int NMB[],double AA[],
+                   long int M, long int STR[],long int NMB[],double AA1[],
                    long int BASE[],long int *UNO,double UP[],double *A,double Q[])
 {
     double MIM,A1;
@@ -315,7 +310,7 @@ void TMulti::WORK(double GZ,double EPS,long int *I0, long int *J0,long int *Z,lo
     *UNO=0;
     *ITER=*ITER+1;
     J=*J0-1;
-    SPOS(P, STR, NMB, J, M, AA);
+    SPOS(P, STR, NMB, J, M, AA1);
     for( I=0;I<=M;I++)
     {
         Q[I]=0.;
@@ -399,7 +394,7 @@ void TMulti::WORK(double GZ,double EPS,long int *I0, long int *J0,long int *Z,lo
 //
 void TMulti::FIN(double EPS,long int M,long int N,long int STR[],long int NMB[],
                   long int BASE[],double UND[],double UP[],double U[],
-                  double AA[],double *A,double Q[],long int * /*ITER*/)
+                  double AA1[],double *A,double Q[],long int * /*ITER*/)
 {
     long int /* K,*/I,J;
     double *P;
@@ -421,7 +416,7 @@ void TMulti::FIN(double EPS,long int M,long int N,long int STR[],long int NMB[],
     Q[0]=0.;
     for( J=1;J<=N;J++)
     {
-        SPOS( P, STR, NMB, J-1, M, AA);
+        SPOS( P, STR, NMB, J-1, M, AA1);
         UP[J-1]+=UND[J-1];
         for( I=0;I<=M;I++)
             Q[I]+=UP[J-1]*P[I];
@@ -455,7 +450,7 @@ void TMulti::FIN(double EPS,long int M,long int N,long int STR[],long int NMB[],
 //
 void TMulti::SolveSimplex(long int M, long int N, long int T, double GZ, double EPS,
                       double *UND, double *UP, double *B, double *U,
-                      double *AA, long int *STR, long int *NMB )
+                      double *AA1, long int *STR, long int *NMB )
 {
     long int IT=200,I0=0,J0=0,Z,UNO,OPT=0,ITER, i;
     double LEVEL;
@@ -473,14 +468,14 @@ void TMulti::SolveSimplex(long int M, long int N, long int T, double GZ, double 
         fillValue(BASE, 0L, (M) );
 
         LEVEL=GZ;
-        START( T, &ITER, M, N, NMB, GZ, EPS, STR, BASE, B,  UND, UP, AA, A, Q );
+        START( T, &ITER, M, N, NMB, GZ, EPS, STR, BASE, B,  UND, UP, AA1, A, Q );
 
         for( i=0; i<IT; i++ )   // while(1) fixed  03.11.00
         {
-            NEW( &OPT, N, M,EPS, &LEVEL, &J0, &Z, STR, NMB, UP, AA, A);
+            NEW( &OPT, N, M,EPS, &LEVEL, &J0, &Z, STR, NMB, UP, AA1, A);
             if( OPT)
                 goto FINISH;  // Converged
-            WORK( GZ, EPS, &I0, &J0, &Z, &ITER, M, STR, NMB, AA, BASE, &UNO, UP, A, Q);
+            WORK( GZ, EPS, &I0, &J0, &Z, &ITER, M, STR, NMB, AA1, BASE, &UNO, UP, A, Q);
             if( UNO)
                 goto FINISH; // Solution at boundary of the constraints polyhedron
         }
@@ -489,7 +484,7 @@ void TMulti::SolveSimplex(long int M, long int N, long int T, double GZ, double 
          Error( "E01IPM: SolveSimplex()",
              "LP solution cannot be obtained with sufficient precision" );
         }
-FINISH: FIN( EPS, M, N, STR, NMB, BASE, UND, UP, U, AA, A, Q, &ITER);
+FINISH: FIN( EPS, M, N, STR, NMB, BASE, UND, UP, U, AA1, A, Q, &ITER);
         delete[] A;
         delete[] Q;
         delete[] BASE;
@@ -499,7 +494,7 @@ FINISH: FIN( EPS, M, N, STR, NMB, BASE, UND, UP, U, AA, A, Q, &ITER);
         if( A) delete[]A;
         if( Q) delete[]Q;
         if( BASE) delete[]BASE;
-        Error( xcpt.title.c_str(), xcpt.mess.c_str());
+        Error( xcpt.title, xcpt.mess);
     }
 
     // Done
@@ -512,15 +507,7 @@ FINISH: FIN( EPS, M, N, STR, NMB, BASE, UND, UP, U, AA, A, Q, &ITER);
 //
 double TMulti::CalculateEquilibriumState(  long int& NumIterFIA, long int& NumIterIPM )
 {
- // const char *key;
   double ScFact=1.;
-
-//  long int KMretCode = 0;
-//#ifndef IPMGEMPLUGIN
-//  key = rt[RT_SYSEQ].UnpackKey();
-//#else
-//  key = "GEMS3K";
-//#endif
 
   InitalizeGEM_IPM_Data();
 
@@ -530,7 +517,7 @@ double TMulti::CalculateEquilibriumState(  long int& NumIterFIA, long int& NumIt
   pm.ITF = pm.ITG = 0;
 
  // New: Run of TKinMet class library
-// cout << "kMM: " << pm.pKMM << "  ITau: " << pm.ITau << "  kTau: " << pm.kTau << "  kdT: " << pm.kdT << endl;
+  ipm_logger->trace("kMM: {}  ITau: {}   kTau: {}   kdT: {}", pm.pKMM, pm.ITau, pm.kTau, pm.kdT);
   if( pm.pKMM < 2 )
   {
     if( pm.ITau < 0 || pm.pKMM != 1 )
@@ -554,7 +541,7 @@ double TMulti::CalculateEquilibriumState(  long int& NumIterFIA, long int& NumIt
 //  to_text_file( "MultiDump1.txt" );   // Debugging
   }
 
-    if( paTProfil->p.DG > 1e-5 )
+    if( base_param()->DG > 1e-5 )
     {
         ScFact = SystemTotalMolesIC();
         ScaleSystemToInternal( ScFact );
@@ -599,7 +586,7 @@ try{
   catch( TError& xcpt )
   {
 
-      if( paTProfil->p.DG > 1e-5 )
+      if( base_param()->DG > 1e-5 )
          RescaleSystemFromInternal( ScFact );
 //      to_text_file( "MultiDump2.txt" );   // Debugging
 
@@ -611,7 +598,7 @@ try{
      Error( xcpt.title, xcpt.mess);
   }
 
-  if( paTProfil->p.DG > 1e-5 )
+  if( base_param()->DG > 1e-5 )
        RescaleSystemFromInternal(  ScFact );
 //  to_text_file( "MultiDump3.txt" );   // Debugging
 
@@ -635,7 +622,7 @@ double TMulti::SystemTotalMolesIC( )
 
   pm.TMols = mass_temp;
 
-  pm.SMols = paTProfil->p.DG;
+  pm.SMols = base_param()->DG;
   ScFact = pm.SMols/pm.TMols;
 
   return ScFact;
@@ -734,9 +721,9 @@ void TMulti::RescaleSystemFromInternal(  double ScFact )
 
   for( j=0; j<pm.L; j++ )
   {
-    if(	pm.DUL[j] < 1e6  )
+    if(	pm.DUL[j] < 1e6  ) {
        pm.DUL[j] /= ScFact;
-
+    }
     // if( pm.DLL[j] > 0.0  )
        pm.DLL[j] /= ScFact;
 
@@ -800,77 +787,12 @@ void TMulti::RescaleSystemFromInternal(  double ScFact )
 // Before Calculations
 /// Calculation by IPM (preparing for calculation, unpacking data)
 /// In IPM
-void TMulti::InitalizeGEM_IPM_Data( ) // Reset internal data formerly MultiInit()
+void TMulti::InitalizeGEM_IPM_Data() // Reset internal data formerly MultiInit()
 {
 
    MultiConstInit();
 
-#ifndef IPMGEMPLUGIN
-   // for GEMIPM unpackDataBr( bool uPrimalSol );
-   // to define quantities
-
-   bool newInterval = false;
-
-   //   MultiKeyInit( key ); //into PMtest
-
-//cout << " pm.pBAL = " << pm.pBAL;
-
- if( !pm.pBAL )
-     newInterval = true;    // to rebuild lookup arrays
-
- if( pm.pBAL < 2  || pm.pTPD < 2 )
- {
-     SystemToLookup();
- }
-
- if( pm.pBAL < 2  )
-   {
-     // Allocating list of phases currently present in non-zero quantities
-     MultiSystemInit( );
-   }
-
-   // Allocating list of phases currently present in non-zero quantities
-     if( !pm.SFs )
-        pm.SFs = (char (*)[MAXPHNAME+MAXSYMB])aObj[ o_wd_sfs].Alloc(
-                    pm.FI, 1, MAXPHNAME+MAXSYMB );
-
-   // no old solution => must be simplex
-      if( pm.pESU == 0 )
-           pm.pNP = 0;
-
-  //TProfil::pm->CheckMtparam(); //load tpp structure
-
-
-  // build new TNode
-  if( !node )
-  {
-    node = new TNode( pmp );
-    newInterval = true;
-  }
-  else if( !node->TestTPGrid(pm.Tai, pm.Pai ))
-               newInterval = true;
-
- if( newInterval )
- {   // build/rebuild internal lookup arrays
-    node->MakeNodeStructures(window(), true, pm.Tai, pm.Pai );
- }
-
-//cout << "newInterval = " << newInterval << " pm.pTPD = " << pm.pTPD << endl;
-
- // New: TKinMet stuff
- if( pm.pKMM <= 0 )
- {
-    KinMetModLoad();  // Call point to loading parameters for kinetic models
-    pm.pKMM = 1;
- }
-
-//#else
-//
-   //TProfil::pm->CheckMtparam(); //test load thermodynamic data before
-//   CheckMtparam(); // this call was in the wrong place!  DK DM 11.10.2012
-//
-#endif
-
+   initalizeGEM_IPM_Data_GUI();
 
    if( pm.pTPD < 2 )
     {
@@ -911,21 +833,21 @@ void TMulti::InitalizeGEM_IPM_Data( ) // Reset internal data formerly MultiInit(
        if( pm.FIs && AllPhasesPure == false )
        {
            // Load activity coeffs for phases-solutions
-         int k, jb, je=0;
-         for( k=0; k<pm.FIs; k++ )
+         int jb, je=0;
+         for( int kk=0; kk<pm.FIs; kk++ )
          { // loop on solution phases
             jb = je;
-            je += pm.L1[k];
+            je += pm.L1[kk];
             // Load activity coeffs for phases-solutions
             for( j=jb; j< je; j++ )
             {
                pm.lnGmo[j] = pm.lnGam[j];
                if( fabs( pm.lnGam[j] ) <= 84. )
       //                pm.Gamma[j] = exp( pm.lnGam[j] );
-                      pm.Gamma[j] = PhaseSpecificGamma( j, jb, je, k, 0 );
+                      pm.Gamma[j] = PhaseSpecificGamma( j, jb, je, kk, 0 );
                else pm.Gamma[j] = 1.0;
              } // j
-          }  // k
+          }  // kk
        }
     }
 }
@@ -935,13 +857,11 @@ void TMulti::InitalizeGEM_IPM_Data( ) // Reset internal data formerly MultiInit(
 /// Do it before calculations
 void TMulti::MultiConstInit() // from MultiRemake
 {
-  SPP_SETTING *pa = paTProfil;
-
   pm.FI1 = 0;
   pm.FI1s = 0;
   pm.FI1a = 0;
   pm.ITF = 0; pm.ITG = 0;
-  pm.PD = pa->p.PD;
+  pm.PD = base_param()->PD;
   pm.Ec = pm.K2 = pm.MK = 0;
   pm.W1 = 0;
   pm.is = 0;
@@ -951,7 +871,7 @@ void TMulti::MultiConstInit() // from MultiRemake
   pm.lowPosNum = Min_phys_amount;               // = 1.66e-24 mol
   pm.logXw = -16.;
   pm.logYFk = -9.;
-  pm.DXM = pa->p.DK;
+  pm.DXM = base_param()->DK;
 
   //  ???????
   pm.FX = 7777777.;
@@ -961,14 +881,7 @@ void TMulti::MultiConstInit() // from MultiRemake
   pm.PCI = 1.0;
   pm.FitVar[4] = 1.0;
 
-#ifndef IPMGEMPLUGIN
-  pm.PZ = 0; // IPM default
-//  pm.FitVar[0] = pa->aqPar[0]; // setting T,P dependent b_gamma parameters
-//  pm.pH = pm.Eh = pm.pe = 0.0;
-#else
-  pm.PZ = pa->p.DW;  // in IPM
-//  pm.FitVar[0] = 0.0640000030398369;
-#endif
+    multiConstInit_PN();
 
 }
 
@@ -1006,26 +919,10 @@ void TMulti::GEM_IPM_Init()
 //     if( pm.pULR && pm.PLIM )
 //          Set_DC_limits(  DC_LIM_INIT );
 
-//#ifndef IPMGEMPLUGIN
-// New: TKinMet stuff
-//  if( pmp->pKMM <= 0 )
-//  {
-//     KinMetModLoad();  // Call point to loading parameters for kinetic models
-//     pmp->pKMM = 1;
-//  }
-//#endif
-
     if( pm.FIs && AllPhasesPure == false )   /// line must be tested !pm.FIs
     {
-#ifndef IPMGEMPLUGIN
-       if( pm.pIPN <=0 )  // mixing models finalized in any case (AIA or SIA)
-       {
-             // not done if these models are already present in MULTI !
-           pm.PD = TProfil::pm->pa.p.PD;
-           SolModLoad();   // Call point to loading scripts and parameters for mixing models
-       }
-       pm.pIPN = 1;
-#endif
+        GEM_IPM_Init_gui1();
+      
         // Calc Eh, pe, pH,and other stuff
        if( pm.E && pm.LO && pm.pNP )
        {
@@ -1033,16 +930,16 @@ void TMulti::GEM_IPM_Init()
             IS_EtaCalc();
             if( pm.Lads )  // Calling this only when sorption models are present
             {
-               int k, jb, je=0;
-               for( k=0; k<pm.FIs; k++ )
+               int jb, je=0;
+               for(int kk=0; kk<pm.FIs; kk++ )
                { // loop on solution phases
                   jb = je;
-                  je += pm.L1[k];
-                  if( pm.PHC[k] == PH_POLYEL || pm.PHC[k] == PH_SORPTION )
+                  je += pm.L1[kk];
+                  if( pm.PHC[kk] == PH_POLYEL || pm.PHC[kk] == PH_SORPTION )
                   {
-                       if( pm.PHC[0] == PH_AQUEL && pm.XF[k] > pm.DSM
+                       if( pm.PHC[0] == PH_AQUEL && pm.XF[kk] > pm.DSM
                            && (pm.XFA[0] > pm.ScMinM && pm.XF[0] > pm.XwMinM )) // fixed 30.08.2009 DK
-                           GouyChapman( jb, je, k );  // getting PSIs - electrical potentials on surface planes
+                           GouyChapman( jb, je, kk );  // getting PSIs - electrical potentials on surface planes
                   }
                }
            }
@@ -1061,219 +958,13 @@ void TMulti::GEM_IPM_Init()
 //          Set_DC_limits(  DC_LIM_INIT );
 //        Set_DC_limits( true );  // test 29.07.15
 
-#ifndef IPMGEMPLUGIN
-    // dynamic work arrays - loading initial data
-    for( k=0; k<pm.FI; k++ )
-    {
-        pm.XFs[k] = pm.YF[k];
-        pm.Falps[k] = pm.Falp[k];
-        memcpy( pm.SFs[k], pm.SF[k], MAXPHNAME+MAXSYMB );
-    }
-#endif
+  GEM_IPM_Init_gui2();
 }
 
-void TMulti::Access_GEM_IMP_init()
-{
-    GEM_IPM_Init();
-}
 
 TSolMod * TMulti::pTSolMod (int xPH){
     return this->phSolMod[xPH];
 }
-
-
-
-/// Load Thermodynamic Data from DATACH to MULTI using Lagrangian Interpolator
-//
-void TMulti::DC_LoadThermodynamicData(TNode* aNa ) // formerly CompG0Load()
-{
-  long int j, jj, k, xTP, jb, je=0;
-  double Go, Gg=0., Ge=0., Vv, h0=0., S0 = 0., Cp0= 0., a0 = 0., u0 = 0.;
-  double TK, P, PPa;
-
-#ifndef IPMGEMPLUGIN
-  TNode* na;
-  if( aNa )
-  {
-      na = aNa;// for reading GEMIPM files task
-      TK =  na->cTK();
-      PPa = na->cP();
-  }
-  else
-  {
-      na = node;
-      TK =  pm.TC+C_to_K;
-      PPa = pm.P*bar_to_Pa;
-  }
-#else
-  TNode* na = node;
-  TK =  na->cTK();
-  PPa = na->cP();
-#endif
-  DATACH  *dCH = na->pCSD();
-  P = PPa/bar_to_Pa;
-
-#ifndef IPMGEMPLUGIN
-
-  if( !aNa )
-  {
-     double T = TK-C_to_K;
-     TMTparm::sm->GetTP()->curT=T;
-     TMTparm::sm->GetTP()->curP=P;
-   }
-#endif
-
-  if( dCH->nTp <1 || dCH->nPp <1 || na->check_TP( TK, PPa ) == false )
-  {
-          char buff[256];
-          sprintf( buff, " Temperature %g or pressure %g out of range, or no T/D data are provided\n",
-                          TK, PPa );
-          Error( "DC_LoadThermodynamicData(): " , buff );
-      return;
-  }
-
- pm.T = pm.Tc = TK;
- pm.TC = pm.TCc = TK-C_to_K;
- if( P < 1e-5 )
-  { // Pressure at saturated H2O vapour at given temperature
-     long int xT = na->check_grid_T(TK);
-     if(xT>= 0)
-       P = dCH->Psat[xT]/bar_to_Pa;
-     else
-       P =  LagranInterp( &PPa, dCH->TKval, dCH->Psat, PPa, TK, dCH->nTp, 1,6 )/bar_to_Pa;
- }
- pm.P = pm.Pc = P;
- pm.RT = R_CONSTANT * pm.Tc;
- pm.FRT = F_CONSTANT/pm.RT;
- pm.lnP = log( P );
-
- xTP = na->check_grid_TP( TK, PPa );
-
- for( k=0; k<5; k++ )
-   {
-     jj =  k * na->gridTP();
-     if( xTP >= 0 )
-      {
-       pm.denW[k] = dCH->denW[jj+xTP]/1e3;
-       pm.epsW[k] = dCH->epsW[jj+xTP];
-       pm.denWg[k] = dCH->denWg[jj+xTP]/1e3;
-       pm.epsWg[k] = dCH->epsWg[jj+xTP];
-      }
-     else
-     {
-       pm.denW[k] = LagranInterp( dCH->Pval, dCH->TKval, dCH->denW+jj,
-                          PPa, TK, dCH->nTp, dCH->nPp,6 )/1e3;// from test denW enough
-       pm.epsW[k] = LagranInterp( dCH->Pval, dCH->TKval, dCH->epsW+jj,
-                          PPa, TK, dCH->nTp, dCH->nPp,5 );// from test epsW enough
-       pm.denWg[k] = LagranInterp( dCH->Pval, dCH->TKval, dCH->denWg+jj,
-                          PPa, TK, dCH->nTp, dCH->nPp,5 )/1e3;
-       pm.epsWg[k] = LagranInterp( dCH->Pval, dCH->TKval, dCH->epsWg+jj,
-                          PPa, TK, dCH->nTp, dCH->nPp,5 );
-     }
-  }
-
- long int xVol =  getXvolume();
-
- for( k=0; k<pm.FI; k++ )
- {
-   jb = je;
-   je += pm.L1[k];
-   // load t/d data from DC - to be extended for DCH->H0, DCH->S0, DCH->Cp0, DCH->DD
-   // depending on the presence of these arrays in DATACH and Multi structures
-    for( j=jb; j<je; j++ )
-    {
-      jj =  j * na->gridTP();
-      if( xTP >= 0 )
-      {
-        Go = dCH->G0[ jj+xTP];
-        Vv = dCH->V0[ jj+xTP]*1e5;
-        if( dCH->S0 ) S0 = dCH->S0[ jj+xTP];
-        if( dCH->H0 ) h0 = dCH->H0[ jj+xTP];
-        if( dCH->Cp0 ) Cp0 = dCH->Cp0[ jj+xTP];
-        if( dCH->A0 ) a0 = dCH->A0[ jj+xTP];
-        if( dCH->U0 ) h0 = dCH->U0[ jj+xTP];
-      }
-     else
-     {
-       Go = LagranInterp( dCH->Pval, dCH->TKval, dCH->G0+jj,
-                          PPa, TK, dCH->nTp, dCH->nPp, 6 ); // from test G0[Ca+2] enough
-       Vv = LagranInterp( dCH->Pval, dCH->TKval, dCH->V0+jj,
-                          PPa, TK, dCH->nTp, dCH->nPp, 5 )*1e5;
-       if( dCH->S0 ) S0 =  LagranInterp( dCH->Pval, dCH->TKval, dCH->S0+jj,
-                          PPa, TK, dCH->nTp, dCH->nPp, 4 ); // from test S0[Ca+2] enough
-       if( dCH->H0 ) h0 =  LagranInterp( dCH->Pval, dCH->TKval, dCH->H0+jj,
-                          PPa, TK, dCH->nTp, dCH->nPp,5 );
-       if( dCH->Cp0 ) Cp0 =  LagranInterp( dCH->Pval, dCH->TKval, dCH->Cp0+jj,
-                          PPa, TK, dCH->nTp, dCH->nPp, 3 ); // from test Cp0[Ca+2] not more
-       if( dCH->A0 ) a0 =  LagranInterp( dCH->Pval, dCH->TKval, dCH->A0+jj,
-                          PPa, TK, dCH->nTp, dCH->nPp,5 );
-       if( dCH->U0 ) u0 =  LagranInterp( dCH->Pval, dCH->TKval, dCH->U0+jj,
-                          PPa, TK, dCH->nTp, dCH->nPp,5 );
-     }
-#ifndef IPMGEMPLUGIN
-      if( TSyst::sm->GetSY()->Guns )  // This is used mainly in UnSpace calculations
-             Gg = TSyst::sm->GetSY()->Guns[pm.muj[j]];    // User-set increment to G0 from project system
- // SDGEX     if( syp->GEX && syp->PGEX != S_OFF )   // User-set increment to G0 from project system
- //            Ge = syp->GEX[pm.muj[j]];     //now Ge is integrated into pm.G0 (since 07.03.2008) DK
-#else
-      if( pm.tpp_G )
-             pm.tpp_G[j] = Go;
-      if( pm.Guns )
-             Gg = pm.Guns[j];
-      else
-             Gg = 0.;
-
-      Ge = 0.;
-#endif
-      pm.G0[j] = ConvertGj_toUniformStandardState( Go+Gg+Ge, j, k ); // formerly Cj_init_calc()
-      // Inside this function, pm.YOF[k] can be added!
-
-#ifndef IPMGEMPLUGIN
-     if( TMTparm::sm->GetTP()->PtvVm != S_ON )
-        pm.Vol[j] = 0.;
-     else
-#endif
-     switch( pm.PV )
-     { // put molar volumes of components into A matrix or into the vector of molar volumes
-       // to be checked!
-       case VOL_CONSTR:
-#ifndef IPMGEMPLUGIN
-          if( TSyst::sm->GetSY()->Vuns )
-             Vv += TSyst::sm->GetSY()->Vuns[j];
-#else
-         if( pm.Vuns )
-            Vv += pm.Vuns[j];
-#endif
-         if( xVol >= 0 )
-            pm.A[j*pm.N+xVol] = Vv;
-
-       case VOL_CALC:
-       case VOL_UNDEF:
-#ifndef IPMGEMPLUGIN
-         if( TSyst::sm->GetSY()->Vuns )
-            Vv += TSyst::sm->GetSY()->Vuns[j];
-#else
-         if( pm.tpp_Vm )
-               pm.tpp_Vm[j] = Vv;
-         if( pm.Vuns )
-               Vv += pm.Vuns[j];
-#endif
-           pm.Vol[j] = Vv  * 10.;
-           break;
-     }
-     if( pm.S0 ) pm.S0[j] = S0;
-     if( pm.H0 ) pm.H0[j] = h0;
-     if( pm.Cp0 ) pm.Cp0[j] = Cp0;
-     if( pm.A0 ) pm.A0[j] = a0;
-     if( pm.U0 ) pm.U0[j] = u0;
-
- }  // j
-} // k
-
- pm.pTPD = 2;
-}
-
-
 
 //===========================================================================================
 // Calls to minimization of other system potentials (A, ...)
@@ -1319,23 +1010,5 @@ double U_TP( double TC, double P)
 }
 */
 
-#ifndef IPMGEMPLUGIN
-
-// Load System data to define lookup arrays
-void TMulti::rebuild_lookup(  double Tai[4], double Pai[4] )
-{
-   // copy intervals for minimizatiom
-   pm.Pai[0] = Pai[0];
-   pm.Pai[1] = Pai[1];
-   pm.Pai[2] = Pai[2];
-   pm.Pai[3] = Pai[3];
-   pm.Tai[0] = Tai[0];
-   pm.Tai[1] = Tai[1];
-   pm.Tai[2] = Tai[2];
-   pm.Tai[3] = Tai[3];
-   if( node )
-      node->MakeNodeStructures(window(), true, pm.Tai, pm.Pai );
-}
-#endif
 
 //--------------------- End of ipm_simplex.cpp ---------------------------

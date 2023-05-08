@@ -27,13 +27,8 @@
 // along with GEMS3K code. If not, see <http://www.gnu.org/licenses/>.
 //-------------------------------------------------------------------
 
-#include <cmath>
-#include <cstdio>
-#include <iostream>
-#include <iomanip>
-#include <fstream>
-using namespace std;
 #include "s_solmod.h"
+#include "v_detail.h"
 
 //=============================================================================================
 // Implementation of ideal mixing model for multicomponent solid solutions
@@ -1769,7 +1764,7 @@ void TBerman::alloc_internal()
         {
             for( s=0; s< NSub; s++ ) // looking through sublattices
             {
-               if( mn[j][s][m] != 0. )
+               if( noZero(mn[j][s][m]) )
                {
                  mf=true;
                  NmoS[s]++;
@@ -1796,11 +1791,19 @@ void TBerman::alloc_internal()
         M += NmoS[s];
         ns++;   // counting how many sites have two or more different moieties
     }
+    // Original formula
     // Computing the number of choices by M from L
-    C = choose( L, M );
+    // C = choose( L, M );
+
+    // Corrected version
+    // L is a total number of possible end-members
+    // Maximum number of possible reciprocal reactions is a total number of 
+    // 4-combinations (4 end members in each combination) of out of L end-members
+    C = choose( L, 4 );
+
     NrcR = C; // maximum possible number of reciprocal reactions
     Nrc = 0;
-// cout << "NComp=" << NComp << " L=" << L << " M=" << M << " NrcR= " << NrcR << endl;
+    solmod_logger->trace("NComp={} L={} M={} NrcR= {}", NComp, L, M, NrcR);
 
     if( MixCode == MR_B_RCPT_ && ns == 2 && NrcR > 0 )  // using CEF reciprocal part in Berman model
     // NSub == 2 )
@@ -1826,7 +1829,7 @@ void TBerman::alloc_internal()
 
        Nrc = CollectReciprocalReactions2();
     }
-// cout << "Nrc=" << Nrc << " NrcR= " << NrcR << endl;
+    solmod_logger->trace("Nrc={} NrcR={}", Nrc, NrcR);
 }
 
 // Collects indexes of end members involved in reciprocal reactions (2 sublattices case)
@@ -1850,36 +1853,35 @@ long int TBerman::CollectReciprocalReactions2( void )
             jb1 = 0;
             while( jb1 < NComp )
             {
-               jf1 = FindIdenticalSublatticeRow( s1, jf2, jf0, jb1, NComp );
-               if( jf1 < 0 )
-                      break; // no suitable end members found
-               jb3 = 0;
-               while( jb3 < NComp )
-               {
-                  jf3 = FindIdenticalSublatticeRow( s3, jf1, jf0, jb3, NComp);
-                  if( jf3 < 0 )
-                      break; // no suitable end members found
-                  XrcM[rn][0][0] = jf0; XrcM[rn][0][1] = s0;
-                  XrcM[rn][2][0] = jf2; XrcM[rn][2][1] = s2;
-                  XrcM[rn][1][0] = jf1; XrcM[rn][1][1] = s1;
-                  XrcM[rn][3][0] = jf3; XrcM[rn][3][1] = s3;
-// cout << "rn=" << rn << " | j0=" << XrcM[rn][0][0] << " s0=" << XrcM[rn][0][1]
-//                 << "  j1=" << XrcM[rn][1][0] << " s1=" << XrcM[rn][1][1]
-//                  << "  j2=" << XrcM[rn][2][0] << " s2=" << XrcM[rn][2][1]
-//                  << "  j3=" << XrcM[rn][3][0] << " s3=" << XrcM[rn][3][1] << endl;
-                  rn++;  // next reaction
-                  if( rn > NrcR-1 )
-                  {
-                     return rn;  // more reactions than size of arrays - trying to probe the same reactions again
-                  }
-                  jb3 = jf3+1;
-               }   // while jb3
-               jb1 = jf1+1;
+                jf1 = FindIdenticalSublatticeRow( s1, jf2, jf0, jb1, NComp );
+                if( jf1 < 0 )
+                    break; // no suitable end members found
+                jb3 = 0;
+                while( jb3 < NComp )
+                {
+                    jf3 = FindIdenticalSublatticeRow( s3, jf1, jf0, jb3, NComp);
+                    if( jf3 < 0 )
+                        break; // no suitable end members found
+                    XrcM[rn][0][0] = jf0; XrcM[rn][0][1] = s0;
+                    XrcM[rn][2][0] = jf2; XrcM[rn][2][1] = s2;
+                    XrcM[rn][1][0] = jf1; XrcM[rn][1][1] = s1;
+                    XrcM[rn][3][0] = jf3; XrcM[rn][3][1] = s3;
+                    solmod_logger->trace("rn={} | j0={} s0={} j1={} s1={}  j2={} s2={}  j3={} s3= {}",
+                                         rn, XrcM[rn][0][0], XrcM[rn][0][1], XrcM[rn][1][0], XrcM[rn][1][1],
+                                         XrcM[rn][2][0], XrcM[rn][2][1], XrcM[rn][3][0], XrcM[rn][3][1]);
+                    rn++;  // next reaction
+                    if( rn > NrcR-1 )
+                    {
+                        return rn;  // more reactions than size of arrays - trying to probe the same reactions again
+                    }
+                    jb3 = jf3+1;
+                }   // while jb3
+                jb1 = jf1+1;
             } // while jb1
             jb2 = jf2+1;
         }   // while jb2
     } // for j0
-//    Nrc = rn;
+    //    Nrc = rn;
     return rn;  // actual number of processed reciprocal reactions
 }
 
@@ -1973,15 +1975,15 @@ long int TBerman::PTparam( )
     if( NrcPpc >= 3 && rcpcf != NULL ) // reciprocal parameters provided
     {
         long int TklnTk = Tk * log(Tk);
-//cout << endl << " j" << "\trc(j,0)" << "\trc(j,1)" << "\trc(j,2)" << "\tGrc[j]" << "\tG0f[j]" << "\t|oGf[j]" << endl;
+//c out << endl << " j" << "\trc(j,0)" << "\trc(j,1)" << "\trc(j,2)" << "\tGrc[j]" << "\tG0f[j]" << "\t|oGf[j]" << endl;
         for (j=0; j<NComp; j++)  // Reciprocal and standard Gibbs energy terms
         {
-//cout << " " << j << "\t" << rcpcf[NrcPpc*j] << "\t" << rcpcf[NrcPpc*j+1] << "\t" << rcpcf[NrcPpc*j+2];
+//c out << " " << j << "\t" << rcpcf[NrcPpc*j] << "\t" << rcpcf[NrcPpc*j+1] << "\t" << rcpcf[NrcPpc*j+2];
              Grc[j] = rcpcf[NrcPpc*j] + rcpcf[NrcPpc*j+1]/Tk + rcpcf[NrcPpc*j+2]*TklnTk;
                      // in J/mol iGrc[j] = a + b/T + c*T*lnT  ;
              oGf[j] = G0f[j] + Grc[j]/(R_CONST*Tk); // normalized
              aGEX[j] = Grc[j]/(R_CONST*Tk);  //this sets the respective correction in pm.fDQF[]
-//cout << "\t" << Grc[j] << "\t" << G0f[j] << "\t" << oGf[j] << endl;
+//c out << "\t" << Grc[j] << "\t" << G0f[j] << "\t" << oGf[j] << endl;
         }
     }
 */
@@ -1998,8 +2000,8 @@ long int TBerman::PTparam( )
         {
            j0 = XrcM[r][0][0]; j1 = XrcM[r][1][0]; j2 = XrcM[r][2][0]; j3 = XrcM[r][3][0];
            dGrc = oGf[j0] + oGf[j1] - oGf[j2] - oGf[j3];  // Aranovich 1991, eq 1.92
-// cout << "r=" << r << " : dGrc=" << dGrc << " oGF: " << oGf[j0] << " " << oGf[j1] << " " << oGf[j2] << " " << oGf[j3] << endl;
-          DGrc[r] = dGrc;  // normalized!
+           solmod_logger->trace("r={} : dGrc={} oGF: {} {} {} {}", r, dGrc, oGf[j0], oGf[j1], oGf[j2], oGf[j3]);
+           DGrc[r] = dGrc;  // normalized!
         }
     }
     return 0;
@@ -2123,7 +2125,7 @@ double TBerman::PYproduct( const long int j )
         ys = ysigma( j, s );
         pyp_j *= ys;
     } // s
-// cout << "j=" << j << " pyp_j=" << pyp_j << endl;
+    solmod_logger->trace(" j={} pyp_j={}", j, pyp_j);
     return pyp_j;
 }
 
@@ -2135,7 +2137,7 @@ double TBerman::ysigma( const long int j, const long s )
     double ys = 0.;
     for( m=0; m < NMoi; m++ ) // Looking through moieties
     {
-       if( mn[j][s][m] != 0. ) // This site is occupied in j-th end member
+       if( noZero( mn[j][s][m] ) ) // This site is occupied in j-th end member
            ys += mn[j][s][m] * y[s][m];
     }
     if( ys > 0. )
@@ -2161,7 +2163,7 @@ double TBerman::dGref_dysigma( const long int j, const long int s, const long in
           if( nmem == NComp )
               continue;  // ignoring the moiety which is present in all end members
           krond = KronDelta( j, s, m );
-          if( krond != 0. )
+          if( noZero( krond ) )
           {
               ys += mn[l][s][m] * y[s][m];
               kron = true;
@@ -2193,7 +2195,7 @@ double TBerman::dGref_dysm( const long int s, const long m, const long int ex_j 
            continue;
        ys = 0.; kron = false;
        krond = KronDelta( l, s, m );
-       if( krond != 0. )
+       if( noZero( krond ) )
        {
            ys = y[s][m];
            kron = true;
@@ -2209,7 +2211,7 @@ double TBerman::dGref_dysm( const long int s, const long m, const long int ex_j 
        } // m
 */     if( kron == false )
            continue;  // no moieties belonging to l-th end member found in this sublattice
-       if( ys != 0. )
+       if( noZero( ys ) )
        {
 //           ys /= mns[s];
            dst = oGf[l] * ( pyp[l] / ys );
@@ -2343,13 +2345,13 @@ long int TBerman::ReciprocalPart()
         pyp[j] = PYproduct( j );
         G_ref += pyp[j] * oGf[j];
     }
-    // cout << "G_ref= " << G_ref << endl;
+    solmod_logger->trace("G_ref= {}", G_ref);
     // Calculation of reciprocal activity terms (modified from CEF, Sundman & Agren, 1981)
     for( j=0; j<NComp; j++)
     {
        rft = RefFrameTerm( j, G_ref );
        lnGamRecip[j] = rft - oGf[j];
-//     cout << "j=" << j  << " rft=" << rft << " lnGamRecip=" << lnGamRecip[j] << " pyp=" << pyp[j] << endl;
+       solmod_logger->trace("j={} rft={} lnGamRecip={} pyp={}", j, rft, lnGamRecip[j], pyp[j]);
     }
 //    if( NSub != 2 )
         return 0;
@@ -2381,7 +2383,7 @@ long int TBerman::ReciprocalPart()
          }
          lnGamRecip[j] -= rcSum;
       }  // r
-      cout << "Alternative from recip.reactions: j=" << j << "  GexRc/(RT)=" << lnGamRecip[j] << endl;
+      solmod_logger->debug("Alternative from recip.reactions: j= {}  GexRc/(RT)= {}", j, lnGamRecip[j]);
     }  // j
     }
     return 0;
@@ -2391,7 +2393,7 @@ long int TBerman::ReciprocalPart()
 // reaction excess energy terms for the end member with index j
 // Returns in xm the moiety indexes for each sublattice for picking up their site fractions
 // (max. 4 sublattices can be considered)
-bool TBerman::CheckThisReciprocalReaction( const long int /*r*/, const long int /*j*/, long int */*xm*/ )
+bool TBerman::CheckThisReciprocalReaction( const long int /*r*/, const long int /*j*/, long int* /*xm*/ )
 {
     return true; // this reaction to be skipped
 }
@@ -2536,7 +2538,7 @@ void TCEFmod::alloc_internal()
         {
             for( s=0; s< NSub; s++ ) // looking through sublattices
             {
-               if( mn[j][s][m] != 0. )
+               if( noZero( mn[j][s][m] ) )
                {
                  mf=true;
                  NmoS[s]++;
@@ -2602,19 +2604,19 @@ long int TCEFmod::PTparam( )
     for (j=0; j<NComp; j++)  // Reciprocal and standard Gibbs energy terms
        oGf[j] = G0f[j];
 //    else
-    { // no separate reciprocal free energy terms provided
-// cout << "NP_DC=" << NP_DC << endl;
+    {
+        // no separate reciprocal free energy terms provided
+        solmod_logger->trace("NP_DC= {}", NP_DC);
         for (j=0; j<NComp; j++)
         {
-// cout << " j=" << j;
-            if(NP_DC > 0) // use the first DCc coefficient (to be checked!)
+           if(NP_DC > 0) // use the first DCc coefficient (to be checked!)
            {
                 aGEX[j] = aDCc[NP_DC*j]/(R_CONST*Tk);
-// cout << " aDCc[j][0]=" << aDCc[NP_DC*j] << " aGEX[j]=" << aGEX[j];
+                solmod_logger->trace(" {} aDCc[j][0]={} aGEX[j]= {}", j, aDCc[NP_DC*j], aGEX[j]);
            }
            Grc[j] = 0.;  // in J/mol
            oGf[j] = G0f[j]+aGEX[j]; // normalized
-// cout << " G0f[j]=" << G0f[j] << " | oGf[j]=" << oGf[j] << endl;
+           solmod_logger->trace(" {} G0f[j]={} | oGf[j]={}", j, G0f[j], oGf[j]);
         }
     }
     return 0;
@@ -2675,7 +2677,7 @@ long int TCEFmod::CalcSiteFractions(){
 
 long int TCEFmod::IdealMixing() {
     long int j,s,m;
-    double dgm_dyjs, dgm_dysis, lnaconj, Gid;  // NSergii
+    double dgm_dyjs, dgm_dysis, lnaconj, Gid1;  // NSergii
 
     if( !NSub || !NMoi ) {
         for( j=0; j<NComp; j++)
@@ -2686,7 +2688,7 @@ long int TCEFmod::IdealMixing() {
     CalcSiteFractions();
     //return_sitefr(); // sending site fractions back to TMulti - was moved to CalcSiteFractions()
 
-    Gid = idealSmix();
+    Gid1 = idealSmix();
     // NSergii: Calculation of the ideal activity cnf term and fictive activity coefficient
     // for each end member
     for( j=0; j<NComp; j++) {
@@ -2708,7 +2710,7 @@ long int TCEFmod::IdealMixing() {
                 dgm_dyjs += y[s][m] * mns[s] * (1 + log(y[s][m]));
         } // m
 
-        lnaconj = Gid + (dgm_dysis - dgm_dyjs);
+        lnaconj = Gid1 + (dgm_dysis - dgm_dyjs);
 
         lnGamConf[j] = 0.;
         if(x[j] > 1e-32 )  // Check threshold
@@ -3005,7 +3007,7 @@ double TCEFmod::idealSmix(){
 }
 
 bool TCEFmod::KronDelta( const long int j, const long int s, const long int m ){
-    if( mn[j][s][m] != 0.0 )
+    if( noZero( mn[j][s][m] ) )
        return true;
     return false;
 }
@@ -3015,7 +3017,7 @@ long int TCEFmod::em_howmany( long int s, long int m )
     long int l, jc=0;
     for( l=0; l<NComp; l++ )
     {
-       if( mn[l][s][m] != 0.0 )
+       if( noZero( mn[l][s][m]) )
            jc++;
     }
     return jc;
@@ -3105,7 +3107,7 @@ void TMBWmod::alloc_internal()
         {
             for( s=0; s< NSub; s++ ) // looking through sublattices
             {
-               if( mn[j][s][m] != 0. )
+               if( noZero( mn[j][s][m] ) )
                {
                  mf=true;
                  NmoS[s]++;
@@ -3172,18 +3174,17 @@ long int TMBWmod::PTparam( )
        oGf[j] = G0f[j];
 //    else
     { // no separate reciprocal free energy terms provided
-// cout << "NP_DC=" << NP_DC << endl;
+        solmod_logger->trace("NP_DC={}", NP_DC);
         for (j=0; j<NComp; j++)
         {
-// cout << " j=" << j;
-            if(NP_DC > 0) // use the first DCc coefficient (to be checked!)
+           if(NP_DC > 0) // use the first DCc coefficient (to be checked!)
            {
                 aGEX[j] = aDCc[NP_DC*j]/(R_CONST*Tk);
-// cout << " aDCc[j][0]=" << aDCc[NP_DC*j] << " aGEX[j]=" << aGEX[j];
+                solmod_logger->trace(" {} aDCc[j][0]={} aGEX[j]= {}", j, aDCc[NP_DC*j], aGEX[j]);
            }
            Grc[j] = 0.;  // in J/mol
            oGf[j] = G0f[j]+aGEX[j]; // normalized
-// cout << " G0f[j]=" << G0f[j] << " | oGf[j]=" << oGf[j] << endl;
+           solmod_logger->trace(" {} G0f[j]={} | oGf[j]={}", j, G0f[j], oGf[j]);
         }
     }
     return 0;
@@ -3402,7 +3403,7 @@ long int TMBWmod::em_howmany( long int s, long int m ) {
     long int l, jc=0;
     for( l=0; l<NComp; l++ )
     {
-       if( mn[l][s][m] != 0 )
+       if( noZero( mn[l][s][m] ) )
            jc++;
     }
     return jc;
@@ -3589,7 +3590,7 @@ double TMBWmod::idealSmix() {
 }
 
 bool TMBWmod::KronDelta( const long int j, const long int s, const long int m ) {
-    if( mn[j][s][m] != 0 )
+    if( noZero( mn[j][s][m] ) )
        return true;
     return false;
 }

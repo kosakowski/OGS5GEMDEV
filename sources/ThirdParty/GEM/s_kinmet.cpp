@@ -24,15 +24,13 @@
 //-------------------------------------------------------------------
 //
 
-#include <cmath>
-#include <cstdio>
-#include <iostream>
-#include <iomanip>
-#include <fstream>
-#include <cstring>
-using namespace std;
-#include "verror.h"
 #include "s_kinmet.h"
+#include "v_detail.h"
+#include <spdlog/sinks/stdout_color_sinks.h>
+
+// Thread-safe logger to stdout with colors
+std::shared_ptr<spdlog::logger> TKinMet::kinmet_logger = spdlog::stdout_color_mt("kinmet");
+
 
 //=============================================================================================
 // TKinMet base class constructor (simulation of phase metastability and MWR kinetics)
@@ -484,15 +482,17 @@ TKinMet::UpdateFSA(const double pAsk, const double pXFk, const double pFWGTk, co
 {
     long int i;
     bool status = false;
-    if( sSA != pAsk || nPh != pXFk || mPh != pFWGTk || vPh != pFVOLk || p_sFact != sFact
-        || LaPh != pLaPh || IS != pICa || pH != ppHa || pe != ppea || Eh != pEha || sGP != pYOFk*mPh )
+    if( !essentiallyEqual( sSA, pAsk) || !essentiallyEqual(nPh, pXFk) || !essentiallyEqual(mPh, pFWGTk) ||
+        !essentiallyEqual( vPh, pFVOLk ) || !essentiallyEqual( p_sFact, sFact) || !essentiallyEqual( LaPh, pLaPh ) ||
+        !essentiallyEqual( IS, pICa ) || !essentiallyEqual( pH, ppHa ) || !essentiallyEqual( pe, ppea ) ||
+        !essentiallyEqual( Eh, pEha ) || !essentiallyEqual( sGP, pYOFk*mPh ) )
         status = true;
     sSA = pAsk*1000.; // from m2/g to m2/kg
     nPh = pXFk;
     mPh = pFWGTk/1e3;  // from g to kg
     nPul = pPULk;
     nPll = pPLLk;
-// cout << " !!! mPh: " << mPh << endl;
+    kinmet_logger->trace(" !!! mPh: {}", mPh);
     vPh = pFVOLk/1e6;  // from cm3 to m3
     sFacti = p_sFact;
     LaPh = pLaPh;
@@ -517,7 +517,7 @@ TKinMet::UpdateFSA(const double pAsk, const double pXFk, const double pFWGTk, co
     }
     for( i = 0; i < nPRk; i++ )
     {
-       if( arPRt[i].feSAr != arfeSAr[i] )
+       if( !essentiallyEqual( arPRt[i].feSAr, arfeSAr[i] ) )
        {    // copying (externally modified) surface area fractions for parallel reactions
            status = true;
            arfeSAr[i] = arPRt[i].feSAr;
@@ -619,7 +619,7 @@ TKinMet::UpdatePT ( const double T_K, const double P_BAR )
     for( i=0; i<nPRk; i++ )
     {
         Arf = arPRt[i].Ap * exp(-(arPRt[i].Ea)/RT);
-        if( arPRt[i].Ap != 0.0 )
+        if( noZero( arPRt[i].Ap ) )
             arPRt[i].arf = Arf;
         else
             Arf = 1.0;
@@ -638,7 +638,7 @@ bool
 TKinMet::UpdateTime( const double Tau, const double dTau )
 {
     bool status = false;
-    if( Tau != kTau || dTau != kdT )
+    if( !essentiallyEqual( Tau, kTau ) || !essentiallyEqual( dTau, kdT ) )
         status = true;
     kTau = Tau;
     kdT = dTau;
@@ -652,15 +652,17 @@ TKinMet::PRrateCon( TKinReact &rk, const long int r )
    long int xj, j, atopc;//, facex;
    double atp, ajp, aj, bc, tt;  // ,kr
 
-//cout << "kTau: " << kTau << " k: " << rk.k << " K: " << rk.K << " Omg: " << OmPh <<
-//        " nPh: " << nPh << " mPh: " << mPh << " LaPh: " << LaPh << endl;
+   kinmet_logger->trace(" kTau: {} k: {}  K: {}  Omg: {}", kTau, rk.k, rk.K,  OmPh );
+   kinmet_logger->trace(" nPh: {} mPh: {}  LaPh: {}", nPh, mPh, LaPh );
+
    rk.rPR = 0.;
 //   rk.rPR = 0.;
    if(fabs(LaPh) < OmgTol )
        return 0.;  // equilibrium - zero rate
 
-if( rk.xPR != r )     // index of this parallel reaction
-        cout << rk.xPR << " <-> " << r << " mismatch" << endl;
+    if( rk.xPR != r ) {    // index of this parallel reaction
+        kinmet_logger->trace(" {} <-> {} mismatch ", rk.xPR, r);
+   }
    atopc = rk.ocPRk[0]; // operation code for this kinetic parallel reaction affinity term
    //facex = rk.ocPRk[1]; // particle face index (reserved)
 
@@ -672,7 +674,7 @@ if( rk.xPR != r )     // index of this parallel reaction
         {
             j = rk.xSKr[xj];
             bc = rk.apCon[xj][0];
-            if( bc  != 0.0 )
+            if( noZero( bc ) )
             {
                 aj = pow( 10., arla[j] );  // bugfix 4.10.2013 DK
                 ajp = pow( aj, bc );
@@ -680,15 +682,15 @@ if( rk.xPR != r )     // index of this parallel reaction
             }
         }
    }
-   if( rk.pPR != 0.0 )
+   if( noZero( rk.pPR ) )
        rk.cat = pow( rk.cat, rk.pPR );
-   if( rk.bI  != 0.0 )
+   if( noZero( rk.bI  ) )
        rk.cat *= pow( IS, rk.bI );
-   if( rk.bpH != 0.0 )
+   if( noZero( rk.bpH ) )
        rk.cat *= pow( pH, rk.bpH );
-   if( rk.bpe != 0.0 )
+   if( noZero( rk.bpe ) )
        rk.cat *= pow( pe, rk.bpe );
-   if( rk.bEh != 0.0 )
+   if( noZero( rk.bEh ) )
        rk.cat *= pow( Eh, rk.bEh );
 
    // affinity term (f(Omega))
@@ -700,19 +702,19 @@ if( rk.xPR != r )     // index of this parallel reaction
        if( LaPh > -OmgTol )
            break;
        rk.aft = - rk.uPR + 1. - pow( OmPh, rk.qPR );
-       if( rk.aft != 0. && rk.mPR != 0. )
+       if( noZero( rk.aft ) && noZero( rk.mPR ) )
            rk.aft = pow( rk.aft, rk.mPR );
        break;
     case ATOP_CLASSIC_REV_: // = 1, classic TST affinity term, reversed (for growth)
        if( LaPh < OmgTol )
            break;
        rk.aft = pow( OmPh, rk.qPR ) - 1. - rk.uPR;
-       if( rk.aft != 0. && rk.mPR != 0. )
+       if( noZero( rk.aft ) && noZero( rk.mPR ) )
            rk.aft = pow( rk.aft, rk.mPR );
 //       rk.aft *= -1.;
        break;
     case ATOP_SCHOTT_: // = 2,      Schott et al. 2012 fig. 1e
-       if( OmPh  != 0.0 )
+       if( noZero( OmPh  ) )
            rk.aft = exp( -rk.uPR/OmPh );
        else
            rk.aft = 0.;
@@ -756,21 +758,21 @@ if( rk.xPR != r )     // index of this parallel reaction
    // Calculating rate for this partial reaction (output) in mol/m2/s (in mol/s/kgw for nucleation)
    if( LaPh < -OmgTol ) // dissolution  (needs more flexible check based on Fa stability criterion!
    {
-       if( rk.k > 0 && rk.K == 0.0 ) // k    net dissolution rate constant (corrected for T) in mol/m2/s
+       if( rk.k > 0 && approximatelyZero( rk.K ) ) // k    net dissolution rate constant (corrected for T) in mol/m2/s
            rk.rPR = rk.k * rk.cat * rk.aft;
-       else if ( rk.K != 0.0 ) // K  gross rate constant (corrected for T) in mol/m2/s
+       else if ( noZero( rk.K ) ) // K  gross rate constant (corrected for T) in mol/m2/s
            rk.rPR = rk.K * rk.cat * rk.aft;
    }
    if( LaPh > OmgTol ) {
-       if( rk.k < 0 && rk.K == 0.0 ) //   net precipitation rate constant (corrected for T) in mol/m2/s
+       if( rk.k < 0 && approximatelyZero( rk.K ) ) //   net precipitation rate constant (corrected for T) in mol/m2/s
            rk.rPR = rk.k * rk.cat * rk.aft;
-       else if ( rk.K != 0.0 ) // K  gross rate constant (corrected for T) in mol/m2/s
+       else if ( noZero( rk.K ) ) // K  gross rate constant (corrected for T) in mol/m2/s
            rk.rPR = rk.K * rk.cat * rk.aft;
    }
 //   else {  // equilibrium - no rate of change
 //       ;
 //   }
-   if( atopc != ATOP_HELLEV_ && rk.rPR != 0.0 )
+   if( atopc != ATOP_HELLEV_ && noZero( rk.rPR ) )
        rk.rPR *= rk.feSAr; // Theta: fraction of surface area of the solid related to this parallel reaction
    return rk.rPR;
 //   rmol,   // rate for the whole face (output) in mol//m2/s    TBD
@@ -917,8 +919,8 @@ TKinMet::RateInit( )
         vTot = 0.;
     }
 //   Here possibly additional corrections of dissolution/precipitation rates
-// cout << " init 0  kTot: " << kTot << " vTot: " << vTot << " rTot: " << rTot << " sSAcor: " << sSAcor << " sAPh: " << sAPh << " nPhi: " << nPhi << endl;
- // Check initial rates and limit them to realistic values
+    kinmet_logger->trace(" init 0  kTot: {} vTot: {}  rTot: {}  sSAcor: {} sAPh: {} nPhi: {}", kTot, vTot, rTot,  sSAcor, sAPh, nPhi);
+// Check initial rates and limit them to realistic values
 
     return false;
 }
@@ -967,7 +969,7 @@ TKinMet::RateMod( )
         vTot = 0.;
 //        sSAcr = 0.; problematic
     }
-    // cout << " t: " << kTau << " kTot: " << kTot << " vTot: " << vTot << " rTot: " << rTot << " sSAcor: " << sSAcor << " sAPh: " << sAPh << " nPh: " << nPh << endl;
+    kinmet_logger->trace(" t: {} kTot: {}  vTot: {}  rTot: {} sSAcor: {} sAPh: {} nPh: {}", kTau, kTot, vTot, rTot, sSAcor, sAPh, nPh);
 //   Here possibly additional corrections of dissolution/precipitation rates
     return false;
 }
@@ -999,7 +1001,7 @@ TKinMet::SetMetCon( )
     {                     // (needs more flexible check based on Fa stability criterion!)
        if( nPh >= 1e-10 )
        {   // dissolution
-         nPll = max( 0.1*nPh, nPh + dnPh );
+         nPll = std::max( 0.1*nPh, nPh + dnPh );
 //         nPul = max( nPh, nPll );
          //         if( nPul < nPll )
            nPul = nPll;
@@ -1020,13 +1022,13 @@ nPll = nPul;     // dolomite kinetics works, no warnings!
 //              nPll = max( 0.0, nPul - dnPh );    // ensuring slackness
        }
        else {  // nucleation (rTot already includes nucleation rate)
-          if( nPh == 0. )
+          if( approximatelyZero( nPh ) )
           {
               if( dnNuc >= 1e-12 )
               {  // no phase but significant nucleation rate - onset of the phase at cutoff 1e-10 mol
                  // No growth yet, even if parallel reactions are given
                   nPul = dnNuc;       // nPll = nPul; // dangerous - needs a check for max. possible nPul!
-                  nPll = min( nPul, 1e-6 ); // PROVISIONAL - max content of phase in aqueous to be checked!
+                  nPll = std::min( nPul, 1e-6 ); // PROVISIONAL - max content of phase in aqueous to be checked!
                   nPhi = nPh;         // initial amount of this phase
                   mPhi = mPh;         // initial mass
                   vPhi = vPh;         // initial volume
@@ -1214,7 +1216,7 @@ Dfj = p_Dfj;  // direct access
 
     alloc_upttabs();
     init_upttabs( p_arUmpCon );
-};
+}
 
 /// Destructor
 TUptakeKin::~TUptakeKin()
@@ -1302,7 +1304,7 @@ TUptakeKin::UptakeInit()
      Rd_rest = (1.-arWx[j])/(molSum-arElm[i]);
      if( fabs(Rd_rest) >1e-20  )
             Dfj[j] = Rdj[j]/Rd_rest;
-     //cout << "Rd_rest(UptakeInit) = " << Rd_rest << "  Dfj[j] = " <<  Dfj[j]<< endl;
+     kinmet_logger->trace(" Rd_rest(UptakeInit) = {}  Dfj[j] = {}", Rd_rest, Dfj[j]);
     }
     return false;
 }
@@ -1377,7 +1379,7 @@ TUptakeKin::UptakeMod()
                 Rd_rest = (1-spcfu[j])/(molSum-arElm[i]);
                 if( fabs(Rd_rest) >1e-20 )
                     Dfj[j] = Rdj[j]/Rd_rest;
-                //cout << "Rd_rest(UptakeMod) = " << Rd_rest << "  Dfj[j] = " <<  Dfj[j]<< endl;
+                kinmet_logger->trace(" Rd_rest(UptakeMod) = {}  Dfj[j] = {}", Rd_rest, Dfj[j]);
                 // Other ways of Dfj calculation are possible!
             }
             break;

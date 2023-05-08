@@ -24,14 +24,12 @@
 // along with GEMS3K code. If not, see <http://www.gnu.org/licenses/>.
 //-------------------------------------------------------------------
 
-#include <cmath>
-#include <cstdio>
-#include <iostream>
-#include <iomanip>
-#include <fstream>
-using namespace std;
 #include "s_solmod.h"
+#include "v_detail.h"
+#include <spdlog/sinks/stdout_color_sinks.h>
 
+// Thread-safe logger to stdout with colors
+std::shared_ptr<spdlog::logger> TSolMod::solmod_logger = spdlog::stdout_color_mt("solmod");
 
 //=============================================================================================
 // TSolMod base class for multicomponent solid, liquid, fluid and aqueous mixtures
@@ -290,8 +288,8 @@ long int TSolMod::UpdatePT ( double T_k, double P_bar )
 /// gets phase name for specific built-in models (class TModOther)
 void TSolMod::GetPhaseName( const char *PhName )
 {
-	 strncpy( PhaseName, PhName, MAXPHASENAME );
-	 PhaseName[MAXPHASENAME] = 0;
+     strncpy( PhaseName, PhName, MAXPHNAME );
+     PhaseName[MAXPHNAME] = 0;
 }
 
 /// Calculation of configurational terms for the ideal mixing (c) DK, TW Nov. 2010
@@ -332,7 +330,7 @@ long int TSolMod::IdealMixing()
         for( s=0; s<NSub; s++)
             for( m=0; m<NMoi; m++)
             {
-              if( mn[j][s][m] && y[s][m] > 1e-32 ) // check threshold
+              if( noZero(mn[j][s][m]) && y[s][m] > 1e-32 ) // check threshold
                 lnaconj += mn[j][s][m] * log( y[s][m] / mn[j][s][m] * mns[s] );
             }
         // Calculation of the fictive activity coefficient  eq 5.1-14
@@ -353,15 +351,15 @@ double TSolMod::ideal_conf_entropy()
 
     if( !NSub || !NMoi )
     {   // This is default (simple mixing) model
-        double si, Sid;
+        double si;
         si = 0.0;
         for(j=0; j<NComp; j++)
         {
            if ( x[j] > 1.0e-32 )
               si += x[j]*log(x[j]);
         }
-        Sid = (-1.)*R_CONST*si;
-        return Sid;
+        auto Sid1 = (-1.)*R_CONST*si;
+        return Sid1;
     }
 
     // calculation of the multi-site configurational entropy

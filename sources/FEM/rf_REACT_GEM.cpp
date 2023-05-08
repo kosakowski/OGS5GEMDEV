@@ -2567,7 +2567,7 @@ int REACT_GEM::MassToConcentration ( long in,int i_failed,  TNode* m_Node )   //
     {
         cout << "OGSGEM MassToConcentration: fluid volume negative or zero " <<
              fluid_volume  << " node " << in << " " << m_fluid_volume[in] << "\n";
-        m_Node->GEM_write_dbr ( "dbr_for_crash_node_fluid_volume.txt" );
+        //m_Node->GEM_write_dbr ( "dbr_for_crash_node_fluid_volume.txt" );
         cout << " skal factor " << skal_faktor << " excess water volume " <<
              m_excess_water[in];
         m_Node->GEM_print_ipm ( "ipm_for_crash_node_fluid_volume.txt" );
@@ -6413,8 +6413,8 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
     {
         // (4) possible return status analysis, error message ..overwrites existing files!
         cout << "Initializing thread failed with response: " << m_NodeStatusCH[0]<< "  \n";
-        t_Node->GEM_write_dbr("FailAfterCalcPhase_dbr.txt");
-        t_Node->GEM_print_ipm("FailAfterCalcPhase_ipm.txt");   // possible debugging printout
+        //t_Node->GEM_write_dbr("FailAfterCalcPhase_dbr.txt");
+        //t_Node->GEM_print_ipm("FailAfterCalcPhase_ipm.txt");   // possible debugging printout
 #if defined(USE_PETSC)
         PetscEnd();                   //make sure MPI exits
 #endif
@@ -6535,7 +6535,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
                 // write out a separate time stamp into file
                 string m_file_namet = "init1_gems_dbr_domain-" + rank_str + ".dat";
 
-                t_Node->GEM_write_dbr ( m_file_namet.c_str() );
+		//                t_Node->GEM_write_dbr ( m_file_namet.c_str() );
                 cout << " Error: Init Loop failed when running GEM on Node #" << in << "." << "\n";
                 cout << "Returned Error Code: " << m_NodeStatusCH[in] << "  we if this is first exit!\n";
 
@@ -6698,7 +6698,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
                 ss.clear();
                 // write out a separate time stamp into file
                 string m_file_namet = "init2_gems_dbr_domain-" + rank_str + ".dat";
-                t_Node->GEM_write_dbr ( m_file_namet.c_str() );
+		//                t_Node->GEM_write_dbr ( m_file_namet.c_str() );
 
                 rwmutex.unlock();
 #if defined(USE_MPI_GEMS) || defined(USE_PETSC)
@@ -6801,7 +6801,7 @@ void REACT_GEM::gems_worker(int tid, string m_Project_path)
                         // write out a separate time stamp into file
                         string m_file_namet = "after_gems_dbr_domain-" + rank_str + ".dat";
 
-                        t_Node->GEM_write_dbr ( m_file_namet.c_str() );
+                        // t_Node->GEM_write_dbr ( m_file_namet.c_str() );
                         rwmutex.unlock();
 
 #if defined(USE_PETSC)

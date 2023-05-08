@@ -5,7 +5,7 @@
 /// Copy constructor for TNode class
 /// DATACH and DATABR structures allocations
 //
-// Copyright (c) 2017 S.Dmytriyeva, D.Kulik
+// Copyright (c) 2017-2021 S.Dmytriyeva, D.Kulik
 // <GEMS Development Team, mailto:gems2.support@psi.ch>
 //
 // This file is part of the GEMS3K code for thermodynamic modelling
@@ -25,47 +25,570 @@
 // along with GEMS3K code. If not, see <http://www.gnu.org/licenses/>.
 //-------------------------------------------------------------------
 
-#include <iomanip>
-#include  <iostream>
-//#include "io_arrays.h"
+#include  <sstream>
 #include "node.h"
-#include "gdatastream.h"
 #include "num_methods.h"
+#include "gdatastream.h"
+#include "io_keyvalue.h"
+#include "io_nlohmann.h"
+#include "io_simdjson.h"
+#include "v_service.h"
 
-#ifdef IPMGEMPLUGIN
-
-TNode::TNode( const TNode& otherNode )
+// Writes CSD (DATACH structure) to a json string or key-value string
+// \param brief_mode - Do not write data items that contain only default values
+// \param with_comments - Write files with comments for all data entries or as "pretty JSON"
+std::string TNode::datach_to_string( bool with_comments, bool brief_mode ) const
 {
-  CSD = 0;
-  CNode = 0;
+    std::stringstream ss;
+    write_dch_format_stream( ss, GEMS3KGenerator::default_type_f, with_comments, brief_mode );
+    return ss.str();
+}
 
-  allocMemory();
-  dbr_file_name = otherNode.dbr_file_name;
-  ipmlog_file_name = otherNode.ipmlog_file_name;
+// Reads CSD (DATACH structure) from a json string or key-value string
+bool TNode::datach_from_string( const std::string data )
+{
+    if( data.empty() )
+        return false;
 
-  // copy data from otherNode
-  datach_copy( otherNode.CSD );
-  databr_copy( otherNode.CNode );
+    std::stringstream ss;
+    ss.str(data);
+    read_dch_format_stream( ss, GEMS3KGenerator::default_type_f );
+    return true;
+}
 
-  multi->copyMULTI( *otherNode.multi );
+// Writes work node (DATABR structure) to a json string or key-value string
+// \param brief_mode - Do not write data items that contain only default values
+// \param with_comments - Write files with comments for all data entries or as "pretty JSON"
+std::string TNode::databr_to_string( bool with_comments, bool brief_mode ) const
+{
+    std::stringstream ss;
+    write_dbr_format_stream( ss, GEMS3KGenerator::default_type_f, with_comments, brief_mode );
+    return ss.str();
+}
 
-  // copy intervals for minimizatiom
-   pmm->Pai[0] = CSD->Pval[0]/bar_to_Pa;
-   pmm->Pai[1] = CSD->Pval[CSD->nPp-1]/bar_to_Pa;
-   pmm->Pai[2] = getStep( pmm->Pai, CSD->nPp )/bar_to_Pa;//(pmp->Pai[1]-pmp->Pai[0])/(double)dCH->nPp;
-   pmm->Pai[3] = CSD->Ptol/bar_to_Pa;
+// Reads work node (DATABR structure) from a json string or key-value string
+bool TNode::databr_from_string( const std::string data )
+{
+    if( data.empty() )
+        return false;
 
-   pmm->Tai[0] = CSD->TKval[0]-C_to_K;
-   pmm->Tai[1] = CSD->TKval[CSD->nTp-1]-C_to_K;
-   pmm->Tai[2] = getStep( pmm->Tai, CSD->nTp );//(pmp->Tai[1]-pmp->Tai[0])/(double)dCH->nTp;
-   pmm->Tai[3] = CSD->Ttol;
+    std::stringstream ss;
+    ss.str(data);
+    read_dbr_format_stream( ss, GEMS3KGenerator::default_type_f );
+    return true;
+}
 
-  pmm->Fdev1[0] = 0.;
-  pmm->Fdev1[1] = 1e-6;   // 24/05/2010 must be copy from GEMS3 structure
-  pmm->Fdev2[0] = 0.;
-  pmm->Fdev2[1] = 1e-6;
+void  TNode::read_dbr_format_file( const std::string& dbr_file, GEMS3KGenerator::IOModes  type_f )
+{
+    switch( type_f )
+    {
+    case GEMS3KGenerator::f_binary:
+    {
+        GemDataStream in_br(dbr_file, std::ios::in|std::ios::binary);
+        databr_from_file(in_br);
+    }
+        break;
+    default:
+    {
+        std::fstream in_br( dbr_file, std::ios::in );
+        ErrorIf( !in_br.good() , dbr_file, "DBR_DAT fileopen error");
+        read_dbr_format_stream( in_br, type_f );
+    }
+        break;
+    }
+}
 
-  cout << "copy constructor..." << endl;
+void  TNode::write_dbr_format_file( const std::string& dbr_file, GEMS3KGenerator::IOModes type_f,
+                                    bool with_comments, bool brief_mode )
+{
+    switch( type_f )
+    {
+    case GEMS3KGenerator::f_binary:
+    {
+        GemDataStream  f_br( dbr_file, std::ios::out|std::ios::binary );
+        databr_to_file(f_br);
+    }
+        break;
+    default:
+    {
+        std::fstream  f_br( dbr_file, std::ios::out);
+        write_dbr_format_stream( f_br, type_f, with_comments, brief_mode );
+    }
+        break;
+    }
+}
+
+void  TNode::read_dbr_format_stream( std::iostream& stream, GEMS3KGenerator::IOModes  type_f )
+{
+    switch( type_f )
+    {
+    case GEMS3KGenerator::f_binary:
+        break;
+    case GEMS3KGenerator::f_json:
+    case GEMS3KGenerator::f_thermofun:
+#ifdef USE_NLOHMANNJSON
+    {
+        io_formats::NlohmannJsonRead in_format( stream, current_input_set_name, "dbr" );
+        databr_from_text_file(in_format);
+    }
+#else
+    {
+        io_formats::SimdJsonRead in_format( stream, current_input_set_name, "dbr" );
+        databr_from_text_file(in_format);
+    }
+#endif
+        break;
+    case GEMS3KGenerator::f_key_value:
+    case GEMS3KGenerator::f_kv_thermofun:
+    {
+        io_formats::KeyValueRead in_format( stream );
+        databr_from_text_file(in_format);
+    }
+        break;
+    }
+}
+
+
+void  TNode::write_dbr_format_stream( std::iostream& stream, GEMS3KGenerator::IOModes type_f,
+                                    bool with_comments, bool brief_mode ) const
+{
+    switch( type_f )
+    {
+    case GEMS3KGenerator::f_binary:
+        break;
+    case GEMS3KGenerator::f_json:
+    case GEMS3KGenerator::f_thermofun:
+#ifdef USE_NLOHMANNJSON
+    {
+        io_formats::NlohmannJsonWrite out_format( stream, current_output_set_name );
+        databr_to_text_file( out_format, with_comments, brief_mode );
+    }
+#else
+    {
+        io_formats::SimdJsonWrite out_format( stream, current_output_set_name, with_comments );
+        databr_to_text_file( out_format, with_comments, brief_mode );
+    }
+#endif
+        break;
+    case GEMS3KGenerator::f_key_value:
+    case GEMS3KGenerator::f_kv_thermofun:
+    {
+        io_formats::KeyValueWrite out_format( stream );
+        databr_to_text_file( out_format, with_comments, brief_mode );
+    }
+        break;
+    }
+}
+
+void  TNode::read_dch_format_stream( std::iostream& stream, GEMS3KGenerator::IOModes  type_f )
+{
+    switch( type_f )
+    {
+    case GEMS3KGenerator::f_binary:
+        break;
+    case GEMS3KGenerator::f_json:
+    case GEMS3KGenerator::f_thermofun:
+#ifdef USE_NLOHMANNJSON
+    {
+        io_formats::NlohmannJsonRead in_format( stream, current_input_set_name, "dch" );
+        datach_from_text_file(in_format, type_f==GEMS3KGenerator::f_thermofun);
+    }
+#else
+    {
+        io_formats::SimdJsonRead in_format( stream, current_input_set_name, "dch" );
+        datach_from_text_file(in_format, type_f==GEMS3KGenerator::f_thermofun);
+    }
+#endif
+        break;
+    case GEMS3KGenerator::f_key_value:
+    case GEMS3KGenerator::f_kv_thermofun:
+    {
+        io_formats::KeyValueRead in_format( stream );
+        datach_from_text_file(in_format, type_f==GEMS3KGenerator::f_kv_thermofun);
+    }
+        break;
+    }
+}
+
+
+void  TNode::write_dch_format_stream( std::iostream& stream, GEMS3KGenerator::IOModes type_f,
+                                    bool with_comments, bool brief_mode ) const
+{
+    switch( type_f )
+    {
+    case GEMS3KGenerator::f_binary:
+        break;
+    case GEMS3KGenerator::f_json:
+    case GEMS3KGenerator::f_thermofun:
+#ifdef USE_NLOHMANNJSON
+    {
+        io_formats::NlohmannJsonWrite out_format( stream, current_output_set_name );
+        datach_to_text_file( out_format, type_f==GEMS3KGenerator::f_thermofun, with_comments, brief_mode );
+    }
+#else
+    {
+        io_formats::SimdJsonWrite out_format( stream, current_output_set_name, with_comments );
+        datach_to_text_file( out_format, type_f==GEMS3KGenerator::f_thermofun, with_comments, brief_mode );
+    }
+#endif
+        break;
+    case GEMS3KGenerator::f_key_value:
+    case GEMS3KGenerator::f_kv_thermofun:
+    {
+        io_formats::KeyValueWrite out_format( stream );
+        datach_to_text_file( out_format, type_f==GEMS3KGenerator::f_kv_thermofun, with_comments, brief_mode );
+    }
+        break;
+    }
+}
+
+//-------------------------------------------------------------------
+// (1) Initialization of GEM IPM2 data structures in coupled RMT-GEM programs
+//  that use GEMS3K module. Also reads in the IPM, DCH and DBR text input files 
+//  in key-value, json or binary format. Parameters:
+//  ipmfiles_lst_name - name of a text file that contains:
+//    " -f | -j | -t |-b <DCH_DAT file name> <IPM_DAT file name> <dataBR file name>
+//  dbfiles_lst_name - name of a text file that contains:
+//    <dataBR  file name1>, ... , <dataBR file nameN> "
+//    These files (one DCH_DAT, one IPM_DAT, and at least one dataBR file) must
+//    exist in the same directory where the ipmfiles_lst_name file is located.
+//    the DBR_DAT files in the above list are indexed as 1, 2, ... N (node handles)
+//    and must contain valid initial chemical systems (of the same structure
+//    as described in the DCH_DAT file) to set up the initial state of the FMT
+//    node array. 
+//  If -t flag or no flag is specified then all data files must be in key-value text 
+//    (ASCII) format (and file names must have .dat extension);
+//  If -j and -f flag is specified then all data files must be in JSON format (and file names
+//    must have .json extension);
+//  if -b flag is specified then all data files are assumed to be binary (little-endian)
+//    files.
+//-------------------------------------------------------------------
+long int  TNode::GEM_init( const char* ipmfiles_lst_name )
+{
+    clearipmLogError();
+    clear_ThermoEngine();
+
+    try
+    {
+        //  Syntax: -t/-b  "<DCH_DAT file name>"  "<IPM_DAT file name>"
+        //       "<DBR_DAT file1 name>" [ ...  "<DBR_DAT fileN name>"]
+        GEMS3KGenerator generator( ipmfiles_lst_name );
+        current_output_set_name = current_input_set_name = generator.get_name();
+
+        switch( generator.files_mode() )
+        {
+        case GEMS3KGenerator::f_binary:
+        {
+            GemDataStream f_ch( generator.get_dch_path(), std::ios::in|std::ios::binary );
+            datach_from_file(f_ch);
+
+            GemDataStream f_m( generator.get_ipm_path(), std::ios::in|std::ios::binary );
+             multi_ptr()->read_multi(f_m, CSD);
+        }
+            break;
+        default:
+        {
+            std::fstream f_ch( generator.get_dch_path(), std::ios::in );
+            ErrorIf( !f_ch.good() , generator.get_dch_path(), "DCH_DAT fileopen error");
+            read_dch_format_stream( f_ch, generator.files_mode() );
+
+            if( generator.files_mode()>=GEMS3KGenerator::f_thermofun )
+            {
+                load_ThermoEngine(generator.get_thermofun_path());
+            }
+
+            std::fstream ff( generator.get_ipm_path(), std::ios::in );
+            ErrorIf( !ff.good() , generator.get_ipm_path(), "Fileopen error");
+            multi_ptr()->read_ipm_format_stream( ff,generator.files_mode(), CSD, current_input_set_name);
+
+        }
+            break;
+        }
+
+        // copy intervals for minimization
+        pmm->Pai[0] = CSD->Pval[0]/bar_to_Pa;
+        pmm->Pai[1] = CSD->Pval[CSD->nPp-1]/bar_to_Pa;
+        pmm->Pai[2] = getStep( pmm->Pai, CSD->nPp )/bar_to_Pa;//(pmp->Pai[1]-pmp->Pai[0])/(double)dCH->nPp;
+        pmm->Pai[3] = CSD->Ptol/bar_to_Pa;
+
+        pmm->Tai[0] = CSD->TKval[0]-C_to_K;
+        pmm->Tai[1] = CSD->TKval[CSD->nTp-1]-C_to_K;
+        pmm->Tai[2] = getStep( pmm->Tai, CSD->nTp );//(pmp->Tai[1]-pmp->Tai[0])/(double)dCH->nTp;
+        pmm->Tai[3] = CSD->Ttol;
+
+        pmm->Fdev1[0] = 0.;
+        pmm->Fdev1[1] = 1e-6;   // 24/05/2010 must be copied from GEMS3 structure
+        pmm->Fdev2[0] = 0.;
+        pmm->Fdev2[1] = 1e-6;
+
+        // Reading DBR_DAT file into work DATABR structure from ipmfiles_lst_name
+        std::string dbr_file = generator.get_dbr_path( 0 );
+        ErrorIf( dbr_file.empty() , ipmfiles_lst_name, " Undefined DBR_DAT file name");
+        read_dbr_format_file( dbr_file, generator.files_mode() );
+        dbr_file_name = dbr_file;
+
+        // Creating and initializing the TActivity class instance for this TNode instance
+        #ifdef IPMGEMPLUGIN
+        //        InitReadActivities( mult_in.c_str(),CSD ); // from DCH file in future?
+                multi_ptr()->InitalizeGEM_IPM_Data();              // In future, initialize data in TActivity also
+                GEM_print_ipm( "InitalizeGEM_IPM.ipm" );
+                this->InitCopyActivities( CSD, pmm, CNode );
+        #else
+            ;
+        #endif
+        return 0;
+    }
+    catch(TError& err)
+    {
+        ipmlog_error = err.title + std::string(": ") + err.mess;
+    }
+    catch(std::exception& e)
+    {
+        ipmlog_error = std::string("std::exception: ") + e.what();
+    }
+    catch(...)
+    {
+        ipmlog_error = "unknown exception";
+        return -1;
+    }
+
+    if( ipmfiles_lst_name ) {
+        ipmlog_file->error("GEMS3K input : file {}", ipmfiles_lst_name);
+    }
+    if( !ipmlog_error.empty() ) {
+        ipmlog_file->error("GEM_init error: {}",ipmlog_error);
+    }
+    return 1;
+}
+
+
+//  Parameters:
+//  @param dch_json -  DATACH - the Data for CHemistry data structure as a json/key-value string
+//  @param ipm_json -  Multi structure as a json/key-value string
+//  @param dbr_json -  DATABR - the data bridge structure as a json/key-value string
+//  @param fun_json -  ThermoFun data structure as a json string
+long int  TNode::GEM_init( std::string dch_json, std::string ipm_json,
+                           std::string dbr_json, std::string fun_json)
+{
+    load_thermodynamic_data = false; // need load thermo
+    clearipmLogError();
+    clear_ThermoEngine();
+
+    try
+    {
+       if(fun_json.empty()) {
+           GEMS3KGenerator::default_type_f  = GEMS3KGenerator::f_json;
+       }
+       else {
+           GEMS3KGenerator::default_type_f  = GEMS3KGenerator::f_thermofun;
+       }
+        node_logger->debug("GEMS3KGenerator::default_type_f {}", static_cast<int>(GEMS3KGenerator::default_type_f));
+        node_logger->debug("dch_json {}", dch_json);
+        node_logger->debug("dbr_json {}", dbr_json);
+        node_logger->debug("ipm_json {}", ipm_json);
+        node_logger->debug("fun_json {}", fun_json);
+
+        // This check of data consistency temporarily disabled for perfomance testing
+        //if( GEMS3KGenerator::default_type_f  == GEMS3KGenerator::f_json )
+        //{
+             current_output_set_name = current_input_set_name = extract_string_json( "set", dch_json );
+        //     auto ipm_set =  extract_string_json( "set", ipm_json );
+        //     auto dbr_set =  extract_string_json( "set", dbr_json );
+        //     ErrorIf(  ipm_set!=current_input_set_name,  "GEM_init error", "Multi structure as a json has different set name:  "+ipm_set );
+        //     ErrorIf(  dbr_set!=current_input_set_name,  "GEM_init error", "The data bridge structure as a json has different set name:  "+dbr_set );
+        //}
+
+        // Reading DCH_DAT data
+        datach_from_string(dch_json);
+
+        if( !fun_json.empty() )
+        {
+            load_ThermoEngine(fun_json);
+        }
+        // Reading IPM_DAT file into structure MULTI (GEM IPM work structure)
+        multi_ptr()->gemipm_from_string( ipm_json, CSD, current_input_set_name );
+
+        // copy intervals for minimization
+        pmm->Pai[0] = CSD->Pval[0]/bar_to_Pa;
+        pmm->Pai[1] = CSD->Pval[CSD->nPp-1]/bar_to_Pa;
+        pmm->Pai[2] = getStep( pmm->Pai, CSD->nPp )/bar_to_Pa;//(pmp->Pai[1]-pmp->Pai[0])/(double)dCH->nPp;
+        pmm->Pai[3] = CSD->Ptol/bar_to_Pa;
+
+        pmm->Tai[0] = CSD->TKval[0]-C_to_K;
+        pmm->Tai[1] = CSD->TKval[CSD->nTp-1]-C_to_K;
+        pmm->Tai[2] = getStep( pmm->Tai, CSD->nTp );//(pmp->Tai[1]-pmp->Tai[0])/(double)dCH->nTp;
+        pmm->Tai[3] = CSD->Ttol;
+
+        pmm->Fdev1[0] = 0.;
+        pmm->Fdev1[1] = 1e-6;   // 24/05/2010 must be copied from GEMS3 structure
+        pmm->Fdev2[0] = 0.;
+        pmm->Fdev2[1] = 1e-6;
+
+        // Reading DBR_DAT file into work DATABR structure from ipmfiles_lst_name
+        databr_from_string(dbr_json);
+
+        // Creating and initializing the TActivity class instance for this TNode instance
+#ifdef IPMGEMPLUGIN
+        //        InitReadActivities( mult_in.c_str(),CSD ); // from DCH file in future?
+        multi_ptr()->InitalizeGEM_IPM_Data();              // In future, initialize data in TActivity also
+        this->InitCopyActivities( CSD, pmm, CNode );
+#else
+        ;
+#endif
+        return 0;
+    }
+    catch(TError& err)
+    {
+        ipmlog_error = err.title + std::string(": ") + err.mess;
+    }
+    catch(std::exception& e)
+    {
+        ipmlog_error = std::string("std::exception: ") + e.what();
+    }
+    catch(...)
+    {
+        ipmlog_error = "unknown exception";
+        return -1;
+    }
+
+    if( !ipmlog_error.empty() ) {
+        ipmlog_file->error("GEM_init error: {}",ipmlog_error);
+    }
+    return 1;
+}
+
+long int  TNode::GEM_write_dbr( std::string& dbr_json )
+{
+    // Writes work node (DATABR structure) into a json string
+    try
+    {
+        std::stringstream ss;
+        write_dbr_format_stream( ss, GEMS3KGenerator::f_json, false, false );
+        dbr_json =  ss.str();
+        return 0;
+    }
+    catch(TError& err)
+    {
+        ipmlog_error = err.title + std::string(": ") + err.mess;
+    }
+    catch(std::exception& e)
+    {
+        ipmlog_error = std::string("std::exception: ") + e.what();
+    }
+    catch(...)
+    {
+        ipmlog_error = "unknown exception";
+        return -1;
+    }
+
+    ipmlog_file->error("Error Node:{}  time:{}  dt:{}", CNode->NodeHandle, CNode->Tm, CNode->dt);
+    ipmlog_file->error("{}", ipmlog_error);
+    return 1;
+}
+
+void TNode::GEM_write_dbr( const char* fname, GEMS3KGenerator::IOModes type_f, bool with_comments, bool brief_mode )
+{
+    std::string str_file;
+    if( fname == 0)
+        str_file = dbr_file_name;//+".out";
+    else
+        str_file = fname;
+    write_dbr_format_file( str_file, type_f, with_comments, brief_mode );
+}
+
+// (4) Produces a formatted text file with detailed contents (scalars and arrays) of the GEM IPM work structure.
+// This call is useful when GEM_run() returns with a NodeStatusCH value indicating a GEM calculation error
+// (see  above).  Another use is for a detailed comparison of a test system calculation after the version upgrade of GEMS3K.
+// Parameters: fname   null-terminated (C) string containing a full path to the disk file to be written.
+//                     NULL  - the disk file name path stored in the  dbr_file_name  field of the TNode class instance will be used,
+//                     extended with ".dump.out".  Usually the dbr_file_name field contains the path to the last input DBR file.
+//
+void  TNode::GEM_print_ipm( const char* fname )
+{
+    std::string str_file;
+    if( fname == 0)
+        str_file = dbr_file_name + ".Dump.out";
+    else
+        str_file = fname;
+
+     multi_ptr()->to_text_file(str_file.c_str());//profil1->outMultiTxt( str_file.c_str()  );
+}
+
+
+// (5j) Reads another DBR object (with input system composition, T,P etc.) from JSON string \ .
+long int TNode::GEM_read_dbr( std::string dbr_json, const bool check_dch_compatibility )
+{
+    // Reads work node (DATABR structure) from a json string
+    try
+    {
+        if( dbr_json.empty() )
+            Error( "GEM_read_dbr" , "Empty input string");
+
+        if( check_dch_compatibility )
+        {
+            auto dbr_set =  extract_string_json( "set", dbr_json );
+            if(  dbr_set!=current_input_set_name )
+                return 2;
+        }
+        std::stringstream ss;
+        ss.str(dbr_json);
+        read_dbr_format_stream( ss, GEMS3KGenerator::f_json );
+        return 0;
+     }
+    catch(TError& err)
+    {
+        ipmlog_error = err.title + std::string(": ") + err.mess;
+    }
+    catch(std::exception& e)
+    {
+        ipmlog_error = std::string("std::exception: ") + e.what();
+    }
+    catch(...)
+    {
+        ipmlog_error = "unknown exception";
+        return -1;
+    }
+
+    ipmlog_file->error("Error Node:{}  time:{}  dt:{}", CNode->NodeHandle, CNode->Tm, CNode->dt);
+    ipmlog_file->error("{}", ipmlog_error);
+    return 1;
+
+}
+
+
+// (5) Reads another DBR file (with input system composition, T,P etc.). The DBR file must be compatible with
+// the currently loaded IPM and DCH files (see description  of GEM_init() function call).
+// Parameters:
+//    fname       Null-terminated (C) string containing a full path to the input DBR disk file.
+//    binary_f    Flag defining whether the file specified in fname is in text fromat (false or 0, default) or in binary format (true or 1)
+// Return values:     0  if successful; 1 if input file(s) has not found been or is corrupt; -1 if internal memory allocation error occurred.
+long int  TNode::GEM_read_dbr( const char* fname, GEMS3KGenerator::IOModes type_f )
+{
+    clearipmLogError();
+
+    try
+    {
+        read_dbr_format_file( fname, type_f );
+        dbr_file_name = fname;
+        return 0;
+    }
+    catch(TError& err)
+    {
+        ipmlog_error = err.title + std::string(": ") + err.mess;
+    }
+    catch(std::exception& e)
+    {
+        ipmlog_error = std::string("std::exception: ") + e.what();
+    }
+    catch(...)
+    {
+        ipmlog_error = "unknown exception";
+        return -1;
+    }
+    ipmlog_file->error("GEMS3K input : file {}", fname);
+    ipmlog_file->error("Error Node:{}  time:{}  dt:{}", CNode->NodeHandle, CNode->Tm, CNode->dt);
+    ipmlog_file->error("{}", ipmlog_error);
+    return 1;
 }
 
 // Copy CSD (DATACH structure) data from other structure.
@@ -76,6 +599,7 @@ void TNode::datach_copy( DATACH* otherCSD )
     copyValues( &CSD->Ttol, &otherCSD->Ttol,4 );
 
     datach_realloc();
+    databr_free_internal(CNode);
     databr_realloc();
 
     //dynamic data
@@ -131,8 +655,7 @@ void TNode::databr_copy( DATABR* otherCNode )
     else
          copyValues( &CNode->TK, &otherCNode->TK, 15 );
 #else
-    fstream f_log(ipmLogFile().c_str(), ios::out|ios::app );
-    ErrorIf(CNode->NodeStatusFMT != No_nodearray, ipmLogFile().c_str(),
+    ErrorIf(CNode->NodeStatusFMT != No_nodearray, "databr_copy",
          "Error reading work dataBR structure from binary file (No_nodearray)");
      copyValues( &CNode->TK, &otherCNode->TK, 15 );
 #endif
@@ -159,7 +682,6 @@ void TNode::databr_copy( DATABR* otherCNode )
     copyValues( CNode->omPH, otherCNode->omPH, CSD->nPHb );
 }
 
-#endif
 
 // allocating DataCH structure
 void TNode::datach_realloc()
@@ -168,6 +690,7 @@ void TNode::datach_realloc()
      Error( "No-interpolation mode",
            "Different number of points for temperature and pressure ");
 
+ datach_free();
  CSD->nDCinPH = new long int[CSD->nPH];
 
  if( CSD->nICb >0 )
@@ -408,10 +931,10 @@ void TNode::databr_realloc( DATABR * CNode_)
 }
 
 // free dynamic memory
-DATABR * TNode::databr_free( DATABR *CNode_ )
+void TNode::databr_free_internal( DATABR *CNode_ )
 {
   if( CNode_ == 0)
-    CNode_ = CNode;
+    return;
 
  if( CNode_->bIC )
  { delete[] CNode_->bIC;
@@ -484,82 +1007,89 @@ DATABR * TNode::databr_free( DATABR *CNode_ )
   { delete[] CNode_->amrl;
     CNode_->amrl = 0;
   }
- delete CNode_;
- return NULL;
+}
+
+DATABR * TNode::databr_free( DATABR *CNode_ )
+{
+    if( CNode_ == 0)
+        CNode_ = CNode;
+    databr_free_internal(CNode_);
+    delete CNode_;
+    return NULL;
 }
 
 // set default values(zeros) for DATABR structure
-void TNode::databr_reset( DATABR *CNode, long int level )
+void TNode::databr_reset( DATABR *CnNde1, long int level )
 {
     //  FMT variables (units or dimensionsless) - to be used for storing them
     //  at the nodearray level = 0.; normally not used in the single-node FMT-GEM coupling
-        CNode->Tm = 0.;
-        CNode->dt = 0.;
+        CnNde1->Tm = 0.;
+        CnNde1->dt = 0.;
 #ifdef NODEARRAYLEVEL
-        CNode->Dif = 0.;
-        CNode->Vt = 0.;
-        CNode->vp = 0.;
-        CNode->eps = 0.;
-        CNode->Km = 0.;
-        CNode->Kf = 0.;
-        CNode->S = 0.;
-        CNode->Tr = 0.;
-        CNode->h = 0.;
-        CNode->rho = 0.;
-        CNode->al = 0.;
-        CNode->at = 0.;
-        CNode->av = 0.;
-        CNode->hDl = 0.;
-        CNode->hDt = 0.;
-        CNode->hDv = 0.;
-        CNode->nto = 0.; //19
+        CnNde1->Dif = 0.;
+        CnNde1->Vt = 0.;
+        CnNde1->vp = 0.;
+        CnNde1->eps = 0.;
+        CnNde1->Km = 0.;
+        CnNde1->Kf = 0.;
+        CnNde1->S = 0.;
+        CnNde1->Tr = 0.;
+        CnNde1->h = 0.;
+        CnNde1->rho = 0.;
+        CnNde1->al = 0.;
+        CnNde1->at = 0.;
+        CnNde1->av = 0.;
+        CnNde1->hDl = 0.;
+        CnNde1->hDt = 0.;
+        CnNde1->hDv = 0.;
+        CnNde1->nto = 0.; //19
 #endif
         if(level <1 )
           return;
 
-   CNode->NodeHandle = 0;
-   CNode->NodeTypeHY = normal;
-   CNode->NodeTypeMT = normal;
-   CNode->NodeStatusFMT = Initial_RUN;
-   CNode->NodeStatusCH = NEED_GEM_AIA;
-   CNode->IterDone = 0;      //6
+   CnNde1->NodeHandle = 0;
+   CnNde1->NodeTypeHY = normal;
+   CnNde1->NodeTypeMT = normal;
+   CnNde1->NodeStatusFMT = Initial_RUN;
+   CnNde1->NodeStatusCH = NEED_GEM_AIA;
+   CnNde1->IterDone = 0;      //6
 
 // Chemical scalar variables
-    CNode->TK = 0.;
-    CNode->P = 0.;
-    CNode->Vs = 0.;
-    CNode->Vi = 0.;
-    CNode->Ms = 0.;
-    CNode->Mi = 0.;
-    CNode->Gs = 0.;
-    CNode->Hs = 0.;
-    CNode->Hi = 0.;
-    CNode->IC = 0.;
-    CNode->pH = 0.;
-    CNode->pe = 0.;
-    CNode->Eh = 0.; //13
+    CnNde1->TK = 0.;
+    CnNde1->P = 0.;
+    CnNde1->Vs = 0.;
+    CnNde1->Vi = 0.;
+    CnNde1->Ms = 0.;
+    CnNde1->Mi = 0.;
+    CnNde1->Gs = 0.;
+    CnNde1->Hs = 0.;
+    CnNde1->Hi = 0.;
+    CnNde1->IC = 0.;
+    CnNde1->pH = 0.;
+    CnNde1->pe = 0.;
+    CnNde1->Eh = 0.; //13
 
     if( level < 2 )
        return;
 
 // Data arrays - dimensions nICb, nDCb, nPHb, nPSb see in the DATACH structure
-    CNode->bIC = 0;
-    CNode->rMB = 0;
-    CNode->uIC = 0;
-    CNode->xDC = 0;
-    CNode->gam = 0;
-   CNode->dul = 0;
-   CNode->dll = 0;
-   CNode->aPH = 0;
-   CNode->xPH = 0;
-   CNode->vPS = 0;
-   CNode->mPS = 0;
-   CNode->bPS = 0;
-   CNode->xPA = 0;
-   CNode->bSP = 0;
-   CNode->amru = 0;
-   CNode->amrl = 0;
-   CNode->omPH = 0;
+    CnNde1->bIC = 0;
+    CnNde1->rMB = 0;
+    CnNde1->uIC = 0;
+    CnNde1->xDC = 0;
+    CnNde1->gam = 0;
+   CnNde1->dul = 0;
+   CnNde1->dll = 0;
+   CnNde1->aPH = 0;
+   CnNde1->xPH = 0;
+   CnNde1->vPS = 0;
+   CnNde1->mPS = 0;
+   CnNde1->bPS = 0;
+   CnNde1->xPA = 0;
+   CnNde1->bSP = 0;
+   CnNde1->amru = 0;
+   CnNde1->amrl = 0;
+   CnNde1->omPH = 0;
 }
 
 // set default values(zeros) for DATACH structure
@@ -624,11 +1154,10 @@ void TNode::CheckMtparam()
     PPa = cP();
     P = PPa/bar_to_Pa;
     //pmp->pTPD = 2;
-
+    node_logger->debug("CheckMtparam T: {} - {}  P: {} - {}", pmm->Tc, TK, pmm->Pc, P);
     if( !load_thermodynamic_data || fabs( pmm->Tc - TK ) > CSD->Ttol
             || fabs( pmm->Pc - P )  > CSD->Ptol/bar_to_Pa  )
     {
-        //cout<< "CheckMtparam " << pmm->Tc <<" - "<<  TK << endl;
 #ifdef IPMGEMPLUGIN
         pmm->pTPD = 0;      //T, P is changed
 #else
@@ -638,6 +1167,175 @@ void TNode::CheckMtparam()
         TMulti::sm->DC_LoadThermodynamicData( this );
 #endif
     }
-
     load_thermodynamic_data = true;
 }
+
+
+void TNode::clear_ThermoEngine()
+{
+#ifdef USE_THERMOFUN
+    // clear previous
+    thermo_engine.reset();
+    thermo_json_string="";
+#endif
+}
+
+bool TNode::load_ThermoEngine(const std::string &thermo_file_or_string)
+{
+    if(thermo_file_or_string.find("\"elements\"")!=std::string::npos) {
+        // input string
+        thermo_json_string = thermo_file_or_string;
+    }
+    else {
+        // input file
+        std::ifstream f_fun(thermo_file_or_string);
+        ErrorIf(!f_fun.good(), thermo_file_or_string, "ThermoFun JSON format file fileopen error");
+        std::stringstream buffer;
+        buffer << f_fun.rdbuf();
+        thermo_json_string = buffer.str();
+    }
+
+#ifdef USE_THERMOFUN
+    thermo_engine.reset(new ThermoFun::ThermoEngine(thermo_file_or_string));
+    node_logger->trace("Read ThermoEngine: {}", thermo_file_or_string);
+    return true;
+#else
+    node_logger->warn("Try read ThermoEngine not in USE_THERMOFUN mode {}", thermo_file_or_string);
+    return false;
+#endif
+}
+
+
+bool TNode::load_all_thermodynamic_from_thermo( double TK, double PPa )
+{
+#ifdef USE_THERMOFUN
+    if( !thermo_engine.get() )
+        return false;
+    try{
+        node_logger->info("Calc ThermoEngine T: {}  P: {}", TK, PPa);
+        long int j, jj, k, jb, je=0;
+        double G0, P = PPa/bar_to_Pa;
+
+        pmm->T = pmm->Tc = TK;
+        pmm->TC = pmm->TCc = TK-C_to_K;
+        // new API
+        double funT = TK, funP=P*bar_to_Pa;   // T in K, P in Pa
+
+        DATACH  *dCH = pCSD();
+        auto water_props = thermo_engine->propertiesSolvent(funT,funP, "H2O@");
+        auto water_electro = thermo_engine->electroPropertiesSolvent(funT,funP, "H2O@");
+
+        auto water_vapor = thermo_engine->database().getSubstance("H2O@");
+        water_vapor.setMethod_P( ThermoFun::MethodCorrP_Thrift::type::CPM_GAS);
+
+        ThermoFun::Database db2;
+        db2.addSubstance(water_vapor);
+
+        ThermoFun::ThermoEngine te2(db2);
+        auto water_gas_props = te2.propertiesSolvent(funT,funP, "H2O@");
+        auto water_gas_electro = te2.electroPropertiesSolvent(funT,funP, "H2O@");
+
+        pmm->Pc = P;
+        if( P < 1e-5 )
+        { // Pressure at saturated H2O vapour at given temperature
+            P = funP/bar_to_Pa;
+            //        long int xT =check_grid_T(TK);
+            //        if(xT>= 0)
+            //            P = dCH->Psat[xT]/bar_to_Pa;
+            //        else
+            //            P =  LagranInterp( &PPa, dCH->TKval, dCH->Psat, PPa, TK, dCH->nTp, 1,6 )/bar_to_Pa;
+        }
+
+        pmm->P = P;
+        pmm->RT = R_CONSTANT * pmm->Tc;
+        pmm->FRT = F_CONSTANT/pmm->RT;
+        pmm->lnP = log( P );
+
+        pmm->denW[0] = water_props.density.val/1e3;
+        pmm->epsW[0] = water_electro.epsilon.val;
+        pmm->denW[1] = water_props.densityT.val/1e3;
+        pmm->epsW[1] = water_electro.epsilonT.val;
+        pmm->denW[2] = water_props.densityTT.val/1e3;
+        pmm->epsW[2] = water_electro.epsilonTT.val;
+        pmm->denW[3] = water_props.densityP.val*1e2; // /1e3;
+        pmm->epsW[3] = water_electro.epsilonP.val;
+        pmm->denW[4] = water_props.densityPP.val/1e3;
+        pmm->epsW[4] = water_electro.epsilonPP.val;
+
+        pmm->denWg[0] = water_gas_props.density.val/1e3;
+        pmm->epsWg[0] = water_gas_electro.epsilon.val;
+        pmm->denWg[1] = water_gas_props.densityT.val/1e3;
+        pmm->epsWg[1] = water_gas_electro.epsilonT.val;
+        pmm->denWg[2] = water_gas_props.densityTT.val/1e3;
+        pmm->epsWg[2] = water_gas_electro.epsilonTT.val;
+        pmm->denWg[3] = water_gas_props.densityP.val*1e2; // /1e3;
+        pmm->epsWg[3] = water_gas_electro.epsilonP.val;
+        pmm->denWg[4] = water_gas_props.densityPP.val/1e3;
+        pmm->epsWg[4] = water_gas_electro.epsilonPP.val;
+
+#ifdef  USE_THERMO_LOG
+        std::fstream f_log("thermodynamic-log.csv", std::ios::out/*|std::ios::app*/ );
+        f_log << "\nCalc ThermoEngine;T;" << TK << ";P;" << PPa << "\n";
+        f_log << "denW";
+        for( jj=0; jj<5; jj++)
+            f_log << ";" << floating_point_to_string(pmm->denW[jj]);
+        f_log << "\nepsW";
+        for( jj=0; jj<5; jj++)
+            f_log << ";" << floating_point_to_string(pmm->epsW[jj]);
+        f_log << "\ndenWg";
+        for( jj=0; jj<5; jj++)
+            f_log << ";" << floating_point_to_string(pmm->denWg[jj]);
+        f_log << "\nepsWg";
+        for( jj=0; jj<5; jj++)
+            f_log << ";" << floating_point_to_string(pmm->epsWg[jj]);
+#endif
+
+        for( k=0; k<pmm->FI; k++ )
+        {
+            jb = je;
+            je += pmm->L1[k];
+            // load t/d data from DC - to be extended for DCH->H0, DCH->S0, DCH->Cp0, DCH->DD
+            // depending on the presence of these arrays in DATACH and Multi structures
+            for( j=jb; j<je; j++ )
+            {
+                std::string symbol = std::string(CSD->DCNL[j], 0, MaxDCN);
+                auto propAl    = thermo_engine->thermoPropertiesSubstance(funT,funP, symbol);
+
+                G0 = propAl.gibbs_energy.val;
+                pmm->Vol[j] = propAl.volume.val*10;
+                if( dCH->S0 ) pmm->S0[j] = propAl.entropy.val;
+                if( dCH->H0 ) pmm->H0[j] = propAl.enthalpy.val;
+                if( dCH->Cp0 ) pmm->Cp0[j] = propAl.heat_capacity_cp.val;
+                if( dCH->A0 ) pmm->A0[j] = propAl.helmholtz_energy.val;
+                if( dCH->U0 ) pmm->U0[j] = propAl.internal_energy.val;
+
+#ifdef IPMGEMPLUGIN
+                pmm->G0[j] = multi_ptr()->ConvertGj_toUniformStandardState(G0, j, k);
+#else
+                pmm->G0[j] = TMulti::sm->ConvertGj_toUniformStandardState(G0, j, k);
+#endif
+#ifdef  USE_THERMO_LOG
+                f_log << "\n" << symbol << ";" << floating_point_to_string(G0)
+                      << ";" << floating_point_to_string(pmm->G0[j])
+                      << ";" << floating_point_to_string(pmm->Vol[j]);
+                if( dCH->S0 ) f_log << ";" << floating_point_to_string(pmm->S0[j]);
+                if( dCH->H0 ) f_log << ";" << floating_point_to_string(pmm->H0[j]);
+                if( dCH->Cp0 ) f_log << ";" << floating_point_to_string(pmm->Cp0[j]);
+                if( dCH->A0 ) f_log << ";" << floating_point_to_string(pmm->A0[j]);
+                if( dCH->U0 ) f_log << ";" << floating_point_to_string(pmm->U0[j]);
+#endif
+            }  // j
+        } // k
+    }
+    catch (const std::runtime_error& exception)
+    {
+        node_logger->error("ThermoEngine error: {}", exception.what());
+        Error( "ThermoEngine error:", exception.what());
+    }
+    return true;
+#else
+    return false;
+#endif
+
+}
+

@@ -24,18 +24,7 @@
 //-------------------------------------------------------------------
 //
 
-#include <cmath>
-#include <cstdio>
-#include <iostream>
-#include <iomanip>
-#include <fstream>
-using namespace std;
-#include "verror.h"
 #include "s_solmod.h"
-
-
-
-
 
 //=============================================================================================
 // Customized solid-solution and fluid models
@@ -45,7 +34,7 @@ using namespace std;
 
 
 // Generic constructor for the TModOther class
-TModOther::TModOther( SolutionData *sd, double */*dW*/, double */*eW*/ ):
+TModOther::TModOther( SolutionData *sd, double* /*dW*/, double* /*eW*/ ):
                 TSolMod( sd )
 {
     alloc_internal();

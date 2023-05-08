@@ -22,81 +22,56 @@
 // You should have received a copy of the GNU General Public License
 // along with GEMS3K code. If not, see <http://www.gnu.org/licenses/>.
 //-------------------------------------------------------------------
-#ifndef _verror_h_
-#define _verror_h_
-
-#ifdef IPMGEMPLUGIN
+#ifndef VERROR_H
+#define VERROR_H
 
 #include <string>
+#include <spdlog/spdlog.h>
 
-using namespace std;
-typedef string gstring;
-static const size_t npos = string::npos;
-//   static const size_t npos = static_cast<size_t>(-1);
-//   static  const size_t npos=32767;   /wp sergey 2004 from below assignment
-
-void strip(string& str);
-
-#else
-
-#include "gstring.h"
-
-#endif
+/// Default logger for gems3k library
+extern std::shared_ptr<spdlog::logger> gems_logger;
 
 struct TError
 {
-    gstring mess;
-    gstring title;
+    std::string mess;
+    std::string title;
     TError()
     {}
 
-    TError(const gstring& titl, const gstring& msg):
-            mess(msg),
-            title(titl)
+    TError( const std::string& titl, const std::string& msg):
+        mess(msg),
+        title(titl)
     {}
 
-    TError(const TError& other ):
-            mess(other.mess),
-            title(other.title)
-    {}
+//    TError( const TError& other ):
+//        mess(other.mess),
+//        title(other.title)
+//    {}
 
-    virtual ~TError() = default;
-
-
+    virtual ~TError();
 };
 
 
 struct TFatalError:
-            public TError
+        public TError
 {
     TFatalError()
     {}
 
     TFatalError(const TError& err):
-            TError(err)
+        TError(err)
     {}
 
-    TFatalError(const gstring& titl, const gstring& msg):
-            TError( titl, msg )
+    TFatalError(const std::string& titl, const std::string& msg):
+        TError( titl, msg )
     {}
 
 };
 
 
-inline
-void Error (const gstring& title, const gstring& message)
-{
-    throw TError(title, message);
-}
-
-inline
-void ErrorIf (bool error, const gstring& title, const gstring& message)
-{
-    if(error)
-        throw TError(title, message);
-}
+[[ noreturn ]]  void Error ( const std::string& title, const std::string& message );
+void ErrorIf ( bool error, const std::string& title, const std::string& message );
 
 
-#endif
-// _verror_h
+#endif  // VERROR_H
 

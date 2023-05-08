@@ -29,10 +29,7 @@
 
 #ifdef IPMGEMPLUGIN
 
-#include <cmath>
 #include "node.h"
-//#include "m_param.h"
-//#include "activities.h"
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ///  Function for converting internal lnGam[j] value into an external (phase-scale-specific)
@@ -46,12 +43,13 @@ double
 TActivity::PhaseSpecificGamma( long int j, long int jb, long int je, long int k, long int DirFlag )
 {
     double NonLogTerm = 0., NonLogTermW = 0., NonLogTermS = 0., MMC = 0.;
-//    SPP_SETTING *pa = &TProfil::pm->pa;
 
+    if( k>=act.FIs || act.sMod[k][SPHAS_TYP] != SM_AQPITZ)
+    {
     switch( act.PHC[k] )
     {
       case PH_AQUEL:
-           if( act.XF[k] && act.XFA[k] )
+           if( noZero(act.XF[k]) && noZero(act.XFA[k]) )
            {
                 NonLogTerm = 1. - act.XFA[k]/act.XF[k];
                 NonLogTermW = 2. - act.XFA[k]/act.XF[k] - act.XF[k]/act.XFA[k];
@@ -64,7 +62,7 @@ TActivity::PhaseSpecificGamma( long int j, long int jb, long int je, long int k,
            break;
       case PH_POLYEL:
       case PH_SORPTION: // only sorbent end-members!
-           if( act.XF[k] && act.XFA[k] )
+           if( noZero(act.XF[k]) && noZero(act.XFA[k]) )
            {
               for( long int jj=jb; jj<je; jj++ )
               {
@@ -80,13 +78,14 @@ TActivity::PhaseSpecificGamma( long int j, long int jb, long int je, long int k,
        default:
           break; // Phase class code error should be generated here!
     }
+    }
 #ifdef NOMUPNONLOGTERM
 NonLogTerm = 0.0;
 NonLogTermS = 0.0;
 #endif
         if( DirFlag == 0 )
         {	 // Converting lnGam[j] into Gamma[j]
-            if( !act.X[j] && !act.XF[k] )   // && !pm->XF[k]  added by DK 13.04.2012
+            if( approximatelyZero(act.X[j]) && approximatelyZero(act.XF[k]) )   // && !pm->XF[k]  added by DK 13.04.2012
                         return 1.;
             double Gamma = 1.;
             double lnGamS = act.lnGam[j];
@@ -126,11 +125,11 @@ NonLogTermS = 0.0;
             return Gamma;
         }
         else { // Converting Gamma[j] into lnGam[j]
-                if( !act.X[j] && !act.XF[k] )   // && !pm->XF[k]  added by DK 13.04.2012
+                if( approximatelyZero(act.X[j]) && approximatelyZero(act.XF[k]) )   // && !pm->XF[k]  added by DK 13.04.2012
                         return 0.;
                 double Gamma = act.Gamma[j];
                 double lnGam = 0.0;  // Cleanup by DK 5.12.2009
-                if( Gamma != 1.0 && Gamma > act.lowPosNum )
+                if( !essentiallyEqual( Gamma, 1.0) && Gamma > act.lowPosNum )
                     lnGam = log( Gamma );
                 switch( act.DCC[j] )
         { // Aqueous electrolyte
@@ -165,7 +164,6 @@ NonLogTermS = 0.0;
 }
 
 //--------------------------------------------------------------------------------
-static double ICold=0.;
 /// Main call point for calculation of DC activity coefficients (lnGam vector)
 ///    formerly GammaCalc().
 /// Controls various built-in models, as well as generic Phase script calculation
@@ -186,7 +184,6 @@ TActivity::CalculateActivityCoefficients( long int LinkMode  )
     char *sMod;
     long int statusGam=0, statusGC=0, statusSACT=0, SmMode = 0;
     double LnGam, pmpXFk;
-//    SPP_SETTING *pa = paTProfil;
 
     // calculating concentrations of species in multi-component phases
     switch( LinkMode )
@@ -221,7 +218,7 @@ TActivity::CalculateActivityCoefficients( long int LinkMode  )
                     double nxk = 1./act.L1[k];
             for( j= jb; j<je; j++ )
     		{
-                if(act.XF[k] < min( act.DSM, act.PhMinM ) ) // act.lowPosNum )   // workaround 10.03.2008 DK
+                if(act.XF[k] < std::min( act.DSM, act.PhMinM ) ) // act.lowPosNum )   // workaround 10.03.2008 DK
                         act.Wx[j] = nxk;  // need this eventually to avoid problems with zero mole fractions
                 act.fDQF[j] =0.0;  // cleaning fDQF in TP mode!
                 act.lnGmo[j] = act.lnGam[j]; // saving activity coefficients in TP mode
@@ -358,7 +355,6 @@ TActivity::CalculateActivityCoefficients( long int LinkMode  )
 					default:
 						break;
                 }
-                ICold = act.IC;
              }
              goto END_LOOP;
              break;
@@ -500,7 +496,7 @@ void TActivity::SolModCreate( long int jb, long int jmb, long int jsb, long int 
     if( phSolMod[k])
         if(  phSolMod[k]->testSizes( &sd ) )
     	{
-                phSolMod[k]->UpdatePT( act.Tc, act.Pc );
+                phSolMod[k]->UpdatePT( act.Tc, act.P );
                 return; // using old allocation and setup of the solution model
     	}
 
@@ -524,7 +520,7 @@ void TActivity::SolModCreate( long int jb, long int jmb, long int jsb, long int 
     sd.arPparc = act.Pparc+jb;
     sd.TP_Code = &act.dcMod[jb];
     sd.T_k = act.Tc;
-    sd.P_bar = act.Pc;
+    sd.P_bar = act.P;
 
     //new objects to Phase 06/06/12
 //    sd.arPhLin = act.PhLin+jphl;
@@ -1142,7 +1138,6 @@ void TActivity::SetSmoothingFactor( long int /*mode*/ )
 //    if( IT )
       FitVar[3] = TF;
 }
-
 
 #endif
 

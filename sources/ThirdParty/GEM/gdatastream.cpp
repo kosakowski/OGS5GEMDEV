@@ -26,7 +26,6 @@
 //-------------------------------------------------------------------
 
 #include <algorithm>
-#include <iostream>
 #include <stdint.h>
 using namespace std;
 
@@ -130,8 +129,8 @@ inline double SWAP(double x) {
 }
 
 
-GemDataStream::GemDataStream( gstring& aPath, ios::openmode aMod  ):
-        mod( aMod ),
+GemDataStream::GemDataStream( const std::string& aPath, ios::openmode aMod  ):
+     //   mod( aMod ),
         Path( aPath ),
     //    byteorder( LittleEndian ),
         ff(aPath.c_str(), aMod)
@@ -153,9 +152,9 @@ void GemDataStream::setByteOrder( int bo )
 	swap = (byteorder == LittleEndian);
 #warning "Compiling for BIG ENDIAN architecture!"
 #else
-	swap = (byteorder == BigEndian);
+    swap = (byteorder == BigEndian);
 #endif
-//    cerr << "GemDataStream::swap == " << swap << endl;
+    gems_logger->debug("byteorder is BigEndian {}", swap);
 }
 
 // NOTE: these functions better to write as a templates!!

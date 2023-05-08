@@ -27,19 +27,15 @@
 //
 
 #include <cmath>
-#include<iomanip>
+#include <iomanip>
 
 #include "node.h"
-//#include "m_param.h"
-//#include "s_kinmet.h"
 #include "kinetics.h"
-
 
 void TKinetics::set_def( void )
 {
 
 }
-
 
 
 // void TNode::setSpeciesUpperAMRs( const double* nu )
@@ -169,14 +165,6 @@ if( k < kin.FIs )
                     XL = kin.DLL[j]*XFL;
                     break;
                 case CON_WTFR:
-//Ask DK! 20/04/2002
-#ifndef IPMGEMPLUGIN
-                    XU = kin.DUL[j]*XFU*MWXW /
-         TProfil::pm->MolWeight(kin.N, kin.Awt, kin.A+j*kin.N );
-                    XL = kin.DLL[j]*XFL*MWXW /
-         TProfil::pm->MolWeight(kin.N, kin.Awt, kin.A+j*kin.N );
-
-#endif
                     break;
                 case CON_VOLFR:
                     XU = kin.DUL[j]*XFU*MXV/ kin.Vol[j];
@@ -217,7 +205,6 @@ NEXT_PHASE:
 }
 */
 
-//-  static double ICold=0.;
 /// \return status code (0 if o.k., non-zero values if there were problems
 ///     with kinetic/metastability models)
 long int
@@ -226,7 +213,6 @@ TKinetics::CalculateKinMet( long int LinkMode  )
    long int k, jb, je=0, kf, kfe=0, kp, kpe=0, ka, kae=0, ks, kse=0,
             kc, kd, kce=0, kde=0, ku, kue=0, ki, kie=0, jphl=0, jlphc=0;
 
-//   SPP_SETTING *pa = paTProfil;
    char *kMod;
 
    for( k=0; k< kin.FI; k++ )
@@ -245,8 +231,10 @@ TKinetics::CalculateKinMet( long int LinkMode  )
       ku = kue;
       ki = kie;
 
-//      for( j=jb; j<je; j++ )
-//cout << "LM: " << LinkMode << " k: " << k << " dul: " << kin.DUL[j] << " dll: " << kin.DLL[j] << endl;
+      if(gems_logger->should_log(spdlog::level::debug)) {
+          for(auto j=jb; j<je; j++ )
+              gems_logger->debug("LM = {}, k={}, j={}, dul={},  dll={}", LinkMode, k, j, kin.DUL[j], kin.DLL[j]);
+      }
 
    // Creating TKinMet instances for phases and passing data, if needed
    switch( LinkMode )

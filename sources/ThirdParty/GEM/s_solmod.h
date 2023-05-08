@@ -28,9 +28,11 @@
 
 #ifndef _s_solmod_h_
 #define _s_solmod_h_
-#include <cstring>
+
+#include <string>
 #include <vector>
-#include <iostream>
+#include <spdlog/spdlog.h>
+#include "m_const_base.h"
 
 // re-declaration of enums below required for GEMS3K
 // dc_class_codes for fluids will be replaced by tp_codes
@@ -74,8 +76,6 @@ enum tp_codes {  /// codes for fluid subroutines in EoS models (see v_mod.h)
 };
 
 // ------------------------------------------------------------------
-
-#define MAXPHASENAME 16
 
 /// Base class for subclasses of built-in mixing models.
 /// (c) March 2007 DK/TW
@@ -133,11 +133,15 @@ struct SolutionData {
 class TSolMod
 {
 	protected:
+
+        /// Default logger for TSolMod class
+        static std::shared_ptr<spdlog::logger> solmod_logger;
+
         char ModCode;   ///< Code of the mixing model
         char MixCode;	///< Code for specific EoS mixing rules or site-balance based electrostatic SCMs
                 char *DC_Codes; ///< Class codes of end members (species) ->NComp
 
-        char PhaseName[MAXPHASENAME+1];    ///< Phase name (for specific built-in models)
+        char PhaseName[MAXPHNAME+1];    ///< Phase name (for specific built-in models)
 
         long int NComp;   ///< Number of components in the solution phase
         long int NPar;     ///< Number of non-zero interaction parameters
@@ -235,17 +239,17 @@ class TSolMod
 			return 0;
         }
 
-        virtual long int ExcessProp( double */*Zex*/ )
+        virtual long int ExcessProp( double* /*Zex*/ )
 		{
 			return 0;
         }
 
-        virtual long int IdealProp( double */*Zid*/ )
+        virtual long int IdealProp( double* /*Zid*/ )
 		{
 			return 0;
         }
 
-        virtual long int StandardProp( double */*Zid*/ )
+        virtual long int StandardProp( double* /*Zid*/ )
         {
             return 0;
         }
@@ -843,7 +847,7 @@ class TSTPcalc: public TSolMod
                 // constants and external parameters
                 double RC, RR, TMIN, TMAX, PMIN, PMAX;
                 double Pkbar, Pkb, Pmpa;
-                double PhVol;   ///< phase volume in cm3
+                //double PhVol;   ///< phase volume in cm3
                 double *Pparc;  ///< DC partial pressures (pure fugacities)
 
                 // internal work data
@@ -1421,13 +1425,13 @@ private:
 	double *zc;
 	double *za;
     double *aM;    ///< Vector of species molality (for aqueous models)
-	double *mc;
-	double *ma;
-	double *mn;
+    double *pmc;
+    double *pma;
+    double *pmn;
     double *RhoW;  ///< water density properties
     double *EpsW;  ///< water dielectrical properties
 
-        double Aphi, dAphidT, d2AphidT2, dAphidP;  ///< Computing A-Factor
+        double Aphi, dAphidT, d2AphidT2; ///<, dAphidP;  ///< Computing A-Factor
     double I;  ///< Ionic Strength
     double Is;  ///< Ionic Strength square root
     double Ffac; ///< F-Factor
@@ -1467,7 +1471,7 @@ private:
 
 	enum eTableType
 	{
-		bet0_ = -10, bet1_ = -11, bet2_ = -12, Cphi_ = -20, Lam_ = -30, Lam1_ = -31,
+        bet0_ = -10, bet1_ = -11, bet2_ = -12, Cphi_ = -20, Lam_ = -30, Lam1_ = -31, Lam2_ = -32,
 		Theta_ = -40,  Theta1_ = -41, Psi_ = -50, Psi1_ = -51, Zeta_ = -60
 	};
 
@@ -1495,10 +1499,13 @@ private:
 	double get_g( double x_alp );
 	double get_gp( double x_alp );
 	double G_ex_par5( long int ii );
+    double G_ex_par6( long int ii );
 	double G_ex_par8( long int ii );
 	double S_ex_par5( long int ii );
+    double S_ex_par6( long int ii );
 	double S_ex_par8( long int ii );
 	double CP_ex_par5( long int ii );
+    double CP_ex_par6( long int ii );
 	double CP_ex_par8( long int ii );
 	double F_Factor( double DH_term );
 	double lnGammaN( long int N );
@@ -1755,9 +1762,9 @@ class TELVIS: public TSolMod
                 long int IonicStrength();
 
                 // activity coefficient contributions
-                void ELVIS_DH(double* ELVIS_lnGam_DH, double* ELVIS_OsmCoeff_DH);
+                void ELVIS_DH(double* ELVIS_lnGam_DH1, double* ELVIS_OsmCoeff_DH1);
                 void ELVIS_Born(double* ELVIS_lnGam_Born);
-                void ELVIS_UNIQUAC(double* ELVIS_lnGam_UNIQUAC);
+                void ELVIS_UNIQUAC(double* ELVIS_lnGam_UNIQUAC1);
 
                 // Osmotic coefficient
                 double Int_OsmCoeff();
@@ -1825,8 +1832,8 @@ class THelgeson: public TSolMod
         double *m;   ///< species molalities
         double *RhoW;  ///< water density properties
         double *EpsW;  ///< water dielectrical properties
-        double *an;  ///< individual ion size-parameters
-        double *bg;  ///< individual extended-term parameters
+        //double *an;  ///< individual ion size-parameters
+        //double *bg;  ///< individual extended-term parameters
         double ac;  ///< common ion size parameters
         double bc;  ///< common extended-term parameter
 

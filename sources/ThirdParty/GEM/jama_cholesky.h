@@ -3,8 +3,10 @@
 
 #include "tnt.h"
 #include <cmath>
+#include "v_detail.h"
+
 //#include "math.h"
-	/* needed for sqrt() below. */
+/* needed for sqrt() below. */
 
 
 namespace JAMA
@@ -34,7 +36,7 @@ using namespace TNT;
 		L = chol.getL();
 
   	else
-		cout << "factorization was not complete.\n";
+        c out << "factorization was not complete.\n";
 
 	</pre>
 
@@ -123,7 +125,7 @@ Cholesky<Real>::Cholesky(const Array2D<Real> &A)
             }
             L_[j][k] = s = (A[j][k] - s)/L_[k][k];  // Zerodivide detected !
             d = d + s*s;
-            isspd = isspd && (A[k][j] == A[j][k]);
+            isspd = isspd && essentiallyEqual(A[k][j], A[j][k]);
          }
          d = A[j][j] - d;
          isspd = isspd && (d > 0.0);

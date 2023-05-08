@@ -25,15 +25,8 @@
 // along with GEMS3K code. If not, see <http://www.gnu.org/licenses/>.
 //-------------------------------------------------------------------
 
-#include <cmath>
-#include <cstdio>
-#include <iostream>
-#include <iomanip>
-#include <fstream>
-using namespace std;
 #include "s_solmod.h"
-#include "verror.h"
-
+#include "v_detail.h"
 
 //=======================================================================================================
 // Peng-Robinson-Stryjek-Vera (PRSV) model for fluid mixtures
@@ -143,9 +136,7 @@ long int TPRSVcalc::PureSpecies()
 
     if ( retCode )
     {
-        char buf[150];
-        sprintf(buf, "PRSV fluid: calculation of pure fugacity failed");
-                Error( "E71IPM IPMgamma: ",  buf );
+        Error( "E71IPM IPMgamma: ", "PRSV fluid: calculation of pure fugacity failed");
     }
     return 0;
 }
@@ -209,9 +200,7 @@ long int TPRSVcalc::MixMod()
     }
     if ( iRet )
     {
-    	char buf[150];
-    	sprintf(buf, "PRSV fluid: calculation failed");
-    	Error( "E71IPM IPMgamma: ",  buf );
+        Error( "E71IPM IPMgamma: ",  "PRSV fluid: calculation failed");
     }
     return iRet;
 }
@@ -227,9 +216,7 @@ long int TPRSVcalc::ExcessProp( double *Zex )
 
     if ( iRet )
     {
-    	char buf[150];
-    	sprintf(buf, "PRSV fluid: calculation failed");
-    	Error( "E71IPM IPMgamma: ",  buf );
+        Error( "E71IPM IPMgamma: ",  "PRSV fluid: calculation failed");
     }
 
     Ars = Grs - Vrs*Pbar;
@@ -361,7 +348,7 @@ long int TPRSVcalc::MixingTemp()
 	{
 		for (j=0; j<NComp; j++)
 		{
-			if ( a[i][j] == 0.0 )
+            if ( approximatelyZero( a[i][j] ) )
 				tmp = 1.0;
 			else
 				tmp = a[i][j];
@@ -602,7 +589,7 @@ long int TPRSVcalc::Cardano( double a2, double a1, double a0, double &z1, double
 	else  // one real root
 	{
 		ac = (-1.)*rc/fabs(rc)*pow(fabs(rc)+sqrt(rc2-q3), 1./3.);
-		if (ac != 0.)
+        if ( noZero(ac) )
 			bc = q/ac;
 		else
 			bc = 0.;
@@ -651,57 +638,57 @@ long int TPRSVcalc::MixParam( double &amix, double &bmix )
 
 /// calculates fugacity of the bulk fluid mixture
 long int TPRSVcalc::FugacityMix( double amix, double bmix, double &fugmix, double &zmix,
-		double &vmix )
+                                 double &vmix )
 {
-	double A, B, a2, a1, a0, z1, z2, z3, vol1, vol2, vol3, lnf1, lnf2, lnf3, lnf;
+    double A, B, a2, a1, a0, z1, z2, z3, vol1, vol2, vol3, lnf1, lnf2, lnf3, lnf;
 
-	// solve cubic equation
-	A = amix*Pbar/(pow(R_CONST,2.)*pow(Tk,2.));
-	B = bmix*Pbar/(R_CONST*Tk);
-	a2 = B - 1.;
-	a1 = A - 3.*pow(B,2.) - 2.*B;
-	a0 = pow(B,3.) + pow(B,2.) - A*B;
-	Cardano( a2, a1, a0, z1, z2, z3 );
+    // solve cubic equation
+    A = amix*Pbar/(pow(R_CONST,2.)*pow(Tk,2.));
+    B = bmix*Pbar/(R_CONST*Tk);
+    a2 = B - 1.;
+    a1 = A - 3.*pow(B,2.) - 2.*B;
+    a0 = pow(B,3.) + pow(B,2.) - A*B;
+    Cardano( a2, a1, a0, z1, z2, z3 );
 
-	// find stable roots
-	vol1 = z1*R_CONST*Tk/Pbar;
-	vol2 = z2*R_CONST*Tk/Pbar;
-	vol3 = z3*R_CONST*Tk/Pbar;
-	if (z1 > B)
-		lnf1 = (-1.)*log(z1-B)
-			- A/(B*sqrt(8.))*log((z1+(1.+sqrt(2.))*B)/(z1+(1.-sqrt(2.))*B))+z1-1.;
-	else
-		lnf1 = 1000.;
-	if (z2 > B)
-		lnf2 = (-1.)*log(z2-B)
-			- A/(B*sqrt(8.))*log((z2+(1.+sqrt(2.))*B)/(z2+(1.-sqrt(2.))*B))+z2-1.;
-	else
-		lnf2 = 1000.;
-	if (z3 > B)
-		lnf3 = (-1.)*log(z3-B)
-			- A/(B*sqrt(8.))*log((z3+(1.+sqrt(2.))*B)/(z3+(1.-sqrt(2.))*B))+z3-1.;
-	else
-		lnf3 = 1000.;
+    // find stable roots
+    vol1 = z1*R_CONST*Tk/Pbar;
+    vol2 = z2*R_CONST*Tk/Pbar;
+    vol3 = z3*R_CONST*Tk/Pbar;
+    if (z1 > B)
+        lnf1 = (-1.)*log(z1-B)
+                - A/(B*sqrt(8.))*log((z1+(1.+sqrt(2.))*B)/(z1+(1.-sqrt(2.))*B))+z1-1.;
+    else
+        lnf1 = 100.;
+    if (z2 > B)
+        lnf2 = (-1.)*log(z2-B)
+                - A/(B*sqrt(8.))*log((z2+(1.+sqrt(2.))*B)/(z2+(1.-sqrt(2.))*B))+z2-1.;
+    else
+        lnf2 = 100.;
+    if (z3 > B)
+        lnf3 = (-1.)*log(z3-B)
+                - A/(B*sqrt(8.))*log((z3+(1.+sqrt(2.))*B)/(z3+(1.-sqrt(2.))*B))+z3-1.;
+    else
+        lnf3 = 100.;
 
-	if (lnf2 < lnf1)
-	{
-		zmix = z2; vmix = vol2; lnf = lnf2;
-	}
-	else
-	{
-		zmix = z1; vmix = vol1; lnf = lnf1;
-	}
-	if (lnf3 < lnf)
-	{
-		zmix = z3; vmix = vol3; lnf = lnf3;
-	}
-	else
-	{
+    if (lnf2 < lnf1)
+    {
+        zmix = z2; vmix = vol2; lnf = lnf2;
+    }
+    else
+    {
+        zmix = z1; vmix = vol1; lnf = lnf1;
+    }
+    if (lnf3 < lnf)
+    {
+        zmix = z3; vmix = vol3; lnf = lnf3;
+    }
+    else
+    {
         ; // zmix = zmix; vmix = vmix; lnf = lnf;
-	}
-	fugmix = exp(lnf);
-        PhVol = vmix;
-	return 0;
+    }
+    fugmix = exp(lnf);
+    PhVol = vmix;
+    return 0;
 }
 
 
@@ -710,43 +697,43 @@ long int TPRSVcalc::FugacityMix( double amix, double bmix, double &fugmix, doubl
 long int TPRSVcalc::FugacitySpec( double *fugpure )
 {
     long int i, j, iRet=0;
-	double fugmix=0., zmix=0., vmix=0., amix=0., bmix=0., sum=0.;
-	double A, B, lnfci, fci;
+    double fugmix=0., zmix=0., vmix=0., amix=0., bmix=0., sum=0.;
+    double A, B, lnfci, fci;
 
     // Reload params to Pureparm
     for( j=0; j<NComp; j++ )
     {
-      Fugpure[j][0] = fugpure[j]/Pbar;
+        Fugpure[j][0] = fugpure[j]/Pbar;
     }
 
-	// retrieve properties of the mixture
-	iRet = MixParam( amix, bmix );
-	iRet = FugacityMix( amix, bmix, fugmix, zmix, vmix );
-	A = amix*Pbar/(pow(R_CONST, 2.)*pow(Tk, 2.));
-	B = bmix*Pbar/(R_CONST*Tk);
+    // retrieve properties of the mixture
+    /*iRet =*/ MixParam( amix, bmix );
+    iRet = FugacityMix( amix, bmix, fugmix, zmix, vmix );
+    A = amix*Pbar/(pow(R_CONST, 2.)*pow(Tk, 2.));
+    B = bmix*Pbar/(R_CONST*Tk);
 
-	// calculate fugacity coefficient, fugacity and activity of species i
-	for (i=0; i<NComp; i++)
-	{
-		sum = 0.;
-		for (j=0; j<NComp; j++)
-		{
-			sum = sum + x[j]*AA[i][j];
-		}
-		lnfci = Pureparm[i][1]/bmix*(zmix-1.) - log(zmix-B)
-		      + A/(sqrt(8.)*B)*(2.*sum/amix-Pureparm[i][1]/bmix)
-                      * log((zmix+B*(1.-sqrt(2.)))/(zmix+B*(1.+sqrt(2.))));
-		fci = exp(lnfci);
-		Fugci[i][0] = fci;  // fugacity coefficient using engineering convention
-		Fugci[i][1] = x[i]*fci;  // fugacity coefficient using geology convention
-		Fugci[i][2] = Fugci[i][1]/Fugpure[i][0];  // activity of species
-		if (x[i]>1.0e-20)
-			Fugci[i][3] = Fugci[i][2]/x[i];  // activity coefficient of species
-		else
-			Fugci[i][3] = 1.0;
-	}
+    // calculate fugacity coefficient, fugacity and activity of species i
+    for (i=0; i<NComp; i++)
+    {
+        sum = 0.;
+        for (j=0; j<NComp; j++)
+        {
+            sum = sum + x[j]*AA[i][j];
+        }
+        lnfci = Pureparm[i][1]/bmix*(zmix-1.) - log(zmix-B)
+                + A/(sqrt(8.)*B)*(2.*sum/amix-Pureparm[i][1]/bmix)
+                * log((zmix+B*(1.-sqrt(2.)))/(zmix+B*(1.+sqrt(2.))));
+        fci = exp(lnfci);
+        Fugci[i][0] = fci;  // fugacity coefficient using engineering convention
+        Fugci[i][1] = x[i]*fci;  // fugacity coefficient using geology convention
+        Fugci[i][2] = Fugci[i][1]/Fugpure[i][0];  // activity of species
+        if (x[i]>1.0e-20)
+            Fugci[i][3] = Fugci[i][2]/x[i];  // activity coefficient of species
+        else
+            Fugci[i][3] = 1.0;
+    }
 
-	return iRet;
+    return iRet;
 }
 
 
@@ -755,73 +742,80 @@ long int TPRSVcalc::FugacitySpec( double *fugpure )
 long int TPRSVcalc::ResidualFunct( double *fugpure )
 {
     long int i, j, iRet=0;
-	double fugmix=0., zmix=0., vmix=0., amix=0., bmix=0.;
+    double fugmix=0., zmix=0., vmix=0., amix=0., bmix=0.;
     double /*A,*/ B, K, dK, d2K, Q, dQ, d2Q, damix, d2amix, ai, aj, dai, daj, d2ai, d2aj,
-			cv, dPdT, dPdV, dVdT;
+            cv, dPdT, dPdV, dVdT;
 
     // Reload params to Pureparm (probably now obsolete?)
     for( j=0; j<NComp; j++ )
     {
-      Fugpure[j][0] = fugpure[j]/Pbar;
+        Fugpure[j][0] = fugpure[j]/Pbar;
     }
 
-	// retrieve properties of the mixture
-	iRet = MixParam( amix, bmix );
-	iRet = FugacityMix( amix, bmix, fugmix, zmix, vmix );
-    //A = amix*Pbar/(pow(R_CONST, 2.)*pow(Tk, 2.));
-	B = bmix*Pbar/(R_CONST*Tk);
+    // retrieve properties of the mixture
+    iRet = MixParam( amix, bmix );
+    if( noZero(bmix) )
+    {
+        iRet = FugacityMix( amix, bmix, fugmix, zmix, vmix );
+        //A = amix*Pbar/(pow(R_CONST, 2.)*pow(Tk, 2.));
+        B = bmix*Pbar/(R_CONST*Tk);
 
-	// calculate total state functions of the mixture
-	damix = 0.;
-	d2amix = 0.;
-	for (i=0; i<NComp; i++)
-	{
-		for (j=0; j<NComp; j++)
-		{
-			// pull parameters
-			ai = Pureparm[i][0];
-			aj = Pureparm[j][0];
-			dai = Pureparm[i][2];
-			daj = Pureparm[j][2];
-			d2ai = Pureparm[i][3];
-			d2aj = Pureparm[j][3];
-			K = KK[i][j];
-			dK = dKK[i][j];
-			d2K = d2KK[i][j];
+        // calculate total state functions of the mixture
+        damix = 0.;
+        d2amix = 0.;
+        for (i=0; i<NComp; i++)
+        {
+            for (j=0; j<NComp; j++)
+            {
+                // pull parameters
+                ai = Pureparm[i][0];
+                aj = Pureparm[j][0];
+                dai = Pureparm[i][2];
+                daj = Pureparm[j][2];
+                d2ai = Pureparm[i][3];
+                d2aj = Pureparm[j][3];
+                K = KK[i][j];
+                dK = dKK[i][j];
+                d2K = d2KK[i][j];
 
-			// increments to derivatives
-			Q = sqrt(ai*aj);
-			dQ = 0.5*( sqrt(aj/ai)*dai + sqrt(ai/aj)*daj );
-			d2Q = 0.5*( dai*daj/sqrt(ai*aj) + d2ai*sqrt(aj)/sqrt(ai) + d2aj*sqrt(ai)/sqrt(aj)
-					- 0.5*( pow(dai,2.)*sqrt(aj)/sqrt(pow(ai,3.))
-					+ pow(daj,2.)*sqrt(ai)/sqrt(pow(aj,3.)) ) );
-			damix = damix + x[i]*x[j] * ( dQ*(1.-K) - Q*dK );
-			d2amix = d2amix + x[i]*x[j] * ( d2Q*(1.-K) - 2.*dQ*dK - Q*d2K );
-		}
-	}
+                // increments to derivatives
+                Q = sqrt(ai*aj);
+                dQ = 0.5*( sqrt(aj/ai)*dai + sqrt(ai/aj)*daj );
+                d2Q = 0.5*( dai*daj/sqrt(ai*aj) + d2ai*sqrt(aj)/sqrt(ai) + d2aj*sqrt(ai)/sqrt(aj)
+                            - 0.5*( pow(dai,2.)*sqrt(aj)/sqrt(pow(ai,3.))
+                                    + pow(daj,2.)*sqrt(ai)/sqrt(pow(aj,3.)) ) );
+                damix = damix + x[i]*x[j] * ( dQ*(1.-K) - Q*dK );
+                d2amix = d2amix + x[i]*x[j] * ( d2Q*(1.-K) - 2.*dQ*dK - Q*d2K );
+            }
+        }
 
-	// calculate thermodynamic properties
-	Grs = (amix/(R_CONST*Tk*sqrt(8.)*bmix) * log((vmix+(1.-sqrt(2.))*bmix)
-		/ (vmix+(1.+sqrt(2.))*bmix))-log(zmix*(1.-bmix/vmix))+zmix-1.)*R_CONST*Tk;
-	Hrs = ((amix-Tk*damix)/(R_CONST*Tk*sqrt(8.)*bmix)*log((vmix+(1.-sqrt(2.))
-		*bmix)/(vmix+(1.+sqrt(2.))*bmix))+zmix-1.)*R_CONST*Tk;
-	Srs = (Hrs - Grs)/Tk;
+        // calculate thermodynamic properties
+        Grs = (amix/(R_CONST*Tk*sqrt(8.)*bmix) * log((vmix+(1.-sqrt(2.))*bmix)
+                                                     / (vmix+(1.+sqrt(2.))*bmix))-log(zmix*(1.-bmix/vmix))+zmix-1.)*R_CONST*Tk;
+        Hrs = ((amix-Tk*damix)/(R_CONST*Tk*sqrt(8.)*bmix)*log((vmix+(1.-sqrt(2.))
+                                                               *bmix)/(vmix+(1.+sqrt(2.))*bmix))+zmix-1.)*R_CONST*Tk;
+        Srs = (Hrs - Grs)/Tk;
 
-	// heat capacity part
-	cv = Tk*d2amix/(bmix*sqrt(8.))
-			 * log( (zmix+B*(1.+sqrt(2.)))/(zmix+B*(1.-sqrt(2.))) );
-	dPdT = R_CONST/(vmix-bmix) - damix/( vmix*(vmix+bmix) + bmix*(vmix-bmix) );
-	dPdV = - R_CONST*Tk/pow((vmix-bmix),2.) + 2.*amix*(vmix+bmix)/pow((vmix*(vmix+bmix)+bmix*(vmix-bmix)),2.);
-	dVdT = (-1.)*(1./dPdV)*dPdT;
-	CPrs = cv + Tk*dPdT*dVdT - R_CONST;
-	Vrs = vmix;
-
-	return iRet;
+        // heat capacity part
+        cv = Tk*d2amix/(bmix*sqrt(8.))
+                * log( (zmix+B*(1.+sqrt(2.)))/(zmix+B*(1.-sqrt(2.))) );
+        dPdT = R_CONST/(vmix-bmix) - damix/( vmix*(vmix+bmix) + bmix*(vmix-bmix) );
+        dPdV = - R_CONST*Tk/pow((vmix-bmix),2.) + 2.*amix*(vmix+bmix)/pow((vmix*(vmix+bmix)+bmix*(vmix-bmix)),2.);
+        dVdT = (-1.)*(1./dPdV)*dPdT;
+        CPrs = cv + Tk*dPdT*dVdT - R_CONST;
+        Vrs = vmix;
+    }
+    else {
+        // calculate thermodynamic properties
+        Grs = 0.;
+        Hrs = 0.;
+        Srs = (Hrs - Grs)/Tk;
+        CPrs = 0.;
+        Vrs = 0.;
+    }
+    return iRet;
 }
 
-
-
-#ifndef IPMGEMPLUGIN
 
 /// calculates properties of pure fluids when called from DCthermo
 long int TPRSVcalc::PRSVCalcFugPure( double Tmin, float *Cpg, double *FugProps )
@@ -849,11 +843,6 @@ long int TPRSVcalc::PRSVCalcFugPure( double Tmin, float *Cpg, double *FugProps )
 		return -1;
 	}
 }
-
-#endif
-
-
-
 
 
 //=======================================================================================================
@@ -1035,9 +1024,7 @@ long int TCGFcalc::PureSpecies()
 
 	if ( retCode )
 	{
-		char buf[150];
-		sprintf(buf, "CG fluid: calculation of pure fugacity failed");
-		Error( "E71IPM IPMgamma: ",  buf );
+        Error( "E71IPM IPMgamma: ", "CG fluid: calculation of pure fugacity failed");
 	}
 	return 0;
 }
@@ -1083,9 +1070,7 @@ long int TCGFcalc::MixMod()
 		CGActivCoefPT( aX, EoSparam, FugCoefs, NComp, Pbar, Tk, roro );  // changed, 21.06.2008 (TW)
 		if (roro <= 0. )
 		{
-			char buf[150];
-			sprintf(buf, "CG fluid: bad calculation of density ro= %lg", roro);
-			Error( "E71IPM IPMgamma: ",  buf );
+            Error( "E71IPM IPMgamma: ", std::string("CG fluid: bad calculation of density ro= ")+std::to_string(roro));
 		}
 
 		// Phase volume of the fluid in cm3 (not needed any more?)
@@ -1120,9 +1105,7 @@ long int TCGFcalc::ExcessProp( double *Zex )
 		CGActivCoefPT( aX, EoSparam, FugCoefs, NComp, Pbar, Tk, roro );  // changed, 21.06.2008 (TW)
 		if (roro <= 0. )
 		{
-			char buf[150];
-			sprintf(buf, "CG fluid: bad calculation of density ro= %lg", roro);
-			Error( "E71IPM IPMgamma: ",  buf );
+            Error( "E71IPM IPMgamma: ", std::string("CG fluid: bad calculation of density ro= ")+std::to_string(roro));
 		}
 
 		// calculate residual functions
@@ -1193,7 +1176,7 @@ long int TCGFcalc::IdealProp( double *Zid )
 
 
 /// high-level method to retrieve pure fluid properties
-long int TCGFcalc::CGFugacityPT( double *EoSparam, double *EoSparPT, double &Fugacity,
+long int TCGFcalc::CGFugacityPT( double *EoSparam2, double *EoSparPT, double &Fugacity,
         double &Volume, double P, double T, double &roro )
 {
 	long int iRet = 0;
@@ -1202,10 +1185,10 @@ long int TCGFcalc::CGFugacityPT( double *EoSparam, double *EoSparPT, double &Fug
 	double FugPure[1];
 
 	// modification to simplify CG database structure, 20.03.2007 (TW)
-	EoSparPT[0] = EoSparam[0] + EoSparam[4]*exp(T*EoSparam[5]);
-	EoSparPT[1] = EoSparam[1] + EoSparam[6]*exp(T*EoSparam[7]);
-	EoSparPT[2] = EoSparam[2] + EoSparam[8]/(T+EoSparam[9]);
-	EoSparPT[3] = EoSparam[3] + EoSparam[10]/(T+EoSparam[11]);
+    EoSparPT[0] = EoSparam2[0] + EoSparam2[4]*exp(T*EoSparam2[5]);
+    EoSparPT[1] = EoSparam2[1] + EoSparam2[6]*exp(T*EoSparam2[7]);
+    EoSparPT[2] = EoSparam2[2] + EoSparam2[8]/(T+EoSparam2[9]);
+    EoSparPT[3] = EoSparam2[3] + EoSparam2[10]/(T+EoSparam2[11]);
 
 	// returns density
 	CGActivCoefPT( X, EoSparPT, FugPure, 1, P, T, roro );  // changed, 21.06.2008 (TW)
@@ -1232,12 +1215,15 @@ long int TCGFcalc::CGFugacityPT( double *EoSparam, double *EoSparPT, double &Fug
 
 
 long int TCGFcalc::CGActivCoefPT( double *X,double *param, double *act,
-		   unsigned long int NN,   double Pbar, double T, double &roro )
+           unsigned long int NN,   double Pbar1, double T, double &roro )
 {
-	double *xtmp,*Fx;
-	double P = Pbar/10.;
-	xtmp = new double [NN];
-	Fx = new double [NN];
+    double *xtmp,*Fx;
+    double P = Pbar1/10.;
+    std::shared_ptr<double> xtmp_mem = std::make_shared<double>(NN); // new double [NN];
+    std::shared_ptr<double> Fx_mem = std::make_shared<double>(NN); // new double [NN];
+
+    xtmp = xtmp_mem.get();
+    Fx = Fx_mem.get();
 
 	if(!paar)
 		paar = new  EOSPARAM(X, param, NN);
@@ -1297,8 +1283,8 @@ long int TCGFcalc::CGActivCoefPT( double *X,double *param, double *act,
 
 	// GMix+=F0 + ax;
 	// MLPutRealList(stdlink,act,paar.NCmp());
-	delete[]xtmp;
-	delete[]Fx;
+    //delete[]xtmp;
+    //delete[]Fx;
 	roro = ro;  // added, 21.06.2008 (TW)
 
 	return 0;  // changed, 21.06.2008 (TW)
@@ -1451,7 +1437,7 @@ double TCGFcalc::DIntegral( double T, double ro, unsigned long int IType )
 	unsigned long int n;
 	double *dtmp,rez;
 
-	if ( (T!=TOld) || (ro!=roOld) )
+    if ( !essentiallyEqual( T, TOld ) || !essentiallyEqual( ro, roOld ) )
 	{
 		TOld = T;
 		roOld = ro;
@@ -1491,7 +1477,7 @@ double TCGFcalc::LIntegral( double T, double ro,unsigned long int IType )
 
 	double *dtmp,rez;
 
-	if ( (T!=TOld) || (ro!=roOld) )
+    if ( !essentiallyEqual(T,TOld) || !essentiallyEqual(ro,roOld) )
 	{
 		TOld = T;
 		roOld = ro;
@@ -1535,7 +1521,7 @@ double TCGFcalc::KIntegral( double T, double ro,unsigned long int IType )
 
 	double *dtmp,rez;
 
-	if ( (T!=TOld) || (ro!=roOld) )
+    if ( !essentiallyEqual(T,TOld) || !essentiallyEqual(ro,roOld) )
 	{
 		TOld = T;
 		roOld = ro;
@@ -1582,7 +1568,7 @@ double TCGFcalc::K23_13( double T, double ro )
 	static double dtmp[]=
 	{ -1.050534, 1.747476,  1.749366,  -1.999227, -0.661046, -3.028720};
 
-	if ( (T!=TOld) || (ro!=roOld) )
+    if ( !essentiallyEqual(T,TOld) || !essentiallyEqual(ro,roOld) )
 	{
 		TOld = T;
 		roOld = ro;
@@ -1601,9 +1587,9 @@ double TCGFcalc::K23_13( double T, double ro )
 
 
 
-double TCGFcalc::DENSITY( double *X, double *param, unsigned long NN, double Pbar, double T )
+double TCGFcalc::DENSITY( double *X, double *param, unsigned long NN, double Pbar1, double T )
 {
-	double P = Pbar * 0.1;
+    double P = Pbar1 * 0.1;
 	double *xtmp;
 	double ro;
 
@@ -1768,7 +1754,7 @@ double TCGFcalc::FWCA( double T,double ro )
 	double F0,F1,FA;
 	double rm,rmdw1,rmdw2,rmdw3,rmdw4,rmdw5;
 
-	if ((T==TOld) && (ro==roOld))
+    if( essentiallyEqual(T,TOld) && essentiallyEqual(ro,roOld))
 	{
 		return F;
 	}
@@ -1934,7 +1920,7 @@ double TCGFcalc::FTOTALMIX( double T_Real,double ro_Real,EOSPARAM* param )
          A2 = -A2*TWOPI*rotmp/(3.*T2R);
          // A2 done
 
-         if ( A2!=0. )
+         if( noZero( A2 ) )
          {
 
           A3 = 0.;
@@ -2111,7 +2097,7 @@ double TCGFcalc::ROTOTALMIX( double P,double TT,EOSPARAM* param )
      double Ptmp[FIRSTSEED], ro0, ro1, rotest, PP0, PP1 /* ,Ptest */;
      double a,b;
      double inttofloat;
-     double f[4],x[4],ff,dens[5],pres[5];
+     double f[4],xx[4],ff,dens[5],pres[5];
      unsigned long int x1=0L,x2=0L;
 // double ptmp;
 
@@ -2174,8 +2160,8 @@ double TCGFcalc::ROTOTALMIX( double P,double TT,EOSPARAM* param )
 
      if ( i==FIRSTSEED || i==0 )
      {
-         printf( "Input pressure is too high!\n" );
-            // exit(1);
+         solmod_logger->error("Input pressure is too high!\n");
+         // exit(1);
          return (-1.0);
      }
      }
@@ -2196,9 +2182,9 @@ double TCGFcalc::ROTOTALMIX( double P,double TT,EOSPARAM* param )
      pres[1] = PP1;
 
      // first order
-     x[0] = P-pres[0];
+     xx[0] = P-pres[0];
      f[0] = (dens[1]-dens[0])/(pres[1]-pres[0]);
-     ff += f[0]*x[0];
+     ff += f[0]*xx[0];
 
      // second order
      dens[2] = ff;
@@ -2209,11 +2195,11 @@ double TCGFcalc::ROTOTALMIX( double P,double TT,EOSPARAM* param )
        return ff*fact0;
      }
 
-     x[1] = x[0]*(P-pres[1]);
+     xx[1] = xx[0]*(P-pres[1]);
      f[1] = (dens[2]-dens[1])/(pres[2]-pres[1]);
 
      f[0] = (f[1]-f[0])/(pres[2]-pres[0]);
-     ff += f[0]*x[1];
+     ff += f[0]*xx[1];
 
      // third order
      dens[3] = ff;
@@ -2222,11 +2208,11 @@ double TCGFcalc::ROTOTALMIX( double P,double TT,EOSPARAM* param )
      {
       return ff*fact0;
      }
-     x[2] = x[1]*(P-pres[2]);
+     xx[2] = xx[1]*(P-pres[2]);
      f[2] = (dens[3]-dens[2])/(pres[3]-pres[2]);
      f[1] = (f[2]-f[1])/(pres[3]-pres[1]);
      f[0] = (f[1]-f[0])/(pres[3]-pres[0]);
-     ff += f[0]*x[2];
+     ff += f[0]*xx[2];
      dens[4] = ff;
      pres[4] = ZTOTALMIX(TT,ff*fact0,param)*ff*fact;
      if ( fabs(pres[4]-P)<1e-6 )
@@ -2258,9 +2244,6 @@ double TCGFcalc::ROTOTALMIX( double P,double TT,EOSPARAM* param )
           return rotest*(fact0);
 
  }
-
-#ifndef IPMGEMPLUGIN
-
 
 
 /// calculates properties of pure fluids when called from DCthermo
@@ -2303,10 +2286,6 @@ long int TCGFcalc::CGcalcFugPure( double Tmin, float *Cemp, double *FugProps )
 		return -1;
 	}
 }
-
-#endif
-
-
 
 
 //=======================================================================================================
@@ -2555,9 +2534,7 @@ long int TSRKcalc::PureSpecies()
 
     if ( retCode )
     {
-        char buf[150];
-        sprintf(buf, "SRK fluid: calculation of pure fugacity failed");
-                                Error( "E71IPM IPMgamma: ",  buf );
+        Error( "E71IPM IPMgamma: ",  "SRK fluid: calculation of pure fugacity failed");
     }
 
     return 0;
@@ -2621,9 +2598,7 @@ long int TSRKcalc::MixMod()
     }
     if ( iRet )
     {
-    	char buf[150];
-    	sprintf(buf, "SRK fluid: calculation failed");
-			Error( "E71IPM IPMgamma: ",  buf );
+        Error( "E71IPM IPMgamma: ",  "SRK fluid: calculation failed");
     }
     return iRet;
 }
@@ -2639,9 +2614,7 @@ long int TSRKcalc::ExcessProp( double *Zex )
 
     if ( iRet )
     {
-    	char buf[150];
-    	sprintf(buf, "SRK fluid: calculation failed");
-    	Error( "E71IPM IPMgamma: ",  buf );
+        Error( "E71IPM IPMgamma: ", "SRK fluid: calculation failed");
     }
 
 	Ars = Grs - Vrs*Pbar;
@@ -2738,7 +2711,7 @@ long int TSRKcalc::MixingTemp()
 	{
 		for (j=0; j<NComp; j++)
 		{
-			if ( a[i][j] == 0.0 )
+            if ( approximatelyZero( a[i][j] ) )
 				tmp = 1.0;
 			else
 				tmp = a[i][j];
@@ -2995,7 +2968,7 @@ long int TSRKcalc::Cardano( double a2, double a1, double a0, double &z1, double 
 	else  // one real root
 	{
 		ac = (-1.)*rc/fabs(rc)*pow(fabs(rc)+sqrt(rc2-q3), 1./3.);
-		if (ac != 0.)
+        if( noZero( ac ) )
 			bc = q/ac;
 		else
 			bc = 0.;
@@ -3214,9 +3187,6 @@ long int TSRKcalc::ResidualFunct( double *fugpure )
 }
 
 
-
-#ifndef IPMGEMPLUGIN
-
 /// Calculates properties of pure fluids when called from DCthermo
 long int TSRKcalc::SRKCalcFugPure( double Tmin, float *Cpg, double *FugProps )
 {
@@ -3243,11 +3213,6 @@ long int TSRKcalc::SRKCalcFugPure( double Tmin, float *Cpg, double *FugProps )
 		return -1;
 	}
 }
-
-#endif
-
-
-
 
 
 //=======================================================================================================
@@ -3359,9 +3324,7 @@ long int TPR78calc::PureSpecies()
 
     if ( retCode )
     {
-        char buf[150];
-        sprintf(buf, "PR78 fluid: calculation of pure fugacity failed");
-					Error( "E71IPM IPMgamma: ",  buf );
+        Error( "E71IPM IPMgamma: ", "PR78 fluid: calculation of pure fugacity failed");
     }
 
     return 0;
@@ -3424,9 +3387,7 @@ long int TPR78calc::MixMod()
     }
     if ( iRet )
     {
-    	char buf[150];
-    	sprintf(buf, "PR78 fluid: calculation failed");
-			Error( "E71IPM IPMgamma: ",  buf );
+        Error( "E71IPM IPMgamma: ", "PR78 fluid: calculation failed");
     }
     return iRet;
 }
@@ -3442,9 +3403,7 @@ long int TPR78calc::ExcessProp( double *Zex )
 
     if ( iRet )
     {
-    	char buf[150];
-    	sprintf(buf, "PR78 fluid: calculation failed");
-    	Error( "E71IPM IPMgamma: ",  buf );
+        Error( "E71IPM IPMgamma: ", "PR78 fluid: calculation failed");
     }
 
 	Ars = Grs - Vrs*Pbar;
@@ -3541,7 +3500,7 @@ long int TPR78calc::MixingTemp()
 	{
 		for (j=0; j<NComp; j++)
 		{
-			if ( a[i][j] == 0.0 )
+            if ( approximatelyZero( a[i][j] ) )
 				tmp = 1.0;
 			else
 				tmp = a[i][j];
@@ -3807,7 +3766,7 @@ long int TPR78calc::Cardano( double a2, double a1, double a0, double &z1, double
 	else  // one real root
 	{
 		ac = (-1.)*rc/fabs(rc)*pow(fabs(rc)+sqrt(rc2-q3), 1./3.);
-		if (ac != 0.)
+        if( noZero( ac ) )
 			bc = q/ac;
 		else
 			bc = 0.;
@@ -4028,9 +3987,6 @@ long int TPR78calc::ResidualFunct( double *fugpure )
 }
 
 
-
-#ifndef IPMGEMPLUGIN
-
 /// Calculates properties of pure fluids when called from DCthermo
 long int TPR78calc::PR78CalcFugPure( double Tmin, float *Cpg, double *FugProps )
 {
@@ -4057,11 +4013,6 @@ long int TPR78calc::PR78CalcFugPure( double Tmin, float *Cpg, double *FugProps )
 		return -1;
 	}
 }
-
-#endif
-
-
-
 
 
 //=======================================================================================================
@@ -4192,9 +4143,7 @@ long int TCORKcalc::PureSpecies()
 
     if ( retCode )
     {
-            char buf[150];
-            sprintf(buf, "CORK fluid: calculation of pure fluid fugacity failed");
-                    Error( "E71IPM IPMgamma: ",  buf );
+        Error( "E71IPM IPMgamma: ", "CORK fluid: calculation of pure fluid fugacity failed");
     }
 
     return 0;
@@ -4319,9 +4268,7 @@ long int TCORKcalc::ExcessProp( double *Zex )
 
     if ( iRet )
     {
-        char buf[150];
-        sprintf(buf, "CORK fluid: calculation failed");
-        Error( "E71IPM IPMgamma: ",  buf );
+        Error( "E71IPM IPMgamma: ", "CORK fluid: calculation failed");
     }
 
     Ars = Grs - Vrs*Pbar;
@@ -4850,7 +4797,7 @@ long int TCORKcalc::Cardano(double cb, double cc, double cd, double &v1, double 
     if ( (cp2-cq3)>0. )  // one real root
     {
         cr = -cp/fabs(cp)*pow(fabs(cp)+sqrt(cp2-cq3),1./3.);
-        if (cr!=0)
+        if(  noZero( cr ) )
         {
             v1 = cr + cq/cr - cb/3.;
             v2 = cr + cq/cr - cb/3.;
@@ -4999,10 +4946,6 @@ long int TCORKcalc::ResidualFunct()
     return 0;
 }
 
-
-
-#ifndef IPMGEMPLUGIN
-
 /// Calculates properties of pure fluids when called from DCthermo
 long int TCORKcalc::CORKCalcFugPure( double Tmin, float *Cpg, double *FugProps )
 {
@@ -5029,10 +4972,6 @@ long int TCORKcalc::CORKCalcFugPure( double Tmin, float *Cpg, double *FugProps )
                 return -1;
         }
 }
-
-#endif
-
-
 
 
 
@@ -5286,9 +5225,7 @@ long int TSTPcalc::PureSpecies()
 
     if ( iErr )
     {
-            char buf[150];
-            sprintf(buf, "STP fluid: calculation of pure fluid fugacity failed");
-                    Error( "E71IPM IPMgamma: ",  buf );
+        Error( "E71IPM IPMgamma: ", "STP fluid: calculation of pure fluid fugacity failed");
     }
 
     return 0;
@@ -5408,9 +5345,7 @@ long int TSTPcalc::ExcessProp( double *Zex )
 
     if ( iErr )
     {
-        char buf[150];
-        sprintf(buf, "STP fluid: calculation failed");
-        Error( "E71IPM IPMgamma: ",  buf );
+        Error( "E71IPM IPMgamma: ", "STP fluid: calculation failed");
     }
 
     Ars = Grs - Vrs*Pbar;
@@ -6245,9 +6180,6 @@ long int TSTPcalc::PsatCO2( long int j )
 }
 
 
-
-#ifndef IPMGEMPLUGIN
-
 /// Calculates pure species properties (called from DCthermo)
 long int TSTPcalc::STPCalcFugPure( double Tmin, float *Cpg, double *FugProps )
 {
@@ -6276,10 +6208,6 @@ long int TSTPcalc::STPCalcFugPure( double Tmin, float *Cpg, double *FugProps )
 
     return 0;
 }
-
-#endif
-
-
 
 
 

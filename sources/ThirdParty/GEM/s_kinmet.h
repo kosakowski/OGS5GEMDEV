@@ -27,6 +27,8 @@
 #define S_KINMET_H
 
 #include <vector>
+#include <spdlog/spdlog.h>
+
 
 const int MAXDCNAME_ = 16, MAXPHNAME_ = 16, MAXSYMB_ = 4;   // see also v_mod.h
 
@@ -224,6 +226,10 @@ struct TKinReact
 class TKinMet  // Base class for MWR kinetics and metastability models
 {
     protected:
+
+    /// Default logger for TKinMet class
+    static std::shared_ptr<spdlog::logger> kinmet_logger;
+
     char  KinProCode;   /// Code of the kinetic process (derived TKinMet class), see enum kinmet_controls
     char  KinModCode;   /// Type code of the kinetic/metastability model, see enum kinmet_controls
     char  KinSorpCode;   /// Type code of sorption kinetics model (solution/sorption phases only), see enum kinmet_controls
@@ -488,9 +494,9 @@ class TUptakeKin: public TKinMet  // SS uptake kinetics models Thien,Kulik,Curti
     // specific stuff for uptake kinetics
     long int numpC;    /// number of sorption/uptake model parameter coefficients (per end member)
     long int nElm;     /// number of independent components in IPM work data structure
-    long int iRes4;    // reserved
+    //long int iRes4;    // reserved
 
-    long int *arxTrDC; /// pointer to input array of aq DC indexes for end-members [NComp]
+    //long int *arxTrDC; /// pointer to input array of aq DC indexes for end-members [NComp]
     long int *arxICu;  /// pointer to input array of aq IC indexes for end members [NComp]
 
     double **arUmpCon; /// input array of uptake model coefficients [NComp*numpC] read-only
