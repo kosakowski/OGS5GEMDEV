@@ -6286,16 +6286,29 @@ void REACT_GEM::WriteVTKGEMValues ( fstream &vtk_file )
 	for ( j = 0; j < nNodes; j++ )
 //		vtk_file << " " <<  m_chargeB[j * nIC + 0] << "\n"; //here the last component is total charge of fluid
 		vtk_file << " " <<  m_chargeB[j * nIC + nIC - 1] << "\n"; //here the last component is total charge of fluid
-	vtk_file << "SCALARS " << " M_CO2 " << " double 1" << "\n";
-	vtk_file << "LOOKUP_TABLE default" << "\n";
+	//
+	
+	vtk_file << "FIELD " << " constraints " << " 2" << "\n";
+	vtk_file << "dll " << nDC << " " << nNodes << " double " << "\n";
 	//....................................................................
 	for ( j = 0; j < nNodes; j++ )
-		vtk_file << " " <<  m_co2[j] << "\n";
-	vtk_file << "SCALARS " << " M_CO2_TRANSPORT " << " double 1" << "\n";
-	vtk_file << "LOOKUP_TABLE default" << "\n";
+	  {
+	    for (k =0; k < nDC; k++)
+	      {
+		vtk_file << " " <<  m_dll[j*nDC+k] << " ";
+		if (k % 10 == 0)  vtk_file << " \n";		  
+	      }
+	  }
+	vtk_file << "dul " << nDC << " " << nNodes << " double " << "\n";
 	//....................................................................
 	for ( j = 0; j < nNodes; j++ )
-		vtk_file << " " <<  m_co2_transport[j] << "\n";
+	  {
+	    for (k =0; k < nDC; k++)
+	      {
+		vtk_file << " " <<  m_dul[j*nDC+k] << " ";
+		if (k % 10 == 0)  vtk_file << " \n";		  
+	      }
+	  }
 }
 
 /** gems_worker:

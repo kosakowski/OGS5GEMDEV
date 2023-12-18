@@ -1130,29 +1130,38 @@ void LegacyVtkInterface::WriteVTKDataArrays(fstream &vtk_file) const
        //======================================================================
        // MAT data
        int mmp_id = -1;
-       if (!_materialPropertyArrayNames.empty())
+       //if (!_materialPropertyArrayNames.empty())
        {
-           if (_materialPropertyArrayNames[0].compare("POROSITY") == 0)
-               mmp_id = 0;
+           //if (_materialPropertyArrayNames[0].compare("POROSITY") == 0)
+           mmp_id = 0; // do ti always
            // Let's say porosity
            // write header for cell data
            if (!wroteAnyEleData)
                vtk_file << "CELL_DATA " << _mesh->ele_vector.size() << "\n";
+           vtk_file << "SCALARS " << "POROSITY" <<" double 1" << "\n";
+           vtk_file << "LOOKUP_TABLE default" << "\n";
            wroteAnyEleData = true;
+           double porosity = 0.0;
            for (size_t i = 0; i < _mesh->ele_vector.size(); i++)
            {
                MeshLib::CElem* ele = _mesh->ele_vector[i];
-               double mat_value = 0.0;
+               int group = ele->GetPatchIndex();
+               CMediumProperties *m_mat_mp = mmp_vector[group];
                switch (mmp_id)
                {
-               case 0:
-                   mat_value = mmp_vector[ele->GetPatchIndex()]->Porosity(i, 0.0);
+               case 0: {
+                   const size_t index = ele->GetIndex();
+                   const double theta = 1;
+                   porosity = m_mat_mp->Porosity(index, theta); // CB Now provides also heterogeneous porosity, model 11
+                   // cout << "mat value" << porosity << "\n";
                    break;
-               default:
+                   }
+               default:{
                    cout << "COutput::WriteVTKValues: no MMP values specified" << "\n";
                    break;
+                   }
                }
-               vtk_file << mat_value << "\n";
+               vtk_file << porosity << "\n";
            }
        }
         /***************************************************************************/
