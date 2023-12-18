@@ -18,6 +18,7 @@ Install Directory=file:///usr/local
 Build Directory Path=file:///home/kosakowski/GitMigration/sources/builddebug
 Build Type=DEBUG
 CMake Binary=file:///usr/bin/cmake
+CMake Executable=/usr/bin/cmake
 Environment Profile=
 Extra Arguments=
 Install Directory=file:///usr/local
