@@ -5,7 +5,7 @@ For the new GEMS3K kernel version one needs nlohmann json, eigen3, pybind11, spd
 
 Basic procedure for compilation:
 
-git clone https://github.com/kosakowski/OGS5GEMDEV
+git clone https://github.com/kosakowski/OGS5GEMDEV.git
 
 cd OGSGEMDEV/sources
 mkdir build 
