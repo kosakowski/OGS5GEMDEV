@@ -12,7 +12,7 @@ mkdir build
 cd build
 cmake .. -DOGS_FEM_GEMS=ON
 make
-make install
+sudo make install
 
 optional CMAKE arguments:
 -DBOOST_ROOT=/path/to/boost/
