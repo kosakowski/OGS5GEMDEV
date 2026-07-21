@@ -27,16 +27,12 @@
 //-------------------------------------------------------------------
 //
 
-#ifdef IPMGEMPLUGIN
 #include "ms_multi.h"
-#else
-#include "m_param.h"
-#endif
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 /// Calculating bulk stoichiometry of a multicomponent phase
 //
-void TMulti::phase_bcs( long int N, long int M, long int jb, double *A, double X[], double BF[] )
+void TMultiBase::phase_bcs( long int N, long int M, long int jb, double *A, double X[], double BF[] )
 {
     long int ii, i, j;
     double Xx;
@@ -62,7 +58,7 @@ void TMulti::phase_bcs( long int N, long int M, long int jb, double *A, double X
 /// Adds phase to total bulk stoichiometry of all solid phases in the system
 // Done on request by TW in November 2006
 //
-void TMulti::phase_bfc( long int k, long int jj )
+void TMultiBase::phase_bfc( long int k, long int jj )
 {
     long int ii, i, j;
     double Xx;
@@ -84,7 +80,7 @@ void TMulti::phase_bfc( long int k, long int jj )
 }
 
 /// Returns mass of all solid phases in grams (from the BFC vector)
-double TMulti::bfc_mass( void )
+double TMultiBase::bfc_mass( void )
 {
    double TotalMass = 0.;
    for(long int i = 0; i<pm.N; i++ )
@@ -100,7 +96,7 @@ double TMulti::bfc_mass( void )
 //
 //  Do we need this all in GEMIPM ?
 //
-void TMulti::CalculateConcentrationsInPhase( double X[], double XF[], double XFA[],
+void TMultiBase::CalculateConcentrationsInPhase( double X[], double XF[], double XFA[],
               double Factor, double MMC, double /*Dsur*/, long int jb, long int je, long int k)
 {
     long int j, ii, i;
@@ -191,10 +187,10 @@ void TMulti::CalculateConcentrationsInPhase( double X[], double XF[], double XFA
             break;
         case DC_AQ_PROTON:  // in molal scale!
             pm.pH = -ln_to_lg*(Muj-pm.G0[j] + lnFmol );
-             // [[fallthrough]];
+             [[fallthrough]];
         case DC_AQ_SPECIES:
             pm.IC += 0.5* X[j]*Factor *(pm.EZ[j]*pm.EZ[j]); // increment to effective molal ionic strength
-            //[[fallthrough]];
+            [[fallthrough]];
         case DC_AQ_SURCOMP:
             SPmol = X[j]*Factor;  // molality
  //           pm.IC += 0.5* SPmol *(pm.EZ[j]*pm.EZ[j]); // Bugfix DK 21.10.2011 'K' species don't count here!
@@ -297,7 +293,7 @@ case DC_SCM_SPECIES:
 // This function has to be rewritten using new set of built-in
 // chemical functions.
 //
-void TMulti::CalculateConcentrations( double X[], double XF[], double XFA[])
+void TMultiBase::CalculateConcentrations( double X[], double XF[], double XFA[])
 {
     long int k, ii, i, j, ist, jj, jja;
     double Factor=0.0, Dsur=0.0, MMC=0.0;
@@ -410,7 +406,7 @@ void TMulti::CalculateConcentrations( double X[], double XF[], double XFA[])
 //            pm.IC=0.;
             pm.pe = ln_to_lg* pm.U[pm.N-1];
             pm.Eh = 0.000086 * pm.U[pm.N-1] * pm.T;
-            // [[fallthrough]];
+             [[fallthrough]];
         case PH_GASMIX:
         case PH_FLUID:
         case PH_PLASMA:
@@ -486,7 +482,7 @@ NEXT_PHASE:
 
 //--------------------------------------------------------------------------------
 /// Calculation of surface charge densities on multi-surface sorption phase
-void TMulti::IS_EtaCalc()
+void TMultiBase::IS_EtaCalc()
 {
     long int k, i, ist, isp, j=0, ja;
     double XetaS=0., XetaW=0.,  Ez, CD0, CDb;
@@ -599,9 +595,10 @@ void TMulti::IS_EtaCalc()
                         pm.XetaB[k][ist] += pm.X[j]*Ez;
                         pm.XetaA[k][ist] += pm.X[j]*CD0;  // added for testing
                     }
-                    else if( pm.SCM[k][ist] == SC_CCM )
+                    else if( pm.SCM[k][ist] == SC_CCM || pm.SCM[k][ist] == SC_ISCCM )
                     { // Added 25.07.03 to implement the extended CCM Nilsson ea 1996
 // New CD version of BSM  added 25.10.2004
+                        // 2026 SC_ISCCM uses dependcy of capacity with IS C = sqrt(IS)/alpha, alpha is given instead of capacity
                            pm.XetaB[k][ist] += pm.X[j] * CDb;
                            pm.XetaA[k][ist] += pm.X[j] * CD0;
                     }
@@ -641,7 +638,7 @@ NEXT_PHASE:
 ///    electric potentials (for detecting bad PIA), 0 otherwise
 //
 long int
-TMulti::GouyChapman(  long int, long int, long int k )
+TMultiBase::GouyChapman(  long int, long int, long int k )
 {
     long int ist, status=0;
     double SigA=0., SigD=0., SigB=0., SigDDL=0.,
@@ -701,6 +698,7 @@ TMulti::GouyChapman(  long int, long int, long int k )
         switch( pm.SCM[k][ist] )
         {
         case SC_CCM:  // Constant-Capacitance Model Schindler, extension Nilsson
+        case SC_ISCCM: // 2026 SC_ISCCM uses dependcy of capacity with IS C = sqrt(IS)/alpha, alpha is given instead of capacity
             SigA = pm.Xetaf[k][ist] + XetaA[ist];
             SigDDL = -SigA - XetaB[ist];
             SigB = XetaB[ist];
@@ -800,9 +798,13 @@ GEMU_CALC:
             pm.XpsiB[k][ist] = PsiD;
             break;
         case SC_CCM:  // Constant-Capacitance Model Schindler, ext. Nilsson
-            if( pm.XcapB[k][ist] > 0.001 )
+        case SC_ISCCM: // 2026 SC_ISCCM uses dependcy of capacity with IS C = sqrt(IS)/alpha, alpha is given instead of capacity
+            if( pm.XcapA[k][ist] > 0.0 )
             {  // Classic CCM Schindler with inner-sphere species only
-               PsiA = SigA / pm.XcapA[k][ist];
+                if (pm.SCM[k][ist] == SC_ISCCM)
+                    PsiA = SigA / (sqrt(I)/pm.XcapA[k][ist]);
+                else
+                    PsiA = SigA / pm.XcapA[k][ist];
                if( fabs( PsiA ) > 0.7 ) // truncated 0-plane potential
                {
                    PsiA = PsiA<0? -0.7: 0.7;
@@ -810,14 +812,33 @@ GEMU_CALC:
                }
                pm.XpsiA[k][ist] = PsiA;
             }
-            else { // Extended CCM model [Nilsson ea 1996] as TLM with PsiD = 0
-               PsiB = - SigB / pm.XcapB[k][ist];
+            if (pm.XcapB[k][ist]<0.001)
+            { // Extended CCM model [Nilsson ea 1996] as TLM with PsiD = 0
+                if( approximatelyZero(pm.XcapB[k][ist])) {
+                    PsiB = 0.0; //-SigB<0? -0.3: 0.3;
+                    ipm_logger->debug("Extended CCM model XcapB = {} IT={} k= {} ist= {}", pm.XcapB[k][ist], pm.IT, k, ist);
+                }
+                else {
+                    if (pm.SCM[k][ist] == SC_ISCCM)
+                        PsiB = - SigB / (sqrt(I)/pm.XcapB[k][ist]);
+                    else
+                        PsiB = - SigB / pm.XcapB[k][ist];
+                }
                if( fabs( PsiB ) > 0.3 )  // truncated B-plane potential
                {
                    PsiB = PsiB<0? -0.3: 0.3;
                    status = 65;
                }
-               PsiA = PsiB + SigA / pm.XcapA[k][ist];
+               if( approximatelyZero(pm.XcapA[k][ist])) {
+                   PsiA = 0.0; // SigA<0? -0.7: 0.7;
+                   ipm_logger->debug("Extended CCM model XcapA = {} IT={} k= {} ist= {}", pm.XcapA[k][ist], pm.IT, k, ist);
+               }
+               else {
+                   if (pm.SCM[k][ist] == SC_ISCCM)
+                       PsiA = PsiB + SigA / (sqrt(I)/pm.XcapA[k][ist]);
+                   else
+                       PsiA = PsiB + SigA / pm.XcapA[k][ist];
+               }
                if( fabs( PsiA ) > 0.7 )
                {
                   PsiA = PsiA<0? -0.7: 0.7;
@@ -829,14 +850,26 @@ GEMU_CALC:
             break;
         case SC_MTL:  // Modified Triple Layer Model for X- Robertson | Kulik
 // PsiD = 0.0; // test
-            PsiB = PsiD - SigDDL / pm.XcapB[k][ist];
+            if( approximatelyZero(pm.XcapB[k][ist])) {
+                PsiB = 0.0; //SigB<0 ? -0.6: 0.6;
+                ipm_logger->debug("Modified Triple Layer Model XcapB = {} IT={} k= {} ist= {}", pm.XcapB[k][ist], pm.IT, k, ist);
+            }
+            else {
+                PsiB = PsiD - SigDDL / pm.XcapB[k][ist];
+            }
             if( fabs( PsiB ) > 0.6)  // truncated B-plane potential
             {
                 ipm_logger->debug("EDL (MTL) PsiB = {} truncated to +- 0.6 V IT={} k= {} ist= {}", PsiB, pm.IT, k, ist);
                 PsiB = PsiB<0? -0.6: 0.6;
                 status = 67;
             }
-            PsiA = PsiB + SigA / pm.XcapA[k][ist];
+            if( approximatelyZero(pm.XcapA[k][ist])) {
+                PsiA = 0.0; //SigA<0? -1.1: 1.1;
+                ipm_logger->debug("Modified Triple Layer Model XcapA = {} IT={} k= {} ist= {}", pm.XcapA[k][ist], pm.IT, k, ist);
+            }
+            else {
+                PsiA = PsiB + SigA / pm.XcapA[k][ist];
+            }
             if( fabs( PsiA ) > 1.1 )  // truncated 0 plane potential
             {
                 ipm_logger->debug("EDL (MTL) PsiA ={} truncated to +- 1.1 V IT={} k= {} ist= {}", PsiA, pm.IT, k, ist);
@@ -847,14 +880,26 @@ GEMU_CALC:
             pm.XpsiB[k][ist] = PsiB;
             break;
         case SC_TLM:  // Triple-Layer Model   [Hayes 1987]
-            PsiB = PsiD - SigDDL / pm.XcapB[k][ist];
+            if( approximatelyZero(pm.XcapB[k][ist])) {
+                PsiB = 0.0; // SigB<0 ? -0.6: 0.6;
+                ipm_logger->debug("Triple-Layer Model XcapB = {} IT={} k= {} ist= {}", pm.XcapB[k][ist], pm.IT, k, ist);
+            }
+            else {
+                PsiB = PsiD - SigDDL / pm.XcapB[k][ist];
+            }
             if( fabs( PsiB ) > 0.6 )  // // truncated B-plane potential
             {
                 ipm_logger->debug("EDL (TLM) PsiB ={} truncated to +- 0.6 V IT={} k= {} ist= {}", PsiB, pm.IT, k, ist);
                 PsiB = PsiB<0? -0.6: 0.6;
                 status = 69;
             }
-            PsiA = PsiB + SigA / pm.XcapA[k][ist];
+            if( approximatelyZero(pm.XcapA[k][ist])) {
+                PsiA = 0.0; // SigA<0? -1.1: 1.1;
+                ipm_logger->debug("Triple-Layer Model XcapA = {} IT={} k= {} ist= {}", pm.XcapA[k][ist], pm.IT, k, ist);
+            }
+            else {
+                PsiA = PsiB + SigA / pm.XcapA[k][ist];
+            }
             if( fabs( PsiA ) > 1.1 )  // truncated 0-plane potential
             {
                 ipm_logger->debug("EDL (TLM) PsiA ={} truncated to +- 1.1 V IT={} k= {} ist= {}", PsiA, pm.IT, k, ist);
@@ -867,7 +912,13 @@ GEMU_CALC:
         case SC_3LM: // Three-Layer Model [Hiemstra & van Riemsdijk 1996]
 //            PsiB = PsiD + SigD / pm.XcapB[k][ist];
             ipm_logger->debug("EDL (3LM) PsiB(D) ={} IT={} k= {} ist= {}", PsiB, pm.IT, k, ist);
-            PsiB = PsiD + ( SigA + SigB ) / pm.XcapB[k][ist];  // Compare!
+            if( approximatelyZero(pm.XcapB[k][ist])) {
+                PsiB = 0.0; //SigA<0 ? -0.6: 0.6;
+                ipm_logger->debug("Three-Layer Model XcapB = {} IT={} k= {} ist= {}", pm.XcapB[k][ist], pm.IT, k, ist);
+            }
+            else {
+                PsiB = PsiD + ( SigA + SigB ) / pm.XcapB[k][ist];  // Compare!
+            }
             ipm_logger->debug("EDL (3LM) PsiB(AB) ={} IT={} k= {} ist= {}", PsiB, pm.IT, k, ist);
             if( fabs( PsiB ) > 0.6 )  // truncated B-plane potential
             {
@@ -875,7 +926,13 @@ GEMU_CALC:
                 PsiB = PsiB<0? -0.6: 0.6;
                 status = 71;
             }
-            PsiA = PsiB + SigA / pm.XcapA[k][ist];
+            if( approximatelyZero(pm.XcapA[k][ist])) {
+                PsiA = 0.0; // SigA<0? -1.1: 1.1;
+                ipm_logger->debug("Three-Layer Model XcapA = {} IT={} k= {} ist= {}", pm.XcapA[k][ist], pm.IT, k, ist);
+            }
+            else {
+                PsiA = PsiB + SigA / pm.XcapA[k][ist];
+            }
             if( fabs( PsiA ) > 1.1 )   // truncated 0-plane potential
             {
                ipm_logger->debug("EDL (3LM) PsiA ={} truncated to +- 1.1 V IT={} k= {} ist= {}", PsiA, pm.IT, k, ist);
@@ -893,7 +950,13 @@ GEMU_CALC:
                 PsiB = PsiB<0? -0.6: 0.6;
                 status = 73;
             }
-            PsiA = PsiB + SigA / pm.XcapA[k][ist];
+            if( approximatelyZero(pm.XcapA[k][ist])) {
+                PsiA = 0.0; // SigA<0? -1.1: 1.1;
+                ipm_logger->debug("Basic Stern model XcapA = {} IT={} k= {} ist= {}", pm.XcapA[k][ist], pm.IT, k, ist);
+            }
+            else {
+                PsiA = PsiB + SigA / pm.XcapA[k][ist];
+            }
             if( fabs( PsiA ) > 1.1 )  // truncated 0-plane potential
             {
                 ipm_logger->debug("EDL (BSM) PsiA ={} truncated to +- 1.1 V IT={} k= {} ist= {}", PsiA, pm.IT, k, ist);
@@ -911,7 +974,13 @@ GEMU_CALC:
                 PsiB = PsiB<0? -0.6: 0.6;
                 status = 75;
             }
-            PsiA = PsiB + SigA / pm.XcapA[k][ist];
+            if( approximatelyZero(pm.XcapA[k][ist])) {
+                PsiA = 0.0; // SigA<0? -1.1: 1.1;
+                ipm_logger->debug("BSM for permanent charge surfaces XcapA = {} IT={} k= {} ist= {}", pm.XcapA[k][ist], pm.IT, k, ist);
+            }
+            else {
+                PsiA = PsiB + SigA / pm.XcapA[k][ist];
+            }
             if( fabs( PsiA ) > 1.1 ) // truncated 0-plane potential
             {
                 ipm_logger->debug("EDL (MXC) PsiA ={} truncated to +- 1.1 V IT={} k= {} ist= {}", PsiA, pm.IT, k, ist);
@@ -951,7 +1020,7 @@ GEMU_CALC:
 ///    0 otherwise (for detecting bad PIA)
 //
 long int
-TMulti::SurfaceActivityCoeff( long int jb, long int je, long int, long int, long int k )
+TMultiBase::SurfaceActivityCoeff( long int jb, long int je, long int, long int, long int k )
 {
 	long int status = 0;
         long int i, ii, j, ja, ist=0, iss, dent, Cj, iSite[MST];

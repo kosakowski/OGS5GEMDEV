@@ -1,9 +1,11 @@
 #include <fstream>
 #include <sstream>
+#include <filesystem>
+namespace fs = std::filesystem;
+
 #include "gems3k_impex.h"
 #include "v_detail.h"
 #include "v_service.h"
-
 
 GEMS3KGenerator::IOModes GEMS3KGenerator::default_type_f =
         GEMS3KGenerator::f_json;
@@ -27,10 +29,30 @@ std::string GEMS3KGenerator::gen_dbr_name(const std::string the_name, int time_p
 GEMS3KGenerator::GEMS3KGenerator(const std::string &filepath, long anIV, IOModes file_mode):
     ipmfiles_lst_name(filepath), nIV(anIV), io_mode(file_mode)
 {
-#ifndef USE_THERMOFUN
+#ifdef NO_THERMOFUN
     ErrorIf( io_mode>=f_thermofun, ipmfiles_lst_name, " ThermoFun as an option is hidden");
 #endif
     set_internal_data();
+}
+
+bool GEMS3KGenerator::create_dir() const
+{
+    const std::string dir = get_dir();
+    if( dir.empty() ) {
+        return true; // current working directory
+    }
+
+    std::error_code ec;
+    const fs::path ps(dir);
+
+    if( fs::exists(ps, ec) ) {
+        return !ec && fs::is_directory(ps, ec);
+    }
+    if( ec ) {
+        return false;
+    }
+
+    return fs::create_directories(ps, ec) || (!ec && fs::is_directory(ps, ec));
 }
 
 std::string GEMS3KGenerator::gen_dbr_file_name(int time_point, size_t index) const
@@ -88,7 +110,7 @@ void GEMS3KGenerator::load_dat_lst_file()
 
     if( files_mode() >= f_thermofun )
     {
-#ifdef USE_THERMOFUN
+#ifndef NO_THERMOFUN
         f_getline( f_lst, thermofun_file_name, ' ');
         trim(thermofun_file_name, "\"");
 #else

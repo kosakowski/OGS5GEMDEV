@@ -29,8 +29,9 @@
 #include "io_keyvalue.h"
 #include "ms_multi.h"
 #include "gdatastream.h"
+#include "jsonconfig.h"
 
-void TMulti::getLsModsum( long int& LsModSum, long int& LsIPxSum )
+void TMultiBase::getLsModsum( long int& LsModSum, long int& LsIPxSum )
 {  LsModSum = 0;
    LsIPxSum = 0;
    for(long int i=0; i<pm.FIs; i++)
@@ -41,7 +42,7 @@ void TMulti::getLsModsum( long int& LsModSum, long int& LsIPxSum )
 }
 
 
-void TMulti::getLsMdcsum( long int& LsMdcSum,long int& LsMsnSum,long int& LsSitSum )
+void TMultiBase::getLsMdcsum( long int& LsMdcSum,long int& LsMsnSum,long int& LsSitSum )
 {  LsMdcSum = 0;
    LsMsnSum = 0;
    LsSitSum = 0;
@@ -55,7 +56,7 @@ void TMulti::getLsMdcsum( long int& LsMdcSum,long int& LsMsnSum,long int& LsSitS
  }
 
 // dimensions from LsPhl array
-void TMulti::getLsPhlsum( long int& PhLinSum,long int& lPhcSum )
+void TMultiBase::getLsPhlsum( long int& PhLinSum,long int& lPhcSum )
 {  PhLinSum = 0;
    lPhcSum = 0;
 
@@ -68,7 +69,7 @@ void TMulti::getLsPhlsum( long int& PhLinSum,long int& lPhcSum )
  }
 
 // dimensions from LsMdc2 array
-void TMulti::getLsMdc2sum( long int& DQFcSum,long int& rcpcSum )
+void TMultiBase::getLsMdc2sum( long int& DQFcSum,long int& rcpcSum )
 {  DQFcSum = 0;
    rcpcSum = 0;
 
@@ -80,7 +81,7 @@ void TMulti::getLsMdc2sum( long int& DQFcSum,long int& rcpcSum )
  }
 
 // dimensions from LsISmo array
-void TMulti::getLsISmosum( long int& IsoCtSum,long int& IsoScSum, long int& IsoPcSum,long int& xSMdSum )
+void TMultiBase::getLsISmosum( long int& IsoCtSum,long int& IsoScSum, long int& IsoPcSum,long int& xSMdSum )
 {  IsoCtSum = 0;
    IsoScSum = 0;
    IsoPcSum = 0;
@@ -96,7 +97,7 @@ void TMulti::getLsISmosum( long int& IsoCtSum,long int& IsoScSum, long int& IsoP
  }
 
 // dimensions from LsESmo array
-void TMulti::getLsESmosum( long int& EImcSum,long int& mCDcSum )
+void TMultiBase::getLsESmosum( long int& EImcSum,long int& mCDcSum )
 {  EImcSum = 0;
    mCDcSum = 0;
 
@@ -108,7 +109,7 @@ void TMulti::getLsESmosum( long int& EImcSum,long int& mCDcSum )
  }
 
 // dimensions from LsKin array
-void TMulti::getLsKinsum( long int& xSKrCSum,long int& ocPRkC_feSArC_Sum,
+void TMultiBase::getLsKinsum( long int& xSKrCSum,long int& ocPRkC_feSArC_Sum,
               long int& rpConCSum,long int& apConCSum, long int& AscpCSum )
 {  xSKrCSum = 0;
    ocPRkC_feSArC_Sum = 0;
@@ -127,7 +128,7 @@ void TMulti::getLsKinsum( long int& xSKrCSum,long int& ocPRkC_feSArC_Sum,
  }
 
 // dimensions from LsUpt array
-void TMulti::getLsUptsum(long int& UMpcSum, long int& xICuCSum )
+void TMultiBase::getLsUptsum(long int& UMpcSum, long int& xICuCSum )
 {
    UMpcSum = 0;
    for(long int i=0; i<pm.FIs; i++)
@@ -141,7 +142,7 @@ void TMulti::getLsUptsum(long int& UMpcSum, long int& xICuCSum )
 
 //---------------------------------------------------------//
 /// Set default information
-void TMulti::set_def( int )
+void TMultiBase::set_def( int )
 {
     //mem_cpy( &pm.PunE, "jjbC", 4 );
     fillValue( pm.stkey, '\0', EQ_RKLEN);
@@ -431,10 +432,12 @@ pm.GamFs = nullptr;
         pm.emRd   = 0;
         pm.emDf   = 0;
         pm.xICuC = 0;
+        memset( pm.errorCode, '\0', 100 );
+        memset( pm.errorBuf,  '\0',  1024 );
 }
 
 /// Writing structure MULTI (GEM IPM work structure) to binary file
-void TMulti::out_multi( GemDataStream& ff  )
+void TMultiBase::out_multi( GemDataStream& ff  )
 {
      short arr[10];
 
@@ -455,7 +458,7 @@ void TMulti::out_multi( GemDataStream& ff  )
 }
 
 /// Reading structure MULTI (GEM IPM work structure) from binary file
-void TMulti::read_multi( GemDataStream& ff, DATACH  *dCH )
+void TMultiBase::read_multi( GemDataStream& ff, DATACH  *dCH )
 {
     short arr[10];
 
@@ -493,7 +496,7 @@ void TMulti::read_multi( GemDataStream& ff, DATACH  *dCH )
 
 //---------------------------------------------------------//
 /// Writing MULTI to binary file
-void TMulti::to_file( GemDataStream& ff  )
+void TMultiBase::to_file( GemDataStream& ff  )
 {
    if( pm.N < 2 || pm.L < 2 || pm.FI < 1 )
         Error( "Multi", "pm.N < 2 || pm.L < 2 || pm.FI < 1" );
@@ -768,7 +771,7 @@ ff.writeArray((double*)pm.D, MST*MST);
 }
 
 /// Reading MULTI from binary file
-void TMulti::from_file( GemDataStream& ff )
+void TMultiBase::from_file( GemDataStream& ff )
 {
    //static values
    char PAalp;
@@ -784,15 +787,9 @@ void TMulti::from_file( GemDataStream& ff )
    ff.readArray( pm.epsW, 5);
    ff.readArray( pm.epsWg, 5);
 
-#ifndef IPMGEMPLUGIN
-//   syp->PAalp = PAalp;
-//   syp->PSigm = PSigm;
-   dyn_new();
-#else
    PAalp_ = PAalp;
    PSigm_ = PSigm;
    multi_realloc( PAalp, PSigm );
-#endif
 
       //dynamic values
     // Part 1
@@ -1080,7 +1077,7 @@ ff.readArray((double*)pm.D, MST*MST);
 
 
 /// Writing structure MULTI ( free format file  )
-void TMulti::to_text_file( const char *path, bool append )
+void TMultiBase::to_text_file(const std::string& path, bool append )
 {
     //static values
    char PAalp;
@@ -1090,7 +1087,7 @@ void TMulti::to_text_file( const char *path, bool append )
    std::ios::openmode mod = std::ios::out;
     if( append )
      mod = std::ios::out|std::ios::app;
-  std::fstream ff(path, mod );
+  std::fstream ff(GemsSettings::with_directory(path), mod );
   ErrorIf( !ff.good() , path, "Fileopen error");
 
   io_formats::KeyValueWrite out_format( ff );
@@ -1365,6 +1362,24 @@ void TMulti::to_text_file( const char *path, bool append )
     prar.writeArray(  "APh", &pm.APh[0][0], pm.FIs*MIXPHPROPS);
     prar.writeArray(  "UPh", &pm.UPh[0][0], pm.FIs*MIXPHPROPS);
 
+}
+
+void TMultiBase::solmod_to_text_file(const std::string& path)
+{
+    for(long int k=0; k<pm.FIs; k++) { // loop on solution phases
+        if(phSolMod[k]) {
+            phSolMod[k]->to_text_file(path+ std::string("solmod_coef_")+std::to_string(k)+".txt", false);
+        }
+    }
+}
+
+void TMultiBase::solmod_to_json_file(const std::string& path)
+{
+    for(long int k=0; k<pm.FIs; k++) { // loop on solution phases
+        if(phSolMod[k]) {
+            phSolMod[k]->to_json_file(path+ std::string("solmod_")+std::to_string(k)+".json");
+        }
+    }
 }
 
 //--------------------- End of ms_multi_file.cpp ---------------------------

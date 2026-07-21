@@ -23,6 +23,7 @@
 #include <time.h>
 #include <cmath>
 #include <string>
+#include <vector>
 #include <boost/thread.hpp>
 #include <boost/date_time.hpp>
 //#include <thread.hpp>
@@ -112,7 +113,11 @@ public:
     // previous time step kinetic values (_pre: old solution, _pi: previous picard iteration)
     double *dmdt_pts, *m_dul_pts, *m_dll_pts, *dmdt_pi, *m_dul_pi, *m_dll_pi;                              // old kinetically controlled rates
     double *mol_phase_pts, *omega_phase_pts, *omega_components_pts, *mol_phase_pi, *omega_phase_pi, *omega_components_pi; // old saturation indices and mole amounts in phase
-    
+    // Name lists from DCH file!
+    // Name lists
+    std::vector<std::string> m_ICNL; ///< List of IC names in the system, [nIC]
+    std::vector<std::string> m_DCNL; ///< List of DC names in the system, [nDC]
+    std::vector<std::string> m_PHNL; ///< List of Phase names  [nPH]    
     
     double *m_excess_water;                     // excess water in m3/s for each node;
     double *m_excess_gas;                       // excess gas in m3/s for each node;
@@ -318,14 +323,6 @@ public:
     double GetNodePorosityValueInitial( long node_Index);    
     double GetNodeFluidDensityValue( long node_Index);
 
-    // Name lists from DCH file!
-    // const long int
-    //  MaxICN =      6,      // IC name length
-    //  MaxDCN =      16,     // DC name length
-    //  MaxPHN =      16;     // PH name length
-    char (*m_ICNL)[MaxICN]; // List of IC names in the system, [nIC]  of MaxICN length
-    char (*m_DCNL)[MaxDCN]; // List of DC names in the system, [nDC] of MaxDCN length
-    char (*m_PHNL)[MaxPHN]; // List of Phase names  [nPH]  of MaxPHN length
 #if defined(USE_PETSC)    
     PetscScalar *gem_glob_buff, *gem_glob_x1 , *gem_glob_x0;
     void WriteVTKGEMValuesPETSC(PetscViewer viewer);
@@ -377,7 +374,7 @@ public:
 	double cover_p[10]; //exponent for power law in surface area model number 7
         int ss_endmembers; // special model for solid solutions...only read for kinetic model == 5
         double *ss_scaling; // special model for solid solutions...only read for kinetic model == 5
-        string endmember_species[10]; // species for cation exchange with endmembers( maximum  10 endmembers) same order as endmembers
+      std::vector<std::string> endmember_species; // species for cation exchange with endmembers( maximum  10 endmembers) same order as endmembers
     } Kinetic_GEMS;
     vector<Kinetic_GEMS> m_kin;
 

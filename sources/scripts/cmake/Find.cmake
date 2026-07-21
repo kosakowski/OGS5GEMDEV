@@ -158,7 +158,7 @@ if(NOT OGS_FEM_GEMS AND NOT OGS_FEM_PETSC_GEMS)
 	endif()
 else()
 	# Boost with threads is required for GEMS
-	find_package(Boost 1.50.0 COMPONENTS system thread REQUIRED)
+	find_package(Boost 1.91.0 COMPONENTS thread REQUIRED)
         message(STATUS "** Boost root: ${BOOST_ROOT}")
         message(STATUS "** Boost include: ${Boost_INCLUDE_DIR}")
         message(STATUS "** Boost libraries: ${Boost_LIBRARY_DIRS}")

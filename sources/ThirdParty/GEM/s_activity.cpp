@@ -31,7 +31,6 @@
 #include "node.h"
 #include "v_service.h"
 
-#ifdef IPMGEMPLUGIN
 
 // These methods largely duplicate same-named methods from the TNode class
 //   (see node_activities.cpp)
@@ -745,7 +744,7 @@ double TActivity:: ConvertGj_toUniformStandardState( double g0, long int j, long
     case DC_AQ_SURCOMP:
         G += act.ln5551;
         // calculate molar mass of solvent
-        // [[fallthrough]];
+         [[fallthrough]];
     case DC_AQ_SOLVCOM:
     case DC_AQ_SOLVENT:
           if( noZero( YOF ) )
@@ -772,7 +771,7 @@ case DC_SCM_SPECIES:
                G += log( act.P ); // log general pressure (changed 04.12.2006)
         }
         // non-electrolyte condensed mixtures
-        // [[fallthrough]];
+         [[fallthrough]];
     case DC_SCP_CONDEN: // single-component phase
     case DC_SUR_MINAL:
     case DC_SUR_CARRIER:
@@ -1000,6 +999,5 @@ else fRestore = true;
     }  // for k
 }
 
-#endif
 
 //--------------------- End of s_activity.cpp ---------------------------

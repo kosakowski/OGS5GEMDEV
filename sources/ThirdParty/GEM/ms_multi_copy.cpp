@@ -24,16 +24,10 @@
 // along with GEMS3K code. If not, see <http://www.gnu.org/licenses/>.
 //-------------------------------------------------------------------
 
-#ifdef IPMGEMPLUGIN
 #include "ms_multi.h"
-#else
-#include "m_param.h"
-#endif
 #include "v_service.h"
 
-#ifdef IPMGEMPLUGIN
-
-void TMulti::copyMULTI( const TMulti& otherMulti )
+void TMultiBase::copyMULTI( const TMultiBase& otherMulti )
 {
     MULTI* otherPM = otherMulti.pmp;
     pa_standalone = otherMulti.pa_standalone;  
@@ -340,7 +334,7 @@ void TMulti::copyMULTI( const TMulti& otherMulti )
 }
 
 /// Realloc dynamic memory
-void TMulti::multi_realloc( char PAalp, char PSigm )
+void TMultiBase::multi_realloc( char PAalp, char PSigm )
 {
     long int ii, jj ;
     if( pm.N < 2 || pm.L < 2 || pm.FI < 1 )
@@ -470,15 +464,18 @@ void TMulti::multi_realloc( char PAalp, char PSigm )
         fillValue( pm.SFs[ii], '\0',MAXPHNAME+MAXSYMB);
     }
     pm.SM = new char[pm.L][MAXDCNAME];
-    for( ii=0; ii<pm.L; ii++)
+    pm.dcMod = new char[pm.L][6];
+    for( ii=0; ii<pm.L; ii++) {
         fillValue( pm.SM[ii], '\0', MAXDCNAME);
+        fillValue( pm.dcMod[ii], '\0', 6);
+    }
     pm.SM2 = new char[pm.Ls][MAXDCNAME];
     for( ii=0; ii<pm.Ls; ii++)
         fillValue( pm.SM2[ii], '\0', MAXDCNAME);
     pm.SF2 = new char[pm.FIs][MAXPHNAME+MAXSYMB];
     for( ii=0; ii<pm.FIs; ii++)
         fillValue( pm.SF2[ii], '\0', MAXPHNAME+MAXSYMB);
-    pm.dcMod = new char[pm.L][6];
+
 
     if( pm.L > 0 )
     {
@@ -999,7 +996,7 @@ void TMulti::multi_realloc( char PAalp, char PSigm )
 
 
 /// Reallocation of dynamic memory
-void TMulti::multi_free()
+void TMultiBase::multi_kill()
 {
     // Part 1
     // need  always to alloc vectors
@@ -1221,5 +1218,4 @@ void TMulti::multi_free()
     Free_uDD();
 }
 
-#endif
 

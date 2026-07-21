@@ -30,7 +30,7 @@
 #include <fstream>
 using namespace std;
 #include "s_solmod.h"
-#include "v_detail.h"
+#include "jsonconfig.h"
 
 
 //=============================================================================================
@@ -81,6 +81,14 @@ void THelgeson::free_internal()
 	delete[]dLnGdP;
 }
 
+// Used in GEMSFITS for mixed electrolites DM 15.08.2014
+long THelgeson::Set_Felect_bc(long int Flagelect, double Bc, double Ac)
+{
+    flagElect = Flagelect;
+    bc = Bc;
+    ac = Ac;
+    return 0;
+}
 
 /// Calculates T,P corrected parameters
 long int THelgeson::PTparam()
@@ -4751,7 +4759,7 @@ double TELVIS::qsimp(const double m_infdil, const double m_j, long int& species,
 void TELVIS::TELVIS_test_out( const char *path, const double M ) const
 {
         long int ii;//, c, a, n;
-        ofstream fo("ELVIS_gam.dat", ios::app );
+        ofstream fo(GemsSettings::with_directory("ELVIS_gam.dat"), ios::app );
         ErrorIf( !fo.good() , "ELVIS_gam.dat", "Fileopen error");
         //fo << "Gamma	lngamDH 	lngamQuac	lngamC	lngamR	lngamBorn"<<endl;
         fo << M <<" "<<(lnGamma[0]+lnGamma[1])/2<<endl;
@@ -4762,7 +4770,7 @@ void TELVIS::TELVIS_test_out( const char *path, const double M ) const
         fo.close();
 
         //const ios::open_mode OFSMODE = ios::out � ios::app;
-        ofstream ff(path, ios::app );
+        ofstream ff(GemsSettings::with_directory(path), ios::app );
         ErrorIf( !ff.good() , path, "Fileopen error");
 
 

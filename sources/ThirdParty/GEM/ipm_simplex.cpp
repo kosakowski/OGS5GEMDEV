@@ -35,7 +35,7 @@
 /// Calculation of LPP-based automatic initial approximation of the primal vector x.
 /// Use the modified simplex method with two-side constraints on x
 //
-void TMulti::AutoInitialApproximation( )
+void TMultiBase::AutoInitialApproximation( )
 {
     long int T,Q,*STR=0,*NMB=0;
     long int i,j,k;
@@ -56,7 +56,7 @@ void TMulti::AutoInitialApproximation( )
         for( i=0; i<pm.N; i++)
              DU[i+Q] = 0.;
         EPS = base_param()->EPS; //  13.10.00  KC  DK
-        GZ = 1./EPS;    
+        GZ = 1./EPS;
 
         T=0; // Calcuation of all non-zero values in A and G arrays
         for(i=0;i<pm.L;i++)
@@ -150,7 +150,7 @@ void TMulti::AutoInitialApproximation( )
 /// Generic simplex method with two sided constraints (c) K.Chudnenko 1992
 ///  SPOS function
 //
-void TMulti::SPOS( double *P, long int STR[],long int NMB[],long int J,long int M,double AA1[])
+void TMultiBase::SPOS( double *P, long int STR[],long int NMB[],long int J,long int M,double AA1[])
 {
     long int I,K;
     K=0;
@@ -169,7 +169,7 @@ void TMulti::SPOS( double *P, long int STR[],long int NMB[],long int J,long int 
 /// Generic simplex method with two sided constraints (c) K.Chudnenko 1992
 ///  START function
 //
-void TMulti::START( long int T,long int *ITER,long int M,long int N,long int NMB[],
+void TMultiBase::START( long int T,long int *ITER,long int M,long int N,long int NMB[],
            double GZ,double EPS,long int STR[],long int *BASE, double B[],
            double UND[],double UP[],double AA1[],double *A, double *Q )
 {
@@ -220,7 +220,7 @@ void TMulti::START( long int T,long int *ITER,long int M,long int N,long int NMB
 /// Generic simplex method with two sided constraints (c) K.Chudnenko 1992
 ///  NEW function
 //
-void TMulti::NEW(long int *OPT,long int N,long int M,double EPS,double *LEVEL,long int *J0,
+void TMultiBase::NEW(long int *OPT,long int N,long int M,double EPS,double *LEVEL,long int *J0,
                   long int *Z,long int STR[], long int NMB[], double UP[],
                   double AA1[], double *A)
 {
@@ -298,7 +298,7 @@ MK4:
 /// Generic simplex method with two sided constraints (c) K.Chudnenko 1992
 ///  WORK function
 //
-void TMulti::WORK(double GZ,double EPS,long int *I0, long int *J0,long int *Z,long int *ITER,
+void TMultiBase::WORK(double GZ,double EPS,long int *I0, long int *J0,long int *Z,long int *ITER,
                    long int M, long int STR[],long int NMB[],double AA1[],
                    long int BASE[],long int *UNO,double UP[],double *A,double Q[])
 {
@@ -392,7 +392,7 @@ void TMulti::WORK(double GZ,double EPS,long int *I0, long int *J0,long int *Z,lo
 /// Generic simplex method with two sided constraints (c) K.Chudnenko 1992
 ///  FIN function
 //
-void TMulti::FIN(double EPS,long int M,long int N,long int STR[],long int NMB[],
+void TMultiBase::FIN(double EPS,long int M,long int N,long int STR[],long int NMB[],
                   long int BASE[],double UND[],double UP[],double U[],
                   double AA1[],double *A,double Q[],long int * /*ITER*/)
 {
@@ -448,7 +448,7 @@ void TMulti::FIN(double EPS,long int M,long int N,long int STR[],long int NMB[],
 ///         1 if inconsistent input constraints;
 ///        -1 if memory allocation error;
 //
-void TMulti::SolveSimplex(long int M, long int N, long int T, double GZ, double EPS,
+void TMultiBase::SolveSimplex(long int M, long int N, long int T, double GZ, double EPS,
                       double *UND, double *UP, double *B, double *U,
                       double *AA1, long int *STR, long int *NMB )
 {
@@ -505,7 +505,7 @@ FINISH: FIN( EPS, M, N, STR, NMB, BASE, UND, UP, U, AA1, A, Q, &ITER);
 /// Main call to GEM IPM calculation of equilibrium state in MULTI
 /// (with internal re-scaling of the system).
 //
-double TMulti::CalculateEquilibriumState(  long int& NumIterFIA, long int& NumIterIPM )
+double TMultiBase::CalculateEquilibriumState(  long int& NumIterFIA, long int& NumIterIPM )
 {
   double ScFact=1.;
 
@@ -613,7 +613,7 @@ try{
 
 /// Calculate total IC mole amounts in b vector and
 /// return the scaling factor
-double TMulti::SystemTotalMolesIC( )
+double TMultiBase::SystemTotalMolesIC( )
 {
   double ScFact, mass_temp = 0.0;
 
@@ -629,7 +629,7 @@ double TMulti::SystemTotalMolesIC( )
 }
 
 /// Resizes MULTI (GEM IPM work structure) data into internally scaled constant mass
-void TMulti::ScaleSystemToInternal(  double ScFact )
+void TMultiBase::ScaleSystemToInternal(  double ScFact )
 {
  long int i, j, k;
 
@@ -705,7 +705,7 @@ void TMulti::ScaleSystemToInternal(  double ScFact )
 
 /// Re-scaling the internal constant-mass MULTI system definition
 /// back to real size
-void TMulti::RescaleSystemFromInternal(  double ScFact )
+void TMultiBase::RescaleSystemFromInternal(  double ScFact )
 {
  long int i, j, k;
 
@@ -787,7 +787,7 @@ void TMulti::RescaleSystemFromInternal(  double ScFact )
 // Before Calculations
 /// Calculation by IPM (preparing for calculation, unpacking data)
 /// In IPM
-void TMulti::InitalizeGEM_IPM_Data() // Reset internal data formerly MultiInit()
+void TMultiBase::InitalizeGEM_IPM_Data() // Reset internal data formerly MultiInit()
 {
 
    MultiConstInit();
@@ -814,9 +814,7 @@ void TMulti::InitalizeGEM_IPM_Data() // Reset internal data formerly MultiInit()
     {  //  Smart Initial Approximation mode
        long int j,k;
 
-#ifndef IPMGEMPLUGIN
        loadData( false );  // unpack SysEq record into MULTI
-#endif
 
      bool AllPhasesPure = true;   // Added by DK on 09.03.2010
      // checking if all phases are pure
@@ -855,7 +853,7 @@ void TMulti::InitalizeGEM_IPM_Data() // Reset internal data formerly MultiInit()
 
 /// Setup/copy flags and thresholds for numeric modules to TMulti structure.
 /// Do it before calculations
-void TMulti::MultiConstInit() // from MultiRemake
+void TMultiBase::MultiConstInit() // from MultiRemake
 {
   pm.FI1 = 0;
   pm.FI1s = 0;
@@ -886,7 +884,7 @@ void TMulti::MultiConstInit() // from MultiRemake
 }
 
 /// Calculation by IPM (internal step initialization)
-void TMulti::GEM_IPM_Init()
+void TMultiBase::GEM_IPM_Init()
 {
    int i,j,k;
 
@@ -962,7 +960,7 @@ void TMulti::GEM_IPM_Init()
 }
 
 
-TSolMod * TMulti::pTSolMod (int xPH){
+TSolMod * TMultiBase::pTSolMod (int xPH){
     return this->phSolMod[xPH];
 }
 
@@ -971,7 +969,7 @@ TSolMod * TMulti::pTSolMod (int xPH){
 
 /// Calls to minimization of other system potentials - HelmholtzEnergy.
 /// Calc function for Method of golden section (only in GEMS ).
-double TMulti::HelmholtzEnergy( double x )
+double TMultiBase::HelmholtzEnergy( double x )
 {
     pm.P = x;
     DC_LoadThermodynamicData(); // from lookup arrays
@@ -991,7 +989,7 @@ double A_P( double x, double )
 
 /// Calls to minimization of other system potentials - InternalEnergy.
 /// Calc function for Method of golden section (only in GEMS ).
-double TMulti::InternalEnergy( double TC, double P )
+double TMultiBase::InternalEnergy( double TC, double P )
 {
     pm.P = P;
     pm.TC = TC;

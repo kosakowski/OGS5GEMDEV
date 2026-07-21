@@ -59,6 +59,7 @@
 #include <iostream>
 #include <cmath>
 #include <cstring>
+#include <vector>
 #include <iostream>
 //
 #ifdef _WIN32
@@ -215,9 +216,9 @@ REACT_GEM::~REACT_GEM ( void )
 		delete [] m_soluteB_corr;		
 		delete [] m_chargeB;
 		delete [] m_chargeB_pre;
-		delete [] m_ICNL;
-		delete [] m_DCNL;
-                delete [] m_PHNL;
+		//delete [] m_ICNL;
+		//delete [] m_DCNL;
+                //delete [] m_PHNL;
 		delete [] m_co2;
 		delete [] m_co2_transport;
 
@@ -484,28 +485,30 @@ short REACT_GEM::Init_Nodes ( string Project_path)
 		m_mPS = new double [nNodes * nPS];
 		m_bPS = new double [nNodes * nIC * nPS];
 
-		m_ICNL = new char [nIC] [MaxICN]; // List of IC names in the system, [nIC]  of MaxICN length
-		m_DCNL = new char [nDC] [MaxDCN]; // List of DC names in the system, [nDC] of MaxDCN length
-		m_PHNL = new char [nDC] [MaxPHN]; // List of Phase names  [nPH]  of MaxPHN length
+		// Name lists
+		// Name lists (mit korrekter Grössenzuweisung in den Klammern)
+// Inside your initialization function:
+		m_ICNL.resize(nIC);
+		m_DCNL.resize(nDC);
+		m_PHNL.resize(nPH);
+		//		std::vector<std::string> m_ICNL(nIC); ///< List of IC names in the system
+		//		std::vector<std::string> m_DCNL(nDC); ///< List of DC names in the system
+		//		std::vector<std::string> m_PHNL(nPH); ///< List of Phase names
 
+		// Schleifen mit korrekter Zuweisung i = 0
+		for (i = 0; i < nIC; i++)
+		  {
+		    m_ICNL[i] = dCH->ICNL[i];
+		  }  
+		for (i = 0; i < nDC; i++)
+		  {
+		    m_DCNL[i] = dCH->DCNL[i];
+		  }
+		for (i = 0; i < nPH; i++)
+		  {
+		    m_PHNL[i] = dCH->PHNL[i];
+		  }
 
-		// now fill the arrays for vtk output...
-		  for( i=0; i< nIC; i++ )
-		  {
-		      std::memcpy( m_ICNL[i],dCH->ICNL[i] , MaxICN );
-		  }
-		  for( i=0; i< nDC; i++ )
-		  {
-		      std::memcpy(m_DCNL[i] , dCH->DCNL[i] , MaxDCN );
-		  }
-		  for( i=0; i< nPH; i++ )
-		  {
-		      std::memcpy( m_PHNL[i], dCH->PHNL[i] , MaxPHN );
-		  }
-		  
-//		       m_ICNL = dCH->ICNL;
-//		       m_DCNL = dCH->DCNL;
-//		       m_PHNL = dCH->PHNL;
 		// ------------------------
 		for ( in = 0; in < nNodes; in++ )
 		{
@@ -1784,7 +1787,7 @@ short REACT_GEM::GetSoComponentValue_MT ( long node_Index,
 			//get the name of compound from MT;
 			str = m_pcs->pcs_primary_function_name[0];
 			//get the index of certain compound, -1: no match
-			x_Component = m_Node->Ph_name_to_xDB ( str.c_str() );
+			x_Component = m_Node->Ph_name_to_xDB ( str );
 			if ( x_Component > -1 )
 				*( m_Phase + x_Component ) = m_pcs->GetNodeValue ( node_Index,
 				                                                   m_pcs->GetNodeValueIndex (
@@ -4091,7 +4094,7 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
     double sactivity;                          // dummy variable for extracting activities
     double omega_comp=0.0, volume_component=0.0;
     double dummy;    // dummy variable for storing direction of reaction -1 or 1
-    const char* species;
+    string species;
     DATACH* dCH;                            //pointer to DATACH
     DATABR* dBR;
     // Getting direct access to DataCH structure in GEMIPM2K memory
@@ -4238,7 +4241,7 @@ int REACT_GEM::CalcReactionRate ( long in,  TNode* m_Node )
 
                     for ( i = 0; i < m_kin[ii].n_activities; i++ ) // loop over all activities that are defined!
                     {
-                        species = m_kin[ii].active_species[i].c_str();
+                        species = m_kin[ii].active_species[i];
                         // loop over all the names in the list
                         idx = m_Node->DC_name_to_xCH ( species );
                         if ( idx < 0 )
@@ -4627,7 +4630,7 @@ double REACT_GEM::MaxDtKinetics(long in, TNode *m_Node)
 double REACT_GEM::MaxChangeKineticsPhase(long in, int ii, int i, TNode *m_Node) // in: node number, ii: counter for kinetics phase, i: endmember number in phase
 {
     long idx=0;
-    const char* species;
+    std::string species;
     double mxchange;
     double dummy=0.0, dummyc=0.0;
     long k,j;
@@ -4657,7 +4660,7 @@ double REACT_GEM::MaxChangeKineticsPhase(long in, int ii, int i, TNode *m_Node) 
             // loop over all concentrations and calculate if phase has an effect !
 //            for (i = 0; i<nIC; i++) // loop over all elements
 	  // i: is the endmember to invest -> corresponds to idx in dependent component list
-	  species = m_kin[ii].endmember_species[i].c_str();
+	  species = m_kin[ii].endmember_species[i];
 	  idx = m_Node ->IC_name_to_xCH (species);
             {
 	        dummy=0.0;
@@ -5708,7 +5711,7 @@ double REACT_GEM::SurfaceAreaPh ( long kin_phasenr,long in,  TNode* m_Node , dou
 		{	  
 	         str = m_kin[kin_phasenr].cover_phase_name[inr];                
 	         //get the index of certain compound, -1: no match
-	         volume_cover_phase = m_Node->Ph_Volume(m_Node->Ph_name_to_xDB ( str.c_str() ));
+	         volume_cover_phase = m_Node->Ph_Volume(m_Node->Ph_name_to_xDB ( str ));
 	         surf_area -= pow(volume_cover_phase,m_kin[kin_phasenr].cover_p[inr]) * m_kin[kin_phasenr].cover_kp[inr]; // here substract correction from volume
 		// if (in==341) cout << " after " <<  m_kin[kin_phasenr].cover_phase_name[inr] << " " << surf_area << " reduced by "<< pow(volume_cover_phase,m_kin[kin_phasenr].cover_p[inr]) * m_kin[kin_phasenr].cover_kp[inr] <<"\n";
 		}
@@ -6100,7 +6103,7 @@ void REACT_GEM::WriteVTKGEMValuesPETSC (PetscViewer viewer)
 //******************************** B Vector ********************
 	for ( long j = 0; j < nIC; j++ )
 	{
-		const char* fieldname =  m_ICNL[j];
+		string fieldname =  m_ICNL[j];
 		PetscObjectSetName((PetscObject)x,fieldname);
 		//....................................................................
 		for (long k = 0; k < count; k++ )
@@ -6120,7 +6123,7 @@ void REACT_GEM::WriteVTKGEMValuesPETSC (PetscViewer viewer)
 //***********************    speciation vector *********************************
 	for (long i = 0; i < nDC; i++ )
 	{
-		const char* fieldname = m_DCNL[i];
+		fieldname = m_DCNL[i];
 		PetscObjectSetName((PetscObject)x,fieldname);
 		//....................................................................
 		for (long j = 0; j < nNodes; j++ )

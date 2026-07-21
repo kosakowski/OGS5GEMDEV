@@ -30,8 +30,8 @@
 #include "io_simdjson.h"
 #include "io_keyvalue.h"
 #include "ms_multi.h"
+extern const std::string _GEMIPM_version_stamp;
 
-const char *_GEMIPM_version_stamp = " GEMS3K v.3.9.6 c.f9bc3d0";  // interim version, need merge for release v.4.0.0
 
 const double R_CONSTANT = 8.31451,
               NA_CONSTANT = 6.0221367e23,
@@ -172,7 +172,7 @@ std::vector<io_formats::outField> MULTI_dynamic_fields =  { //80
 
 /// Writing structure MULTI (GEM IPM work structure)
 template<typename TIO>
-void TMulti::to_text_file_gemipm( TIO& out_format, bool addMui,
+void TMultiBase::to_text_file_gemipm( TIO& out_format, bool addMui,
                                       bool with_comments, bool brief_mode )
 {
     const BASE_PARAM *pa_p = base_param();
@@ -603,7 +603,7 @@ void TMulti::to_text_file_gemipm( TIO& out_format, bool addMui,
 
 /// Reading structure MULTI (GEM IPM work structure)
 template<typename TIO>
-void TMulti::from_text_file_gemipm( TIO& in_format,  DATACH  *dCH )
+void TMultiBase::from_text_file_gemipm( TIO& in_format,  DATACH  *dCH )
 {
     BASE_PARAM *pa_p = base_param();
     long int ii, nfild;
@@ -688,15 +688,14 @@ void TMulti::from_text_file_gemipm( TIO& in_format,  DATACH  *dCH )
         Error( "Error", ret);
     }
 
-#ifndef IPMGEMPLUGIN
-    //   syp->PAalp = PAalp;
-    //   syp->PSigm = PSigm;
-    dyn_new();
-#else
+    // Try fix error 09.12.2025 lost pm.E after reading gems3k files
+    if( pm.E && dCH->ccIC[dCH->nICb-1] != IC_CHARGE) {
+        pm.E = 0;
+    }
+
     PAalp_ = PAalp;
     PSigm_ = PSigm;
     multi_realloc( PAalp, PSigm );
-#endif
 
     // get dynamic data from DATACH file
     for( ii=0; ii<dCH->nPH; ii++)
@@ -718,12 +717,12 @@ void TMulti::from_text_file_gemipm( TIO& in_format,  DATACH  *dCH )
     }
 
     for( ii=0; ii< dCH->nIC; ii++ )
-    { pm.Awt[ii]  = dCH->ICmm[ii]*1e3;
-        fillValue(pm.SB[ii], ' ', MaxICN );
-        len = strlen(dCH->ICNL[ii]);
-        //len = min(  len,MaxICN);
-        copyValues( pm.SB[ii], dCH->ICNL[ii], std::min<size_t>(len,MAXICNAME));
-        pm.SB[ii][MaxICN] = dCH->ccIC[ii];
+    {
+        pm.Awt[ii]  = dCH->ICmm[ii]*1e3;
+        fillValue(pm.SB[ii], ' ', MAXICNAME );
+        len = dCH->ICNL[ii].length();
+        copyValues(pm.SB[ii], dCH->ICNL[ii], std::min<size_t>(len,MAXICNAME));
+        pm.SB[ii][MAXICNAME] = dCH->ccIC[ii];
         pm.ICC[ii] =  dCH->ccIC[ii];
     }
 
@@ -739,15 +738,13 @@ void TMulti::from_text_file_gemipm( TIO& in_format,  DATACH  *dCH )
     {
         pm.MM[ii] = dCH->DCmm[ii]*1e3;
         pm.DCC[ii] = dCH->ccDC[ii];
-        len =strlen(dCH->DCNL[ii]);
-        //len = min(  len,MaxDCN);
-        copyValues( pm.SM[ii], dCH->DCNL[ii], std::min<size_t>(len,MAXDCNAME) );
+        len = dCH->DCNL[ii].length();
+        copyValues(pm.SM[ii], dCH->DCNL[ii], std::min<size_t>(len,MAXDCNAME) );
     }
 
     for( ii=0; ii< dCH->nPH; ii++ )
     {
-        len =strlen(dCH->PHNL[ii]);
-        //len = min(  len,MaxPHN);
+        len = dCH->PHNL[ii].length();
         fillValue( pm.SF[ii], ' ', MAXPHNAME+MAXSYMB );
         copyValues( pm.SF[ii]+MAXSYMB, dCH->PHNL[ii], std::min<size_t>(len,MAXPHNAME) );
         pm.SF[ii][0] = dCH->ccPH[ii];
@@ -838,6 +835,7 @@ void TMulti::from_text_file_gemipm( TIO& in_format,  DATACH  *dCH )
                 alloc_SitFr(LsSitSum);
                 fillValue( pm.SitFr, 0., LsSitSum );
                 rddar.readArray( "MoiSN", pm.MoiSN,  LsMsnSum);
+                // ??? rddar.readArray( "SitFr", pm.SitFr,  LsSitSum);
             }
             break;
         }
@@ -854,16 +852,6 @@ void TMulti::from_text_file_gemipm( TIO& in_format,  DATACH  *dCH )
                 alloc_DQFc(DQFcSum);
                 rddar.readArray(  "DQFc", pm.DQFc,  DQFcSum);
             }
-            //        if(rcpcSum )
-            //        { rddar.readNext( "rcpc");
-            //#ifdef IPMGEMPLUGIN
-            //                if(!pm.rcpc )
-            //                     pm.rcpc = new double[rcpcSum];
-            //#else
-            //                pm.rcpc = (double *)aObj[ o_wi_rcpc]->Alloc( rcpcSum, 1, D_ );
-            //#endif
-            //                rddar.readArray(  "rcpc", pm.rcpc,  rcpcSum);
-            //        }
             break;
         }
         case f_LsPhl:
@@ -1197,7 +1185,7 @@ void TMulti::from_text_file_gemipm( TIO& in_format,  DATACH  *dCH )
 /// Writes Multi to a json/key-value string
 /// \param brief_mode - Do not write data items that contain only default values
 /// \param with_comments - Write files with comments for all data entries or as "pretty JSON"
-std::string TMulti::gemipm_to_string( bool addMui, const std::string& test_set_name, bool with_comments, bool brief_mode )
+std::string TMultiBase::gemipm_to_string( bool addMui, const std::string& test_set_name, bool with_comments, bool brief_mode )
 {
     std::stringstream ss;
     write_ipm_format_stream( ss, GEMS3KGenerator::default_type_f, addMui, with_comments, brief_mode, test_set_name );
@@ -1205,7 +1193,7 @@ std::string TMulti::gemipm_to_string( bool addMui, const std::string& test_set_n
 }
 
 /// Reads Multi structure from a json/key-value string
-bool TMulti::gemipm_from_string( const std::string& data,  DATACH  *dCH, const std::string& test_set_name )
+bool TMultiBase::gemipm_from_string( const std::string& data,  DATACH  *dCH, const std::string& test_set_name )
 {
     if( data.empty() )
         return false;
@@ -1216,7 +1204,7 @@ bool TMulti::gemipm_from_string( const std::string& data,  DATACH  *dCH, const s
     return true;
 }
 
-void  TMulti::read_ipm_format_stream( std::iostream& stream, GEMS3KGenerator::IOModes  type_f, DATACH  *dCH, const std::string& test_set_name )
+void  TMultiBase::read_ipm_format_stream( std::iostream& stream, GEMS3KGenerator::IOModes  type_f, DATACH  *dCH, const std::string& test_set_name )
 {
     switch( type_f )
     {
@@ -1246,7 +1234,7 @@ void  TMulti::read_ipm_format_stream( std::iostream& stream, GEMS3KGenerator::IO
     }
 }
 
-void  TMulti::write_ipm_format_stream( std::iostream& stream, GEMS3KGenerator::IOModes type_f,
+void  TMultiBase::write_ipm_format_stream( std::iostream& stream, GEMS3KGenerator::IOModes type_f,
                                            bool addMui, bool with_comments, bool brief_mode, const std::string& test_set_name )
 {
     switch( type_f )
@@ -1257,7 +1245,7 @@ void  TMulti::write_ipm_format_stream( std::iostream& stream, GEMS3KGenerator::I
     case GEMS3KGenerator::f_thermofun:
 #ifdef USE_NLOHMANNJSON
     {
-        io_formats::NlohmannJsonWrite out_format( stream, test_set_name );
+        io_formats::NlohmannJsonWrite out_format( stream, test_set_name, with_comments );
         to_text_file_gemipm( out_format, addMui, with_comments, brief_mode );
     }
 #else
@@ -1279,14 +1267,14 @@ void  TMulti::write_ipm_format_stream( std::iostream& stream, GEMS3KGenerator::I
 
 
 #ifdef USE_NLOHMANNJSON
-template void TMulti::from_text_file_gemipm<io_formats::NlohmannJsonRead>( io_formats::NlohmannJsonRead& in_format,  DATACH  *dCH );
-template void TMulti::to_text_file_gemipm<io_formats::NlohmannJsonWrite>( io_formats::NlohmannJsonWrite& out_format, bool addMui, bool with_comments, bool brief_mode );
+template void TMultiBase::from_text_file_gemipm<io_formats::NlohmannJsonRead>( io_formats::NlohmannJsonRead& in_format,  DATACH  *dCH );
+template void TMultiBase::to_text_file_gemipm<io_formats::NlohmannJsonWrite>( io_formats::NlohmannJsonWrite& out_format, bool addMui, bool with_comments, bool brief_mode );
 #else
-template void TMulti::from_text_file_gemipm<io_formats::SimdJsonRead>( io_formats::SimdJsonRead& in_format,  DATACH  *dCH );
-template void TMulti::to_text_file_gemipm<io_formats::SimdJsonWrite>( io_formats::SimdJsonWrite& out_format, bool addMui, bool with_comments, bool brief_mode );
+template void TMultiBase::from_text_file_gemipm<io_formats::SimdJsonRead>( io_formats::SimdJsonRead& in_format,  DATACH  *dCH );
+template void TMultiBase::to_text_file_gemipm<io_formats::SimdJsonWrite>( io_formats::SimdJsonWrite& out_format, bool addMui, bool with_comments, bool brief_mode );
 #endif
-template void TMulti::from_text_file_gemipm<io_formats::KeyValueRead>( io_formats::KeyValueRead& in_format,  DATACH  *dCH );
-template void TMulti::to_text_file_gemipm<io_formats::KeyValueWrite>( io_formats::KeyValueWrite& out_format, bool addMui, bool with_comments, bool brief_mode );
+template void TMultiBase::from_text_file_gemipm<io_formats::KeyValueRead>( io_formats::KeyValueRead& in_format,  DATACH  *dCH );
+template void TMultiBase::to_text_file_gemipm<io_formats::KeyValueWrite>( io_formats::KeyValueWrite& out_format, bool addMui, bool with_comments, bool brief_mode );
 
 //=============================================================================
 // ms_multi_format.cpp

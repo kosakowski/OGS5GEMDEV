@@ -25,7 +25,6 @@
 // along with GEMS3K code. If not, see <http://www.gnu.org/licenses/>.
 //-------------------------------------------------------------------
 //
-#ifdef IPMGEMPLUGIN
 
 #include "node.h"
 
@@ -483,7 +482,6 @@ TActivity::~TActivity( )
 //         this->cnd = NULL;
 //         this->cno = NULL;
 }
-#endif
 
 //--------------------- End of node_activities.cpp ---------------------------
 

@@ -5,7 +5,10 @@
 #include <set>
 #include <optional>
 #include <algorithm>
-#include "v_detail.h"
+#include "verror.h"
+
+/// Get home directory in  C++
+std::string  home_dir();
 
 #ifdef USE_NLOHMANNJSON
 
@@ -194,9 +197,20 @@ public:
     /// Task settings file name
     static std::string settings_file_name;
 
+    /// Path to logger data (by default empty)
+    static std::string data_logger_directory;
+
     static std::string logger_section_name;
     static std::set<std::string> default_gems3k_loggers;
     static std::string gems3k_logger_pattern;
+    static size_t log_file_size;
+    static size_t log_file_count;
+    static bool log_thermodynamic;
+
+    /// Add default logger directory if only the file name
+    static std::string with_directory(const std::string& logfile_name);
+    /// "~" generally refers to the user's home directory
+    static std::string expand_home_dir(const std::string &in_path);
 
     /// Constructor
     explicit GemsSettings(const std::string& config_file_path=GemsSettings::settings_file_name);
@@ -209,6 +223,9 @@ public:
     ///        logfile_name:  add logging to rotating file name (hide if empty)
     ///        log_level:     set login level for all loggers
     void gems3k_update_loggers(bool use_stdout, const std::string &logfile_name, size_t log_level);
+
+    /// Update only log_level for all loggers
+    void gems3k_update_log_level(size_t log_level);
 
 private:
 
@@ -223,6 +240,7 @@ private:
 
     /// Update/reread spdlog settings
     bool update_logger();
+
 };
 
 GemsSettings& gemsSettings();

@@ -41,7 +41,7 @@ class NlohmannJsonWrite
     /// Internal structure of file data
     nlohmann::json json_data;
     nlohmann::json top_data;
-    std::iostream& fout;
+    std::ostream& fout;
     std::string current_set_name;
     std::string top_field_name;
 
@@ -59,7 +59,7 @@ class NlohmannJsonWrite
 public:
 
     /// Constructor
-    NlohmannJsonWrite( std::iostream& ff, const std::string& test_set_name ):
+    NlohmannJsonWrite( std::ostream& ff, const std::string& test_set_name, bool not_brief):
         json_data(), top_data(), fout(ff), current_set_name(test_set_name)
     {}
     const std::string& set_name() const
@@ -101,10 +101,12 @@ public:
     /// Writes double vector to a text file.
     /// <flds[f_num].name> arr[0] ... arr[size-1]
     /// \param l_size - Setup number of elements in line
-    /// \param with_comments - Write files with comments for all data entries
-    /// \param brief_mode - Do not write data items that contain only default values
-    void write_array( const std::string& field_name, const std::vector<double>& arr, long int  )
+    template < typename T >
+    void write_array( const std::string& field_name, const std::vector<T>& arr, long int l_size )
     {
+        if(field_name.empty()) {  // comment
+            return;
+        }
         json_data[ key(field_name) ] = arr;
     }
 
@@ -169,7 +171,7 @@ class NlohmannJsonRead
 public:
 
     /// Constructor
-    NlohmannJsonRead( std::iostream& ff, const std::string& test_set_name,  const std::string& field_name );
+    NlohmannJsonRead( std::ostream& ff, const std::string& test_set_name,  const std::string& field_name );
 
     /// Reset json loop
     void reset()
@@ -226,7 +228,10 @@ public:
     void read_strings_array( const std::string& field_name, char* arr, long int size, long int el_size );
 
     /// Reads double vector from a text file.
-    void read_array( const std::string& name, std::vector<double> arr );
+    void read_array( const std::string& name, std::vector<double>& arr );
+
+    /// Reads strings vector from a text file.
+    void read_strings_array(const std::string &field_name, std::vector<std::string> &arr);
 
     /// Empty function
     bool skip_line() { return false; }

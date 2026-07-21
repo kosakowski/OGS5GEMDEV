@@ -68,23 +68,6 @@ template <> void KeyValueWrite::write_key_value( const std::string& field_name, 
     fout  << "\"" << value << "\"";
 }
 
-void KeyValueWrite::write_array(const std::string &field_name, const std::vector<double> &arr, long l_size )
-{
-    int sz = ( l_size > 0 ? l_size: 40 );
-    int jj = 0;
-    fout << std::endl << "<" << field_name << ">" << std::endl;
-
-    for( size_t ii=0; ii<arr.size(); ii++, jj++  )
-    {
-        if(jj == sz)
-        {
-            jj=0;
-            fout << std::endl;
-        }
-        writeValue( arr[ii] );
-        fout << " ";
-    }
-}
 
 
 //------------------------------------------------------------------
@@ -192,11 +175,12 @@ void KeyValueRead::read_strings_array( const std::string&, char *arr, long size,
     }
 }
 
-void KeyValueRead::read_array( const std::string &, std::vector<double> arr )
+void KeyValueRead::read_array( const std::string &, std::vector<double>& arr )
 {
     double dval;
     char input;
 
+    arr.clear();
     if( fin.eof() )
         return;
     fin.get( input );
@@ -209,6 +193,29 @@ void KeyValueRead::read_array( const std::string &, std::vector<double> arr )
         fin.get( input );
         if(  fin.eof() )
             break;
+    }
+}
+
+void KeyValueRead::read_strings_array(const std::string &, std::vector<std::string>& arr)
+{
+    char input, buf[200];
+    arr.clear();
+
+    skip_space();
+    if(fin.eof()) {
+        return;
+    }
+    fin.get(input);
+    while(input != '<' && input != '\0') {
+        //fin.putback(input);
+        //fin.get(input);
+        fin.getline(buf, 200, '\'');
+        arr.push_back(buf);
+        skip_space();
+        if(fin.eof()) {
+            break;
+        }
+        fin.get(input);
     }
 }
 

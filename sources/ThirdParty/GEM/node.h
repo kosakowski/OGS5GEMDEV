@@ -56,20 +56,16 @@
 #define NODE_H
 
 // #include "allan_ipm.h"
-#include "datach.h"
-#include "databr.h"
+#include "datach_api.h"
 #include "activities.h"
-#include "gems3k_impex.h"
 #include "v_detail.h"
+#include "v_service.h"
 
-#ifndef IPMGEMPLUGIN
-#include "m_param.h"
-class QWidget;
-#else
 #include "ms_multi.h"
-#endif
 
-#ifdef USE_THERMOFUN
+#include "map"
+
+#ifndef NO_THERMOFUN
 #include "ThermoFun/ThermoFun.h"
 #endif
 
@@ -79,11 +75,6 @@ class TKinetics;
 extern const double bar_to_Pa,
 m3_to_cm3,
 kg_to_g;
-
-const long int
-MaxICnameLength =      6,      // IC name length
-MaxDCnameLength =      16,     // DC name length
-MaxPHnameLength =      16;     // PH name length
 
 /// \class TNode (GEMS3K kernel)
 /// Implements a simple C/C++ interface between GEM IPM and FMT codes.
@@ -111,24 +102,21 @@ protected:
     DATACH* CSD;  ///< Pointer to chemical system data structure CSD (DATACH)
     DATABR* CNode;  ///< Pointer to a work node data bridge structure (node)
 
-#ifdef USE_THERMOFUN
+#ifndef NO_THERMOFUN
     std::unique_ptr<ThermoFun::ThermoEngine> thermo_engine;
 #endif
     std::string thermo_json_string;
 
-#ifdef IPMGEMPLUGIN
     // These pointers are only used in standalone GEMS3K programs
-    TMulti* multi_base = nullptr;     // GEM IPM3 implementation class
-    std::shared_ptr<TMulti> internal_multi;
+    TMultiBase* multi_base = nullptr;     // GEM IPM3 implementation class
+    std::shared_ptr<TMultiBase> internal_multi;
     //    TAllan *ipm;       // Allan's GEM IPM implementation class
     // more speciation algorithms classes, when provided
     std::shared_ptr<TActivity> atp;   // Activity term class
     std::shared_ptr<TKinetics> kip;  // MW reaction kinetics class
     ///< used for exchanging input data and results between FMT and GEM IPM
     ACTIVITY* AiP; ///< Pointer to DC activities in phases and related properties
-#else
-    TProfil* profil;
-#endif
+
 
     // These four values are set by the last GEM_run() call
     double CalcTime;  ///< \protected GEMIPM2 calculation time, s
@@ -137,13 +125,9 @@ protected:
     NumIterFIA,   ///< \protected Total Number of performed FIA entry iterations
     NumIterIPM;   ///< \protected Total Number of performed IPM main iterations
 
-    TMulti* multi_ptr() const
+    TMultiBase* multi_ptr() const
     {
-#ifndef IPMGEMPLUGIN
-        return TMulti::sm;
-#else
         return multi_base;
-#endif
     }
 
 public:
@@ -153,14 +137,9 @@ public:
     /// Default logger for ipmLogFile
     static std::shared_ptr<spdlog::logger> ipmlog_file;
 
-#ifndef IPMGEMPLUGIN
-    /// Constructor of the class instance in memory in GEMS environment
-    TNode( MULTI *apm );
-#else
     /// Constructor of the class instance in memory for standalone GEMS3K or coupled program
     TNode();
     TNode( const TNode& otherNode );
-#endif
 
     /// Destructor
     virtual ~TNode();
@@ -211,19 +190,34 @@ public:
     long int  GEM_init( std::string dch_json, std::string ipm_json,
                         std::string dbr_json, std::string fun_json = "" );
 
-    // String i/o functions
+    /// String i/o functions
     /// Writes CSD (DATACH structure) to a json/key-value string
     /// \param brief_mode - Do not write data items that contain only default values
     /// \param with_comments - Write files with comments for all data entries or as "pretty JSON"
-    std::string datach_to_string( bool with_comments = true, bool brief_mode = false ) const;
+    std::string datach_to_string( bool with_comments = true, bool brief_mode = false ) const
+    {
+        return dbr_dch_api::datach_to_string(current_output_set_name, CSD, with_comments, brief_mode);
+    }
     /// Reads CSD (DATACH structure) from a json/key-value string
-    bool datach_from_string( std::string data );
+    bool datach_from_string( std::string data )
+    {
+        return dbr_dch_api::datach_from_string(current_input_set_name, CSD, data);
+    }
     /// Writes work node (DATABR structure) to a json/key-value string
     /// \param brief_mode - Do not write data items that contain only default values
     /// \param with_comments - Write files with comments for all data entries or as "pretty JSON"
-    std::string databr_to_string( bool with_comments = true, bool brief_mode = false ) const;
+    std::string databr_to_string( bool with_comments = true, bool brief_mode = false ) const
+    {
+#ifdef NO_NODEARRAYLEVEL
+        CNode->NodeStatusFMT = No_nodearray;
+#endif
+        return dbr_dch_api::databr_to_string(current_output_set_name, CSD, CNode, with_comments, brief_mode);
+    }
     /// Reads work node (DATABR structure) from a json/key-value string
-    bool databr_from_string( std::string data );
+    bool databr_from_string( std::string data )
+    {
+        return dbr_dch_api::databr_from_string(current_input_set_name, CSD, CNode, data);
+    }
     /// Writes Multi to a json/key-value string
     /// \param brief_mode - Do not write data items that contain only default values
     /// \param with_comments - Write files with comments for all data entries or as "pretty JSON"
@@ -250,15 +244,14 @@ public:
     /// Return code of error in IPM
     std::string code_error_IPM() const
     {
-        return std::string(pmm->errorCode, 100);
+        return char_array_to_string(pmm->errorCode, 100);
     }
     /// Returndescription of error in IPM
     std::string description_error_IPM() const
     {
-        return std::string(pmm->errorBuf, 1024);
+        return char_array_to_string(pmm->errorBuf, 1024);
     }
 
-#ifdef IPMGEMPLUGIN
     //  Calls for direct coupling of a FMT code with GEMS3K
 
     /// (6) Passes (copies) the GEMS3K input data from the work instance of DATABR structure.
@@ -442,7 +435,6 @@ public:
         return pmm->ITau;
     }
 
-#endif
 
     /// (5) Reads another DBR file (with input system composition, T,P etc.) \ . The DBR file must be compatible with
     /// the currently loaded IPM and DCH files (see description  of GEM_init() function call).
@@ -476,7 +468,7 @@ public:
     /// Returns GEMIPM2 calculation time in seconds elapsed during the last call of GEM_run() - can be used for monitoring
     ///                      the performance of calculations.
     /// \return double number, may contain 0.0 if the calculation time is less than the internal time resolution of C/C++ function
-    double GEM_CalcTime();
+    double GEM_CalcTime(long int& NumK2, long int& NumIterFIA, long int& NumIterIPM);
 
     /// To obtain the number of GEM IPM2 iterations performed during the last call of GEM_run() e.g. for monitoring the
     /// performance of GEMS3K in AIA or SIA modes, or for problem diagnostics.
@@ -517,10 +509,8 @@ public:
     /// from the project database, not just the records needed for a particular system
     /// (where some elements, DComps or ReacDCs can be switched off) as done in preparation of DCH lookup arrays.
     ///  \param stream     stream to output json file
-    void  write_ThermoFun_format_stream(std::iostream&  stream, bool compact);
+    virtual void  write_ThermoFun_format_stream(std::iostream&  stream, bool compact);
 
-
-#ifdef IPMGEMPLUGIN
     /// (7)  Retrieves the GEMIPM2 chemical speciation calculation results from the work DATABR structure instance
     ///   into memory provided by the mass transport part. Dimensions and order of elements in the arrays must correspond
     ///   to those in currently existing DATACH memory structure.
@@ -569,7 +559,6 @@ public:
             double *p_asPH    ///< Specific surface areas of phases m2/kg  [nPHb]          -       -      +     -
             );
 
-#endif
 
     // Access methods for direct or protected manipulation of CSD and DBR data
 
@@ -580,10 +569,16 @@ public:
     /// usage on the level of TNodearray is not recommended !
     {        return CNode;     }
 
-#ifdef IPMGEMPLUGIN
     TActivity* pActiv() const  /// Get pointer to TActivity class instance
     { return atp.get(); }
-#endif
+
+    const MULTI& otherPMM() const
+    { 
+        if (!pmm) {
+            throw std::runtime_error("TNode::otherPMM(): pmm is null");
+        }
+        return *pmm; 
+    }
 
     // These methods get contents of fields in the work node structure
     double cTC() const     /// Get current node Temperature T, Celsius
@@ -610,25 +605,34 @@ public:
     // and DataBR (or node) data structures for components and phases
     // (i.e. between the chemical system definition and the node)
 
+    //DM 25.02.2014 (call from gemsfit)
+    void Access_GEM_IMP_init();
+    long get_sizeTSolMod();
     /// Return a pointer to a phase (TSolMod) with index xPH
     void *get_ptrTSolMod( int xPH ) const;
 
     /// Returns DCH index of IC given the IC Name string (null-terminated)
     /// or -1 if no such name was found in the DATACH IC name list
-    long int IC_name_to_xCH( const char *Name ) const;
+    long int IC_name_to_xCH(const std::string& name) const;
 
-    /// Returns DCH index of DC given the DC Name string
+    /// Returns first DCH index of DC given the DC Name string
     /// or -1 if no such name was found in the DATACH DC name list
-    long int DC_name_to_xCH( const char *Name ) const;
+    long int DC_name_to_xCH(const std::string& name) const;
+
+    /// Returns all DCH indexes and the corresponding phase names  given the DC Name string
+    std::map<std::string, long int> DC_name_to_xCH_map(const std::string& name) const;
 
     /// Returns DC Name string given the DCH index of DC, check MaxDCnameLength
     /// or -1 if no such name was found in the DATACH DC name list
-    char* xCH_to_DC_name( int xCH ) const
+    const std::string& xCH_to_DC_name( int xCH ) const
     {return CSD->DCNL[xCH];}
+
+    const std::string& xCH_to_PH_name( int xCH ) const
+    {return CSD->PHNL[xCH];}
 
     /// Returns IC Name string given the ICH index of IC, check MaxICnameLength
     /// or -1 if no such name was found in the DATACH IC name list
-    char* xCH_to_IC_name( int xCH ) const
+    const std::string& xCH_to_IC_name( int xCH ) const
     {return CSD->ICNL[xCH];}
 
     /// Returns the class codes of phase given the ICH index of PH, check check MaxPHnameLength
@@ -641,24 +645,33 @@ public:
     long int* Get_LsMod ( ) const
     {return pmm->LsMod;}
 
+    /// Returns the Dimensions of TSolMod <DMc> and <MoiSN> arrays [nPS*3]: In each row (for phase):
+    /// number of parameters per component; [1] 0; [2] 0. For multi-site (sublattice) models:
+    /// [1] number of sublattices nS; [2] total number of moieties nM acting in sublattice sites
+    long int* Get_LsMdc ( ) const
+    {return pmm->LsMdc;}
+
     /// Returns DCH index of Phase given the Phase Name string
     /// or -1 if no such name was found in the DATACH Phase name list
-    long int Ph_name_to_xCH( const char *Name ) const;
+    long int Ph_name_to_xCH(const std::string& name) const;
 
     /// Returns DBR index of IC given the IC Name string
     /// or -1 if no such name was found in the DATACH IC name list
-    inline long int IC_name_to_xDB( const char *Name ) const
-    { return IC_xCH_to_xDB( IC_name_to_xCH( Name ) ); }
+    inline long int IC_name_to_xDB(const std::string& name) const
+    { return IC_xCH_to_xDB( IC_name_to_xCH( name ) ); }
 
-    /// Returns DBR index of DC given the DC Name string
+    /// Returns first DBR index of DC given the DC Name string
     /// or -1 if no such name was found in the DATACH DC name list
-    inline long int DC_name_to_xDB( const char *Name ) const
-    { return DC_xCH_to_xDB( DC_name_to_xCH( Name ) ); }
+    inline long int DC_name_to_xDB(const std::string& name) const
+    { return DC_xCH_to_xDB( DC_name_to_xCH( name ) ); }
+
+    /// Returns all DBR indexes and the corresponding phase names  given the DC Name string
+    std::map<std::string, long int> DC_xCH_to_xDB_map(const std::string& name) const;
 
     /// Returns DBR index of Phase given the Phase Name string
     /// or -1 if no such name was found in the DATACH Phase name list
-    inline long int Ph_name_to_xDB( const char *Name ) const
-    { return Ph_xCH_to_xDB( Ph_name_to_xCH( Name ) ); }
+    inline long int Ph_name_to_xDB(const std::string& name) const
+    { return Ph_xCH_to_xDB( Ph_name_to_xCH( name ) ); }
 
     /// Converts the IC DCH index into the IC DBR index
     /// or returns -1 if this IC is not used in the data bridge
@@ -671,6 +684,18 @@ public:
     /// Converts the Phase DCH index into the Phase DBR index
     /// or returns -1 if this Phase is not used in the data bridge
     long int Ph_xCH_to_xDB( const long int xCH ) const;
+
+    /// Checking if a specific IC DCH index is valid or "exists" within an array.
+    /// Return false and print a warning message if the index is not a valid.
+    bool check_IC_xCH( const long int xCH ) const;
+
+    /// Checking if a specific DC DCH index is valid or "exists" within an array.
+    /// Return false and print a warning message if the index is not a valid.
+    bool check_DC_xCH( const long int xCH ) const;
+
+    /// Checking if a specific Phase DCH index is valid or "exists" within an array.
+    /// Return false and print a warning message if the index is not a valid.
+    bool check_Phase_xCH( const long int xCH ) const;
 
     /// Converts the IC DBR index into the IC DCH index
     inline long int IC_xDB_to_xCH( const long int xBR ) const
@@ -703,7 +728,7 @@ public:
 
     // Data exchange methods between GEMIPM and work node DATABR structure
     // Are called inside of GEM_run()
-    void packDataBr();   ///<  Packs GEMIPM calculation results into work node structure
+    virtual void packDataBr();   ///<  Packs GEMIPM calculation results into work node structure
     void unpackDataBr( bool uPrimalSol ); ///<  unpacks work DATABR content into GEMIPM data structure
 
     // Access to interpolated thermodynamic data from DCH structure
@@ -713,24 +738,30 @@ public:
 
     /// Tests TK as a grid point for the interpolation of thermodynamic data.
     /// \return index in the lookup grid array or -1  if it is not a grid point
-    long int  check_grid_T( double TK ) const;
+    long int  check_grid_T( double TK ) const
+    {
+        return dbr_dch_api::check_grid_T(CSD, TK);
+    }
 
     /// Tests P as a grid point for the interpolation of thermodynamic data.
     /// \return index in the lookup grid array or -1 if it is not a grid point
-    long int  check_grid_P( double P ) const;
+    long int  check_grid_P( double P ) const
+    {
+        return dbr_dch_api::check_grid_P(CSD, P);
+    }
 
     /// Tests T (K) and P (Pa) as a grid point for the interpolation of thermodynamic data using DATACH
     /// lookup arrays. \return -1L if interpolation is needed, or 1D index of the lookup array element
     /// if TK and P fit within the respective tolerances.
-    long int  check_grid_TP(  double T, double P ) const;
+    long int  check_grid_TP(double T, double P) const
+    {
+        return dbr_dch_api::check_grid_TP(CSD, T, P);
+    }
 
     /// Returns number of temperature and  pressure grid points for one dependent component
     inline long int gridTP() const
     {
-        if( CSD->mLook == 1L )
-            return CSD->nTp;
-        else
-            return (CSD->nPp * CSD->nTp);
+        return dbr_dch_api::gridTP(CSD);
     }
 
     /// Returns 1 if a Psat value corresponding to the temperature of interest was found in the GEMS3K input file
@@ -749,6 +780,14 @@ public:
     /// \param new_G0 in J/mol;
     /// \return 0
     double Set_DC_G0(const long int xCH, const double P, const double TK, const double new_G0 );
+
+    ///
+    /// \brief Set_aPH
+    /// \param xPH index of phase
+    /// \param aPH sepcific surface area in m2/kg
+    /// \return
+    ///
+    double Set_aPH(const long int xPH, const double aPH );
 
     /// Retrieves (interpolated) molar Gibbs energy G0(P,TK) value for Dependent Component
     /// from the DATACH structure.
@@ -1036,7 +1075,6 @@ public:
     inline void Set_IC_b( const double b_val, const long int xCH)
     { pmm->B[xCH] = b_val; }
 
-#ifdef IPMGEMPLUGIN
     // used in GEMSFIT
     /// Sets the mLook Mode of lookup-interpolation: 0 interpolation (on nTp*nPp grid).
     /// \param mLook is 0 or 1
@@ -1055,8 +1093,7 @@ public:
     {  PMc_val = pmm->PMc[xPMc]; load_thermodynamic_data = false; }
 
     /// Gets code of the aquesous solution model
-    inline void Get_sMod( int ndx, std::string &sMod)
-    {  sMod = pmm->sMod[ndx];}
+    void Get_sMod( int ndx, std::string &sMod);
 
     /// Sets the value of the phase component parameter.
     /// Internal re-scaling to mass of the system is applied.
@@ -1064,7 +1101,12 @@ public:
     /// \param xDMC is the index of the interaction parameter
     inline void Set_DMc( const double DMc_val, const long int xDMc)
     { pmm->DMc[xDMc] = DMc_val; load_thermodynamic_data = false; }
-#endif
+
+    /// Gets the value of the interaction parameter.
+    inline void Get_DMc( double &DMc_val, const long int xDMc)
+    {  DMc_val = pmm->DMc[xDMc];  }
+
+
 
     /// Retrieves the current total amount of Independent Component.
     /// Also amount of ICs not included into DATABR list can be retrieved.
@@ -1179,36 +1221,6 @@ public:
     ///      false - in J/mol; true (default) - in mol/mol
     double DC_mu0(const long int xCH, bool norm=true);
 
-#ifndef IPMGEMPLUGIN
-    // These calls are used only inside the GEMS-PSI GEM2MT module
-
-    /// Makes start DATACH and DATABR data using GEMS internal data (MULTI and other)
-    /// interaction variant. The user must select ICs, DCs and phases to be included
-    /// in DATABR lists
-    void MakeNodeStructures( QWidget* par, bool select_all,bool no_interpolat,
-                             double *Tai, double *Pai, long int nTp_ = 1 ,
-                             long int nPp_ = 1 , double Ttol_ = 1., double Ptol_ =1. );
-    /// Makes start DATACH and DATABR data using GEMS internal data (MULTI and other)
-    /// interaction variant. The user must select ICs, DCs and phases to be included
-    /// in DATABR lists
-    /// Lookup arays from iterators
-    void MakeNodeStructures( QWidget* par, bool select_all,
-                             double Tai[4], double Pai[4]  );
-
-
-    /// Overloaded variant - takes lists of ICs, DCs and phases according to
-    /// already existing index vectors axIC, axDC, axPH (with anICb, anDCb,
-    /// anPHb, respectively)
-    void MakeNodeStructures(  long int anICb, long int anDCb,  long int anPHb,
-                              long int* axIC, long int* axDC,  long int* axPH, bool no_interpolat,
-                              double* Tai, double* Pai,  long int nTp_,
-                              long int nPp_, double Ttol_, double Ptol_  );
-
-    /// Test temperature and pressure values for the interpolation grid
-    bool TestTPGrid(  double Tai[4], double Pai[4] );
-
-#endif
-
     /// Writes work node (DATABR structure) to a text VTK file
     virtual void databr_to_vtk( std::fstream& ff, const char*name, double time, long int  cycle,
                                 long int nFilds, long int (*Flds)[2]);
@@ -1235,54 +1247,17 @@ public:
 
     /// Deletes fields of DATABR structure indicated by data_BR_
     /// and sets the pointer data_BR_ to NULL
-    DATABR* databr_free( DATABR* data_BR_ );
+    DATABR* databr_free(DATABR* data_BR_);
 
 protected:
 
     void allocMemory();
     void freeMemory();
 
-    // Functions that maintain DATACH and DATABR memory allocation
-    void datach_realloc();
-    void datach_free();
-    void datach_reset();
     void databr_realloc()
     {
-        databr_realloc( CNode);
+        dbr_dch_api::databr_realloc(CSD, CNode);
     }
-
-    void databr_realloc( DATABR * CNode_);
-    void databr_free_internal(DATABR *CNode_);
-    void databr_reset( DATABR *CNode, long int level=0 );
-
-    // Binary i/o functions
-    // including file i/o using GemDataStream class (with account for endianness)
-    /// Writes CSD (DATACH structure) to a binary DCH file.
-    void datach_to_file( GemDataStream& ff );
-    /// Reads CSD (DATACH structure) from a binary DCH file.
-    void datach_from_file( GemDataStream& ff );
-    /// Writes node (work DATABR structure) to a binary DBR file.
-    void databr_to_file( GemDataStream& ff );
-    /// Reads node (work DATABR structure) from a binary DBR file.
-    void databr_from_file( GemDataStream& ff );
-
-    // Text i/o functions
-    /// Writes CSD (DATACH structure) to a text DCH file
-    /// \param brief_mode - Do not write data items that contain only default values
-    /// \param with_comments - Write files with comments for all data entries or as "pretty JSON"
-    template<typename TIO>
-    void datach_to_text_file( TIO& out_format, bool use_thermofun, bool with_comments = true, bool brief_mode = false ) const;
-    /// Reads CSD (DATACH structure) from a text DCH file
-    template<typename TIO>
-    void datach_from_text_file( TIO& in_format, bool use_thermofun );
-    /// Writes work node (DATABR structure) to a text DBR file
-    /// \param brief_mode - Do not write data items that contain only default values
-    /// \param with_comments - Write files with comments for all data entries or as "pretty JSON"
-    template<typename TIO>
-    void databr_to_text_file( TIO& out_format, bool with_comments = true, bool brief_mode = false ) const;
-    /// Reads work node (DATABR structure) from a text DBR file
-    template<typename TIO>
-    void databr_from_text_file( TIO& in_format );
 
     ///  Reads the contents of the work instance of the DATABR structure from a disk file with path name dbr_file.
     ///   \param dbr_file  string containing a full path to the DBR disk file to be read.
@@ -1300,38 +1275,6 @@ protected:
     ///  \param brief_mode     if true, tells that do not write data items,  that contain only default values in text format
     void  write_dbr_format_file( const std::string& dbr_file, GEMS3KGenerator::IOModes type_f, bool with_comments, bool brief_mode );
 
-
-    ///  Reads the contents of the work instance of the DATABR structure from a stream.
-    ///   \param stream    string or file stream.
-    ///   \param type_f    defines if the file is in binary format (1), in text format (0) or in json format (2).
-    void  read_dbr_format_stream( std::iostream& stream, GEMS3KGenerator::IOModes type_f );
-
-    /// Writes the contents of the work instance of the DATABR structure into a stream.
-    ///   \param stream    string or file stream.
-    ///   \param type_f    defines if the file is in binary format (1), in text format (0) or in json format (2).
-    ///   \param with_comments (text format only): defines the mode of output of comments written before each data tag and  content
-    ///                 in the DBR file. If set to true (1), the comments will be written for all data entries (default).
-    ///                 If   false (0), comments will not be written;
-    ///                         (json format): interpret the flag with_comments=on as "pretty JSON" and
-    ///                                   with_comments=off as "condensed JSON"
-    ///  \param brief_mode     if true, tells that do not write data items,  that contain only default values in text format
-    void  write_dbr_format_stream( std::iostream& stream, GEMS3KGenerator::IOModes type_f, bool with_comments, bool brief_mode ) const;
-
-    ///  Reads the contents of the work instance of the DATACH structure from a stream.
-    ///   \param stream    string or file stream.
-    ///   \param type_f    defines if the file is in binary format (1), in text format (0) or in json format (2).
-    void  read_dch_format_stream( std::iostream& stream, GEMS3KGenerator::IOModes type_f );
-
-    /// Writes the contents of the work instance of the DATACH structure into a stream.
-    ///   \param stream    string or file stream.
-    ///   \param type_f    defines if the file is in binary format (1), in text format (0) or in json format (2).
-    ///   \param with_comments (text format only): defines the mode of output of comments written before each data tag and  content
-    ///                 in the DBR file. If set to true (1), the comments will be written for all data entries (default).
-    ///                 If   false (0), comments will not be written;
-    ///                         (json format): interpret the flag with_comments=on as "pretty JSON" and
-    ///                                   with_comments=off as "condensed JSON"
-    ///  \param brief_mode     if true, tells that do not write data items,  that contain only default values in text format
-    void  write_dch_format_stream( std::iostream& stream, GEMS3KGenerator::IOModes type_f, bool with_comments, bool brief_mode ) const;
 
     // Methods to perform output to vtk files
 
@@ -1360,29 +1303,7 @@ protected:
 
     /// Test to reload thermodynamic data from grid
     void CheckMtparam();
-
-#ifndef IPMGEMPLUGIN
-    // Integration in GEMS-PSI GUI environment
-    // Prepares and writes DCH and DBR files for reading into the coupled code
-    void makeStartDataChBR( QWidget* par, bool no_interpolat,
-                            TCIntArray& selIC, TCIntArray& selDC, TCIntArray& selPH,
-                            long int nTp_, long int nPp_, double Ttol_, double Ptol_,
-                            double *Tai, double *Pai );
-    void makeStartDataChBR( QWidget* par,
-                            TCIntArray& selIC, TCIntArray& selDC, TCIntArray& selPH,
-                            double Tai[4], double Pai[4] );
-
-    // Building internal dataCH and DataBR structures from Multi
-    void setupDataChBR( TCIntArray& selIC, TCIntArray& selDC, TCIntArray& selPH,
-                        long int nTp_, long int nPp_, bool use_grid );
-    // Build lists names of components for selection into DataBridge
-    void getDataBridgeNames( QWidget* par, bool select_all,
-                             TCIntArray& selIC, TCIntArray& selDC, TCIntArray& selPH  );
-
-    // Virtual function for interaction with TNodeArray class
-    virtual void  setNodeArray( std::string& , long int , bool ) { }
-
-#else
+    virtual void init_into_gems3k();
 
 public:
 
@@ -1475,7 +1396,6 @@ public:
 
     // long int updateKineticsMetastability( long int LinkMode );
 
-#endif
 
 };
 

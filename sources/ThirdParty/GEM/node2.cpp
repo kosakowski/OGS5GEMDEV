@@ -90,56 +90,91 @@ double TNode::Get_Psat(double Tk)
 //-----------------------------------------------------------------
 // work with lists
 
-#ifdef IPMGEMPLUGIN
 void *TNode::get_ptrTSolMod(int xPH) const
 {
     return multi_ptr()->pTSolMod(xPH);
 }
-#endif
+void TNode::Access_GEM_IMP_init()
+{
+    multi_ptr()->GEM_IPM_Init();
+}
+long TNode::get_sizeTSolMod()
+{
+    return multi_ptr()->sizeFIs;
+}
+
 
 //Returns DCH index of IC given the IC Name string (null-terminated)
 // or -1 if no such name was found in the DATACH IC name list
-long int TNode::IC_name_to_xCH( const char *Name ) const
+long int TNode::IC_name_to_xCH(const std::string& name) const
 {
     long int ii;
-    size_t len = strlen( Name );
-    len =  std::min<size_t>(len,MaxICN);
-
-    for(ii = 0; ii<CSD->nIC; ii++ )
-        if(!memcmp(Name, CSD->ICNL[ii], len ))
-            if( len == MaxICN || CSD->ICNL[ii][len] == ' ' || CSD->ICNL[ii][len] == '\0' )
-                return ii;
+    for(ii = 0; ii<CSD->ICNL.size(); ii++) {
+        if(name == CSD->ICNL[ii]) {
+            return ii;
+        }
+    }
+    gems_logger->warn("Element {} not found in the DATACH IC name list", name);
     return -1;
 }
 
 // Returns DCH index of DC given the DC Name string
 // or -1 if no such name was found in the DATACH DC name list
-long int TNode::DC_name_to_xCH( const char *Name ) const
+long int TNode::DC_name_to_xCH(const std::string& name) const
 {
     long int ii;
-    size_t len = strlen( Name );
-    len =  std::min<size_t>(len,MaxDCN);
-
-    for( ii = 0; ii<CSD->nDC; ii++ )
-        if(!memcmp(Name, CSD->DCNL[ii], std::min<size_t>(len,MaxDCN)))
-            if( len == MaxDCN || CSD->DCNL[ii][len] == ' ' || CSD->DCNL[ii][len] == '\0' )
-                return ii;
+    for(ii = 0; ii<CSD->DCNL.size(); ii++) {
+        if(name == CSD->DCNL[ii]) {
+            return ii;
+        }
+    }
+    gems_logger->warn("Substance {} not found in the DATACH DC name list", name);
     return -1;
+}
+
+std::map<std::string, long> TNode::DC_name_to_xCH_map(const std::string &name) const
+{
+    std::map<std::string, long> ndx_map;
+    long int k, jb=0, je=0, jj;
+
+    for(k=0; k<CSD->nPHb; k++) {
+        jb = je;
+        je += CSD->nDCinPH[k];
+        for(jj = jb; jj<je; jj++) {
+            if(name == CSD->DCNL[jj]) {
+                ndx_map[CSD->PHNL[k]] = jj;
+                break;
+            }
+        }
+    }
+    return ndx_map;
 }
 
 // Returns DCH index of Phase given the Phase Name string
 // or -1 if no such name was found in the DATACH Phase name list
-long int TNode::Ph_name_to_xCH( const char *Name ) const
+long int TNode::Ph_name_to_xCH(const std::string& name) const
 {
     long int ii;
-    size_t len = strlen( Name );
-    len =  std::min<size_t>(len,MaxPHN);
-
-    for( ii = 0; ii<CSD->nPH; ii++ )
-        if(!memcmp(Name, CSD->PHNL[ii], std::min<size_t>(len,MaxPHN)))
-            if( len == MaxPHN || CSD->PHNL[ii][len] == ' ' || CSD->PHNL[ii][len] == '\0' )
-                return ii;
+    for(ii = 0; ii<CSD->PHNL.size(); ii++) {
+        if(name == CSD->PHNL[ii]) {
+            return ii;
+        }
+    }
+    gems_logger->warn("Phase {} not found in the DATACH Phase name list", name);
     return -1;
+}
+
+std::map<std::string, long> TNode::DC_xCH_to_xDB_map(const std::string &name) const
+{
+    std::map<std::string, long> xDB_map;
+    auto xCH_map = DC_name_to_xCH_map(name);
+    for(auto& item: xCH_map) {
+        auto xDB = DC_xCH_to_xDB(item.second);
+        if(xDB>=0) {
+            xDB_map[item.first] = xDB;
+        }
+    }
+    return xDB_map;
 }
 
 // Converts the IC DCH index into the IC DBR index
@@ -149,6 +184,7 @@ long int TNode::IC_xCH_to_xDB( const long int xCH ) const
     for(long int ii = 0; ii<CSD->nICb; ii++ )
         if( CSD->xic[ii] == xCH )
             return ii;
+    gems_logger->warn("IC index {} is not used in the data bridge", xCH);
     return -1;
 }
 
@@ -159,6 +195,7 @@ long int TNode::DC_xCH_to_xDB( const long int xCH ) const
     for(long int ii = 0; ii<CSD->nDCb; ii++ )
         if( CSD->xdc[ii] == xCH )
             return ii;
+    gems_logger->warn("DC index {} is not used in the data bridge", xCH);
     return -1;
 }
 
@@ -169,7 +206,35 @@ long int TNode::Ph_xCH_to_xDB( const long int xCH ) const
     for(long int ii = 0; ii<CSD->nPHb; ii++ )
         if( CSD->xph[ii] == xCH )
             return ii;
+    gems_logger->warn("Phase index {} is not used in the data bridge", xCH);
     return -1;
+}
+
+bool TNode::check_IC_xCH(const long xCH) const
+{
+    if(xCH>=CSD->nIC || xCH<0) {
+        gems_logger->warn("IC index {}({}) is not a valid", xCH, CSD->nIC);
+        return false;
+    }
+    return true;
+}
+
+bool TNode::check_DC_xCH(const long xCH) const
+{
+    if(xCH>=CSD->nDC || xCH<0) {
+        gems_logger->warn("DC index {}({}) is not a valid", xCH, CSD->nDC);
+        return false;
+    }
+    return true;
+}
+
+bool TNode::check_Phase_xCH(const long xCH) const
+{
+    if(xCH>=CSD->nPH || xCH<0) {
+        gems_logger->warn("Phase index {}({}) is not a valid", xCH, CSD->nPH);
+        return false;
+    }
+    return true;
 }
 
 // Returns the DCH index of the first DC belonging to the phase with DCH index Phx
@@ -247,58 +312,6 @@ long int  TNode::PhtoDC_DBR( const long int Phx, long int& nDCinPh ) const
     return DCx;
 }
 
-// Test TK as lying in the vicinity of a grid point for the interpolation of thermodynamic data
-// Return index of the node in lookup array or -1
-long int  TNode::check_grid_T( double TK ) const
-{
-    long int jj;
-    for( jj=0; jj<CSD->nTp; jj++)
-        if( fabs( TK - CSD->TKval[jj] ) < CSD->Ttol )
-            return jj;
-    return -1;
-}
-
-// Test P as lying in the vicinity of a grid point for the interpolation of thermodynamic data
-// Return index of the node in lookup array or -1
-long int  TNode::check_grid_P( double P ) const
-{
-    long int jj;
-    for( jj=0; jj<CSD->nPp; jj++)
-        if( fabs( P - CSD->Pval[jj] ) < CSD->Ptol )
-            return jj;
-    return -1;
-}
-
-// Tests TK and P as a grid point for the interpolation of thermodynamic data using DATACH
-// lookup arrays. Returns -1L if interpolation is needed, or 1D index of the lookup array element
-// if TK and P fit within the respective tolerances.
-// For producing lookup arrays (in GEMS), we recommend using step for temperature less or equal to 10 degrees
-// in order to assure good accuracy of interpolation especially for S0 and Cp0 of aqueous species.
-long int  TNode::check_grid_TP(  double TK, double P ) const
-{
-    long int xT, xP, ndx=-1;
-
-    if( CSD->mLook == 1 )
-    {
-        for(long int  jj=0; jj<CSD->nPp; jj++)
-            if( (fabs( P - CSD->Pval[jj] ) < CSD->Ptol ) && ( fabs( TK - CSD->TKval[jj] ) < CSD->Ttol ) )
-                return jj;
-        Error( "check_grid_TP: " , std::string("Temperature ")+std::to_string(TK)+
-               " and pressure "+std::to_string(P)+" out of grid" );
-        //return -1;
-    }
-    else
-    {
-        xT = check_grid_T( TK );
-        xP = check_grid_P( P );
-        if( xT >=0 && xP>= 0 )
-            ndx =  xP * CSD->nTp + xT;
-        return ndx;
-    }
-    return ndx;
-}
-
-#ifdef IPMGEMPLUGIN
 // used in GEMSFIT only
 //Sets new molar Gibbs energy G0(P,TK) value for Dependent Component
 //in the DATACH structure ( xCH is the DC DCH index) or 7777777., if TK (temperature, Kelvin)
@@ -323,7 +336,20 @@ double TNode::Set_DC_G0(const long int xCH, const double P, const double TK, con
     }
     return 0;
 }
-#endif
+
+
+// used in GEMSFIT only
+//Sets specific surface area (m2/kg)
+//in the DATACH structure ( xPH is the PH DCH index)
+double TNode::Set_aPH(const long int xPH, const double aPH )
+{
+    if( CSD->nAalp >0 )
+    {
+        CNode->aPH[xPH] = aPH;
+        return 0;
+    }
+    return 1;
+}
 
 //Retrieves (interpolated) molar Gibbs energy G0(P,TK) value for Dependent Component
 //from the DATACH structure ( xCH is the DC DCH index) or 7777777., if TK (temperature, Kelvin)

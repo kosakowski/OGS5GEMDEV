@@ -37,14 +37,14 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 
 // Thread-safe logger to stdout with colors
-std::shared_ptr<spdlog::logger> TMulti::ipm_logger = spdlog::stdout_color_mt("ipm");
+std::shared_ptr<spdlog::logger> TMultiBase::ipm_logger = spdlog::stdout_color_mt("ipm");
 
 #define uDDtrace false
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 /// Call to GEM IPM calculation of equilibrium state in MULTI
 /// (with already scaled GEM problem)
-void TMulti::GibbsEnergyMinimization()
+void TMultiBase::GibbsEnergyMinimization()
 {
   bool IAstatus;
   Reset_uDD( 0L, uDDtrace); // Experimental - added 06.05.2011 KD
@@ -107,7 +107,7 @@ FORCED_AIA:
 ///  rLoop is the index of the primal solution refinement loop (for tracing)
 ///   or -1 if this is main GEM_IPM call
 //
-void TMulti::GEM_IPM( long int /*rLoop*/ )
+void TMultiBase::GEM_IPM( long int /*rLoop*/ )
 {
     long int i, j, eRet, status=0; long int csRet=0;
 // bool CleanAfterIPM = true;
@@ -171,9 +171,26 @@ to_text_file( "MultiDumpD.txt" );   // Debugging
 // Diagnostics of IPM results
    switch( eRet )
    {
-     case 0:  // OK
-            CalculateActivityCoefficients( LINK_PP_MODE);
-            break;
+   case 0:  // OK
+ #ifndef NDEBUG
+       if(gems_logger->should_log(spdlog::level::debug)) {
+           gems_logger->debug("Before CalculateActivityCoefficients:");
+           for(int j = 0; j < pm.L; j++)
+               gems_logger->debug("  j={} Y={:.6e} X={:.6e} W={:.6e} F={:.6e} lnGam={:.6e}",
+                                  j, pm.Y[j], pm.X[j], pm.W[j], pm.F[j], pm.lnGam[j]);
+       }
+#endif
+
+       CalculateActivityCoefficients(LINK_PP_MODE);
+#ifndef NDEBUG
+       if(gems_logger->should_log(spdlog::level::debug)) {
+           gems_logger->debug("After CalculateActivityCoefficients:");
+           for(int j = 0; j < pm.L; j++)
+               gems_logger->debug("  j={} Y={:.6e} X={:.6e} W={:.6e} F={:.6e} lnGam={:.6e}",
+                                  j, pm.Y[j], pm.X[j], pm.W[j], pm.F[j], pm.lnGam[j]);
+       }
+#endif
+       break;
      case 2:  // max number of iterations has been exceeded in InteriorPointsMethod()
      case 1: // degeneration in R matrix  for InteriorPointsMethod()
          if( pm.pNP )
@@ -213,7 +230,32 @@ to_text_file( "MultiDumpD.txt" );   // Debugging
        if( pa_p->PC > 2 )
            cleanupStatus = 0; // in this case separate SpeciationCleanup() is called
 
+#ifndef NDEBUG
+       if(gems_logger->should_log(spdlog::level::debug)) {
+           gems_logger->debug("Before PhaseSelectionSpeciationCleanup - species amounts:");
+           for(int i = 0; i < pm.N; i++)
+               gems_logger->debug("  x[{}] = {:.6e}", i, pm.X[i]); // or whatever the species array is
+       }
+#endif
        ps_rcode = PhaseSelectionSpeciationCleanup( k_miss, k_unst, cleanupStatus );
+
+#ifndef NDEBUG
+       if(gems_logger->should_log(spdlog::level::debug)) {
+           gems_logger->debug("After PhaseSelectionSpeciationCleanup - species amounts:");
+           for(int i = 0; i < pm.N; i++)
+               gems_logger->debug("  x[{}] = {:.6e}", i, pm.X[i]);
+           gems_logger->debug("cleanupStatus={}, k_miss={}, k_unst={}", cleanupStatus, k_miss, k_unst);
+       }
+
+       if(gems_logger->should_log(spdlog::level::debug)) {
+           gems_logger->debug("After PSSC - Y vs W:");
+           for(int j = 0; j < pm.L; j++)
+               if(pm.Y[j] > min(pm.lowPosNum, pm.DcMinM))
+                   gems_logger->debug("  j={} Y={:.6e} W={:.6e} ratio={:.3f}",
+                                      j, pm.Y[j], pm.W[j],
+                                      pm.W[j] > 0 ? pm.Y[j]/pm.W[j] : 0.0);
+       }
+#endif
 
   // STEPWISE (3)  - stop point to examine output from SpeciationCleanup()
   STEP_POINT("After PSSC()");
@@ -380,6 +422,14 @@ to_text_file( "MultiDumpD.txt" );   // Debugging
 
   if( nCNud <= 0 )
   {
+#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_DEBUG
+       if(gems_logger->should_log(spdlog::level::debug)) {
+           gems_logger->debug("W and F arrays before second MBR:");
+           for(int j = 0; j < pm.L; j++)
+               if(pm.Y[j] > min(pm.lowPosNum, pm.DcMinM))
+                   gems_logger->debug("  j={} Y={:.6e} W={:.6e} F={:.6e}", j, pm.Y[j], pm.W[j], pm.F[j]);
+       }
+#endif
     eRet = MassBalanceRefinement( pm.K2 ); // Mass balance improvement in all normal cases
     switch( eRet )
     {
@@ -451,7 +501,7 @@ to_text_file( "MultiDumpE.txt" );   // Debugging
 /// false - OK for IPM
 /// true  - OK solved (pure phases only in the system)
 //
-bool TMulti::GEM_IPM_InitialApproximation(  )
+bool TMultiBase::GEM_IPM_InitialApproximation(  )
 {
     long int i, j, k, NN, eCode=-1L;
     double minB;//, sfactor;
@@ -653,13 +703,13 @@ STEP_POINT("Before FIA");
 ///                         2 - after post-IPM cleanup
 ///                         3 - additional (after PhaseSelection)
 /// \return  0 -  OK,
-///          1 -  no SLE colution at the specified precision pa.p.DHB
+///          1 -  no SLE solution at the specified precision pa.p.DHB
 ///          2  - used up more than pa.p.DP iterations
 ///          3  - too small step length (< 1e-6), no descent possible
 ///          4  - error in Initial mass balance residuals (debugging)
 ///          5  - error in MetastabilityLagrangeMultiplier() (debugging)
 //
-long int TMulti::MassBalanceRefinement( long int WhereCalledFrom )
+long int TMultiBase::MassBalanceRefinement( long int WhereCalledFrom )
 {
     long int IT1;
     long int I, J, Z,  N, sRet, iRet=0, j, jK;
@@ -684,12 +734,18 @@ long int TMulti::MassBalanceRefinement( long int WhereCalledFrom )
                     buf += ")) Invalid initial Lagrange multiplier for metastability-constrained DC ";
                     buf += char_array_to_string( pm.SM[jK], MAXDCNAME);
         setErrorMessage( 17, "E17IPM: Mass Balance Refinement: ", buf.c_str());
-      	return 5;
+        return 5;
     }
 
 
 //----------------------------------------------------------------------------
 // BEGIN:  main loop
+    // AbsMbCutoff_stall computed once before the loop —
+    // mirrors the convergence check logic for the combined mode
+    double AbsMbCutoff_stall = pm.DHBM;
+    // Track previous max residual to detect oscillation
+    double prev_maxResidual = std::numeric_limits<double>::max();
+    long int stalledIter = 0;
     for( IT1=0; IT1 < pa_p->DP; IT1++, pm.ITF++ )
     {
         // get size of task
@@ -715,7 +771,10 @@ long int TMulti::MassBalanceRefinement( long int WhereCalledFrom )
            if( AbsMbAccExp < 2. )  // If DT is set to 1 or -1 then DHBM is used also as the absolute cutoff
                AbsMbCutoff = pm.DHBM;
            else
+           {
                AbsMbCutoff = pow( 10, -AbsMbAccExp );
+               AbsMbCutoff_stall = pow( 10., -AbsMbAccExp );
+           }
            for( I=0;I<Z;I++ )
               if( fabs( pm.C[I]) > AbsMbCutoff || fabs(pm.C[I]) > pm.B[I] * pm.DHBM )
                   break;
@@ -732,6 +791,9 @@ long int TMulti::MassBalanceRefinement( long int WhereCalledFrom )
 //               CalculateConcentrations( pm.X, pm.XF, pm.XFA );
                CalculateActivityCoefficients( LINK_UX_MODE);
            }
+           if(iRet==1) {
+               iRet=0;  // no SLE solution on internal iterations SD 02/2026
+           }
            return iRet;       // mass balance refinement finished OK
        }
 
@@ -742,12 +804,17 @@ long int TMulti::MassBalanceRefinement( long int WhereCalledFrom )
 
        if( sRet == 1 )  // error: no SLE solution!
        {
-    	 iRet = 1;
-         std::string buf = "(EFD("+std::to_string(WhereCalledFrom);
-                     buf += "Degeneration in R matrix (fault in SLE solver).\n"
-                            "Mass balance cannot be improved, not possible to proceed.";
-         setErrorMessage( 5, "E05IPM: Mass Balance Refinement: " , buf.c_str() );
+           iRet = 1;
+           std::string buf = "(EFD("+std::to_string(WhereCalledFrom)+ ")";
+           buf += "Degeneration in R matrix (fault in SLE solver).\n"
+                  "Mass balance cannot be improved, not possible to proceed.";
+           setErrorMessage( 5, "E05IPM: Mass Balance Refinement: " , buf.c_str() );
+           gems_logger->warn(buf);
        }
+       else
+           iRet = 0;  // reset: matrix was singular in a previous iteration but recovered —
+               // stale Uefd was used for MU descent direction in the failed iteration,
+               // subsequent iterations may succeed as Y evolves away from singularity
 
       // SOLVED: solution of linear matrix has been obtained
          //          pm.PCI = calcDikin( N, true);
@@ -771,6 +838,83 @@ long int TMulti::MassBalanceRefinement( long int WhereCalledFrom )
       // from step size LM and the gradient vector MU
       for(J=0;J<pm.L;J++)
             pm.Y[J] += LM * pm.MU[J];
+
+      // Stall detection: exit early if residuals are no longer improving
+      // for 3 consecutive iterations
+      {
+          double maxDeltaY = 0.0;
+          for( J=0; J<pm.L; J++ )
+              maxDeltaY = std::max( maxDeltaY, fabs(pm.MU[J]) * LM );
+
+          // Stall detection: compute max residual across all failing active ICs
+          // Start from I — ICs before I already passed the convergence check
+          double cur_maxResidual = 0.0;
+          bool any_failing = false;
+          bool degenerate_cause = false;
+          for( long int II=I; II<pm.N; II++ )
+          {
+              bool ic_failing;
+              double ic_tol = pm.B[II] * pm.DHBM;
+              if( !pa_p->DT )
+                  ic_failing = fabs(pm.C[II]) > ic_tol;
+              else
+                  ic_failing = fabs(pm.C[II]) > AbsMbCutoff_stall ||
+                               fabs(pm.C[II]) > ic_tol;
+              if( ic_failing )
+              {
+                  if( pm.B[II] >= pm.DcMinM )
+                  {
+                      // Non-negligible IC is failing — not purely degenerate
+                      any_failing = true;
+                      cur_maxResidual = std::max( cur_maxResidual, fabs(pm.C[II]) );
+                      degenerate_cause = false;  // permanently cleared
+                  }
+                  else if( !any_failing )
+                  {
+                      // Negligible IC failing, no non-negligible failures yet
+                      degenerate_cause = true;
+                  }
+
+                  //if( pm.B[II] < 1e-15 ) // need to remove hardcoded value
+                  //{
+                  //  gems_logger->warn("MBR({}): B[{}]={:.3e}", WhereCalledFrom, II, pm.B[II]);
+                  //  iRet = 0; // treat as degenerate but not physically negligible, to avoid triggering AIA fallback
+                  //}
+              }
+          }
+
+          bool stalled = false;
+          if( any_failing )
+          {
+              // Stall if residuals are not improving AND steps are tiny
+              // relative to the residual magnitude
+              if( maxDeltaY < cur_maxResidual * pm.DHBM )
+                  stalled = true;
+              // Also stall if residuals are oscillating (not decreasing)
+              if( cur_maxResidual >= prev_maxResidual * 0.999 )
+                  stalledIter++;
+              else
+              {
+                  stalledIter = 0;  // residuals improving, reset
+                  prev_maxResidual = cur_maxResidual;
+              }
+          }
+
+          if( stalled || stalledIter >= 10 )
+          {
+              gems_logger->warn("MBR({}): stall at IT1={} stalledIter={} "
+                                     "maxDeltaY={:.3e} curRes={:.3e} prevRes={:.3e}",
+                                     WhereCalledFrom, IT1, stalledIter,
+                                     maxDeltaY, cur_maxResidual, prev_maxResidual);
+              // Reset iRet if stall is caused only by physically degenerate ICs:
+              // - degeneracy is due to negligible bulk amount, not numerical failure
+              // - active ICs have converged sufficiently
+              // - returning iRet=1 would incorrectly trigger AIA fallback
+              // if( iRet == 1 && degenerate_cause )
+                  iRet = 0;
+              break;
+          }
+      }
 
 // STEPWISE (5) Stop point at end of iteration of FIA()
 STEP_POINT("FIA Iteration");
@@ -814,7 +958,7 @@ STEP_POINT("FIA Iteration");
 ///          4, Mass balance broken  in DualTH (Mol_u)
 ///          5, Divergence in dual solution u vector has been detected
 //
-long int TMulti::InteriorPointsMethod( long int &status/*, long int rLoop*/ )
+long int TMultiBase::InteriorPointsMethod( long int &status/*, long int rLoop*/ )
 {
     bool StatusDivg;
     long int N, IT1,J,Z,iRet,i,  nDivIC;
@@ -891,6 +1035,7 @@ to_text_file( "MultiDumpDC1.txt" );   // Debugging
       if( nDivIC )
       { // Printing error message
         char buf[512];
+          memset(buf, '\0', 512);
         StatusDivg = true;
         sprintf( buf, "Divergence in dual solution approximation (u) \n at IPM iteration %ld with gen.tolerance %g "
              "for %ld ICs:   %-6.5s", pm.ITG, DivTol, nDivIC, pm.SB[ICNud[0]] );
@@ -973,7 +1118,7 @@ CONDITIONALLY_CONVERGED:
 /// \param   Y - moles  DC quantities in IPM solution (L)
 /// \param   B - Input bulk chem. compos. (N)
 /// \param   C - mass balance residuals (N)
-void TMulti::MassBalanceResiduals( long int N, long int L, double *A, double *Y,
+void TMultiBase::MassBalanceResiduals( long int N, long int L, double *A, double *Y,
                                    double *B, double *C )
 {
     long int ii, jj, i;
@@ -995,7 +1140,7 @@ void TMulti::MassBalanceResiduals( long int N, long int L, double *A, double *Y,
 /// after GEM IPM PhaseSelect(). When pm.X is passed as parameter
 /// \return -1 (Ok) or index of the first IC for which the balance is broken
 long int
-TMulti::CheckMassBalanceResiduals(double *Y )
+TMultiBase::CheckMassBalanceResiduals(double *Y )
 {
     double cutoff;
     long int iRet = -1L;
@@ -1033,7 +1178,7 @@ TMulti::CheckMassBalanceResiduals(double *Y )
 /// \return optimal value of LM which provides the largest possible monotonous
 /// decrease in G(X)
 //
-double TMulti::OptimizeStepSize( double LM )
+double TMultiBase::OptimizeStepSize( double LM )
 {
     double A,B,C,LM1,LM2;
     double FX1,FX2;
@@ -1083,7 +1228,7 @@ OCT:
 //===================================================================
 
 /// Cleaning the unstable phase with index k >= 0 (if k < 0 only DC will be cleaned)
-void TMulti::DC_ZeroOff( long int jStart, long int jEnd, long int k )
+void TMultiBase::DC_ZeroOff( long int jStart, long int jEnd, long int k )
 {
   if( k >=0 )
      pm.YF[k] = 0.;
@@ -1096,7 +1241,7 @@ void TMulti::DC_ZeroOff( long int jStart, long int jEnd, long int k )
 /// Important for the automatic initial approximation with solution phases
 ///  (k = -1)  or inserting a solution phase after PhaseSelect() (k >= 0)
 //
-void TMulti::DC_RaiseZeroedOff( long int jStart, long int jEnd, long int k )
+void TMultiBase::DC_RaiseZeroedOff( long int jStart, long int jEnd, long int k )
 {
 //  double sfactor = scalingFactor;
 //  if( fabs( sfactor ) > 1. )   // can reach 30 at total moles in system above 300000 (DK 11.03.2008)
@@ -1159,7 +1304,7 @@ case DC_SCM_SPECIES:
 }
 
 /// Adjustment of primal approximation according to kinetic constraints
-long int TMulti::MetastabilityLagrangeMultiplier()
+long int TMultiBase::MetastabilityLagrangeMultiplier()
 {
     double E = base_param()->DKIN; //1E-8;  Default min value of Lagrange multiplier p
 //    E = 1E-30;
@@ -1192,7 +1337,7 @@ long int TMulti::MetastabilityLagrangeMultiplier()
 }
 
 /// Calculation of weight multipliers for DCs
-void TMulti::WeightMultipliers( bool square )
+void TMultiBase::WeightMultipliers( bool square )
 {
   long int J;
   double  W1, W2;
@@ -1281,96 +1426,117 @@ void TMulti::WeightMultipliers( bool square )
 ///    N - dimension of the matrix R (number of equations)
 /// \return 0  - solved OK;
 ///         1  - no solution, degenerated or inconsistent system
-long int TMulti::MakeAndSolveSystemOfLinearEquations( long int N, bool initAppr )
+long int TMultiBase::MakeAndSolveSystemOfLinearEquations( long int N, bool initAppr )
 {
-  long int ii, i, jj, kk, k, Na = pm.N;
-  Alloc_A_B( N );
+    long int ii, i, jj, kk, k, Na = pm.N;
+    Alloc_A_B( N );
 
-  // Making the  matrix of IPM linear equations
-  for( kk = 0; kk < N; kk++)
-   for( ii=0; ii < N; ii++ )
-      (*(AA+(ii)+(kk)*N)) = 0.;
+    // Making the matrix of IPM linear equations
+    for( kk = 0; kk < N; kk++)
+        for( ii=0; ii < N; ii++ )
+            (*(AA+(ii)+(kk)*N)) = 0.;
 
-  for( jj=0; jj < pm.L; jj++ )
-  {
-    if( pm.Y[jj] > min( pm.lowPosNum, pm.DcMinM ) )
+    for( jj=0; jj < pm.L; jj++ )
     {
-      for( k = arrL[jj]; k < arrL[jj+1]; k++)
-        for( i = arrL[jj]; i < arrL[jj+1]; i++ )
-        { ii = arrAN[i];
-          kk = arrAN[k];
-          if( ii >= N || kk >= N )
-           continue;
-          (*(AA+(ii)+(kk)*N)) += a(jj,ii) * a(jj,kk) * pm.W[jj];
+        if( pm.Y[jj] > min( pm.lowPosNum, pm.DcMinM ) )
+        {
+            for( k = arrL[jj]; k < arrL[jj+1]; k++)
+                for( i = arrL[jj]; i < arrL[jj+1]; i++ )
+                {   ii = arrAN[i];
+                    kk = arrAN[k];
+                    if( ii >= N || kk >= N )
+                        continue;
+                    (*(AA+(ii)+(kk)*N)) += a(jj,ii) * a(jj,kk) * pm.W[jj];
+                }
         }
     }
-  }
 
-   if( initAppr )
-     for( ii = 0; ii < N; ii++ )
-         BB[ii] = pm.C[ii];
-   else {
-     for( ii = 0; ii < N; ii++ )
-         BB[ii] = 0.;
-     for( jj=0; jj < pm.L; jj++ )
-        if( pm.Y[jj] > min( pm.lowPosNum, pm.DcMinM ) )
-           for( i = arrL[jj]; i < arrL[jj+1]; i++ )
-           {  ii = arrAN[i];
-              if( ii >= N )
-                continue;
-              BB[ii] += pm.F[jj] * a(jj,ii) * pm.W[jj];
-           }
+    if( initAppr )
+        for( ii = 0; ii < N; ii++ )
+            BB[ii] = pm.C[ii];
+    else {
+        for( ii = 0; ii < N; ii++ )
+            BB[ii] = 0.;
+        for( jj=0; jj < pm.L; jj++ )
+            if( pm.Y[jj] > min( pm.lowPosNum, pm.DcMinM ) )
+                for( i = arrL[jj]; i < arrL[jj+1]; i++ )
+                {   ii = arrAN[i];
+                    if( ii >= N )
+                        continue;
+                    BB[ii] += pm.F[jj] * a(jj,ii) * pm.W[jj];
+                }
     }
 
 #ifndef PGf90
-  Array2D<double> A( N, N, AA );
-  Array1D<double> B( N, BB );
+    Array2D<double> A( N, N, AA );
+    Array1D<double> B( N, BB );
 #else
-  Array2D<double> A( N, N);
-  Array1D<double> B( N );
-
-  for( kk = 0; kk < N; kk++)
-   for( ii = 0; ii < N; ii++ )
-      A[kk][ii] = (*(AA+(ii)+(kk)*N));
-   for( ii = 0; ii < N; ii++ )
-     B[ii] = BB[ii];
+    Array2D<double> A( N, N);
+    Array1D<double> B( N );
+    for( kk = 0; kk < N; kk++)
+        for( ii = 0; ii < N; ii++ )
+            A[kk][ii] = (*(AA+(ii)+(kk)*N));
+    for( ii = 0; ii < N; ii++ )
+        B[ii] = BB[ii];
 #endif
-// From here on, the NIST TNT Jama/C++ linear algebra package is used
-//    (credit: http://math.nist.gov/tnt/download.html)
-// this routine constructs the Cholesky decomposition, A = L x LT .
-  JAMA::Cholesky<double>  chol(A);
 
-  if( chol.is_spd() )  // is positive definite A.
-  {
-    B = chol.solve( B );
-  }
-  else
-  {
-// no solution by Cholesky decomposition; Trying the LU Decompositon
-// The LU decompostion with pivoting always exists, even if the matrix is
-// singular, so the constructor will never fail.
+#ifndef NDEBUG
+        ipm_logger->debug("MakeAndSolveSystemOfLinearEquations\n {} \n {} \n",
+                          A.to_string(), B.to_string());
+#endif
 
-   JAMA::LU<double>  lu(A);
+    // From here on, the NIST TNT Jama/C++ linear algebra package is used
+    //    (credit: http://math.nist.gov/tnt/download.html)
+    // this routine constructs the Cholesky decomposition, A = L x LT .
+    JAMA::Cholesky<double> chol(A);
+ #ifndef NDEBUG
+    ipm_logger->debug("Cholesky Decomposition\n{}", chol.to_string());
+ #endif
 
-// The primary use of the LU decomposition is in the solution
-// of square systems of simultaneous linear equations.
-// This will fail if isNonsingular() returns false.
-   if( !lu.isNonsingular() )
-     return 1; // Singular matrix - too bad! No solution ...
+    if( chol.is_spd() )
+    {
+        B = chol.solve( B );
+    }
+    else
+    {
+        // no solution by Cholesky decomposition; Trying the LU Decompositon
+        // The LU decompostion with pivoting always exists, even if the matrix is
+        // singular, so the constructor will never fail.
+        JAMA::LU<double> lu(A);
+                // The primary use of the LU decomposition is in the solution
+        // of square systems of simultaneous linear equations.
+        // This will fail if isNonsingular() returns false.
+        if( !lu.isNonsingular() )
+        {
+            // Singular matrix — log diagnostics to identify the cause
+            ipm_logger->warn("MakeAndSolveSystemOfLinearEquations FAILED:");
+            ipm_logger->warn("LU Decomposition\n{}", lu.to_string());
+            for( long int r=0; r<N; r++ )
+            {
+                double row_norm = 0.0;
+                for( long int c=0; c<N; c++ )
+                    row_norm += std::abs( *(AA+(r)+(c)*N) );
+                if( row_norm < 1e-20 )
+                    ipm_logger->trace("  IC[{}] B={:.3e} — zero row, "
+                                      "no active species contribute to this IC",
+                                      r, pm.B[r]);
+            }
+            return 1; // Singular matrix - too bad! No solution ...
+        }
 
-  B = lu.solve( B );
-  }
+        B = lu.solve( B );
+    }
 
-if( initAppr )
-{
-   for( ii = 0; ii < N; ii++ )
-     pm.Uefd[ii] = B[(int)ii];
-}
-else {
-  for( ii = 0; ii < N; ii++ )
-     pm.U[ii] = B[(int)ii];
-}
-  return 0;
+    if( initAppr )
+    {
+        for( ii = 0; ii < N; ii++ )
+            pm.Uefd[ii] = B[(int)ii];
+    }
+    else {
+        for( ii = 0; ii < N; ii++ )
+            pm.U[ii] = B[(int)ii];
+    }
+    return 0;
 }
 
 #undef a
@@ -1379,7 +1545,7 @@ else {
 /// Calculation of MU values (in the vector of direction of descent) and Dikin criterion
 /// \param initAppr - use in MassBalanceRefinement() (true) or main iteration of IPM (false)
 /// \param N - dimension of the matrix R (number of equations)
-double TMulti::DikinsCriterion(  long int N, bool initAppr )
+double TMultiBase::DikinsCriterion(  long int N, bool initAppr )
 {
   long int  J;
   double Mu, PCI=0., qMu;
@@ -1438,7 +1604,7 @@ double TMulti::DikinsCriterion(  long int N, bool initAppr )
 
 /// Estimation of the descent step length LM
 /// \param initAppr - MBR() (true) or iteration of IPM (false)
-double TMulti::StepSizeEstimate(  bool initAppr )
+double TMultiBase::StepSizeEstimate(  bool initAppr )
 {
     long int J, Z = -1;
     double LM=1., LM1=1., Mu;
@@ -1501,7 +1667,7 @@ double TMulti::StepSizeEstimate(  bool initAppr )
 }
 
 /// Restoring primal vectors Y and YF
-void TMulti::Restore_Y_YF_Vectors()
+void TMultiBase::Restore_Y_YF_Vectors()
 {
     long int Z, I, JJ = 0;
 
@@ -1535,7 +1701,7 @@ void TMulti::Restore_Y_YF_Vectors()
 
 /// Calculation of the system size scaling factor and modified thresholds/cutoffs/insertion values
 /// Replaces calcSfactor()
-double TMulti::RescaleToSize( bool /*standard_size*/ )
+double TMultiBase::RescaleToSize( bool /*standard_size*/ )
 {
     double SizeFactor=1.;
     const BASE_PARAM *pa_p = base_param();
@@ -1568,7 +1734,7 @@ double TMulti::RescaleToSize( bool /*standard_size*/ )
 /// Internal memory allocation for IPM performance optimization
 /// (since version 2.2.0)
 //
-void TMulti::Alloc_A_B( long int newN )
+void TMultiBase::Alloc_A_B( long int newN )
 {
   if( AA && BB && (newN == sizeN) )
     return;
@@ -1578,7 +1744,7 @@ void TMulti::Alloc_A_B( long int newN )
   sizeN = newN;
 }
 
-void TMulti::Free_A_B()
+void TMultiBase::Free_A_B()
 {
   if(AA)
     { delete[] AA; AA = 0; }
@@ -1589,7 +1755,7 @@ void TMulti::Free_A_B()
 
 #define  a(j,i) ((*(pm.A+(i)+(j)*pm.N)))
 /// Building an index list of non-zero elements of the matrix pm.A
-void TMulti::Build_compressed_xAN()
+void TMultiBase::Build_compressed_xAN()
 {
  long int ii, jj, k;
 
@@ -1622,7 +1788,7 @@ void TMulti::Build_compressed_xAN()
 }
 #undef a
 
-void TMulti::Free_compressed_xAN()
+void TMultiBase::Free_compressed_xAN()
 {
   if( arrL  )
     { delete[] arrL; arrL = 0;  }
@@ -1630,18 +1796,14 @@ void TMulti::Free_compressed_xAN()
     { delete[] arrAN; arrAN = 0;  }
 }
 
-void TMulti::Free_internal()
+void TMultiBase::Free_internal()
 {
   Free_compressed_xAN();
   Free_A_B();
-#ifndef IPMGEMPLUGIN
-  if( node1 )
-    delete node1;
-#endif
  }
 
 /// Internal memory allocation for IPM performance optimization
-void TMulti::Alloc_internal()
+void TMultiBase::Alloc_internal()
 {
 // optimization 08/02/2007
  Alloc_A_B( pm.N );
@@ -1649,7 +1811,7 @@ void TMulti::Alloc_internal()
 }
 
 // add09
-void TMulti::setErrorMessage( long int num, const char *code, const char * msg)
+void TMultiBase::setErrorMessage( long int num, const char *code, const char * msg)
 {
   size_t len_code, len_msg;
   pm.Ec  = num;
@@ -1665,19 +1827,19 @@ void TMulti::setErrorMessage( long int num, const char *code, const char * msg)
   pm.errorBuf[len_msg] ='\0';
 }
 
-void TMulti::addErrorMessage( const char * msg)
+void TMultiBase::addErrorMessage( const char * msg)
 {
   auto len = strlen(pm.errorBuf);
   auto lenm = strlen( msg );
   if( len + lenm < 1023 )
   {
-    memcpy(pm.errorBuf+len, msg, lenm  );
+    memcpy(pm.errorBuf+len, msg, lenm);
     pm.errorBuf[len+lenm] ='\0';
   }
 }
 
 /// Added for implementation of divergence detection in dual solution 06.05.2011 DK
-void TMulti::Alloc_uDD( long int newN )
+void TMultiBase::Alloc_uDD( long int newN )
 {
     if( U_mean && U_M2 && U_CVo && U_CV && ICNud && (newN == nNu) )
       return;
@@ -1690,7 +1852,7 @@ void TMulti::Alloc_uDD( long int newN )
     nNu = newN;
 }
 
-void TMulti::Free_uDD()
+void TMultiBase::Free_uDD()
 {
     if( U_mean  )
       { delete[] U_mean; U_mean = 0; }
@@ -1706,7 +1868,7 @@ void TMulti::Free_uDD()
 }
 
 /// initializing data for u divergence detection
-void TMulti::Reset_uDD( long int nr, bool trace )
+void TMultiBase::Reset_uDD( long int nr, bool trace )
 {
     long int i;
     cnr = nr;
@@ -1730,7 +1892,7 @@ void TMulti::Reset_uDD( long int nr, bool trace )
 }
 
 /// Incrementing mean u values for r-th (current) IPM iteration
-void TMulti::Increment_uDD( long int r, bool trace )
+void TMultiBase::Increment_uDD( long int r, bool trace )
 {
     long int i;
     //double delta;
@@ -1802,7 +1964,7 @@ void TMulti::Increment_uDD( long int r, bool trace )
 ///          >0 - number of diverging dual chemical potentials
 ///            (their IC names are collected in the ICNud list)
 ///
-long int TMulti::Check_uDD( long int mode, double DivTol,  bool trace )
+long int TMultiBase::Check_uDD( long int mode, double DivTol,  bool trace )
 {
     long int i;
     double delta = 0., tol_gen=1., tolerance=1., log_bi=0.;
