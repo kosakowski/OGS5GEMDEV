@@ -22,14 +22,11 @@
 #ifndef TNT_ARRAY1D_H
 #define TNT_ARRAY1D_H
 
-//#include <cstdlib>
-#include <iostream>
-
 #ifdef TNT_BOUNDS_CHECK
 #include <cassert>
 #endif
 
-
+#include "sstream"
 #include "tnt_i_refvec.h"
 
 namespace TNT
@@ -82,10 +79,9 @@ class Array1D
 	inline int ref_count() const;
 	inline Array1D<T> subarray(int i0, int i1);
 
+    inline std::string to_string() const;
+
 };
-
-
-
 
 template <class T>
 Array1D<T>::Array1D() : v_(), n_(0), data_(0) {}
@@ -93,39 +89,22 @@ Array1D<T>::Array1D() : v_(), n_(0), data_(0) {}
 template <class T>
 Array1D<T>::Array1D(const Array1D<T> &A) : v_(A.v_),  n_(A.n_), 
 		data_(A.data_)
-{
-#ifdef TNT_DEBUG
-	std::cout << "Created Array1D(const Array1D<T> &A) \n";
-#endif
-
-}
+{ }
 
 
 template <class T>
 Array1D<T>::Array1D(int n) : v_(n), n_(n), data_(v_.begin())
-{
-#ifdef TNT_DEBUG
-	std::cout << "Created Array1D(int n) \n";
-#endif
-}
+{ }
 
 template <class T>
 Array1D<T>::Array1D(int n, const T &val) : v_(n), n_(n), data_(v_.begin()) 
 {
-#ifdef TNT_DEBUG
-	std::cout << "Created Array1D(int n, const T& val) \n";
-#endif
 	set_(data_, data_+ n, val);
-
 }
 
 template <class T>
 Array1D<T>::Array1D(int n, T *a) : v_(a), n_(n) , data_(v_.begin())
-{
-#ifdef TNT_DEBUG
-	std::cout << "Created Array1D(int n, T* a) \n";
-#endif
-}
+{ }
 
 template <class T>
 inline Array1D<T>::operator T*()
@@ -247,6 +226,16 @@ inline Array1D<T> Array1D<T>::subarray(int i0, int i1)
 	{
 		return Array1D<T>();
 	}
+}
+
+template<class T>
+inline std::string Array1D<T>::to_string() const
+{
+    std::stringstream buf;
+    for(int jj=0; jj<n_; ++jj) {
+        buf << data_[jj] << " ";
+    }
+    return buf.str();
 }
 
 

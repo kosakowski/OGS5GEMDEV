@@ -36,21 +36,20 @@
 
 class GemDataStream				// data stream class
 {
-
-    ios::openmode mod;
-    gstring Path;
+    //std::ios::openmode mod;
+    std::string Path;
 
     int swap;
     int	byteorder;
-    fstream ff;
+    std::fstream ff;
 
 public:
 //    GemDataStream( fstream& ff  );
     GemDataStream( ) {    setByteOrder(LittleEndian); }
-    GemDataStream( gstring& aPath, ios::openmode aMod  );
+    GemDataStream( const std::string& aPath, std::ios::openmode aMod  );
     virtual ~GemDataStream();
 
-    const gstring& GetPath() const
+    const std::string& GetPath() const
     {
         return Path;
     }
@@ -62,20 +61,20 @@ public:
     int	 byteOrder() const { return byteorder; }
     void setByteOrder( int );
 
-    filebuf* rdbuf() { return ff.rdbuf(); }
-    streamsize gcount() { return ff.gcount(); }
-    istream& getline(char* s, streamsize n, char delim) { return ff.getline(s, n, delim); }
+    std::filebuf* rdbuf() { return ff.rdbuf(); }
+    std::streamsize gcount() { return ff.gcount(); }
+    std::istream& getline(char* s, std::streamsize n, char delim) { return ff.getline(s, n, delim); }
     void close() { ff.close(); }
     void put(char ch) { ff.put(ch); }
-    istream& get(char& ch) { return ff.get(ch); }
+    std::istream& get(char& ch) { return ff.get(ch); }
     void sync() { ff.sync(); }
     bool good() { return ff.good(); }
     void clear() { ff.clear(); }
     void flush() { ff.flush(); }
-    long tellg() { return ff.tellg(); }
-    void open(const char* filename, ios::openmode mode) { ff.open(filename, mode); }
-    ostream& seekp(long pos, ios_base::seekdir dir) { return ff.seekp(pos, dir); }
-    istream& seekg(long pos, ios_base::seekdir dir) { return ff.seekg(pos, dir); }
+    long long tellg() { return ff.tellg(); }
+    void open(const char* filename, std::ios::openmode mode) { ff.open(filename, mode); }
+    std::ostream& seekp(long pos, std::ios_base::seekdir dir) { return ff.seekp(pos, dir); }
+    std::istream& seekg(long pos, std::ios_base::seekdir dir) { return ff.seekg(pos, dir); }
 
     GemDataStream &operator>>( char &i );
     GemDataStream &operator>>( unsigned char &i ) { return operator>>((char&)i); }
@@ -88,7 +87,6 @@ public:
     GemDataStream &operator>>( unsigned long &i ) { return operator>>((long&)i); }
     GemDataStream &operator>>( float &f );
     GemDataStream &operator>>( double &f );
-//    GemDataStream &operator>>( char *&str );
 
     GemDataStream &operator<<( char i );
     GemDataStream &operator<<( unsigned char i ) { return operator<<((char) i); }
@@ -101,48 +99,34 @@ public:
     GemDataStream &operator<<( unsigned long i ) { return operator<<((long) i); }
     GemDataStream &operator<<( float f );
     GemDataStream &operator<<( double f );
-//    GemDataStream &operator<<( const char *str );
+
+    template <class T>
+    void writeArray( T* arr, int size )
+    {
+        if(!arr) {
+            return;
+        }
+        for(int ii=0; ii<size; ii++) {
+            *this << arr[ii];
+        }
+    }
+
+    template <class T>
+    void readArray( T* arr, int size )
+    {
+        if(!arr) {
+            return;
+        }
+        for(int ii=0; ii<size; ii++) {
+            *this >> arr[ii];
+        }
+    }
+
+    void writeArray(const std::vector<std::string>& arr);
+    void readArray(std::vector<std::string>& arr, int size);
 
     void readArray( char* arr, int size );
-    void readArray( short* arr, int size );
-    void readArray( int* arr, int size );
-    void readArray( long* arr, int size );
-    void readArray( float* arr, int size );
-    void readArray( double* arr, int size );
-
     void writeArray( char* arr, int size );
-    void writeArray( short* arr, int size );
-    void writeArray( int* arr, int size );
-    void writeArray( long* arr, int size );
-    void writeArray( float* arr, int size );
-    void writeArray( double* arr, int size );
-
-#ifndef IPMGEMPLUGIN
-
-    template <class T> void writeArray( T* arr, int size );
-    template <class T> void readArray( T* arr, int size );
-#endif
 };
 
-#ifndef IPMGEMPLUGIN
-
-template <class T>
-void GemDataStream::writeArray( T* arr, int size )
-{
-  if( !arr )
-    return;
-  for(int ii=0; ii<size; ii++)
-   *this << arr[ii];
-}
-
-template <class T>
-void GemDataStream::readArray( T* arr, int size )
-{
-  if( !arr )
-    return;
-  for(int ii=0; ii<size; ii++)
-   *this >> arr[ii];
-}
-
-#endif
 #endif

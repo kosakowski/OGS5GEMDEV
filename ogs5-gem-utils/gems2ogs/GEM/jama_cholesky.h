@@ -3,8 +3,10 @@
 
 #include "tnt.h"
 #include <cmath>
+#include "v_detail.h"
+
 //#include "math.h"
-	/* needed for sqrt() below. */
+/* needed for sqrt() below. */
 
 
 namespace JAMA
@@ -59,6 +61,11 @@ public:
 	Array1D<Real> solve(const Array1D<Real> &B);
 	Array2D<Real> solve(const Array2D<Real> &B);
 	int is_spd() const;
+    std::string to_string() const
+    {
+        std::string buf = "Cholesky  Decomposition\n";
+        return buf+L_.to_string();
+    }
 
 };
 
@@ -93,12 +100,10 @@ Array2D<Real> Cholesky<Real>::getL() const
 template <class Real>
 Cholesky<Real>::Cholesky(const Array2D<Real> &A)
 {
-
-
-   	int m = A.dim1();
+    int m = A.dim1();
 	int n = A.dim2();
 
-	isspd = (m == n);
+    isspd = (m == n);
 
 	if (m != n)
 	{
@@ -113,8 +118,7 @@ Cholesky<Real>::Cholesky(const Array2D<Real> &A)
      for (int j = 0; j < n; j++)
 	 {
         double d = 0.0;
-        int k;
-        for ( k = 0; k < j; k++)
+        for (int k = 0; k < j; k++)
 		{
             Real s = 0.0;
             for (int i = 0; i < k; i++)
@@ -127,11 +131,12 @@ Cholesky<Real>::Cholesky(const Array2D<Real> &A)
          }
          d = A[j][j] - d;
          isspd = isspd && (d > 0.0);
+
 //         if( !isspd ) // Added SD 29/11/2006
 //             return;
 //        L_[j][j] = sqrt(d > 0.0 ? d : 0.0);
- L_[j][j] = sqrt(d > 0.0 ? d : 1e-60);  //  Test change!  DK 13.10.2006
-         for ( k = j+1; k < n; k++)
+            L_[j][j] = sqrt(d > 0.0 ? d : 1e-60);  //  Test change!  DK 13.10.2006
+         for (int k = j+1; k < n; k++)
 		 {
             L_[j][k] = 0.0;
          }
@@ -151,7 +156,7 @@ Cholesky<Real>::Cholesky(const Array2D<Real> &A)
 template <class Real>
 Array1D<Real> Cholesky<Real>::solve(const Array1D<Real> &b)
 {
-	int k, n = L_.dim1();
+	int n = L_.dim1();
 	if (b.dim1() != n)
 		return Array1D<Real>();
 
@@ -160,7 +165,7 @@ Array1D<Real> Cholesky<Real>::solve(const Array1D<Real> &b)
 
 
       // Solve L*y = b;
-      for ( k = 0; k < n; k++)
+      for (int k = 0; k < n; k++) 
 	  {
          for (int i = 0; i < k; i++)
                x[k] -= x[i]*L_[k][i];
@@ -169,7 +174,7 @@ Array1D<Real> Cholesky<Real>::solve(const Array1D<Real> &b)
       }
 
       // Solve L'*X = Y;
-      for ( k = n-1; k >= 0; k--)
+      for (int k = n-1; k >= 0; k--) 
 	  {
          for (int i = k+1; i < n; i++)
                x[k] -= x[i]*L_[i][k];

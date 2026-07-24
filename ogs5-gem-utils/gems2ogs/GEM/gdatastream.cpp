@@ -26,7 +26,6 @@
 //-------------------------------------------------------------------
 
 #include <algorithm>
-#include <iostream>
 #include <stdint.h>
 using namespace std;
 
@@ -130,14 +129,14 @@ inline double SWAP(double x) {
 }
 
 
-GemDataStream::GemDataStream( gstring& aPath, ios::openmode aMod  ):
-        mod( aMod ),
+GemDataStream::GemDataStream( const std::string& aPath, ios::openmode aMod  ):
+     //   mod( aMod ),
         Path( aPath ),
     //    byteorder( LittleEndian ),
-        ff(aPath.c_str(), aMod)
+        ff(aPath, aMod)
 {
     setByteOrder(LittleEndian);
-    ErrorIf( !ff.good(), Path.c_str(), "Fileopen error");
+    ErrorIf( !ff.good(), Path, "Fileopen error");
 }
 
 GemDataStream::~GemDataStream()
@@ -153,9 +152,9 @@ void GemDataStream::setByteOrder( int bo )
 	swap = (byteorder == LittleEndian);
 #warning "Compiling for BIG ENDIAN architecture!"
 #else
-	swap = (byteorder == BigEndian);
+    swap = (byteorder == BigEndian);
 #endif
-//    cerr << "GemDataStream::swap == " << swap << endl;
+    gems_logger->trace("byteorder is BigEndian {}", swap);
 }
 
 // NOTE: these functions better to write as a templates!!
@@ -260,101 +259,44 @@ GemDataStream &GemDataStream::operator<<( double f )
 
 void GemDataStream::readArray( char* arr, int size )
 {
-  if( !arr )
-    return;
-    
-  ff.read(arr, size);
-//  for(int ii=0; ii<size; ii++)
-//   *this >> arr[ii];
-}
-
-void GemDataStream::readArray( short* arr, int size )
-{
-  if( !arr )
-    return;
-  for(int ii=0; ii<size; ii++)
-   *this >> arr[ii];
-}
-
-void GemDataStream::readArray( int* arr, int size )
-{
-  if( !arr )
-    return;
-  for(int ii=0; ii<size; ii++)
-   *this >> arr[ii];
-}
-
-void GemDataStream::readArray( long* arr, int size )
-{
-  if( !arr )
-    return;
-  for(int ii=0; ii<size; ii++)
-   *this >> arr[ii];
-}
-
-void GemDataStream::readArray( float* arr, int size )
-{
-  if( !arr )
-    return;
-  for(int ii=0; ii<size; ii++)
-   *this >> arr[ii];
-}
-
-void GemDataStream::readArray( double* arr, int size )
-{
-  if( !arr )
-    return;
-  for(int ii=0; ii<size; ii++)
-   *this >> arr[ii];
+    if(!arr) {
+        return;
+    }
+    ff.read(arr, size);
 }
 
 void GemDataStream::writeArray( char* arr, int size )
 {
-  if( !arr )
-    return;
-
-  ff.write(arr, size);
-//  for(int ii=0; ii<size; ii++)
-//   *this << arr[ii];
+    if(!arr) {
+        return;
+    }
+    ff.write(arr, size);
 }
 
-void GemDataStream::writeArray( short* arr, int size )
+void GemDataStream::writeArray(const std::vector<std::string> &arr)
 {
-  if( !arr )
-    return;
-  for(int ii=0; ii<size; ii++)
-   *this << arr[ii];
+    for(const auto& str : arr) {
+        uint64_t len = str.size();
+        ff.write(reinterpret_cast<const char*>(&len), sizeof(len));
+        ff.write(str.data(), len);
+    }
 }
 
-void GemDataStream::writeArray( int* arr, int size )
+void GemDataStream::readArray(std::vector<std::string>& arr, int count)
 {
-  if( !arr )
-    return;
-  for(int ii=0; ii<size; ii++)
-   *this << arr[ii];
+    arr.clear();
+    arr.reserve(count);
+
+    for (uint64_t i = 0; i < count; ++i) {
+        uint64_t len;
+        ff.read(reinterpret_cast<char*>(&len), sizeof(len));
+        std::string str;
+        str.resize(len);
+        ff.read(&str[0], len);
+        arr.push_back(std::move(str));
+    }
 }
 
-void GemDataStream::writeArray( long* arr, int size )
-{
-  if( !arr )
-    return;
-  for(int ii=0; ii<size; ii++)
-   *this << arr[ii];
-}
 
-void GemDataStream::writeArray( float* arr, int size )
-{
-  if( !arr )
-    return;
-  for(int ii=0; ii<size; ii++)
-   *this << arr[ii];
-}
-void GemDataStream::writeArray( double* arr, int size )
-{
-  if( !arr )
-    return;
-  for(int ii=0; ii<size; ii++)
-   *this << arr[ii];
-}
 // gdatastream.cpp
 

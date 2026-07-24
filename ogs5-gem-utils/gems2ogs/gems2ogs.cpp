@@ -192,8 +192,9 @@ void MyFrame::OnOpenDCH ( wxCommandEvent &event )
 			textCtrl->AppendText ( msg );
 			msg.Printf ( wxT ( "-----------------------------------\n" ) );
 			textCtrl->AppendText ( msg );
-			m_Node->GEM_write_dbr ( "dbr_for_debug.txt" );
-			m_Node->GEM_print_ipm ( "ipm_for_debug.txt" );
+			std::string dbr_filenam = "dbr_for_debug.txt";
+			m_Node->GEM_write_dbr (  dbr_filenam.c_str() , GEMS3KGenerator::f_key_value);
+			//			m_Node->GEM_print_ipm ( "ipm_for_debug.txt" );
 		}
 	}
 }
@@ -207,7 +208,7 @@ void MyFrame::OnConIC ( wxCommandEvent &event )
 	if ( flag_status ) // if initialized
 	{
 		textCtrl->Clear();
-		string temp_name,strnum; // used to get the current name of DC;
+		std::string temp_name,strnum; // used to get the current name of DC;
 
 		for ( i=0 ; i < dCH->nDC ; i++ )
 		{
@@ -263,7 +264,7 @@ void MyFrame::OnConMCP ( wxCommandEvent &event )
 	if ( flag_status ) // if initialized
 	{
 		textCtrl->Clear();
-		string temp_name,strnum; // used to get the current name of DC;
+		std::string temp_name,strnum; // used to get the current name of DC;
 
 		for ( i=0 ; i < dCH->nDC ; i++ )
 		{
@@ -368,7 +369,7 @@ void MyFrame::OnConBC ( wxCommandEvent &event )
 	if ( flag_status ) // if initialized
 	{
 		textCtrl->Clear();
-		string temp_name,strnum; // used to get the current name of DC;
+		std::string temp_name,strnum; // used to get the current name of DC;
 
 		for ( i=0 ; i < dCH->nDC ; i++ )
 		{
@@ -426,7 +427,7 @@ void MyFrame::OnConOUT ( wxCommandEvent &event )
 	if ( flag_status ) // if initialized
 	{
 		textCtrl->Clear();
-		string temp_name,strnum; // used to get the current name of DC;
+		std::string temp_name,strnum; // used to get the current name of DC;
 
 		textCtrl->AppendText ( OUT_Head );
 
@@ -469,7 +470,7 @@ void MyFrame::OnConDLUB ( wxCommandEvent &event )
 	if ( flag_status ) // if initialized
 	{
 		textCtrl->Clear();
-		string temp_name,strnum; // used to get the current name of DC;
+		std::string temp_name,strnum; // used to get the current name of DC;
 
 		textCtrl->AppendText ( DLU_Head );
 
@@ -515,7 +516,7 @@ void MyFrame::OnConICB ( wxCommandEvent &event )
 	if ( flag_status ) // if initialized
 	{
 		textCtrl->Clear();
-		string temp_name,strnum; // used to get the current name of DC;
+		std::string temp_name,strnum; // used to get the current name of DC;
 
 		for ( i=0 ; i < dCH->nIC ; i++ )
 		{
@@ -561,7 +562,7 @@ void MyFrame::OnConMCPB ( wxCommandEvent &event )
 	if ( flag_status ) // if initialized
 	{
 		textCtrl->Clear();
-		string temp_name,strnum; // used to get the current name of DC;
+		std::string temp_name,strnum; // used to get the current name of DC;
 
 		for ( i=0 ; i < dCH->nIC ; i++ )
 		{
@@ -611,7 +612,7 @@ void MyFrame::OnConBCB ( wxCommandEvent &event )
 	if ( flag_status ) // if initialized
 	{
 		textCtrl->Clear();
-		string temp_name,strnum; // used to get the current name of DC;
+		std::string temp_name,strnum; // used to get the current name of DC;
 
 		for ( i=0 ; i < dCH->nIC ; i++ )
 		{
@@ -674,7 +675,7 @@ void MyFrame::OnConBCBW ( wxCommandEvent &event )
 	if ( flag_status ) // if initialized
 	{
 		textCtrl->Clear();
-		string temp_name,strnum; // used to get the current name of DC;
+		std::string temp_name,strnum; // used to get the current name of DC;
 
 		for ( i=0 ; i < dCH->nIC ; i++ )
 		{
@@ -724,7 +725,7 @@ void MyFrame::OnConOUTB ( wxCommandEvent &event )
 	if ( flag_status ) // if initialized
 	{
 		textCtrl->Clear();
-		string temp_name,strnum; // used to get the current name of DC;
+		std::string temp_name,strnum; // used to get the current name of DC;
 
 		textCtrl->AppendText ( OUT_Head );
 

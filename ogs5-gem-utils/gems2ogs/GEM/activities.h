@@ -23,7 +23,7 @@
 // GEMS3K is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
+// GNU Lesser General Public TSolModLicense for more details.
 
 // You should have received a copy of the GNU General Public License
 // along with GEMS3K code. If not, see <http://www.gnu.org/licenses/>.
@@ -33,28 +33,13 @@
 
 #define Activity_H_
 
-//#include "node.h"
 #include "datach.h"
 #include "databr.h"
 #include "s_solmod.h"
 #include "s_sorpmod.h"
-#include "m_const.h"
 
 class TNode;
-/*
-const double R_CONSTANT = 8.31451,
-              NA_CONSTANT = 6.0221367e23,
-                F_CONSTANT = 96485.309,
-                  e_CONSTANT = 1.60217733e-19,
-                    k_CONSTANT = 1.380658e-23,
-// Conversion factors
-                      cal_to_J = 4.184,
-                        C_to_K = 273.15,
-                          lg_to_ln = 2.302585093,
-                            ln_to_lg = 0.434294481,
-                             H2O_mol_to_kg = 55.50837344,
-                               Min_phys_amount = 1.66e-24;
-*/
+
 typedef struct  /// ACTIVITY - data structure for computing DC activities in phases
 {               /// DATACH indexation throughout, no I/O file exchange
 
@@ -172,7 +157,7 @@ typedef struct  /// ACTIVITY - data structure for computing DC activities in pha
            (*CPh)[MIXPHPROPS],     ///< Heat capacity Cp properties for mixed phases [FIs]           -      -      +     +
            (*APh)[MIXPHPROPS],     ///< Helmholtz energy properties for mixed phases [FIs]           -      -      +     +
            (*UPh)[MIXPHPROPS];     ///< Internal energy properties for mixed phases [FIs]            -      -      +     +
-            // MIXPHPROPS: see m_const.h
+            // MIXPHPROPS: see m_const_base.h
 
 // Coding - takeover from MULTI
     char (*sMod)[8];   ///< new: Codes for built-in mixing models of multicomponent phases [FIs]
@@ -292,11 +277,11 @@ class TActivity
        long int *arrAN;
 
     size_t sizeFIs;     ///< current size of phSolMod
-    TSolMod* (*phSolMod); ///< size current FIs - number of multicomponent phases
+    TSolMod* *phSolMod; ///< size current FIs - number of multicomponent phases
 
     // new - allocation of TsorpMod
     size_t sizeFIa;       ///< current size of phSorpMod
-    TSorpMod* (*phSorpMod); ///< size current FIa - number of adsorption phases
+    TSorpMod* *phSorpMod; ///< size current FIa - number of adsorption phases
 
     bool load;
     long int IT, IIM;  // current number of iterations of GEM algorithm (used in smoothing)
@@ -360,7 +345,6 @@ public:
         long int  getXvolume();
 
     // ipm_chemical2.cpp
-        void GasParcP();
         void phase_bcs( long int N, long int M, long int jb, double *A, double X[], double BF[] );
         void phase_bfc( long int k, long int jj );
         double bfc_mass( void );
@@ -409,8 +393,6 @@ public:
     void updateActivities(); // compute primal activities
     void updateChemicalData();
 };
-
-
 
 #endif
 // -----------------------------------------------------------------------------

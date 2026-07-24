@@ -27,85 +27,13 @@
 //-------------------------------------------------------------------
 //
 
-#include <cmath>
-#include "m_param.h"
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-/// Linking DOD for executing Phase mixing model scripts
-#ifdef IPMGEMPLUGIN
-   void TMulti::pm_GC_ods_link( long int /*k*/, long int /*jb*/, long int /*jpb*/, long int /*jdb*/, long int /*ipb*/ )
-   {
-#else
-	void TMulti::pm_GC_ods_link( long int k, long int jb, long int jpb, long int jdb, long int ipb )
-	{
-
-        ErrorIf( k < 0 || k >= pm.FIs , "CalculateActivityCoefficients():", "Invalid link: k=0||>FIs" );
-    aObj[ o_nsmod].SetPtr( pm.sMod[k] );
-    aObj[ o_nncp].SetPtr( pm.LsMod+k*3 );
-    aObj[ o_nncd].SetPtr( pm.LsMdc+k*3 );
-    aObj[ o_ndc].SetPtr(  pm.L1+k );
-    aObj[ o_nez].SetPtr( pm.EZ+jb );
-    aObj[o_nez].SetN(  pm.L1[k]);
-    aObj[ o_npcv].SetPtr( pm.PMc+jpb );
-    aObj[o_npcv].SetDim( pm.LsMod[k*3], pm.LsMod[k*3+2]);
-    //  Object for indexation of interaction parameters
-    aObj[ o_nu].SetPtr( pm.IPx+ipb ); // added 07.12.2006  KD
-    aObj[o_nu].SetDim( pm.LsMod[k*3], pm.LsMod[k*3+1]);
-    //
-    aObj[ o_ndcm].SetPtr( pm.DMc+jdb );
-    aObj[o_ndcm].SetDim( pm.L1[k], pm.LsMdc[k*3] );
-    aObj[ o_nmvol].SetPtr( pm.Vol+jb );
-    aObj[o_nmvol].SetN( pm.L1[k]);
-    aObj[ o_nppar].SetPtr(pm.G0+jb );  // changed 10.12.2008 by DK
-    aObj[o_nppar].SetN(  pm.L1[k]);
-//    aObj[ o_ngtn].SetPtr( pm.G0+jb );
-    aObj[ o_ngtn].SetPtr( pm.fDQF+jb );     // changed 05.12.2006 by DK
-    aObj[o_ngtn].SetN( pm.L1[k] );
-    aObj[ o_ngam].SetPtr( pm.Gamma+jb ); // Gamma calculated
-    aObj[o_ngam].SetN( pm.L1[k] );
-    aObj[ o_nlngam].SetPtr( pm.lnGam+jb ); // ln Gamma calculated
-    aObj[o_nlngam].SetN( pm.L1[k]);
-    aObj[ o_nas].SetPtr(  pm.A+pm.N*jb );
-    aObj[o_nas].SetDim(  pm.L1[k], pm.N );
-    aObj[ o_nxa].SetPtr(  pm.XF+k );
-    aObj[ o_nxaa].SetPtr(  pm.XFA+k );
-    if( pm.FIat > 0 )
-    {
-        aObj[ o_nxast].SetPtr( pm.XFTS[k] );
-        aObj[ o_nxcec].SetPtr( pm.MASDT[k] );
-    }
-    else
-    {
-        aObj[ o_nxast].SetPtr( 0 );
-        aObj[ o_nxcec].SetPtr( 0 );
-    }
-    //
-    aObj[ o_nbmol].SetPtr( pm.FVOL+k );  // phase volume
-    aObj[ o_nxx].SetPtr(  pm.X+jb );
-    aObj[o_nxx].SetN( pm.L1[k]);
-    aObj[ o_nwx].SetPtr(  pm.Wx+jb );
-    aObj[o_nwx].SetN( pm.L1[k]);
-    aObj[ o_nmju].SetPtr( pm.Fx+jb );
-    aObj[o_nmju].SetN( pm.L1[k]);
-    aObj[ o_nqp].SetPtr( pm.Qp+k*QPSIZE );
-    aObj[ o_nqd].SetPtr( pm.Qd+k*QDSIZE );   // Fixed 7.12.04 by KD
-
-    // phase excess properties
-    aObj[o_ngte].SetPtr( &pm.GPh[k][0] );
-    aObj[o_nhte].SetPtr( &pm.HPh[k][0] );
-    aObj[o_nste].SetPtr( &pm.SPh[k][0] );
-    aObj[o_nvte].SetPtr( &pm.VPh[k][0] );
-    aObj[o_ncpte].SetPtr( &pm.CPh[k][0] );
-    aObj[o_nate].SetPtr( &pm.APh[k][0] );
-    aObj[o_nute].SetPtr( &pm.UPh[k][0] );
-
-#endif
-}
-
+#include "ms_multi.h"
+#include "v_detail.h"
+#include "v_service.h"
 
 /// Returns current value of smoothing factor for chemical potentials of highly non-ideal DCs
 // added 18.06.2008 DK
-double TMulti::SmoothingFactor( )
+double TMultiBase::SmoothingFactor( )
 {
    if( pm.FitVar[4] < 0 )
    {  // To start SIA mode (smart initial approximation)
@@ -127,16 +55,16 @@ double TMulti::SmoothingFactor( )
 ///       1, 2, ...  taking log(CD) average from the moving window of length mode
 ///       (up to 5 consecutive values)
 ///
-void TMulti::SetSmoothingFactor( long int mode )
+void TMultiBase::SetSmoothingFactor( long int mode )
 {
     double TF=1., al, ag, dg, iim, irf; // rg=0.0;
     long int ir; //, Level, itqF, itq;
 
     ir = pm.IT;
     irf = static_cast<double>(ir);
-    ag = paTProfil->p.AG; // pm.FitVar[4];
-    dg = paTProfil->p.DGC;
-    iim = paTProfil->p.IIM;
+    ag = base_param()->AG; // pm.FitVar[4];
+    dg = base_param()->DGC;
+    iim = base_param()->IIM;
 
     if( dg > -0.0001 && ag >= 0.0001 ) // Smoothing used in the IPM-2 algorithm
     {					// with some improvements
@@ -162,7 +90,9 @@ void TMulti::SetSmoothingFactor( long int mode )
         logr = log( inv_r );
         logr_m = log( 1./iim );
         al = dg + ( ag - dg ) / ( 1. + exp( logr_m - logr ) / dg );
-        al += exp( log( 1. - ag ) + logr );
+        if( !essentiallyEqual(ag, 1.0) ) {
+           al += exp( log( 1. - ag ) + logr );
+        }
         if( al > 1. )
       	    al = 1.;
         TF = al;
@@ -192,7 +122,9 @@ void TMulti::SetSmoothingFactor( long int mode )
     	   	     break;
     	}
         al = dg + ( ag - dg ) / ( 1. + exp( dk - cd ) / dg );
-        al += exp( log( 1. - ag ) + cd );
+        if( !essentiallyEqual(ag, 1.0) ) {
+           al += exp( log( 1. - ag ) + cd );
+        }
         if( al > 1. )
       	    al = 1.;
         TF = al;
@@ -210,130 +142,134 @@ void TMulti::SetSmoothingFactor( long int mode )
 ///    amount is zero (X[j] == 0) (is this a correct policy for zeroed-off components?)
 //
 double
-TMulti::PhaseSpecificGamma( long int j, long int jb, long int je, long int k, long int DirFlag )
+TMultiBase::PhaseSpecificGamma( long int j, long int jb, long int je, long int k, long int DirFlag )
 {
-    double NonLogTerm = 0., NonLogTermW = 0., NonLogTermS = 0., MMC = 0.;
-//    SPP_SETTING *pa = &TProfil::pm->pa;
+    double NonLogTerm = 0., NonLogTermW = 0., NonLogTermS = 0.;//, MMC = 0.;
 
-    switch( pm.PHC[k] )
+    if( k>=pm.FIs || pm.sMod[k][SPHAS_TYP] != SM_AQPITZ)
     {
-      case PH_AQUEL:
-           if( pm.XF[k] && pm.XFA[k] )
-           {
+        switch( pm.PHC[k] )
+        {
+        case PH_AQUEL:
+            if( noZero( pm.XF[k] ) && noZero( pm.XFA[k] ) )
+            {
                 NonLogTerm = 1. - pm.XFA[k]/pm.XF[k];
                 NonLogTermW = 2. - pm.XFA[k]/pm.XF[k] - pm.XF[k]/pm.XFA[k];
-           }
-           break;
-      case PH_GASMIX:  case PH_FLUID:   case PH_PLASMA:   case PH_SIMELT:
-      case PH_HCARBL:  case PH_SINCOND:  case PH_SINDIS:  case PH_LIQUID:
-      case PH_IONEX:
-           break;  
-      case PH_POLYEL:
-      case PH_SORPTION: // only sorbent end-members!
-           if( pm.XF[k] && pm.XFA[k] )
-           {
-              for( long int jj=jb; jj<je; jj++ )
-              {
-                if( pm.DCC[jj] == DC_SUR_CARRIER ||
-                    pm.DCC[jj] == DC_SUR_MINAL || pm.DCC[jj] == DC_PEL_CARRIER )
-                    MMC += pm.MM[jj]*pm.X[jj]/pm.XFA[k];
-                    // Weighted-average sorbent mole mass
-              }
-              NonLogTerm = 1. - pm.XFA[k]/pm.XF[k];  // Also for sorption phases
-              NonLogTermS = 2. - pm.XFA[k]/pm.XF[k] - pm.XF[k]/pm.XFA[k];
-           }
-           break;
-       case PH_ADSORPT: // 'z' phase - adsorption on site balances
-           break;
-       default:
-          break; // Phase class code error should be generated here!
+            }
+            break;
+        case PH_GASMIX:  case PH_FLUID:   case PH_PLASMA:   case PH_SIMELT:
+        case PH_HCARBL:  case PH_SINCOND:  case PH_SINDIS:  case PH_LIQUID:
+        case PH_IONEX:
+            break;
+        case PH_POLYEL:
+        case PH_SORPTION: // only sorbent end-members!
+            if( noZero( pm.XF[k] ) && noZero( pm.XFA[k] ) )
+            {
+//                for( long int jj=jb; jj<je; jj++ )
+//                {
+//                    if( pm.DCC[jj] == DC_SUR_CARRIER ||
+//                            pm.DCC[jj] == DC_SUR_MINAL || pm.DCC[jj] == DC_PEL_CARRIER )
+//                        MMC += pm.MM[jj]*pm.X[jj]/pm.XFA[k];
+//                    // Weighted-average sorbent mole mass
+//                }
+                NonLogTerm = 1. - pm.XFA[k]/pm.XF[k];  // Also for sorption phases
+                NonLogTermS = 2. - pm.XFA[k]/pm.XF[k] - pm.XF[k]/pm.XFA[k];
+            }
+            break;
+        case PH_ADSORPT: // 'z' phase - adsorption on site balances
+            break;
+        default:
+            break; // Phase class code error should be generated here!
+        }
     }
 #ifdef NOMUPNONLOGTERM
-NonLogTerm = 0.0;
-NonLogTermS = 0.0;
+    NonLogTerm = 0.0;
+    NonLogTermS = 0.0;
 #endif
-        if( DirFlag == 0 )
-        {	 // Converting lnGam[j] into Gamma[j]
-            if( !pm.X[j] && !pm.XF[k] )   // && !pm->XF[k]  added by DK 13.04.2012
-                        return 1.;
-            double Gamma = 1.;
-            double lnGamS = pm.lnGam[j];
+    if( DirFlag == 0 )
+    {	 // Converting lnGam[j] into Gamma[j]
+        if( approximatelyZero(pm.X[j]) && approximatelyZero(pm.XF[k]) )   // && !pm->XF[k]  added by DK 13.04.2012
+            return 1.;
+        double Gamma = 1.;
+        double lnGamS = pm.lnGam[j];
 
-            switch( pm.DCC[j] )
-            { // Aqueous electrolyte
-              case DC_AQ_PROTON: case DC_AQ_ELECTRON:  case DC_AQ_SPECIES: case DC_AQ_SURCOMP:
-                lnGamS += NonLogTerm;    // Correction by asymmetry term
-                break;
-                // calculate molar mass of solvent
-            case DC_AQ_SOLVCOM:	    case DC_AQ_SOLVENT:
-                lnGamS += NonLogTermW;
-                break;
-            case DC_GAS_COMP: case DC_GAS_H2O:  case DC_GAS_CO2:
-            case DC_GAS_H2: case DC_GAS_N2:
-                break;
-            case DC_SOL_IDEAL:  case DC_SOL_MINOR:  case DC_SOL_MAJOR:
-            case DC_SOL_MINDEP: case DC_SOL_MAJDEP:               case DC_SCM_SPECIES:
-            break;
-                // non-electrolyte condensed mixtures
-            case DC_SCP_CONDEN: case DC_SUR_MINAL:
-                break;
-            case DC_SUR_CARRIER: case DC_PEL_CARRIER:
-                lnGamS += NonLogTermS;
-                break;
-                // Sorption phases
-            case DC_SSC_A0: case DC_SSC_A1: case DC_SSC_A2: case DC_SSC_A3: case DC_SSC_A4:
-            case DC_WSC_A0: case DC_WSC_A1: case DC_WSC_A2: case DC_WSC_A3: case DC_WSC_A4:
-            case DC_SUR_GROUP: case DC_SUR_COMPLEX: case DC_SUR_IPAIR:  case DC_IESC_A:
-            case DC_IEWC_B:
-                lnGamS += NonLogTerm;
-                break;
-            default:
-                break;
-            }
-            Gamma = exp( lnGamS );
-            return Gamma;
-        }
-        else { // Converting Gamma[j] into lnGam[j]
-                if( !pm.X[j] && !pm.XF[k] )   // && !pm->XF[k]  added by DK 13.04.2012
-                        return 0.;
-                double Gamma = pm.Gamma[j];
-                double lnGam = 0.0;  // Cleanup by DK 5.12.2009
-                if( Gamma != 1.0 && Gamma > pm.lowPosNum )
-                    lnGam = log( Gamma );
-                switch( pm.DCC[j] )
+        switch( pm.DCC[j] )
         { // Aqueous electrolyte
-                   case DC_AQ_PROTON: case DC_AQ_ELECTRON:  case DC_AQ_SPECIES: case DC_AQ_SURCOMP:
-                        lnGam -= NonLogTerm;  // Correction by asymmetry term
-                        break;
-                   case DC_AQ_SOLVCOM:	    case DC_AQ_SOLVENT:
-                        lnGam -= NonLogTermW;
-                        break;
-               case DC_GAS_COMP: case DC_GAS_H2O: case DC_GAS_CO2: case DC_GAS_H2: case DC_GAS_N2:
-                                break;
-                   case DC_SOL_IDEAL:  case DC_SOL_MINOR:  case DC_SOL_MAJOR: case DC_SOL_MINDEP:
-                   case DC_SOL_MAJDEP:                   case DC_SCM_SPECIES:
-                        break;
-               case DC_SCP_CONDEN: case DC_SUR_MINAL:
-                            break;
-               case DC_SUR_CARRIER: case DC_PEL_CARRIER:
-                        lnGam -= NonLogTermS;
-                            break;
-                                // Sorption phases
-               case DC_SSC_A0: case DC_SSC_A1: case DC_SSC_A2: case DC_SSC_A3: case DC_SSC_A4:
-                   case DC_WSC_A0: case DC_WSC_A1: case DC_WSC_A2: case DC_WSC_A3: case DC_WSC_A4:
-                   case DC_SUR_GROUP: case DC_SUR_COMPLEX: case DC_SUR_IPAIR:  case DC_IESC_A:
-                   case DC_IEWC_B:
-                        lnGam -= NonLogTerm;
-                        break;
-                    default:
-                        break;
-                }
-            return lnGam;
+        case DC_AQ_PROTON: case DC_AQ_ELECTRON:  case DC_AQ_SPECIES: case DC_AQ_SURCOMP:
+            lnGamS += NonLogTerm;    // Correction by asymmetry term
+            break;
+            // calculate molar mass of solvent
+        case DC_AQ_SOLVCOM:	    case DC_AQ_SOLVENT:
+            lnGamS += NonLogTermW;
+            break;
+        case DC_GAS_COMP: case DC_GAS_H2O:  case DC_GAS_CO2:
+        case DC_GAS_H2: case DC_GAS_N2:
+            break;
+        case DC_SOL_IDEAL:  case DC_SOL_MINOR:  case DC_SOL_MAJOR:
+        case DC_SOL_MINDEP: case DC_SOL_MAJDEP:               case DC_SCM_SPECIES:
+            break;
+            // non-electrolyte condensed mixtures
+        case DC_SCP_CONDEN: case DC_SUR_MINAL:
+            break;
+        case DC_SUR_CARRIER: case DC_PEL_CARRIER:
+            lnGamS += NonLogTermS;
+            break;
+            // Sorption phases
+        case DC_SSC_A0: case DC_SSC_A1: case DC_SSC_A2: case DC_SSC_A3: case DC_SSC_A4:
+        case DC_WSC_A0: case DC_WSC_A1: case DC_WSC_A2: case DC_WSC_A3: case DC_WSC_A4:
+        case DC_SUR_GROUP: case DC_SUR_COMPLEX: case DC_SUR_IPAIR:  case DC_IESC_A:
+        case DC_IEWC_B:
+            lnGamS += NonLogTerm;
+            break;
+        default:
+            break;
         }
+        if( fabs(lnGamS) < 706.8936 )
+            Gamma = exp( lnGamS );
+        else
+            Gamma = 1.0; // Workaround - warning is needed
+        return Gamma;
+    }
+    else { // Converting Gamma[j] into lnGam[j]
+        if( approximatelyZero(pm.X[j]) && approximatelyZero(pm.XF[k]) )   // && !pm->XF[k]  added by DK 13.04.2012
+            return 0.;
+        double Gamma = pm.Gamma[j];
+        double lnGam = 0.0;  // Cleanup by DK 5.12.2009
+        if( !essentiallyEqual(Gamma, 1.0) && Gamma > pm.lowPosNum )
+            lnGam = log( Gamma );
+        switch( pm.DCC[j] )
+        { // Aqueous electrolyte
+        case DC_AQ_PROTON: case DC_AQ_ELECTRON:  case DC_AQ_SPECIES: case DC_AQ_SURCOMP:
+            lnGam -= NonLogTerm;  // Correction by asymmetry term
+            break;
+        case DC_AQ_SOLVCOM:	    case DC_AQ_SOLVENT:
+            lnGam -= NonLogTermW;
+            break;
+        case DC_GAS_COMP: case DC_GAS_H2O: case DC_GAS_CO2: case DC_GAS_H2: case DC_GAS_N2:
+            break;
+        case DC_SOL_IDEAL:  case DC_SOL_MINOR:  case DC_SOL_MAJOR: case DC_SOL_MINDEP:
+        case DC_SOL_MAJDEP:                   case DC_SCM_SPECIES:
+            break;
+        case DC_SCP_CONDEN: case DC_SUR_MINAL:
+            break;
+        case DC_SUR_CARRIER: case DC_PEL_CARRIER:
+            lnGam -= NonLogTermS;
+            break;
+            // Sorption phases
+        case DC_SSC_A0: case DC_SSC_A1: case DC_SSC_A2: case DC_SSC_A3: case DC_SSC_A4:
+        case DC_WSC_A0: case DC_WSC_A1: case DC_WSC_A2: case DC_WSC_A3: case DC_WSC_A4:
+        case DC_SUR_GROUP: case DC_SUR_COMPLEX: case DC_SUR_IPAIR:  case DC_IESC_A:
+        case DC_IEWC_B:
+            lnGam -= NonLogTerm;
+            break;
+        default:
+            break;
+        }
+        return lnGam;
+    }
 }
 
 //--------------------------------------------------------------------------------
-static double ICold=0.;
 /// Main call point for calculation of DC activity coefficients (lnGam vector)
 ///    formerly GammaCalc().
 /// Controls various built-in models, as well as generic Phase script calculation
@@ -346,7 +282,7 @@ static double ICold=0.;
 /// \return status code (0 if o.k., non-zero values if there were problems
 ///     with surface complexation models)
 long int
-TMulti::CalculateActivityCoefficients( long int LinkMode  )
+TMultiBase::CalculateActivityCoefficients( long int LinkMode  )
 {
     long int k, j, jb, je=0, jpb, jdb, ipb,  jpe=0, jde=0, ipe=0;
     //long int  jmb, jme=0, jsb, jse=0;
@@ -354,27 +290,27 @@ TMulti::CalculateActivityCoefficients( long int LinkMode  )
     char *sMod;
     long int statusGam=0, statusGC=0, statusSACT=0, SmMode = 0;
     double LnGam, pmpXFk;
-    SPP_SETTING *pa = paTProfil;
-//    std::cout << "CalculateActivityCoefficients - 0 " << LinkMode << std::endl;
+    const BASE_PARAM *pa_p = base_param();
+
+    ipm_logger->trace("CalculateActivityCoefficients {}", LinkMode);
     // calculating concentrations of species in multi-component phases
     switch( LinkMode )
     {
-//      std::cout << "CalculateActivityCoefficients - LinkMode" << std::endl;
-      case LINK_TP_MODE:  // Built-in functions depending on T,P only
-      {
+    case LINK_TP_MODE:  // Built-in functions depending on T,P only
+    {
         long int  jdqfc=0,  jrcpc=0; // jphl=0, jlphc=0,
         long int  jmb, jme=0, jsb, jse=0;
 
         pm.FitVar[3] = 1.0;  // resetting the IPM smoothing factor
 
-         for( k=0; k<pm.FIs; k++ )
-         { // loop on solution phases
+        for( k=0; k<pm.FIs; k++ )
+        { // loop on solution phases
             jb = je;
             je += pm.L1[k];
             if( pm.L1[k] == 1 && !( pm.PHC[k] == PH_GASMIX ||
-                                    pm.PHC[k] == PH_PLASMA ||
-                                    pm.PHC[k] == PH_FLUID ))  // SD 13/12/19
-                 continue;
+                                   pm.PHC[k] == PH_PLASMA ||
+                                   pm.PHC[k] == PH_FLUID ))  // SD 13/12/19
+                continue;
             // Indexes for extracting data from IPx, PMc and DMc arrays
             ipb = ipe;
             ipe += pm.LsMod[k*3]*pm.LsMod[k*3+1];
@@ -389,46 +325,46 @@ TMulti::CalculateActivityCoefficients( long int LinkMode  )
             jsb = jse;
             jse += pm.LsMdc[k*3+1]*pm.LsMdc[k*3+2];
 
-                    double nxk = 1./pm.L1[k];
+            double nxk = 1./pm.L1[k];
             for( j= jb; j<je; j++ )
-    		{
-                if(pm.XF[k] < min( pm.DSM, pm.PhMinM ) ) // pm.lowPosNum )   // workaround 10.03.2008 DK
-                        pm.Wx[j] = nxk;  // need this eventually to avoid problems with zero mole fractions
+            {
+                if(pm.XF[k] < std::min( pm.DSM, pm.PhMinM ) ) // pm.lowPosNum )   // workaround 10.03.2008 DK
+                    pm.Wx[j] = nxk;  // need this eventually to avoid problems with zero mole fractions
                 pm.fDQF[j] =0.0;  // cleaning fDQF in TP mode!
                 pm.lnGmo[j] = pm.lnGam[j]; // saving activity coefficients in TP mode
-       	    }
-                // if( sMod[SGM_MODE] != SM_STNGAM ) This should not be the case anymore DK 24.11.2010
-                // continue;  // The switch below is for built-in functions only!
+            }
+            // if( sMod[SGM_MODE] != SM_STNGAM ) This should not be the case anymore DK 24.11.2010
+            // continue;  // The switch below is for built-in functions only!
 
             // the following section probably needs to be re-written to allow more flexible
             // combinations of fluid models for pure gases with gE mixing models,
             // scheme should probably be the same as in LINK_UX_MODE, 03.06.2008 (TW)
             switch( pm.PHC[k] )
             {
-                case PH_AQUEL: case PH_LIQUID: case PH_SINCOND: case PH_SINDIS: case PH_HCARBL:
-                case PH_SIMELT: case PH_GASMIX: case PH_PLASMA: case PH_FLUID: case PH_ADSORPT:
-                case PH_IONEX:
-                    SolModCreate( jb, jmb, jsb, jpb, jdb, k, ipb,
-                        sMod[SPHAS_TYP], sMod[MIX_TYP], /* jphl, jlphc,*/ jdqfc/*,  jrcpc*/  );
-                    // new solution models (TW, DK 2007)
-            	    SolModParPT( k, sMod[SPHAS_TYP] );
-            	    break;
-              default:
-                    break;
+            case PH_AQUEL: case PH_LIQUID: case PH_SINCOND: case PH_SINDIS: case PH_HCARBL:
+            case PH_SIMELT: case PH_GASMIX: case PH_PLASMA: case PH_FLUID: case PH_ADSORPT:
+            case PH_IONEX:
+                SolModCreate( jb, jmb, jsb, jpb, jdb, k, ipb,
+                             sMod[SPHAS_TYP], sMod[MIX_TYP], /* jphl, jlphc,*/ jdqfc/*,  jrcpc*/  );
+                // new solution models (TW, DK 2007)
+                SolModParPT( k, sMod[SPHAS_TYP] );
+                break;
+            default:
+                break;
             }
 
             // move pointers
- //           jphl  +=  (pm.LsPhl[k*2]*2);
- //           jlphc += (pm.LsPhl[k*2 ]*pm.LsPhl[k*2+1]);
+            //           jphl  +=  (pm.LsPhl[k*2]*2);
+            //           jlphc += (pm.LsPhl[k*2 ]*pm.LsPhl[k*2+1]);
             jdqfc += (pm.LsMdc2[k*3]*pm.L1[k]);
             jrcpc += (pm.LsMdc2[k*3+1]*pm.L1[k]);
 
-          } // k
-        }
-//        std::cout << "CalculateActivityCoefficients - LINK_TP_MODE" << std::endl;
+        } // k
+    }
+        ipm_logger->trace("CalculateActivityCoefficients - LINK_TP_MODE");
         break;
 
-      case LINK_PP_MODE: // Mode of calculation of integral solution phase properties
+    case LINK_PP_MODE: // Mode of calculation of integral solution phase properties
         for( k=0; k<pm.FIs; k++ )
         { // loop on solution phases
             jb = je;
@@ -436,25 +372,25 @@ TMulti::CalculateActivityCoefficients( long int LinkMode  )
             sMod = pm.sMod[k];
             switch( pm.PHC[k] )
             {
-              case PH_AQUEL: case PH_LIQUID: case PH_SINCOND: case PH_SINDIS: case PH_HCARBL:
-              case PH_SIMELT: case PH_GASMIX: case PH_PLASMA: case PH_FLUID:  case PH_ADSORPT:
-              case PH_IONEX:
-//                std::cout << "CalculateActivityCoefficients - LINK_PP_MODE" << std::endl;
-                   SolModExcessProp( k, sMod[SPHAS_TYP] ); // extracting integral phase properties
-                   SolModIdealProp(  /*jb,*/ k, sMod[SPHAS_TYP] );
-                   SolModStandProp(  /*jb,*/ k, sMod[SPHAS_TYP] );
-                   SolModDarkenProp( /*jb,*/ k/*, sMod[SPHAS_TYP]*/ );
-           	       break;
-              default:
-                       break;
+            case PH_AQUEL: case PH_LIQUID: case PH_SINCOND: case PH_SINDIS: case PH_HCARBL:
+            case PH_SIMELT: case PH_GASMIX: case PH_PLASMA: case PH_FLUID:  case PH_ADSORPT:
+            case PH_IONEX:
+                ipm_logger->trace("CalculateActivityCoefficients - LINK_PP_MODE");
+                SolModExcessProp( k, sMod[SPHAS_TYP] ); // extracting integral phase properties
+                SolModIdealProp(  /*jb,*/ k, sMod[SPHAS_TYP] );
+                SolModStandProp(  /*jb,*/ k, sMod[SPHAS_TYP] );
+                SolModDarkenProp( /*jb,*/ k/*, sMod[SPHAS_TYP]*/ );
+                break;
+            default:
+                break;
             }
-       } // k
-       break;
+        } // k
+        break;
 
     case LINK_UX_MODE:
-    	// Getting actual smoothing parameter
-    	SetSmoothingFactor( SmMode );
-    	// calculating DC concentrations after this IPM iteration
+        // Getting actual smoothing parameter
+        SetSmoothingFactor( SmMode );
+        // calculating DC concentrations after this IPM iteration
         CalculateConcentrations( pm.X, pm.XF, pm.XFA );
         // cleaning activity coefficients
         for( j=0; j<pm.L; j++ )
@@ -464,21 +400,21 @@ TMulti::CalculateActivityCoefficients( long int LinkMode  )
         }
         if( pm.E && pm.LO ) // checking electrostatics
         {
-          IS_EtaCalc();  //  calculating charges and charge densities
-          if( pm.FIat > 0 )
-             for( k=0; k<pm.FIs; k++ )
-             {
-               if( pm.PHC[k] == PH_POLYEL || pm.PHC[k] == PH_SORPTION )
-               {  long int ist;
-                  for( ist=0; ist<pm.FIat; ist++ ) // loop over surface types
-                  {
-                     pm.XpsiA[k][ist] = 0.0;        // cleaning Psi before GouyChapman()
-                     pm.XpsiB[k][ist] = 0.0;
-                     pm.XpsiD[k][ist] = 0.0;
-                  }  // ist
-                }
-             }  // k
-         } // pm.E
+            IS_EtaCalc();  //  calculating charges and charge densities
+            if( pm.FIat > 0 )
+                for( k=0; k<pm.FIs; k++ )
+                {
+                    if( pm.PHC[k] == PH_POLYEL || pm.PHC[k] == PH_SORPTION )
+                    {  long int ist;
+                        for( ist=0; ist<pm.FIat; ist++ ) // loop over surface types
+                        {
+                            pm.XpsiA[k][ist] = 0.0;        // cleaning Psi before GouyChapman()
+                            pm.XpsiB[k][ist] = 0.0;
+                            pm.XpsiD[k][ist] = 0.0;
+                        }  // ist
+                    }
+                }  // k
+        } // pm.E
         break;
     default:
         Error("CalculateActivityCoefficients()","Invalid LinkMode for a built-in solution model");
@@ -513,50 +449,49 @@ TMulti::CalculateActivityCoefficients( long int LinkMode  )
         //jsb = jse;
         //jse += pm.LsMdc[k*3+1]*pm.LsMdc[k*3+2];
 
-   if( LinkMode == LINK_UX_MODE && sMod[SGM_MODE] == SM_STNGAM )
-   {    // check that SGM_MODE for adsorption or multi-site ideal SS is not SM_IDEAL in Phase records!
-        switch( pm.PHC[k] )
-        {  // calculating activity coefficients using built-in functions
-          case PH_AQUEL:   // DH III variant consistent with HKF
-             if( pmpXFk > pm.DSM && pm.X[pm.LO] > pm.XwMinM && pm.IC > pa->p.ICmin )
-             {
-                switch( sMod[SPHAS_TYP] )
+        if( LinkMode == LINK_UX_MODE && sMod[SGM_MODE] == SM_STNGAM )
+        {    // check that SGM_MODE for adsorption or multi-site ideal SS is not SM_IDEAL in Phase records!
+            switch( pm.PHC[k] )
+            {  // calculating activity coefficients using built-in functions
+            case PH_AQUEL:   // DH III variant consistent with HKF
+                if( pmpXFk > pm.DSM && pm.X[pm.LO] > pm.XwMinM && pm.IC > pa_p->ICmin )
                 {
+                    switch( sMod[SPHAS_TYP] )
+                    {
                     case SM_AQDH3: case SM_AQDH2: case SM_AQDH1: case SM_AQDHS: case SM_AQDHH:
                     case SM_AQDAV: case SM_AQSIT: case SM_AQPITZ: case SM_AQEXUQ: case SM_AQELVIS:
-						SolModActCoeff( k, sMod[SPHAS_TYP] );
-						break;
-					default:
-						break;
+                        SolModActCoeff( k, sMod[SPHAS_TYP] );
+                        break;
+                    default:
+                        break;
+                    }
                 }
-                ICold = pm.IC;
-             }
-             goto END_LOOP;
-             break;
-          case PH_GASMIX: case PH_PLASMA: case PH_FLUID:
-             if( pmpXFk > pm.DSM && pm.XF[k] > pa->p.PhMin )
-             {
-                 if( sMod[SPHAS_TYP] == SM_CGFLUID )  // CG EoS fluid model
-                     SolModActCoeff( k, sMod[SPHAS_TYP] );
-                 if( sMod[SPHAS_TYP] == SM_PRFLUID )  // PRSV EoS fluid model
-                     SolModActCoeff( k, sMod[SPHAS_TYP] );
-                 if( sMod[SPHAS_TYP] == SM_SRFLUID )  // SRK EoS fluid model
-                     SolModActCoeff( k, sMod[SPHAS_TYP] );
-                 if( sMod[SPHAS_TYP] == SM_PR78FL )  // PR78 EoS fluid model
-                     SolModActCoeff( k, sMod[SPHAS_TYP] );
-                 if( sMod[SPHAS_TYP] == SM_CORKFL )  // CORK EoS fluid model
-                     SolModActCoeff( k, sMod[SPHAS_TYP] );
-                 if ( sMod[SPHAS_TYP] == SM_STFLUID )  // STP EoS fluid model
-                     SolModActCoeff( k, sMod[SPHAS_TYP] );
-             }
-             goto END_LOOP;
-             break;
-         case PH_LIQUID: case PH_SIMELT: case PH_SINCOND: case PH_SINDIS: case PH_HCARBL:
-         case PH_ADSORPT: case PH_IONEX:
-             if( pmpXFk > pm.DSM )
-             {     // solid and liquid mixtures
-                switch( sMod[SPHAS_TYP] )
+                goto END_LOOP;
+                break;
+            case PH_GASMIX: case PH_PLASMA: case PH_FLUID:
+                if( pmpXFk > pm.DSM && pm.XF[k] >pa_p->PhMin )
                 {
+                    if( sMod[SPHAS_TYP] == SM_CGFLUID )  // CG EoS fluid model
+                        SolModActCoeff( k, sMod[SPHAS_TYP] );
+                    if( sMod[SPHAS_TYP] == SM_PRFLUID )  // PRSV EoS fluid model
+                        SolModActCoeff( k, sMod[SPHAS_TYP] );
+                    if( sMod[SPHAS_TYP] == SM_SRFLUID )  // SRK EoS fluid model
+                        SolModActCoeff( k, sMod[SPHAS_TYP] );
+                    if( sMod[SPHAS_TYP] == SM_PR78FL )  // PR78 EoS fluid model
+                        SolModActCoeff( k, sMod[SPHAS_TYP] );
+                    if( sMod[SPHAS_TYP] == SM_CORKFL )  // CORK EoS fluid model
+                        SolModActCoeff( k, sMod[SPHAS_TYP] );
+                    if ( sMod[SPHAS_TYP] == SM_STFLUID )  // STP EoS fluid model
+                        SolModActCoeff( k, sMod[SPHAS_TYP] );
+                }
+                goto END_LOOP;
+                break;
+            case PH_LIQUID: case PH_SIMELT: case PH_SINCOND: case PH_SINDIS: case PH_HCARBL:
+            case PH_ADSORPT: case PH_IONEX:
+                if( pmpXFk > pm.DSM )
+                {     // solid and liquid mixtures
+                    switch( sMod[SPHAS_TYP] )
+                    {
                     case SM_IDEAL:   // Ideal (multi-site) model (DK 29.11.2010)
                     case SM_BERMAN:  // Non-ideal (multi-site) model (DK 07.12.2010)
                     case SM_CEF:     // multi-site non-ideal ss model (CALPHAD) DK 15.08.2014
@@ -573,186 +508,77 @@ TMulti::CalculateActivityCoefficients( long int LinkMode  )
                         break;
                     case SM_SURCOM:   // new SCMs with site balances
                         SolModActCoeff( k, sMod[SPHAS_TYP] );
-                    break;
+                        break;
                     default:
                         break;
+                    }
                 }
-             }
-             goto END_LOOP;
-             break;
-        case PH_POLYEL:  // PoissonBoltzmann( q, jb, je, k ); break;
-        case PH_SORPTION: // electrostatic potenials from Gouy-Chapman eqn
+                goto END_LOOP;
+                break;
+            case PH_POLYEL:  // PoissonBoltzmann( q, jb, je, k ); break;
+            case PH_SORPTION: // electrostatic potenials from Gouy-Chapman eqn
                 if( pm.PHC[0] == PH_AQUEL && pmpXFk > pm.DSM
-                && (pm.XFA[0] > pm.XwMinM && pm.XF[0] > pm.DSM ))
+                    && (pm.XFA[0] > pm.XwMinM && pm.XF[0] > pm.DSM ))
                 {
                     if( pm.E )
                     {
-                       statusGC = GouyChapman( jb, je, k );
-                    // PoissonBoltzmann( q, jb, je, k )
+                        statusGC = GouyChapman( jb, je, k );
+                        // PoissonBoltzmann( q, jb, je, k )
                     }
                     // Calculating surface activity coefficient terms
                     statusSACT = SurfaceActivityCoeff(  jb, je, jpb, jdb, k );
                 }
                 break;
-         default:
-            goto END_LOOP;
-       } // end switch
-   }  // end if LinkMode == LINK_UX_MODE
-
-#ifndef IPMGEMPLUGIN
-// This part running Phase math scripts is not used in standalone GEMS3K
-        // Link DOD and set sizes of work arrays
-        pm_GC_ods_link( k, jb, jpb, jdb, ipb );
-        pm.is=0;
-        pm.js=0;
-        pm.next=1;
-
-        switch( LinkMode )
-        { // check the calculation mode
-        case LINK_TP_MODE: // running TP-dependent scripts
-            if(( sMod[SPHAS_DEP] == SM_TPDEP || sMod[SPHAS_DEP] == SM_UXDEP ) && qEp[k].nEquat() )
-            {	// Changed on 26.02.2008 to try TW DQF scripts - DK
-        	      qEp[k].CalcEquat();
-            }
-        	if((sMod[DCOMP_DEP] == SM_TPDEP || sMod[DCOMP_DEP] == SM_UXDEP) && qEd[k].nEquat() )
-            {
-                switch( sMod[DCE_LINK] )
-                {
-                case SM_PUBLIC:  // one script for all species
-                    for( pm.js=0, pm.is=0; pm.js<pm.L1[k]; pm.js++ )
-                        qEd[k].CalcEquat();
-                    break;
-                case SM_PRIVATE_: // separate group of equations per species
-                    qEd[k].CalcEquat();
-                    break;
-                }
-            }
-        	break;
-
-        case LINK_PP_MODE: // Mode of calculation of integral solution phase properties
-                        switch( pm.PHC[k] )
-                {
-                  case PH_AQUEL:
-                  case PH_LIQUID:
-                  case PH_SINCOND:
-                  case PH_SINDIS:
-                  case PH_HCARBL:
-                  case PH_SIMELT:
-                  case PH_IONEX:
-                  case PH_ADSORPT:
-                  case PH_GASMIX:
-                  case PH_PLASMA:
-                  case PH_FLUID:  // How to pull this stuff out of the script (pointers to integral phase properties added)
-                	  // SolModExcessProp( k, sMod[SPHAS_TYP] ); // extracting integral phase properties
-                	  // SolModIdealProp( jb, k, sMod[SPHAS_TYP] );
-                	  // SolModStandProp( jb, k, sMod[SPHAS_TYP] );
-                	  // SolModDarkenProp( jb, k, sMod[SPHAS_TYP] );
-               	       break;
-                  default:
-                       break;
-                }
-                break;
-
-        case LINK_UX_MODE:  // the model is dependent on current concentrations on IPM iteration
-            switch( pm.PHC[k] )
-            {  //
-              case PH_AQUEL:
-                  if(!(pmpXFk > pm.DSM && pm.X[pm.LO] > pm.XwMinM && pm.IC > pa->p.ICmin ))
-                	 goto END_LOOP;
-                 break;
-              case PH_GASMIX:
-              case PH_PLASMA:
-              case PH_FLUID:
-                 if( !(pmpXFk > pm.DSM && pm.XF[k] > pa->p.PhMin))
-                     goto END_LOOP;
-                 break;
-             case PH_LIQUID:
-             case PH_SIMELT:
-             case PH_SINCOND:
-             case PH_SINDIS:
-             case PH_IONEX:
-             case PH_ADSORPT:
-             case PH_HCARBL:  // solid and liquid mixtures
-                 if( !(pmpXFk > pm.DSM) )
-                     goto END_LOOP;
-                 SolModActCoeff( k, sMod[SPHAS_TYP] );  // Added to introduce multi-site ideal term 29.11.2010
-                 break;
-            case PH_POLYEL:  // PoissonBoltzmann( q, jb, je, k ); break;
-            case PH_SORPTION: // electrostatic potenials from Gouy-Chapman eqn
-                  if( !(pm.PHC[0] == PH_AQUEL && pmpXFk > pm.DSM
-                      && (pm.XFA[0] > pm.XwMinM && pm.XF[0] > pm.DSM )))
-                	goto END_LOOP;
-                break;
-             default:
+            default:
                 goto END_LOOP;
-           } // end switch
+            } // end switch
+        }  // end if LinkMode == LINK_UX_MODE
 
-            if( sMod[SPHAS_DEP] == SM_UXDEP && qEp[k].nEquat() )
-                // Equations for the whole phase
-                qEp[k].CalcEquat();
-            if( sMod[DCOMP_DEP] == SM_UXDEP && qEd[k].nEquat() )
-            {  // Equations for species
-                switch( sMod[DCE_LINK] )
-                {
-                case SM_PUBLIC:  // one script for all species
-                    for( pm.js=0, pm.is=0; pm.js<pm.L1[k]; pm.js++ )
-                        qEd[k].CalcEquat();
-                    break;
-                case SM_PRIVATE_:  // separate group of equations for each species
-                    qEd[k].CalcEquat();
-                    break;
-                }
-            }
-            if( pm.PHC[k] == PH_AQUEL )
-                ICold = pm.IC;
-            break;
-        default:
-            Error("CalculateActivityCoefficients()","Invalid LinkMode for a scripted solution model");
-        } // end switch
-#endif
+        if( !calculateActivityCoefficients_scripts( LinkMode, k, jb, jpb, jdb, ipb, pmpXFk ) )
+            goto END_LOOP;
 
-END_LOOP:
+    END_LOOP:
         if( LinkMode == LINK_TP_MODE )  // TP mode - added 04.03.2008 by DK
         {
-        	for( j=jb; j<je; j++ )
-        	{
-                   if( pm.XF[k] < pm.DSM )   // workaround 10.03.2008 DK
-                                pm.Wx[j] = 0.0;               //
-                   LnGam = pm.lnGmo[j];
-                   pm.lnGam[j] = LnGam;
-                   if(  fabs( LnGam ) < 84. )
-                       pm.Gamma[j] = PhaseSpecificGamma( j, jb, je, k, 0 );
-                   else pm.Gamma[j] = 1.0;
-        	}
+            for( j=jb; j<je; j++ )
+            {
+                if( pm.XF[k] < pm.DSM )   // workaround 10.03.2008 DK
+                    pm.Wx[j] = 0.0;               //
+                LnGam = pm.lnGmo[j];
+                pm.lnGam[j] = LnGam;
+                if(  fabs( LnGam ) < 84. )
+                    pm.Gamma[j] = PhaseSpecificGamma( j, jb, je, k, 0 );
+                else pm.Gamma[j] = 1.0;
+            }
         }
         else if(LinkMode == LINK_UX_MODE )  // Bugfix! DK 06.04.11
         { // Real mode for activity coefficients
-           double lnGamG;
-           for( j=jb; j<je; j++ )
-           {
-             if( pm.DCC[j] == DC_AQ_SURCOMP )  // Workaround for aqueous surface complexes DK 22.07.09
-             {   pm.lnGam[j] = 0.0; lnGamG = 0.0; }
-             else
-                 lnGamG = PhaseSpecificGamma( j, jb, je, k, 1 );
-             LnGam = pm.lnGam[j];
-             if( fabs( lnGamG ) > 1e-9 )
-            	LnGam += lnGamG;
-             pm.lnGmo[j] = LnGam;
-             if( fabs( LnGam ) < 84. )   // before 26.02.08: < 42.
+            double lnGamG;
+            for( j=jb; j<je; j++ )
+            {
+                if( pm.DCC[j] == DC_AQ_SURCOMP )  // Workaround for aqueous surface complexes DK 22.07.09
+                {   pm.lnGam[j] = 0.0; lnGamG = 0.0; }
+                else
+                    lnGamG = PhaseSpecificGamma( j, jb, je, k, 1 );
+                LnGam = pm.lnGam[j];
+                if( fabs( lnGamG ) > 1e-9 )
+                    LnGam += lnGamG;
+                pm.lnGmo[j] = LnGam;
+                if( fabs( LnGam ) < 84. )   // before 26.02.08: < 42.
                     pm.Gamma[j] = PhaseSpecificGamma( j, jb, je, k, 0 );
-             else pm.Gamma[j] = 1.0;
-             if( pm.DCC[j] == DC_AQ_SURCOMP )  // bugfix 18.11.2017 by DK for K aq species
-                  pm.Gamma[j] = 1.0;
-             pm.F0[j] = DC_PrimalChemicalPotentialUpdate( j, k );
-             pm.G[j] = pm.G0[j] + pm.fDQF[j] + pm.F0[j];
-           }
+                else pm.Gamma[j] = 1.0;
+                if( pm.DCC[j] == DC_AQ_SURCOMP )  // bugfix 18.11.2017 by DK for K aq species
+                    pm.Gamma[j] = 1.0;
+                pm.F0[j] = DC_PrimalChemicalPotentialUpdate( j, k );
+                pm.G[j] = pm.G0[j] + pm.fDQF[j] + pm.F0[j];
+            }
         }
     }  // k - end loop over phases
 
     if( statusGC )
         return statusGC;
     if( statusSACT )
-    	return statusSACT;
+        return statusSACT;
     return statusGam;
 }
 
@@ -761,7 +587,7 @@ END_LOOP:
 /// Wrapper calls for creating multi-component mixing models for phases
 /// using  TSolMod class. Now including multi-site ideal and scripted models
 //
-void TMulti::SolModCreate( long int jb, long int jmb, long int jsb, long int jpb, long int jdb,
+void TMultiBase::SolModCreate( long int jb, long int jmb, long int jsb, long int jpb, long int jdb,
                            long int k, long int ipb, char ModCode, char MixCode,
                            /* long int jphl, long int jlphc, */ long int jdqfc/*, long int  jrcpc*/)
 {
@@ -789,7 +615,7 @@ void TMulti::SolModCreate( long int jb, long int jmb, long int jsb, long int jpb
     if( phSolMod[k])
         if(  phSolMod[k]->testSizes( &sd ) )
     	{
-                phSolMod[k]->UpdatePT( pm.Tc, pm.Pc );
+                phSolMod[k]->UpdatePT( pm.Tc, pm.P );
                 return; // using old allocation and setup of the solution model
     	}
 
@@ -814,19 +640,22 @@ void TMulti::SolModCreate( long int jb, long int jmb, long int jsb, long int jpb
     sd.arPparc = pm.Pparc+jb;
     sd.TP_Code = &pm.dcMod[jb];
     sd.T_k = pm.Tc;
-    sd.P_bar = pm.Pc;
+    sd.P_bar = pm.P;
 
     //new objects to Phase 06/06/12
 //    sd.arPhLin = pm.PhLin+jphl;
 //    sd.lPhc = pm.lPhc+ jlphc;
-    sd.DQFc = pm.DQFc+ jdqfc;
+    sd.arDQFc = pm.DQFc+ jdqfc;
 //    sd.rcpc = pm.rcpc+ jrcpc;
-    //sd.arSitFj =
 
     // specific properties
     aM = pm.Y_m+jb;
     aZ = pm.EZ+jb;
     sd.arVol = pm.Vol+jb;
+    sd.arSM = pm.SM+jb;
+    auto phase_name = char_array_to_string(pm.SF[k]+MAXSYMB, MAXPHNAME);
+    strip(phase_name);
+    sd.phaseName = phase_name;
 
     TSolMod* mySM = nullptr;
 
@@ -837,7 +666,6 @@ void TMulti::SolModCreate( long int jb, long int jmb, long int jsb, long int jpb
         case SM_OTHER:  // Hard-coded solid solution models (selected by phase name)
         {
                 TModOther* myPT = new TModOther( &sd, pm.denW, pm.epsW );
-                myPT->GetPhaseName( pm.SF[k] );
                 mySM = myPT;
                 break;
         }
@@ -1034,7 +862,6 @@ void TMulti::SolModCreate( long int jb, long int jmb, long int jsb, long int jpb
         case SM_IDEAL:
         {
                 TIdeal* myPT = new TIdeal( &sd );
-                myPT->GetPhaseName( pm.SF[k] );
                 mySM = myPT;
                 break;
         }
@@ -1042,7 +869,6 @@ void TMulti::SolModCreate( long int jb, long int jmb, long int jsb, long int jpb
         case SM_SURCOM:
         {
             TSCM_NEM* myPT = new TSCM_NEM( &sd );
-            myPT->GetPhaseName( pm.SF[k] );
             mySM = myPT;
             break;
         }
@@ -1051,12 +877,16 @@ void TMulti::SolModCreate( long int jb, long int jmb, long int jsb, long int jpb
     }
   	if(phSolMod[k])
             delete phSolMod[k];
-        phSolMod[k] = mySM; // set up new pointer for the solution model
+
+     phSolMod[k] = mySM; // set up new pointer for the solution model
+    if(TSolMod::solmod_logger->should_log(spdlog::level::debug)) {
+     phSolMod[k]->to_json_file(std::string("solmod_")+std::to_string(k)+".json");
+    }
 }
 
 /// Wrapper call for calculation of temperature and pressure correction
 /// uses TSolMod class
-void TMulti::SolModParPT( long int k, char ModCode )
+void TMultiBase::SolModParPT( long int k, char ModCode )
 {
     // Extended constructor to connect to params, coeffs, and mole fractions
     switch( ModCode )
@@ -1072,7 +902,8 @@ void TMulti::SolModParPT( long int k, char ModCode )
         // fluid (gas) models
         case SM_PRFLUID: case SM_CGFLUID: case SM_SRFLUID: case SM_PR78FL: case SM_CORKFL:
         case SM_STFLUID:
-        {    ErrorIf( !phSolMod[k], "SolModParPT: ","Invalid index of phase");
+        {
+              ErrorIf( !phSolMod[k], "SolModParPT: ","Invalid index of phase");
               TSolMod* mySM = phSolMod[k];
               mySM->PTparam();
              break;
@@ -1084,7 +915,7 @@ void TMulti::SolModParPT( long int k, char ModCode )
 
 /// Wrapper call for calculation of activity coefficients
 /// uses TSolMod class
-void TMulti::SolModActCoeff( long int k, char ModCode )
+void TMultiBase::SolModActCoeff( long int k, char ModCode )
 {
     switch( ModCode )
     {   // solid and liquid solutions
@@ -1099,9 +930,13 @@ void TMulti::SolModActCoeff( long int k, char ModCode )
         // fluid (gas) models
         case SM_PRFLUID: case SM_CGFLUID: case SM_SRFLUID: case SM_PR78FL: case SM_CORKFL:
         case SM_STFLUID:
-        {    ErrorIf( !phSolMod[k], "SolModActCoeff: ","Invalid index of phase");
+        {
+             ErrorIf( !phSolMod[k], "SolModActCoeff: ","Invalid index of phase");
              TSolMod* mySM = phSolMod[k];
              mySM->MixMod();
+             if(TSolMod::solmod_logger->should_log(spdlog::level::debug)) {
+                 phSolMod[k]->to_text_file(std::string("solmod_act_coef_")+std::to_string(k)+".txt", true);
+             }
              break;
         }
         default:
@@ -1111,7 +946,7 @@ void TMulti::SolModActCoeff( long int k, char ModCode )
 
 /// Wrapper call for calculation of bulk phase excess properties
 /// uses TSolMod class
-void TMulti::SolModExcessProp( long int k, char ModCode )
+void TMultiBase::SolModExcessProp( long int k, char ModCode )
 {
 
     // order of phase properties: G, H, S, CP, V, A, U
@@ -1146,7 +981,6 @@ void TMulti::SolModExcessProp( long int k, char ModCode )
               break;
     }
     // assignments
-//    std::cout << "Assignment of calculated excess properties of mixing [2]" << std::endl;
     Gex = zex[0];
     Hex = zex[1];
     Sex = zex[2];
@@ -1154,6 +988,7 @@ void TMulti::SolModExcessProp( long int k, char ModCode )
     Vex = zex[4];
     Aex = zex[5];
     Uex = zex[6];
+    ipm_logger->debug("Assignment of calculated excess properties of mixing [2] Gex={} Hex={} Sex={} CPex={}", Gex, Hex, Sex, CPex);
     pm.GPh[k][2] = Gex;
     pm.HPh[k][2] = Hex;
     pm.SPh[k][2] = Sex;
@@ -1165,7 +1000,7 @@ void TMulti::SolModExcessProp( long int k, char ModCode )
 
 
 /// Wrapper call for calculation of bulk phase ideal mixing properties
-void TMulti::SolModIdealProp( /*long int jb,*/ long int k, char ModCode )
+void TMultiBase::SolModIdealProp( /*long int jb,*/ long int k, char ModCode )
 {
     // order of phase properties: G, H, S, CP, V, A, U
     long int j;
@@ -1199,7 +1034,6 @@ void TMulti::SolModIdealProp( /*long int jb,*/ long int k, char ModCode )
             break;
     }
     // assignments
-//    std::cout << "Assignment of calculated ideal properties of mixing [1]" << std::endl;
     Gid = zid[0];
     Hid = zid[1];
     Sid = zid[2];
@@ -1207,6 +1041,7 @@ void TMulti::SolModIdealProp( /*long int jb,*/ long int k, char ModCode )
     Vid = zid[4];
     Aid = zid[5];
     Uid = zid[6];
+    ipm_logger->debug("Assignment of calculated excess properties of mixing [1] Gid={} Hid={} Sid={} CPid={}", Gid, Hid, Sid, CPid);
     pm.GPh[k][1] = Gid;
     pm.HPh[k][1] = Hid;
     pm.SPh[k][1] = Sid;
@@ -1217,7 +1052,7 @@ void TMulti::SolModIdealProp( /*long int jb,*/ long int k, char ModCode )
 }
 
 /// Wrapper call for retrieving bulk phase Darken quadratic terms
-void TMulti::SolModDarkenProp( /*long int jb,*/ long int k/*, char ModCode*/ )
+void TMultiBase::SolModDarkenProp( /*long int jb,*/ long int k/*, char ModCode*/ )
 {
     // order of phase properties: G, H, S, CP, V, A, U
     long int j;
@@ -1230,7 +1065,6 @@ void TMulti::SolModDarkenProp( /*long int jb,*/ long int k/*, char ModCode*/ )
     }
 
     // data object for derivative properties needs to be added in Multi and DODs in scripts
-//    std::cout << "Assignment of calculated Darken terms of mixing [2]" << std::endl;
     // assignments
     Gdq = zdq[0];
     Hdq = zdq[1];
@@ -1239,6 +1073,7 @@ void TMulti::SolModDarkenProp( /*long int jb,*/ long int k/*, char ModCode*/ )
     Vdq = zdq[4];
     Adq = zdq[5];
     Udq = zdq[6];
+    ipm_logger->debug("Assignment of calculated Darken terms of mixing [2] Gdq={} Hdq={} Sdq={} CPdq={}", Gdq, Hdq, Sdq, CPdq);
     pm.GPh[k][3] = Gdq;
     pm.HPh[k][3] = Hdq;
     pm.SPh[k][3] = Sdq;
@@ -1250,7 +1085,7 @@ void TMulti::SolModDarkenProp( /*long int jb,*/ long int k/*, char ModCode*/ )
 }
 
 /// Wrapper call for retrieving bulk phase standard state terms
-void TMulti::SolModStandProp ( /*long int jb,*/ long int k, char ModCode )
+void TMultiBase::SolModStandProp ( /*long int jb,*/ long int k, char ModCode )
 {
     // order of phase properties: G, H, S, CP, V, A, U
     long int j;
@@ -1285,8 +1120,6 @@ void TMulti::SolModStandProp ( /*long int jb,*/ long int k, char ModCode )
             break;
     }
     // assignments
-//    std::cout << "Assignment of calculated standard (reference) properties of mixed phase [0]" << std::endl;
-    // assignments
     Gst = zst[0];
     Hst = zst[1];
     Sst = zst[2];
@@ -1294,6 +1127,7 @@ void TMulti::SolModStandProp ( /*long int jb,*/ long int k, char ModCode )
     Vst = zst[4];
     Ast = zst[5];
     Ust = zst[6];
+    ipm_logger->debug("Assignment of calculated standard (reference) properties of mixed phase [0] Gst={} Hst={} Sst={} CPst={}", Gst, Hst, Sst, CPst);
     pm.GPh[k][0] = Gst;
     pm.HPh[k][0] = Hst;
     pm.SPh[k][0] = Sst;
@@ -1307,7 +1141,7 @@ void TMulti::SolModStandProp ( /*long int jb,*/ long int k, char ModCode )
 //-------------------------------------------------------------------------
 /// Internal memory allocation for TSolMod performance optimization
 /// (since version 2.3.0)
-void TMulti::Alloc_TSolMod( long int newFIs )
+void TMultiBase::Alloc_TSolMod( long int newFIs )
 {
   if(  phSolMod && ( newFIs == sizeFIs) )
     return;
@@ -1320,7 +1154,7 @@ void TMulti::Alloc_TSolMod( long int newFIs )
           phSolMod[ii] = nullptr;
 }
 
-void TMulti::Free_TSolMod()
+void TMultiBase::Free_TSolMod()
 {
   long int kk;
 
@@ -1337,7 +1171,7 @@ void TMulti::Free_TSolMod()
 
 /// Internal memory allocation for TSorpMod performance optimization
 /// (since version 3.4.0)
-void TMulti::Alloc_TSorpMod( long int newFIs )
+void TMultiBase::Alloc_TSorpMod( long int newFIs )
 {
   if(  phSorpMod && ( newFIs == sizeFIa) )
     return;
@@ -1346,11 +1180,11 @@ void TMulti::Alloc_TSorpMod( long int newFIs )
   // alloc memory for all multicomponents phases
   phSorpMod = new  TSorpMod *[newFIs];
   sizeFIa = newFIs;
- for( long int ii=0; ii<newFIs; ii++ )
+  for( long int ii=0; ii<newFIs; ii++ )
           phSorpMod[ii] = nullptr;
 }
 
-void TMulti::Free_TSorpMod()
+void TMultiBase::Free_TSorpMod()
 {
   long int kk;
 
@@ -1364,38 +1198,6 @@ void TMulti::Free_TSorpMod()
   phSorpMod = nullptr;
   sizeFIa = 0;
 }
-
-/*
-/// Internal memory allocation for TKinMet performance optimization
-/// (since version 3.3.0)
-void TMulti::Alloc_TKinMet( long int newFI )
-{
-  if(  phKinMet && ( newFI == sizeFI) )
-    return;
-
-  Free_TKinMet();
-  // alloc memory for all multicomponents phases
-  phKinMet = new  TKinMet *[newFI];
-  sizeFI = newFI;
- for( long int ii=0; ii<newFI; ii++ )
-          phKinMet[ii] = 0;
-}
-
-void TMulti::Free_TKinMet()
-{
-  long int kk;
-
-  if( phKinMet )
-  {  for(  kk=0; kk<sizeFI; kk++ )
-      if( phKinMet[kk] )
-           delete phKinMet[kk];
-
-      delete[]  phKinMet;
-  }
-  phKinMet = 0;
-  sizeFI = 0;
-}
-*/
 
 //--------------------- End of ipm_chemical3.cpp ---------------------------
 
