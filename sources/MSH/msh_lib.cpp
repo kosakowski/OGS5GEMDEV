@@ -1293,10 +1293,12 @@ void CFEMesh::DefineMobileNodes(CRFProcess* m_pcs)
    ToDo evtl. vector<CGLPoint>
    08/2005 CC Modification: CGLPoint* e_pnt - Move from GeoLib to MshLib
 **************************************************************************/
-void MSHGetNodesClose(std::vector<long>&msh_point_vector,CGLPoint* e_pnt)
+//void MSHGetNodesClose(std::vector<long>&msh_point_vector,CGLPoint* e_pnt)
+void MSHGetNodesClose(std::vector<long>& /* msh_point_vector */, CGLPoint* /* e_pnt */)
 {
-	e_pnt = e_pnt;
-	msh_point_vector.size();
+    // Komplett leerer Funktionskörper ohne ungenutzte Variablen-Zuweisungen
+  //e_pnt = e_pnt;
+	//not needed kg44	msh_point_vector.size();
 	/*OK411
 	   long i;
 	   CGLPoint m_pnt;

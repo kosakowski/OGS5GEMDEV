@@ -1018,34 +1018,34 @@ double CFluidProperties::Density(double* variables)
 			density = GetElementValueFromNodes(int(variables[0]),
 			                                   int(variables[1]),
 			                                   int(variables[2]),
-			                                   0);                                // hand over element index, Gauss point index and phase index
+			                                   0);                                          // hand over element index, Gauss point index and phase index
 			break;
 		case 19:                // KG44 get the density from GEMS calculations
 		                       // seems complicated, as we probably have to call GEMS.....or take values from last GEMS calculation ---> update during iterations is not possible
 #ifdef GEM_REACT
-		  if (variables[0] ==-1)
-		  {
-		   density= m_vec_GEM->REACT_GEM::GetNodeFluidDensityValue(long(variables[1]));
-		  }
-		  else
-		  {
-		  if (!Fem_Ele_Std) //for Richards flow (when saturation is needed initially in GEMS setup) we have to make 
-			{
-			     density=1000.0;
-			}
+		        if (variables[0] == -1)  {
+			    density= m_vec_GEM->REACT_GEM::GetNodeFluidDensityValue(long(variables[1]));
+			  }
 			else
-			{  
- 			    // elem = Fem_Ele_Std->GetMeshElement()->GetIndex(); //kg44 need element index or node index for GEMS ...currently we stick to arithmetric average of node data (even for gauss points!)
-                             density=m_vec_GEM->REACT_GEM::FluidDensity( long(variables[0]), int(variables[1]),Fem_Ele_Std); //hand over element index and gauss point index 
-			     // here we can interpolate values from nodes to elemnt or to gauss points
-			}
-		  }
+			  {
+			     //for Richards flow (when saturation is needed initially in GEMS setup) we have to make
+			    if (!Fem_Ele_Std) { 
+				density=1000.0;
+			      }
+			    else
+			      {  
+				// elem = Fem_Ele_Std->GetMeshElement()->GetIndex(); //kg44 need element index or node index for GEMS ...currently we stick to arithmetric average of node data (even for gauss points!)
+				//hand over element index and gauss point index 
+				density=m_vec_GEM->REACT_GEM::FluidDensity( long(variables[0]), int(variables[1]),Fem_Ele_Std);
+				// here we can interpolate values from nodes to elemnt or to gauss points
+			      }
+			  }
 #endif
 		       //insert call for GEMS densities..
 		       break;
-	case 20: // rho(p,T, C) for water, range p < 100 MPa, 0 <= T <= 350 °C   Magri GFZ thesis
+		case 20: // rho(p,T, C) for water, range p < 100 MPa, 0 <= T <= 350 °C   Magri GFZ thesis
 
-		pressure = variables[0] / 1e5;
+			pressure = variables[0] / 1e5;
 			density =
 				9.99792877961606e+02 + 5.07605113140940e-04 * max(pressure, 0.0) - 5.28425478164183e-10 * pow(max(pressure, 0.0), 2.)
 				+ (5.13864847162196e-02 - 3.61991396354483e-06 * max(pressure, 0.0) + 7.97204102509724e-12 * pow(max(pressure, 0.0), 2.)) * max(variables[1], 0.0)
@@ -1073,8 +1073,7 @@ double CFluidProperties::Density(double* variables)
 
 			density = p / (PhysicalConstant::IdealGasConstant * T) * (M1*xn + M0*(1.0-xn)); //R_uni in mNs
 		}
-          break;
-
+			break;
 		default:
 			std::cout << "Error in CFluidProperties::Density: no valid model" <<
 			"\n";
@@ -1159,22 +1158,25 @@ double CFluidProperties::Density(double* variables)
 			break;
 
 		case 14: // #Exponential law#
-		density = rho_0 *exp(drho_dp * (max(variables[0],0.0) - p_0) + drho_dT * (max(variables[2], 0.0)) + drho_dC *max(variables[2], 0.0));
-		break;
+			if (sizeof(variables) >=2 )
+		        density = rho_0 *exp(drho_dp * (max(variables[0],0.0) - p_0) + drho_dT * (max(variables[2], 0.0)) + drho_dC *max(variables[2], 0.0));
+			break;
 		case 15: // mixture 1/rho= sum_i x_i/rho_i #p, T, x:-> Amagat's law#
-			 for (int CIndex = 2; CIndex < cmpN + 2; CIndex++) Rho += variables[CIndex]/ComponentDensity(CIndex, variables);
+			for (int CIndex = 2; CIndex < cmpN + 2; CIndex++) Rho += variables[CIndex]/ComponentDensity(CIndex, variables);
 			     density =  1/Rho;
-		    break;
-         case 18:	//using calculated densities at nodes from the phase transition model, BG, NB 11/2010
-		    // Just dummy function, so density is not 0 ;
-			std::cout << " Error - Density Model 18 not implemented, usind dummy density of 1000." << "\n";
-	  	    density = 1000; // Achtung - dummy
-			
-
-		case 19:                // KG44 get the density from GEMS calculations
-		                       // seems complicated, as we probably have to call GEMS.....or take values from last GEMS calculation ---> update during iterations is not possible
-		     //  long elem = Fem_Ele_Std->GetMeshElement()->GetIndex();
- 		       density=1000.0;
+		        break;
+		case 18:
+		        //using calculated densities at nodes from the phase transition model, BG, NB 11/2010
+		        // Just dummy function, so density is not 0 ;
+		        std::cout << " Error - Density Model 18 not implemented, usind dummy density of 1000." << "\n";
+			// Achtung - dummy
+			density = 1000.0;
+			break;
+		// KG44 get the density from GEMS calculations	
+		case 19:
+ 		        density = 1000.0;
+		        // seems complicated, as we probably have to call GEMS.....or take values from last GEMS calculation ---> update during iterations is not possible
+		        //  long elem = Fem_Ele_Std->GetMeshElement()->GetIndex();
 #ifdef GEM_REACT
 			if (!Fem_Ele_Std) //for Richards flow (when saturation is needed initially in GEMS setup) we have to make 
 			{

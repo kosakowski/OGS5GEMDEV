@@ -2926,14 +2926,16 @@ int REACT_GEM::ConcentrationToMass ( long in /*idx of node*/, int i_timestep )
         break;
     }
 
-    if ( ( water_volume < (0.99*min_possible_porosity) ) || ( water_volume > 1.0 ) )
+    if ( ( water_volume < (0.99*min_possible_porosity) ) || ( water_volume > 1.0 && flag_scale_fluidvolume_to_porosity) )
     {
-        cout << "conctomass water volume " << water_volume << " at node: " << in << "\n";
+        scale_factor= 1.0; //min_possible_porosity/water_volume;
+	cout << "DEBUG: conctomass water volume,min_possible_porosity " << water_volume << " " << min_possible_porosity << " at node: " << in << " -> re-scale volume! to porosity " << scale_factor<< " \n";
+
 #if defined(USE_PETSC)
         PetscEnd();                     //make sure MPI exits
 #endif
 
-        exit ( 1 );
+        // exit ( 1 );
     }
 
     if ( flowflag <= 3 ) // groundwater flow or fluid flow
@@ -7171,8 +7173,11 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
         if (node_fail)
         {
             {
-              rwmutex.lock();
-              cout <<   "DEBUG: node failed: " << in << " at timestep " << aktueller_zeitschritt << " needed " << ii << " kinetic substeps and failed with error" << m_NodeStatusCH[in] << " volume change " << ( fabs ( oldvolume - dBR->Vs ) / oldvolume ) <<"\n";
+				rwmutex.lock();
+				cout <<   "DEBUG: node failed: " << in << " at timestep " << aktueller_zeitschritt << " needed " << ii << " kinetic substeps and failed with error" << m_NodeStatusCH[in] << " volume change " << ( fabs ( oldvolume - dBR->Vs ) / oldvolume ) <<"\n";
+				//string m_file_namet = "gems_tstep" + std::to_string(aktueller_zeitschritt) + "node"+std::to_string(in)+"error"+std::to_string(m_NodeStatusCH[in])+"_dbr.dat";
+
+				//m_Node->GEM_write_dbr ( m_file_namet.c_str() , GEMS3KGenerator::f_key_value); // last argument writes indicates classical text output see gems3k_impex.h in GEM library
 	      /*
                         cout << "GEMS: " << repeated_fail <<
                              " nodes failed this timestep, check chemical system!"

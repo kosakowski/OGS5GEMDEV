@@ -1791,7 +1791,7 @@ long int TMulti::PhaseSelectionSpeciationCleanup( long int &kfr, long int &kur, 
            NeedToImproveMassBalance = true;
         }
 //        goto NextPhaseC;
-     }
+    }
      NextPhaseC: jb+=pm.L1[k];
    } // k
 }

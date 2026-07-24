@@ -165,6 +165,8 @@ protected:
 class Matrix : public MatrixBase
 {
 public:
+        using MatrixBase::multi; 
+
 	using MatrixBase::operator=;
 	using MatrixBase::operator+=;
 	using MatrixBase::operator-=;
@@ -240,6 +242,7 @@ public:
 class SymMatrix : public MatrixBase
 {
 public:
+        using MatrixBase::multi; 
 	using MatrixBase::operator=;
 	using MatrixBase::operator+=;
 	using MatrixBase::operator-=;
@@ -323,6 +326,7 @@ class DiagonalMatrix : public MatrixBase
 private:
 	mutable double dummy_zero;
 public:
+        using MatrixBase::multi; 
 	using MatrixBase::operator=;
 	using MatrixBase::operator+=;
 	using MatrixBase::operator-=;

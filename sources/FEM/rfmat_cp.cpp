@@ -795,7 +795,7 @@ double CompProperties::CalcDiffusionCoefficientCP(long index,double theta,CRFPro
 	double pressure_average = 1e5;
 	double temperature_average = 293.;
 	double diffusion_average = 0.0;
-	double tortuosity = 1.0;	
+        [[maybe_unused]] double tortuosity = 1.0;	
 	double* k = NULL;
 	double Dm;
 	// static long *element_nodes;
@@ -1269,6 +1269,7 @@ int CompProperties::GetNumberDiffusionValuesCompProperties(int diffusion_model)
 		break;                    /* Keine Diffusion */
 	case 0:                               /* curve */
 		n = 1;
+		break;
 	case 1:
 		n = 1;
 		break;                    /* Konstanter Diffusionswert */
@@ -1384,7 +1385,9 @@ int CompProperties::GetNumberIsothermValuesCompProperties(int isotherm)
 
 	switch (isotherm)
 	{
-	case -1: n = 0;                       /* no isotherm */
+	case -1:
+	        n = 0;                       /* no isotherm */
+		break;
 	case 0:
 		n = 1;
 		break;                    /* get KD from curve derivative */

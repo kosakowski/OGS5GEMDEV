@@ -993,6 +993,7 @@ std::ios::pos_type CMediumProperties::Read(std::ifstream* mmp_file)
 				                                         //if -1, threshold is constant
 				in >> permeability_strain_model_value[4];//lower limit
 				in >> permeability_strain_model_value[5];//uper limit
+				break;
 			default:
 				cout << "Error in MMPRead: no valid permeability strain model" <<
 				"\n";
@@ -1481,6 +1482,7 @@ std::ios::pos_type CMediumProperties::Read(std::ifstream* mmp_file)
 				            permeability_porosity_updating_type = 1;
 				            in >> permeability_porosity_updating_values[0]; // critical porosity
 				            in >> permeability_porosity_updating_values[1]; // n: a power law exponent
+					    break;
 			            case 'G': // Verma-Pruess formulation 
 				            permeability_porosity_updating_type = 2;
 				            in >> permeability_porosity_updating_values[0]; // critical porosity
@@ -5322,7 +5324,7 @@ double CMediumProperties::Density(long element,double* gp,double theta)
 	int i;
 	CFluidProperties* m_mfp = NULL;
 	//OK411 CSolidProperties* m_msp = NULL;
-	char saturation_name[15];
+	char saturation_name[32];
 	if(no_phases == 1)
 	{
 		m_mfp = mfp_vector[0];
@@ -5332,7 +5334,7 @@ double CMediumProperties::Density(long element,double* gp,double theta)
 		for(i = 0; i < no_phases; i++)
 		{
 			m_mfp = mfp_vector[i];
-			sprintf(saturation_name,"SATURATION%i",i + 1);
+			snprintf(saturation_name,sizeof(saturation_name),"SATURATION%i",i + 1);
 			//OK411 density += Porosity(element,theta) * m_mfp->Density() * PCSGetELEValue(element,gp,theta,saturation_name);
 		}
 	/*OK411

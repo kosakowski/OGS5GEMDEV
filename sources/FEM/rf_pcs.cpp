@@ -2987,7 +2987,9 @@ void CRFProcess::ConfigMassTransport()
 	//KG44 added secondary function for adaptive time stepping
 	string comp_name = "DELTA_" + convertPrimaryVariableToString(this->getProcessPrimaryVariable());// JOD 2014-11-10
 	pcs_secondary_function_name[2] = new char[80];  
-	strncpy((char*)pcs_secondary_function_name[2], comp_name.c_str(), 80);
+	strncpy((char*)pcs_secondary_function_name[2], comp_name.c_str(), 79);
+	// Setze das letzte Byte explizit auf 0, um den String sicher zu terminieren
+	((char*)pcs_secondary_function_name[2])[79] = '\0'; 
 	pcs_secondary_function_unit[2] = "kg/m3";
 	pcs_secondary_function_timelevel[2] = 0;
 	
@@ -6695,7 +6697,7 @@ void CRFProcess::DDCAssembleGlobalMatrix()
 				// copy values SB 09.2012
 				if(m_bc_node->bc_node_copy_geom.length() > 0)
 				{
-					size_t geo_node_id;
+     				        size_t geo_node_id = -1; //initialize to something
 					//std::string geo_file_name = (std::string)this->m_msh->_geo_name;
 					GEOLIB::GEOObjects * geo_obj;
 					geo_obj = this->m_msh->getGEOObjects();
@@ -8791,10 +8793,17 @@ double CRFProcess::evaluteSwitchBC(CBoundaryCondition const & bc, CBoundaryCondi
 			// WW
 			CalcSecondaryVariablesUnsaturatedFlow(initial);
 			break;
-		case FiniteElement::DEFORMATION || FiniteElement::DEFORMATION_FLOW || FiniteElement::DEFORMATION_DYNAMIC:
+		case FiniteElement::DEFORMATION:
 			if (type == 42) //H2M                                                  //WW
 				CalcSecondaryVariablesUnsaturatedFlow(initial);
-
+			break;
+		case FiniteElement::DEFORMATION_FLOW:
+			if (type == 42) //H2M                                                  //WW
+				CalcSecondaryVariablesUnsaturatedFlow(initial);
+			break;
+		case FiniteElement::DEFORMATION_DYNAMIC:
+			if (type == 42) //H2M                                                  //WW
+				CalcSecondaryVariablesUnsaturatedFlow(initial);
 			break;
 		case FiniteElement::PS_GLOBAL:
 			CalcSecondaryVariablesPSGLOBAL(); //WW
@@ -10954,8 +10963,11 @@ void CRFProcess::CalcSecondaryVariablesLiquidFlow()
    size_t i;
    size_t ndx_dens;
    double  var[3]={0,0,0};
-   bool heattransport = false;
 
+   [[maybe_unused]] bool heattransport;
+
+   heattransport = false;
+   
    ndx_dens = GetNodeValueIndex("DENSITY1");
 
    CRFProcess *m_pcs = NULL;

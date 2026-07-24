@@ -184,11 +184,11 @@ void MyFrame::OnOpenDCH ( wxCommandEvent &event )
 			textCtrl->AppendText ( msg );
 			msg.Printf ( wxT ( "---Infomation of the GEM project---\n" ) );
 			textCtrl->AppendText ( msg );
-			msg.Printf ( wxT ( "Number of ICs:      %d\n" ), dCH->nIC );
+			msg.Printf ( wxT ( "Number of ICs:      %zu\n" ), dCH->nIC );
 			textCtrl->AppendText ( msg );
-			msg.Printf ( wxT ( "Number of DCs:      %d\n" ), dCH->nDC );
+			msg.Printf ( wxT ( "Number of DCs:      %zu\n" ), dCH->nDC );
 			textCtrl->AppendText ( msg );
-			msg.Printf ( wxT ( "Number of Phases:  %d\n" ),  dCH->nPH );
+			msg.Printf ( wxT ( "Number of Phases:  %zu\n" ),  dCH->nPH );
 			textCtrl->AppendText ( msg );
 			msg.Printf ( wxT ( "-----------------------------------\n" ) );
 			textCtrl->AppendText ( msg );

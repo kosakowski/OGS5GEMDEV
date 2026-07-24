@@ -2263,10 +2263,9 @@ void CFiniteElementStd::CalCoefLaplace(bool Gravity, int ip)
 			for(size_t i = 0; i < dim; i++)
 				tensor[i * dim + i] *= w[i];
 		}
-		for(size_t i = 0; i < dim * dim; i++)
+		for(size_t i = 0; i < dim * dim; i++){
 			mat[i] = tensor[i] / mat_fac * perm_effstress;//AS:perm. dependent eff stress.
-
-
+		}
 		break;
 	case EPT_GROUNDWATER_FLOW:                               // Groundwater flow
 		/* SB4218 - moved to ->PermeabilityTensor(Index);
@@ -2332,10 +2331,11 @@ void CFiniteElementStd::CalCoefLaplace(bool Gravity, int ip)
                }
             }
             //TK/NW 10.10.2011
-            for(size_t i = 0; i < dim * dim; i++)
+            for(size_t i = 0; i < dim * dim; i++){
 				//16.10.2009 .WW
                 mat[i] = tensor[i]*time_unit_factor*k_rel;
-		break;
+	    }
+	    break;	    
 	//..................................................................
 	case EPT_TWOPHASE_FLOW:                               // Two-phase flow
 		// PCH Rewriting...
@@ -3302,7 +3302,9 @@ void CFiniteElementStd::UpwindUnitCoord(int p, int point, int ind)
 #ifdef OLD_UPWINDING
 	//test
 	for(i = 0; i < ele_dim; i++)
+	  {
 		cout << unit[i] << " ";
+	  }	
 	cout << "\n";
 
 	double ur, us, ut;
