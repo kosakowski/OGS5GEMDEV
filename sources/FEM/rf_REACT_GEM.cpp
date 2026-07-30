@@ -7175,8 +7175,7 @@ int REACT_GEM::SolveChemistry(long in, TNode* m_Node)
             {
 				rwmutex.lock();
 				cout <<   "DEBUG: node failed: " << in << " at timestep " << aktueller_zeitschritt << " needed " << ii << " kinetic substeps and failed with error" << m_NodeStatusCH[in] << " volume change " << ( fabs ( oldvolume - dBR->Vs ) / oldvolume ) <<"\n";
-				//string m_file_namet = "gems_tstep" + std::to_string(aktueller_zeitschritt) + "node"+std::to_string(in)+"error"+std::to_string(m_NodeStatusCH[in])+"_dbr.dat";
-
+				string m_file_namet = "gems_tstep" + std::to_string(aktueller_zeitschritt) + "node"+std::to_string(in)+"error"+std::to_string(m_NodeStatusCH[in])+"_dbr.dat";
 				//m_Node->GEM_write_dbr ( m_file_namet.c_str() , GEMS3KGenerator::f_key_value); // last argument writes indicates classical text output see gems3k_impex.h in GEM library
 	      /*
                         cout << "GEMS: " << repeated_fail <<
